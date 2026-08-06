@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-06T17:17:00+02:00",
+  "route": "/fixtures",
+  "capture": "Codex in-app browser viewport screenshot",
+  "states": ["idle", "running", "fault", "aborted", "emergency", "completed", "replay"],
+  "viewports": {
+    "desktop": {"width": 1440, "height": 1000},
+    "narrow": {"width": 720, "height": 1000}
+  },
+  "files": {
+    "aborted-desktop.jpg": "bc3a4fb918643cf60f7a68eb9864738418f06a0b5ec05ba984408cd91355ae51",
+    "aborted-narrow.jpg": "82439fbd3ca9bd63e3add38427a77ce926c8662acbacb71fb7fc10d0eda777c4",
+    "completed-desktop.jpg": "97d57fcbaf55327441a1574f751a31cd2ef01b94ee04ad970b75f041c14f72be",
+    "completed-narrow.jpg": "bff0526cc24b8161708e796c30b4cfa520d108cfe74a579ce5d3e59347dea079",
+    "emergency-desktop.jpg": "33650348b2f1eedcd62bc472b974abee5f23847fda68c07189cb3fb023e323cf",
+    "emergency-narrow.jpg": "2e1a41cd89dc53e70ddce50ef26b81719ef47cf9ccf72a5389141f3c71d8917c",
+    "fault-desktop.jpg": "1d496084950e847af6da1a3ad136863be41fedbf3e0563c86c75c85870fdcf12",
+    "fault-narrow.jpg": "7e0a99f8c0af67537cfeaf6ff93dea4e745e20c7ba1ba2c557f7ce85614301ad",
+    "idle-desktop.jpg": "47cf666c26ed54d487f95842a066f54c42d25e48f61d3f620df4e057d1bee6c1",
+    "idle-narrow.jpg": "9a026030f19aecda7aa442772bbdac6bd98f5bfda4d8136f32b381af4d3436f3",
+    "replay-desktop.jpg": "d05736766da56cfbf2a72c7e88375274576e292bc4505b30101cbf937aa21033",
+    "replay-narrow.jpg": "c29d764a5a32ed2ba7adaa052dc5cdd9d801905d0f6094d1d340102ed3b625ff",
+    "running-desktop.jpg": "47cf666c26ed54d487f95842a066f54c42d25e48f61d3f620df4e057d1bee6c1",
+    "running-narrow.jpg": "1c7033a7382047dcb0929c55878efac183443c8d811acbb586ed1390d2dd0123"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "release_id": "fast-sim-reference-v1",
+  "process_repetitions": 2,
+  "scenarios": [
+    {
+      "id": "hover",
+      "config": "config/scenarios/canonical_hover.yaml",
+      "mission_id": "hover",
+      "parameters": {"duration_s": 3.0},
+      "all_vehicles": false,
+      "expected_status": "SUCCEEDED",
+      "expected_reason_code": "MISSION_COMPLETED",
+      "expected_scenario_sha256": "06a513639f3871338faa0082f53cb724a3a6e9c7614394d4c6b368e3d6add764",
+      "expected_outcome_sha256": "fbc6c3ed5b98a599c48e1d8e6c8cc1fca2f08af8be42b553b7693b0ddb29bbb1"
+    },
+    {
+      "id": "move-return",
+      "config": "config/scenarios/canonical_move_return.yaml",
+      "mission_id": "move-return",
+      "parameters": {"x_m": 0.3, "move_duration_s": 2.0, "dwell_s": 1.0},
+      "all_vehicles": false,
+      "expected_status": "SUCCEEDED",
+      "expected_reason_code": "MISSION_COMPLETED",
+      "expected_scenario_sha256": "b3f6fcf2d86243988b4c133bc355d0fccf82937167f398980302adb6c46e1921",
+      "expected_outcome_sha256": "8f196d1df16f6794841ac0235ddb9a9900ae4a5fd0b3395b4332dcba44924373"
+    },
+    {
+      "id": "failure",
+      "config": "config/scenarios/canonical_failure.yaml",
+      "mission_id": "hover",
+      "parameters": {"duration_s": 3.0},
+      "all_vehicles": false,
+      "expected_status": "FAILED",
+      "expected_reason_code": "LINK_LOST",
+      "expected_scenario_sha256": "6e363bd1ed07dc94de15bdf95ada8fb21320ab21a4b52608096d45586f565b9c",
+      "expected_outcome_sha256": "8699697648555d1719a8681bc03214e827bbae1414af27195fe7a0bcb00f4a66"
+    },
+    {
+      "id": "three-vehicle",
+      "config": "config/scenarios/canonical_three_vehicle.yaml",
+      "mission_id": "hover",
+      "parameters": {"duration_s": 1.0},
+      "all_vehicles": true,
+      "expected_status": "SUCCEEDED",
+      "expected_reason_code": "MISSION_COMPLETED",
+      "expected_scenario_sha256": "cdf1c5a5ab6f410d6762d885f9d2f1293a46db7a85b48f9dd1b03029ee84d47a",
+      "expected_outcome_sha256": "d4c940d1505fce3a28eb7608f1dba6ea8c709ff4c2dd48492d29a543ed63d870"
+    }
+  ]
+}

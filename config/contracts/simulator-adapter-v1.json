@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "contract_version": "1.0.0",
+  "stability": "FROZEN",
+  "interface": "crazyswarm_app.vehicles.base.Vehicle",
+  "required_members": [
+    "identity",
+    "capabilities",
+    "contract_manifest",
+    "execution_metadata",
+    "connect",
+    "disconnect",
+    "execute",
+    "snapshot",
+    "telemetry_stream"
+  ],
+  "command_semantics": [
+    "arm",
+    "disarm",
+    "takeoff",
+    "move_relative",
+    "hover",
+    "stop_and_hold",
+    "land",
+    "abort",
+    "emergency_stop"
+  ],
+  "frames": ["world", "home", "body", "rotor", "sensor"],
+  "quaternion_order": ["w", "x", "y", "z"],
+  "units": "SI",
+  "time_requirements": [
+    "source_timestamp_s",
+    "received_timestamp_s",
+    "source_clock_id",
+    "source_clock_epoch"
+  ],
+  "run_identity_requirements": [
+    "mission_source_sha256",
+    "model_id",
+    "model_version",
+    "model_configuration_sha256",
+    "scenario_id",
+    "scenario_configuration_sha256",
+    "initial_state_sha256",
+    "seed",
+    "fixed_step_s"
+  ],
+  "conformance_test": "tests/vehicles/conformance.py",
+  "fast_sim_reference_manifest": {
+    "adapter_id": "fast-sim",
+    "contract_version": "1.0.0",
+    "supported_capabilities": [
+      "arming",
+      "emergency_stop",
+      "high_level_commands",
+      "parameter_access",
+      "range_sensing",
+      "relative_positioning"
+    ],
+    "supported_signals": [
+      "attitude",
+      "battery",
+      "flow",
+      "ground-truth-position",
+      "imu",
+      "motors",
+      "position",
+      "ranges",
+      "velocity"
+    ],
+    "supported_model_ids": ["crazyflie-6dof"]
+  }
+}

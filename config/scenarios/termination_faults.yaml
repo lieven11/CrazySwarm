@@ -1,0 +1,37 @@
+schema_version: 1
+scenario_id: deterministic-termination-faults
+world:
+  world_id: termination-fault-room
+  width_m: 8.0
+  depth_m: 4.0
+  height_m: 2.5
+simulation:
+  seed: 47
+  fixed_step_s: 0.01
+  clock_mode: accelerated
+vehicles:
+  - vehicle_id: sim-low
+    display_name: Low Battery Injection
+    position_m: {x: -3.0, y: 0.0, z: 0.0}
+  - vehicle_id: sim-geofence
+    display_name: Geofence Injection
+    position_m: {x: -1.0, y: 0.0, z: 0.0}
+  - vehicle_id: sim-collision
+    display_name: Collision Injection
+    position_m: {x: 1.0, y: 0.0, z: 0.0}
+  - vehicle_id: sim-numerical
+    display_name: Numerical Injection
+    position_m: {x: 3.0, y: 0.0, z: 0.0}
+faults:
+  - fault: low_battery
+    start_s: 0.0
+    vehicle_id: sim-low
+  - fault: geofence_breach
+    start_s: 0.0
+    vehicle_id: sim-geofence
+  - fault: collision
+    start_s: 0.0
+    vehicle_id: sim-collision
+  - fault: numerical_failure
+    start_s: 0.0
+    vehicle_id: sim-numerical

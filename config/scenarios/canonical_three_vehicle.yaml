@@ -1,0 +1,26 @@
+schema_version: 1
+scenario_id: canonical-three-vehicle-v1
+world:
+  world_id: canonical-fleet-room-v1
+  width_m: 8.0
+  depth_m: 6.0
+  height_m: 3.0
+  obstacles: []
+simulation:
+  seed: 109
+  fixed_step_s: 0.01
+  clock_mode: accelerated
+vehicles:
+  - vehicle_id: canonical-left
+    display_name: Canonical Left
+    position_m: {x: -1.5, y: 0.0, z: 0.0}
+    yaw_rad: 0.0
+  - vehicle_id: canonical-center
+    display_name: Canonical Center
+    position_m: {x: 0.0, y: 0.0, z: 0.0}
+    yaw_rad: 0.0
+  - vehicle_id: canonical-right
+    display_name: Canonical Right
+    position_m: {x: 1.5, y: 0.0, z: 0.0}
+    yaw_rad: 0.0
+faults: []

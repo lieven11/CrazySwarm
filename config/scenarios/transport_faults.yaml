@@ -1,0 +1,22 @@
+schema_version: 1
+scenario_id: deterministic-transport-faults
+world:
+  world_id: transport-fault-room
+  width_m: 4.0
+  depth_m: 4.0
+  height_m: 2.5
+simulation:
+  seed: 41
+  fixed_step_s: 0.01
+  clock_mode: accelerated
+  command_latency_s: 0.08
+  acknowledgement_latency_s: 0.03
+  packet_loss_probability: 0.25
+vehicles:
+  - vehicle_id: sim-transport
+    display_name: Transport Fault Simulation
+    position_m: {x: 0.0, y: 0.0, z: 0.0}
+faults:
+  - fault: stale_telemetry
+    start_s: 2.0
+    vehicle_id: sim-transport

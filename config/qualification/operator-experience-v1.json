@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "qualification_id": "fast-sim-operator-experience-v1",
+  "scope": "software-only local operator path",
+  "hardware_qualified": false,
+  "supported_viewports": {
+    "desktop": {"width_px": 1440, "height_px": 1000},
+    "narrow": {"width_px": 720, "height_px": 1000}
+  },
+  "budgets": {
+    "telemetry_publish_p95_ms": 5.0,
+    "evidence_commit_p95_ms": 25.0,
+    "websocket_event_delivery_p95_ms": 100.0,
+    "renderer_scene_build_p95_ms": 250.0,
+    "ui_animation_min_frames_per_second": 30.0,
+    "ui_long_task_max_ms": 100.0,
+    "browser_heap_max_mib": 256.0,
+    "operator_trace_max_points": 500,
+    "websocket_client_buffer_events": 256,
+    "default_run_history_rows": 100,
+    "maximum_run_history_rows": 1000,
+    "evidence_query_max_events": 50000
+  },
+  "load_profile": {
+    "vehicles": 3,
+    "telemetry_rate_hz_per_vehicle": 20.0,
+    "rendered_trace_points": 2000,
+    "planned_trace_points": 800,
+    "range_rays_per_selected_vehicle": 6
+  },
+  "verification": {
+    "backend": [
+      "tests/performance/test_operator_experience.py",
+      "tests/api/test_websocket.py",
+      "tests/observability/test_storage.py",
+      "tests/simulation/test_qualification.py"
+    ],
+    "frontend": [
+      "ui/tests/renderer-boundary.test.ts",
+      "ui/tests/visual-baselines.test.mjs",
+      "FAST-SIM-WP-04 integrated browser record"
+    ]
+  },
+  "interpretation": "Budgets are local software guardrails, not measured aircraft, radio, or hardware capability."
+}

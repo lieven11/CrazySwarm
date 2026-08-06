@@ -1,0 +1,18 @@
+schema_version: 1
+scenario_id: canonical-move-return-v1
+world:
+  world_id: canonical-room-v1
+  width_m: 4.0
+  depth_m: 4.0
+  height_m: 2.5
+  obstacles: []
+simulation:
+  seed: 103
+  fixed_step_s: 0.01
+  clock_mode: accelerated
+vehicles:
+  - vehicle_id: canonical-move-return
+    display_name: Canonical Move Return
+    position_m: {x: 0.0, y: 0.0, z: 0.0}
+    yaw_rad: 0.0
+faults: []

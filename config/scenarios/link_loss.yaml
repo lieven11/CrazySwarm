@@ -1,0 +1,18 @@
+schema_version: 1
+scenario_id: link-loss-hover
+world:
+  world_id: link-loss-room
+  width_m: 4.0
+  depth_m: 4.0
+  height_m: 2.5
+simulation:
+  seed: 37
+  fixed_step_s: 0.01
+  clock_mode: accelerated
+vehicles:
+  - vehicle_id: sim-link-loss
+    display_name: Link Loss Simulation
+    position_m: {x: 0.0, y: 0.0, z: 0.0}
+faults:
+  - fault: disconnect
+    start_s: 2.5

@@ -1,0 +1,22 @@
+schema_version: 1
+scenario_id: three-drone-room
+world:
+  world_id: fleet-test-room
+  width_m: 8.0
+  depth_m: 6.0
+  height_m: 3.0
+  obstacles: []
+simulation:
+  seed: 19
+  fixed_step_s: 0.01
+  clock_mode: realtime
+vehicles:
+  - vehicle_id: sim01
+    display_name: Simulated Drone 1
+    position_m: {x: -1.5, y: 0.0, z: 0.0}
+  - vehicle_id: sim02
+    display_name: Simulated Drone 2
+    position_m: {x: 0.0, y: 0.0, z: 0.0}
+  - vehicle_id: sim03
+    display_name: Simulated Drone 3
+    position_m: {x: 1.5, y: 0.0, z: 0.0}

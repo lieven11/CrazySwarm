@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "qualification_id": "fast-sim-v1-software",
+  "model_id": "crazyflie-6dof",
+  "model_version": "1.0.0",
+  "parameter_source": "CONFIGURED_UNQUALIFIED",
+  "hardware_qualified": false,
+  "supported_fixed_steps_s": [0.005, 0.01, 0.02],
+  "cross_timestep_tolerances": {
+    "position_m": 0.04,
+    "attitude_rad": 0.08
+  },
+  "cross_timestep_observed_against_0_005_s": {
+    "0.010": {"position_delta_m": 0.000826207, "attitude_delta_rad": 0.000203349},
+    "0.020": {"position_delta_m": 0.002503003, "attitude_delta_rad": 0.000565783}
+  },
+  "long_duration_s": 120.0,
+  "invariants": {
+    "quaternion_norm_absolute_error": 1e-09,
+    "timestamps_strictly_ordered": true,
+    "battery_state_monotonic": true,
+    "finite_state_required": true
+  },
+  "independent_references": {
+    "free_fall": "analytic constant-gravity trajectory before floor contact",
+    "actuator": "analytic first-order step response",
+    "expected_difference": "semi-implicit position integration differs from continuous free fall by at most one fixed-step velocity increment",
+    "observed_free_fall_position_absolute_error_m": 0.0004903325,
+    "observed_actuator_thrust_absolute_error_n": 0.0
+  },
+  "failure_repetitions_per_class": 100,
+  "collision_model": "configured geometry terminates the run; no contact impulse or crash deformation is resolved",
+  "transport_model": "fixed latency and seeded packet loss; jitter and RF propagation are omitted",
+  "transport_seed_outcomes_0_through_99": {"completed": 72, "command_dropped": 28},
+  "multi_vehicle_model": "independent vehicle dynamics and identity-scoped faults; no aerodynamic interaction",
+  "verification_test": "tests/simulation/test_qualification.py"
+}

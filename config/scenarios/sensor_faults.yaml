@@ -1,0 +1,24 @@
+schema_version: 1
+scenario_id: deterministic-sensor-faults
+world:
+  world_id: sensor-fault-room
+  width_m: 4.0
+  depth_m: 4.0
+  height_m: 2.5
+simulation:
+  seed: 43
+  fixed_step_s: 0.01
+  clock_mode: accelerated
+vehicles:
+  - vehicle_id: sim-sensors
+    display_name: Sensor Fault Simulation
+    position_m: {x: 0.0, y: 0.0, z: 0.0}
+faults:
+  - fault: sensor_failure
+    start_s: 1.0
+    end_s: 2.0
+    vehicle_id: sim-sensors
+  - fault: localization_loss
+    start_s: 3.0
+    end_s: 4.0
+    vehicle_id: sim-sensors

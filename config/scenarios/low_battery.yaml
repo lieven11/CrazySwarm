@@ -1,0 +1,21 @@
+schema_version: 1
+scenario_id: low-battery-hover
+world:
+  world_id: low-battery-room
+  width_m: 4.0
+  depth_m: 4.0
+  height_m: 2.5
+simulation:
+  seed: 31
+  fixed_step_s: 0.01
+  clock_mode: accelerated
+  battery_start_percent: 11.0
+  physics:
+    battery_capacity_ah: 0.05
+  low_battery_percent: 25.0
+  critical_battery_percent: 10.0
+vehicles:
+  - vehicle_id: sim-low-battery
+    display_name: Low Battery Simulation
+    position_m: {x: 0.0, y: 0.0, z: 0.0}
+faults: []

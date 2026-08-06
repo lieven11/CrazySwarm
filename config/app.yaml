@@ -1,0 +1,56 @@
+schema_version: 1
+application_name: CrazySwarm Control Center
+default_mode: SIM
+telemetry_period_s: 0.05
+cache_directory: .cache/crazyswarm
+safety_envelope:
+  max_altitude_m: 1.0
+  max_horizontal_speed_m_s: 0.5
+  max_vertical_speed_m_s: 0.3
+  max_acceleration_m_s2: 1.0
+  max_yaw_rate_rad_s: 1.5707963268
+  max_mission_duration_s: 300.0
+  command_timeout_s: 10.0
+  telemetry_timeout_s: 1.0
+  control_lease_timeout_s: 2.0
+  preflight_valid_s: 30.0
+  minimum_takeoff_battery_percent: 30.0
+  critical_battery_percent: 10.0
+  minimum_link_quality_percent: 70.0
+  minimum_localization_quality_percent: 60.0
+  flight_volume:
+    minimum_m: {x: -2.0, y: -2.0, z: 0.0}
+    maximum_m: {x: 2.0, y: 2.0, z: 1.0}
+simulation:
+  seed: 7
+  fixed_step_s: 0.01
+  clock_mode: realtime
+  speed: 1.0
+  command_latency_s: 0.02
+  acknowledgement_latency_s: 0.01
+  packet_loss_probability: 0.0
+  max_horizontal_speed_m_s: 0.7
+  max_vertical_speed_m_s: 0.5
+  max_acceleration_m_s2: 2.0
+  max_yaw_rate_rad_s: 2.0
+  battery_start_percent: 100.0
+  low_battery_percent: 25.0
+  critical_battery_percent: 10.0
+  flow_drift_std_m_sqrt_s: 0.002
+  position_noise_std_m: 0.001
+  range_noise_std_m: 0.002
+  max_range_m: 4.0
+api:
+  bind_host: 127.0.0.1
+  port: 8000
+  allowed_origins:
+    - http://127.0.0.1:3000
+    - http://localhost:3000
+    - http://127.0.0.1:3001
+    - http://localhost:3001
+    - http://127.0.0.1:5173
+    - http://localhost:5173
+evidence:
+  database_path: .cache/crazyswarm/evidence.sqlite3
+  recorder_buffer_size: 8192
+  retention_days: 30

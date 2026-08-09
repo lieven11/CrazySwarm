@@ -6,7 +6,8 @@ import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import type { ControlApi } from "../lib/api";
 import type { CampaignCaseView, CampaignCatalogView, CampaignWorkspaceView } from "../lib/models";
 
-type FleetSizeFilter = "all" | "1" | "2" | "3";
+const FLEET_SIZES = ["1", "2", "3"] as const;
+type FleetSizeFilter = typeof FLEET_SIZES[number];
 type ClusterFilter = "all" | CampaignCaseView["cluster"];
 type EnvironmentFilter = CampaignCaseView["environment"];
 
@@ -254,7 +255,7 @@ export function filterCampaignCases(
   return cases
     .filter((item) => item.environment === environment)
     .filter((item) => cluster === "all" || item.cluster === cluster)
-    .filter((item) => fleetSize === "all" || item.drone_count === Number(fleetSize))
+    .filter((item) => item.drone_count === Number(fleetSize))
     .toSorted((left, right) =>
       (clusterOrder.get(left.cluster) ?? 99) - (clusterOrder.get(right.cluster) ?? 99)
       || left.drone_count - right.drone_count
@@ -269,7 +270,7 @@ export function CampaignLab({ api, onNotice }: { api: ControlApi; onNotice: (mes
   const [workspace, setWorkspace] = useState<CampaignWorkspaceView>();
   const [selectedId, setSelectedId] = useState("");
   const [environment, setEnvironment] = useState<EnvironmentFilter>("SIMULATION");
-  const [fleetSize, setFleetSize] = useState<FleetSizeFilter>("all");
+  const [fleetSize, setFleetSize] = useState<FleetSizeFilter>("1");
   const [cluster, setCluster] = useState<ClusterFilter>("all");
   const [busy, setBusy] = useState<string>();
   const [preview, setPreview] = useState<Record<string, unknown>>();
@@ -291,9 +292,18 @@ export function CampaignLab({ api, onNotice }: { api: ControlApi; onNotice: (mes
     void Promise.all([api.campaignCatalog(), api.campaignState()])
       .then(([nextCatalog, nextWorkspace]) => {
         if (cancelled) return;
+        const initialCase = nextCatalog.cases.find(
+          (item) => item.case_id === nextWorkspace.active_case_id,
+        ) ?? nextCatalog.cases.find(
+          (item) => item.environment === "SIMULATION" && item.drone_count === 1,
+        ) ?? nextCatalog.cases[0];
         setCatalog(nextCatalog);
         setWorkspace(nextWorkspace);
-        setSelectedId(nextWorkspace.active_case_id || nextCatalog.cases[0]?.case_id || "");
+        setSelectedId(initialCase?.case_id ?? "");
+        if (initialCase) {
+          setEnvironment(initialCase.environment);
+          setFleetSize(String(initialCase.drone_count) as FleetSizeFilter);
+        }
       })
       .catch((error: unknown) => {
         if (!cancelled) {
@@ -312,6 +322,12 @@ export function CampaignLab({ api, onNotice }: { api: ControlApi; onNotice: (mes
   const selected = cases.find((item) => item.case_id === selectedId);
   const active = catalog?.cases.find((item) => item.case_id === workspace?.active_case_id);
   const latestReview = workspace?.reviews.at(-1);
+  const availableFleetSizes = useMemo(() => new Set(
+    (catalog?.cases ?? [])
+      .filter((item) => item.environment === environment)
+      .filter((item) => cluster === "all" || item.cluster === cluster)
+      .map((item) => String(item.drone_count) as FleetSizeFilter),
+  ), [catalog, cluster, environment]);
   const clusterOptions = useMemo<CampaignDropdownOption[]>(() => [
     {
       value: "all",
@@ -338,16 +354,37 @@ export function CampaignLab({ api, onNotice }: { api: ControlApi; onNotice: (mes
     nextEnvironment: EnvironmentFilter,
     nextCluster: ClusterFilter,
     nextFleetSize: FleetSizeFilter,
+    useAvailableFleetFallback = false,
   ) => {
-    setEnvironment(nextEnvironment);
-    setCluster(nextCluster);
-    setFleetSize(nextFleetSize);
-    const matching = filterCampaignCases(
+    let resolvedFleetSize = nextFleetSize;
+    let matching = filterCampaignCases(
       catalog?.cases ?? [],
       nextEnvironment,
       nextCluster,
-      nextFleetSize,
+      resolvedFleetSize,
     );
+    if (useAvailableFleetFallback && !matching.length) {
+      const firstAvailable = FLEET_SIZES.find((candidate) => (
+        filterCampaignCases(
+          catalog?.cases ?? [],
+          nextEnvironment,
+          nextCluster,
+          candidate,
+        ).length > 0
+      ));
+      if (firstAvailable) {
+        resolvedFleetSize = firstAvailable;
+        matching = filterCampaignCases(
+          catalog?.cases ?? [],
+          nextEnvironment,
+          nextCluster,
+          resolvedFleetSize,
+        );
+      }
+    }
+    setEnvironment(nextEnvironment);
+    setCluster(nextCluster);
+    setFleetSize(resolvedFleetSize);
     if (!matching.some((item) => item.case_id === selectedId)) {
       setSelectedId(matching[0]?.case_id ?? "");
       setPreview(undefined);
@@ -393,16 +430,22 @@ export function CampaignLab({ api, onNotice }: { api: ControlApi; onNotice: (mes
                     key={value}
                     type="button"
                     className={environment === value ? "is-selected" : ""}
-                    onClick={() => chooseFilters(value, cluster, fleetSize)}
+                    onClick={() => chooseFilters(value, cluster, fleetSize, true)}
                   >
                     {value === "SIMULATION" ? "Simulation" : "Real"}
                   </button>
                 ))}
               </div>
               <div className="campaign-filter" role="group" aria-label="Fleet size">
-                {(["all", "1", "2", "3"] as const).map((value) => (
-                  <button key={value} type="button" className={fleetSize === value ? "is-selected" : ""} onClick={() => chooseFilters(environment, cluster, value)}>
-                    {value === "all" ? "All" : `${value}D`}
+                {FLEET_SIZES.map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={fleetSize === value ? "is-selected" : ""}
+                    disabled={!availableFleetSizes.has(value)}
+                    onClick={() => chooseFilters(environment, cluster, value)}
+                  >
+                    {value}D
                   </button>
                 ))}
               </div>
@@ -414,6 +457,7 @@ export function CampaignLab({ api, onNotice }: { api: ControlApi; onNotice: (mes
                   environment,
                   nextCluster as ClusterFilter,
                   fleetSize,
+                  true,
                 )}
               />
               <CampaignDropdown

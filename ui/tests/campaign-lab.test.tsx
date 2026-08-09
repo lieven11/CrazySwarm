@@ -63,7 +63,7 @@ describe("campaign laboratory", () => {
       [one, two],
       "SIMULATION",
       "GEOMETRIC_CONFLICT_RESOLUTION",
-      "all",
+      "2",
     )).toEqual([two]);
   });
 
@@ -75,9 +75,9 @@ describe("campaign laboratory", () => {
       authorization: "NOT_AUTHORIZED",
     });
 
-    expect(filterCampaignCases([simulation, real], "SIMULATION", "all", "all"))
+    expect(filterCampaignCases([simulation, real], "SIMULATION", "all", "1"))
       .toEqual([simulation]);
-    expect(filterCampaignCases([simulation, real], "REAL", "all", "all"))
+    expect(filterCampaignCases([simulation, real], "REAL", "all", "1"))
       .toEqual([real]);
   });
 

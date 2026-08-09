@@ -325,7 +325,7 @@ An expanded flight panel starts below the top-right vehicle and Engineering cont
 Catalog selectors use the same dense-black language as Run files rather than the
 operating system's native select window.
 
-- The closed control is a quiet 44 px black-glass row with a readable title, one line
+- The closed control is a quiet 50 px black-glass row with a readable title, one line
   of secondary context, and a restrained chevron.
 - The open menu is bounded to the width of its control and at most 45% of the viewport
   height. Long catalogs scroll inside the menu and never create a screen-sized native
@@ -335,8 +335,17 @@ operating system's native select window.
   operator-facing copy.
 - Options are separated near-black rounded rows. The status sits in a stable left
   column, the mission name and context occupy the center, and the current selection
-  receives a cyan check at the right. Hover/focus changes the edge and surface only;
+  receives a white check at the right. Hover/focus changes the edge and surface only;
   it never replaces the status color.
+- Menu structure is black, white, and neutral gray. Open controls, search focus,
+  highlighted rows, and selected rows must not use cyan/blue outlines, blue surface
+  fills, or blue glow. Cyan is reserved for semantic source/status meaning, never for
+  generic selection chrome.
+- Primary option names are at least 12 px, secondary context at least 8.5 px, and
+  lifecycle labels at least 8.5 px at the Campaign Lab control scale.
+- Fleet scope is always explicit. The selector contains exactly `1D`, `2D`, and `3D`;
+  there is no `All` state. `1D` is the default, unavailable sizes are disabled, and a
+  cluster change moves to its first available fleet size when necessary.
 - Keyboard behavior is mandatory: Enter/Space opens, arrows and Home/End move through
   results, Enter selects, Escape closes, and focus returns to the trigger.
 

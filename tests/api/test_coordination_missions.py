@@ -311,15 +311,24 @@ def test_normal_play_three_drone_conflict_executes_one_joint_schedule(
     for role_id, duration_s in expected_holds.items():
         mission_result = cast(dict[str, object], child_by_task[role_id]["mission_result"])
         trace = cast(list[dict[str, object]], mission_result["normalized_intent_trace"])
-        assert [item["action"] for item in trace] == [
+        base_actions = [
             "takeoff",
             "hover",
             "execute_trajectory",
             "hover",
             "land",
         ]
-        assert cast(dict[str, object], trace[1]["arguments"])["duration_s"] == pytest.approx(
-            duration_s
+        actions = [item["action"] for item in trace]
+        if actions[0] == "ground_wait":
+            assert actions[1:] == base_actions
+            hold = trace[0]
+            expected_duration_s = max(0.0, duration_s - 1.0)
+        else:
+            assert actions == base_actions
+            hold = trace[1]
+            expected_duration_s = duration_s
+        assert cast(dict[str, object], hold["arguments"])["duration_s"] == pytest.approx(
+            expected_duration_s
         )
         assert mission_result["goal_captures"]
         assert mission_result["accepted_plan_sha256"] == preview["plan_sha256"]

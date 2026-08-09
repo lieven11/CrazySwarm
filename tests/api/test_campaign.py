@@ -62,6 +62,39 @@ def test_campaign_browse_validate_select_and_preview_do_not_launch(
     assert runtime.runner.list_runs() == ()
 
 
+def test_campaign_run_returns_immediate_tracked_acknowledgement(
+    api_client: tuple[TestClient, ApplicationRuntime],
+) -> None:
+    client, _ = api_client
+    client.post(
+        "/api/v1/campaign/cases/static-validate",
+        headers=auth_headers("campaign-async-validate"),
+        json={"case_id": "1d.altitude_transition.canonical_nominal"},
+    ).raise_for_status()
+    client.post(
+        "/api/v1/campaign/active",
+        headers=auth_headers("campaign-async-select"),
+        json={
+            "case_id": "1d.altitude_transition.canonical_nominal",
+            "reason": "verify asynchronous campaign acknowledgement",
+        },
+    ).raise_for_status()
+
+    started = client.post(
+        "/api/v1/campaign/runs",
+        headers=auth_headers("campaign-async-run"),
+        json={"mode": "AUTOMATED_ACCELERATED"},
+    )
+
+    assert started.status_code == 202
+    acknowledgement = started.json()
+    assert acknowledgement["accepted"] is True
+    assert acknowledgement["mode"] == "AUTOMATED_ACCELERATED"
+    assert acknowledgement["status"] in {"QUEUED", "RUNNING", "SUCCEEDED"}
+    workspace = client.get("/api/v1/campaign/state", headers=auth_headers()).json()
+    assert any(run["run_id"] == acknowledgement["run_id"] for run in workspace["runs"])
+
+
 def test_browser_timing_channel_is_bounded_to_browser_owned_stages(
     api_client: tuple[TestClient, ApplicationRuntime],
 ) -> None:

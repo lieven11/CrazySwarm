@@ -35,8 +35,12 @@ import {
   type ReactNode,
 } from "react";
 import { ControlApi } from "../lib/api";
+import { campaignMissionPreview } from "../lib/campaign-preview";
 import { createEmptyDashboard } from "../lib/empty";
 import type {
+  CampaignCaseView,
+  CampaignRunMode,
+  CampaignRunSummary,
   DashboardModel,
   FleetSessionView,
   Health,
@@ -55,7 +59,7 @@ import type {
 import { missionPlan, missionPreviewPaths } from "../lib/spatial";
 import { RoomScene, type HomeBaseView } from "./RoomScene";
 import { FlightReadout, RunFilesControl, type TelemetrySample } from "./TelemetryDock";
-import { CampaignLab } from "./CampaignLab";
+import { CampaignLab, humanizeCampaignValue } from "./CampaignLab";
 
 type ServiceState = "ATTACHING" | "ONLINE" | "OFFLINE";
 type SafetyAction = "abort" | "emergency" | null;
@@ -70,6 +74,16 @@ const LIVE_UPDATE_PERIOD_MS = 100;
 const BATTERY_LEVEL_PRESETS = [5, 10, 20, 50, 75, 100] as const;
 export const TOAST_DURATION_MS = 4_500;
 export const TOAST_FAILURE_DURATION_MS = 7_000;
+
+export function campaignDockModePresentation(mode: CampaignRunMode): {
+  label: "Accelerated" | "Realtime";
+  actionLabel: "accelerated" | "realtime";
+  buttonClassName: "campaign-mode-accelerated" | "";
+} {
+  return mode === "AUTOMATED_ACCELERATED"
+    ? { label: "Accelerated", actionLabel: "accelerated", buttonClassName: "campaign-mode-accelerated" }
+    : { label: "Realtime", actionLabel: "realtime", buttonClassName: "" };
+}
 
 export interface SimulationBatteryStartRisk {
   batteryPercent: number;
@@ -158,6 +172,9 @@ export function ControlCenter() {
   const modelRef = useRef(initialModel);
   const [serviceState, setServiceState] = useState<ServiceState>("ATTACHING");
   const [selectedMissionId, setSelectedMissionId] = useState("");
+  const [campaignDockCase, setCampaignDockCase] = useState<CampaignCaseView>();
+  const [campaignRun, setCampaignRun] = useState<CampaignRunSummary>();
+  const [campaignExecutionMode, setCampaignExecutionMode] = useState<CampaignRunMode>("OPERATOR_OBSERVED_REALTIME");
   const [executionMode, setExecutionMode] = useState<ExecutionMode>("SIMULATION");
   const [uploadFile, setUploadFile] = useState<File>();
   const [uploadName, setUploadName] = useState("");
@@ -193,14 +210,37 @@ export function ControlCenter() {
   const [customBatteryPercent, setCustomBatteryPercent] = useState("50");
   const [lowBatteryConfirmation, setLowBatteryConfirmation] = useState<SimulationBatteryStartRisk>();
   const [missionPreview, setMissionPreview] = useState<MissionPreview>();
+  const [campaignPreview, setCampaignPreview] = useState<MissionPreview>();
   const [planOverview, setPlanOverview] = useState<MissionPreview>();
   const [missionStart, setMissionStart] = useState<{ missionId: string; runId?: string; homeBases: HomeBaseView[] }>();
   const [previewingMissionId, setPreviewingMissionId] = useState<string>();
   const previewRequestRef = useRef(0);
+  const campaignPreviewRequestRef = useRef(0);
   const autoPreviewMissionIdRef = useRef<string | undefined>(undefined);
+  const campaignDockCaseIdRef = useRef<string | undefined>(undefined);
   const batteryControlRef = useRef<HTMLDivElement>(null);
 
   const api = useMemo(() => new ControlApi(LOCAL_API), []);
+  const handleActiveCampaignCaseChange = useCallback((campaignCase: CampaignCaseView | undefined) => {
+    if (campaignDockCaseIdRef.current === campaignCase?.case_id) return;
+    campaignDockCaseIdRef.current = campaignCase?.case_id;
+    setCampaignDockCase(campaignCase);
+    setCampaignPreview(undefined);
+    if (!campaignCase) return;
+    previewRequestRef.current += 1;
+    autoPreviewMissionIdRef.current = undefined;
+    setMissionPreview(undefined);
+    setPlanOverview(undefined);
+    setObservedVehicleId(undefined);
+    setTargetVehicleIds([]);
+    setExecutionMode("SIMULATION");
+  }, []);
+  const handleCampaignRunChange = useCallback((run: CampaignRunSummary | undefined) => {
+    setCampaignRun(run);
+  }, []);
+  const handleCampaignExecutionModeChange = useCallback((mode: CampaignRunMode) => {
+    setCampaignExecutionMode(mode);
+  }, []);
   const observationVehicleId = observedVehicleId && model.vehicles.some((vehicle) => vehicle.id === observedVehicleId)
     ? observedVehicleId
     : model.selectedVehicleId;
@@ -220,9 +260,42 @@ export function ControlCenter() {
   );
   const effectiveMissionId = activeMissionId || selectedMissionId || model.missions[0]?.id || "";
   const selectedMission = model.missions.find((mission) => mission.id === effectiveMissionId);
-  const activeMissionPreview = !runningRunId && missionPreview?.missionId === effectiveMissionId
+  const campaignRunId = campaignRun?.run_id;
+  const campaignRunActive = campaignRun?.status === "QUEUED" || campaignRun?.status === "RUNNING";
+  const campaignModePresentation = campaignDockModePresentation(campaignExecutionMode);
+  const activePythonMissionPreview = !runningRunId && missionPreview?.missionId === effectiveMissionId
     ? missionPreview
     : undefined;
+  const activeCampaignPreview = !runningRunId
+    && !campaignRunActive
+    && campaignDockCase
+    && campaignPreview?.sourceSha256 === campaignDockCase.case_sha256
+    ? campaignPreview
+    : undefined;
+  const activeMissionPreview = campaignDockCase
+    ? activeCampaignPreview
+    : activePythonMissionPreview;
+
+  useEffect(() => {
+    if (!campaignDockCase || runningRunId || campaignRunActive) return;
+    const requestId = campaignPreviewRequestRef.current + 1;
+    campaignPreviewRequestRef.current = requestId;
+    let cancelled = false;
+    void api.previewActiveCampaign().then((payload) => {
+      if (cancelled || campaignPreviewRequestRef.current !== requestId) return;
+      const preview = campaignMissionPreview(campaignDockCase, payload);
+      if (!preview) throw new Error("Campaign preview has no selected route");
+      setCampaignPreview(preview);
+    }).catch((error: unknown) => {
+      if (!cancelled && campaignPreviewRequestRef.current === requestId) {
+        setNotice(error instanceof Error ? error.message : "Campaign preview unavailable");
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [api, campaignDockCase, campaignRunActive, runningRunId]);
+
   const previewControlVehicles: MaintenanceVehicle[] | undefined = activeMissionPreview?.vehicles.flatMap((vehicle) =>
     vehicle.existingVehicle && vehicle.backendRole && vehicle.vehicleState
       ? [{
@@ -235,7 +308,9 @@ export function ControlCenter() {
         }]
       : [],
   );
-  const controlScopeVehicles: MaintenanceVehicle[] = activeMissionPreview
+  const controlScopeVehicles: MaintenanceVehicle[] = campaignDockCase
+    ? previewControlVehicles ?? []
+    : activeMissionPreview
     ? previewControlVehicles ?? []
     : model.vehicles;
   const controlScopeVehicleIds = new Set(controlScopeVehicles.map((vehicle) => vehicle.id));
@@ -260,13 +335,17 @@ export function ControlCenter() {
         (vehicle) => vehicle.vehicleId === effectiveTargetVehicleIds[0],
       )?.displayName
     : undefined;
-  const sceneVehicleCount = activeMissionPreview?.vehicles.length ?? model.vehicles.length;
+  const sceneVehicleCount = activeMissionPreview?.vehicles.length
+    ?? campaignDockCase?.drone_count
+    ?? model.vehicles.length;
   const selectedPlanOverview = planOverview?.missionId === effectiveMissionId
     ? planOverview
     : undefined;
-  const referencePlanOverview = runningRunId
-    ? activeMissionId && planOverview?.missionId === activeMissionId ? planOverview : undefined
-    : selectedPlanOverview;
+  const referencePlanOverview = campaignDockCase
+    ? activeCampaignPreview
+    : runningRunId
+      ? activeMissionId && planOverview?.missionId === activeMissionId ? planOverview : undefined
+      : selectedPlanOverview;
   const selectedMissionPlanId = runningRunId && !activeMissionId ? undefined : selectedMission?.id;
   const selectedPlanOverviewMissionId = selectedPlanOverview?.missionId;
   const retainedMissionStart = missionStart?.missionId === effectiveMissionId
@@ -282,23 +361,23 @@ export function ControlCenter() {
     ? missionPreviewHomeBases(activeMissionPreview)
     : retainedMissionStart && (runningRunId || fleet?.missionDerived)
       ? retainedMissionStart
-      : fleet?.missionDerived
+      : !campaignDockCase && fleet?.missionDerived
         ? fleet.vehicles.flatMap((vehicle, index) => vehicle.home
           ? [{ vehicleId: vehicle.id, number: index + 1, position: vehicle.home }]
           : [])
         : undefined;
   const plannedPath = referencePlanOverview
     ? missionPreviewPaths(referencePlanOverview)
-    : runningRunId
+    : runningRunId || campaignDockCase
       ? {}
       : missionPlan(selectedMission, model.room);
   const historicalPath = useMemo(
-    () => activeMissionPreview
+    () => activeMissionPreview || campaignDockCase
       ? {}
       : Object.fromEntries(
           Object.entries(historyByVehicle).map(([vehicleId, value]) => [vehicleId, value.points]),
         ),
-    [activeMissionPreview, historyByVehicle],
+    [activeMissionPreview, campaignDockCase, historyByVehicle],
   );
   const observationModel = withObservationFocus(model, observationVehicleId);
   const targetSelectionModel = withVehicleTargetSelection(
@@ -307,26 +386,28 @@ export function ControlCenter() {
   );
   const rendererModel = replay
     ? { ...targetSelectionModel, mode: "REPLAY" as const }
-    : targetSelectionModel;
+    : campaignDockCase && !activeMissionPreview && !campaignRunActive
+      ? { ...targetSelectionModel, vehicles: [] }
+      : targetSelectionModel;
   const twinAvailable = model.vehicles.some((vehicle) => vehicle.authorityClass === "PHYSICAL")
     && model.vehicles.some((vehicle) => vehicle.authorityClass === "SIMULATION");
   const selectedVehicleException = singleTargetVehicle ? vehicleException(singleTargetVehicle) : undefined;
   const simulationQuickActionsDisabled = !allCommandTargetsAreFastSim
     || simulationTargetVehicles.some((vehicle) => vehicle.state !== "DISCONNECTED")
-    || Boolean(runningRunId)
+    || Boolean(runningRunId || campaignRunActive)
     || Boolean(busyAction);
   const simulationBatteryDisabled = !allCommandTargetsAreFastSim
     || simulationTargetVehicles.some((vehicle) => !simulationBatteryControlEnabled(
       vehicle,
-      Boolean(runningRunId),
+      Boolean(runningRunId || campaignRunActive),
       Boolean(busyAction),
     ));
-  const simulationQuickActionHint = runningRunId
+  const simulationQuickActionHint = runningRunId || campaignRunActive
     ? "Stop the mission first"
     : simulationTargetVehicles.some((vehicle) => vehicle.state !== "DISCONNECTED")
       ? "Land, disarm, and disconnect every targeted simulator first"
       : undefined;
-  const simulationBatteryHint = runningRunId
+  const simulationBatteryHint = runningRunId || campaignRunActive
     ? "Stop the mission first"
     : simulationBatteryDisabled
       ? "Recharge is available once the simulated drone is disarmed and no longer flying"
@@ -451,6 +532,47 @@ export function ControlCenter() {
       if (timer !== undefined) window.clearTimeout(timer);
     };
   }, [attachLocalService]);
+
+  useEffect(() => {
+    if (!campaignRunActive || !campaignRunId) return;
+    let cancelled = false;
+    let timer: number | undefined;
+    const poll = async () => {
+      try {
+        const workspace = await api.campaignState();
+        if (cancelled) return;
+        const tracked = workspace.runs.find((run) => run.run_id === campaignRunId);
+        if (!tracked) {
+          setCampaignRun(undefined);
+          setNotice("Campaign run is no longer tracked");
+          return;
+        }
+        setCampaignRun(tracked);
+        if (tracked.status === "QUEUED" || tracked.status === "RUNNING") {
+          timer = window.setTimeout(poll, 500);
+          return;
+        }
+        void api.loadDashboard().then(applyDashboard).catch(() => undefined);
+        if (tracked.status === "SUCCEEDED") {
+          setNotice("Campaign run succeeded · review evidence is ready");
+        } else if (tracked.status === "ABORTED" || tracked.status === "CANCELLED_BEFORE_LAUNCH") {
+          setNotice("Campaign run aborted · vehicles returned to a safe state");
+        } else {
+          setNotice(`Campaign run failed${tracked.failure_reason ? ` · ${tracked.failure_reason}` : ""}`);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setNotice(error instanceof Error ? error.message : "Campaign status unavailable");
+          timer = window.setTimeout(poll, 2_000);
+        }
+      }
+    };
+    void poll();
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [api, applyDashboard, campaignRunActive, campaignRunId]);
 
   useEffect(() => {
     if (!activeRunId) return;
@@ -638,6 +760,31 @@ export function ControlCenter() {
     void executeMissionStart(preview);
   };
 
+  const startCampaignFromDock = async () => {
+    if (!campaignDockCase || campaignRunActive) return;
+    setStarting(true);
+    try {
+      const run = await api.runActiveCampaign(campaignExecutionMode);
+      setCampaignRun(run);
+      setMissionOpen(false);
+      setNotice(`Starting ${humanizeCampaignValue(campaignDockCase.family)} · ${campaignModePresentation.actionLabel} · ${campaignDockCase.drone_count} ${campaignDockCase.drone_count === 1 ? "drone" : "drones"}`);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Campaign run could not start");
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const cancelCampaign = async () => {
+    if (!campaignRunActive || !campaignRun) return;
+    try {
+      await api.cancelCampaignRun(campaignRun.run_id);
+      setNotice("Campaign abort and landing requested");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Campaign cancel request failed");
+    }
+  };
+
   const cancelMission = async () => {
     const runId = runningRunId;
     if (!api || !runId) return;
@@ -665,12 +812,16 @@ export function ControlCenter() {
   }, [api, applyDashboard]);
 
   const stageMissionPreview = async (mission: MissionOption) => {
-    if (runningRunId) return;
+    if (runningRunId || campaignRunActive) return;
     const requestId = previewRequestRef.current + 1;
     previewRequestRef.current = requestId;
     autoPreviewMissionIdRef.current = mission.id;
     setObservedVehicleId(undefined);
     setTargetVehicleIds([]);
+    campaignDockCaseIdRef.current = undefined;
+    setCampaignDockCase(undefined);
+    setCampaignPreview(undefined);
+    setCampaignRun(undefined);
     setSelectedMissionId(mission.id);
     setMissionPreview(undefined);
     setPlanOverview(undefined);
@@ -1072,10 +1223,10 @@ export function ControlCenter() {
           />
         </section>
 
-        {referencePlanOverview || (fleet?.missionDerived && fleet.vehicles.length > 0) ? (
+        {referencePlanOverview || (!campaignDockCase && fleet?.missionDerived && fleet.vehicles.length > 0) ? (
           <DeploymentSummary
             key={referencePlanOverview?.missionId ?? fleet?.id}
-            fleet={fleet?.missionDerived ? fleet : undefined}
+            fleet={!campaignDockCase && fleet?.missionDerived ? fleet : undefined}
             preview={referencePlanOverview}
             vehicles={model.vehicles}
             selectedVehicleIds={effectiveTargetVehicleIds}
@@ -1083,8 +1234,7 @@ export function ControlCenter() {
           />
         ) : null}
 
-        {missionOpen ? (
-          <aside className="mission-panel" aria-label="Mission setup">
+        <aside className={missionOpen ? "mission-panel" : "mission-panel is-closed"} aria-label="Mission setup" aria-hidden={!missionOpen}>
             <div className="panel-heading">
               <h1 id="mission-title" tabIndex={-1}>Mission</h1>
               <button className="panel-close" type="button" aria-label="Close mission setup" onClick={() => setMissionOpen(false)}><ChevronDown size={17} /></button>
@@ -1093,7 +1243,13 @@ export function ControlCenter() {
               <EmptyMission state={serviceState} onRetry={() => void attachLocalService()} />
             ) : (
               <>
-                <CampaignLab api={api} onNotice={setNotice} />
+                <CampaignLab
+                  api={api}
+                  onNotice={setNotice}
+                  onActiveCaseChange={handleActiveCampaignCaseChange}
+                  onCampaignRunChange={handleCampaignRunChange}
+                  onExecutionModeChange={handleCampaignExecutionModeChange}
+                />
                 <div className="execution-switch" role="group" aria-label="Execution mode">
                   <button type="button" className={executionMode === "SIMULATION" ? "is-selected" : ""} onClick={() => setExecutionMode("SIMULATION")}>Simulation</button>
                   <button type="button" className={executionMode === "TWIN" ? "is-selected" : ""} disabled={!twinAvailable} title={!twinAvailable ? "Real vehicle adapter required" : undefined} onClick={() => setExecutionMode("TWIN")}>Digital twin</button>
@@ -1126,15 +1282,15 @@ export function ControlCenter() {
                     <div className="mission-card-row" key={mission.id}>
                       <button
                         type="button"
-                        className={mission.id === effectiveMissionId ? "mission-card is-selected" : "mission-card"}
-                        disabled={Boolean(runningRunId)}
+                        className={!campaignDockCase && mission.id === effectiveMissionId ? "mission-card is-selected" : "mission-card"}
+                        disabled={Boolean(runningRunId || campaignRunActive)}
                         onClick={() => void stageMissionPreview(mission)}
                       >
                         {previewingMissionId === mission.id ? <LoaderCircle className="spin" size={15} /> : <FileCode2 size={15} />}
                         <span><strong>{mission.name}</strong><small>{mission.sourceFilename}</small></span>
-                        {mission.id === effectiveMissionId ? <Check size={13} /> : null}
+                        {!campaignDockCase && mission.id === effectiveMissionId ? <Check size={13} /> : null}
                       </button>
-                      <button className="mission-archive" type="button" aria-label={`Archive ${mission.name}`} disabled={Boolean(runningRunId || busyAction)} onClick={() => void archiveMission(mission.id)}><Trash2 size={13} /></button>
+                      <button className="mission-archive" type="button" aria-label={`Archive ${mission.name}`} disabled={Boolean(runningRunId || campaignRunActive || busyAction)} onClick={() => void archiveMission(mission.id)}><Trash2 size={13} /></button>
                     </div>
                   ))}
                   {!model.missions.length ? <span className="mission-empty">NO MISSIONS YET</span> : null}
@@ -1142,33 +1298,35 @@ export function ControlCenter() {
 
               </>
             )}
-          </aside>
-        ) : null}
+        </aside>
 
         <section className="mission-dock" aria-label="Mission controls">
           <button className="mission-dock-summary" type="button" aria-expanded={missionOpen} onClick={toggleMission}>
             <Command size={17} />
             <span>
-              <strong>{selectedMission?.name ?? "Mission"}</strong>
-              {runningRunId ? <small>{sentenceCase(model.latestRun?.phase ?? "Running")}</small> : null}
+              <strong>{campaignDockCase ? humanizeCampaignValue(campaignDockCase.family) : selectedMission?.name ?? "Mission"}</strong>
+              {campaignDockCase ? (
+                <small>{campaignRunActive ? sentenceCase(campaignRun?.status ?? "Running") : `Campaign · ${campaignDockCase.drone_count}D · ${campaignModePresentation.label}`}</small>
+              ) : runningRunId ? <small>{sentenceCase(model.latestRun?.phase ?? "Running")}</small> : null}
             </span>
             {missionOpen ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
           </button>
-          {runningRunId ? (
-            <button className="dock-abort-button" type="button" onClick={cancelMission}><Square size={13} fill="currentColor" />Abort and land</button>
+          {runningRunId || campaignRunActive ? (
+            <button className="dock-abort-button" type="button" onClick={campaignRunActive ? cancelCampaign : cancelMission}><Square size={13} fill="currentColor" />Abort and land</button>
           ) : (
             <button
-              className="dock-run-button"
+              className={`dock-run-button ${campaignDockCase ? campaignModePresentation.buttonClassName : ""}`}
               type="button"
-              aria-label={executionMode === "TWIN" ? "Run digital twin" : "Run simulation"}
+              aria-label={campaignDockCase ? `Run active campaign ${campaignModePresentation.actionLabel}` : executionMode === "TWIN" ? "Run digital twin" : "Run simulation"}
               disabled={
-                !selectedMission
+                (!campaignDockCase && !selectedMission)
                 || starting
                 || Boolean(runningRunId)
-                || activeMissionPreview?.plan.status === "BLOCKED"
-                || (executionMode === "TWIN" && !twinAvailable)
+                || Boolean(campaignRunActive)
+                || (!campaignDockCase && activeMissionPreview?.plan.status === "BLOCKED")
+                || (!campaignDockCase && executionMode === "TWIN" && !twinAvailable)
               }
-              onClick={() => void startMission()}
+              onClick={() => void (campaignDockCase ? startCampaignFromDock() : startMission())}
             >
               {starting ? <LoaderCircle className="spin" size={16} /> : <Play size={15} fill="currentColor" />}
             </button>

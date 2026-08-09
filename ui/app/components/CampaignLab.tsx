@@ -1,45 +1,54 @@
 "use client";
 
-import { Beaker, Check, ChevronDown, CircleAlert, LoaderCircle, Play, RotateCcw } from "lucide-react";
+import { Beaker, Check, ChevronDown, CircleAlert, Clock3, FastForward, LoaderCircle, Maximize2, X } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+import { createPortal } from "react-dom";
 import type { ControlApi } from "../lib/api";
-import type { CampaignCaseView, CampaignCatalogView, CampaignWorkspaceView } from "../lib/models";
+import type {
+  CampaignCaseView,
+  CampaignCatalogView,
+  CampaignRunMode,
+  CampaignRunSummary,
+  CampaignWorkspaceView,
+} from "../lib/models";
 
 const FLEET_SIZES = ["1", "2", "3"] as const;
 type FleetSizeFilter = typeof FLEET_SIZES[number];
 type ClusterFilter = "all" | CampaignCaseView["cluster"];
 type EnvironmentFilter = CampaignCaseView["environment"];
+type CampaignWorkspaceTab = "catalog" | "run" | "review";
+
+const CAMPAIGN_WORKSPACE_PREFERENCES_KEY = "crazyswarm.campaign-workspace.v1";
+const CAMPAIGN_WORKSPACE_TABS: ReadonlyArray<{ id: CampaignWorkspaceTab; label: string }> = [
+  { id: "catalog", label: "Catalog" },
+  { id: "run", label: "Active run" },
+  { id: "review", label: "Review" },
+];
 
 export const MISSION_CLUSTERS: ReadonlyArray<{
   id: CampaignCaseView["cluster"];
   label: string;
-  description: string;
 }> = [
   {
     id: "BASIC_FLIGHT_AND_ROUTE_FOLLOWING",
     label: "Basic flight & routes",
-    description: "Takeoff, tracking, smooth routes, goals, boundaries, and landing.",
   },
   {
     id: "GEOMETRIC_CONFLICT_RESOLUTION",
     label: "Conflict resolution",
-    description: "Separation through timing, speed, detours, or altitude.",
   },
   {
     id: "CONSTRAINTS_AND_OPTIMIZATION",
     label: "Constraints & optimization",
-    description: "Hard limits and objective-ordered planner decisions.",
   },
   {
     id: "COORDINATION_AND_ALLOCATION",
     label: "Coordination & allocation",
-    description: "Roles, task ownership, priority, reserve selection, and handover.",
   },
   {
     id: "FAILURE_RECOVERY_AND_REPLANNING",
     label: "Recovery & replanning",
-    description: "Safe rejection, atomic replanning, recovery, and abort behavior.",
   },
 ];
 
@@ -47,7 +56,6 @@ type CampaignDropdownOption = {
   value: string;
   label: string;
   meta?: string;
-  description?: string;
   badge?: string;
   badgeClassName?: string;
 };
@@ -94,7 +102,7 @@ export function CampaignDropdown({
     const needle = query.trim().toLowerCase();
     if (!needle) return options;
     return options.filter((option) => (
-      `${option.label} ${option.meta ?? ""} ${option.description ?? ""} ${option.badge ?? ""}`
+      `${option.label} ${option.meta ?? ""} ${option.badge ?? ""}`
         .toLowerCase()
         .includes(needle)
     ));
@@ -134,6 +142,7 @@ export function CampaignDropdown({
   const handleListKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
     if (event.key === "Escape") {
       event.preventDefault();
+      event.stopPropagation();
       close();
       return;
     }
@@ -203,7 +212,6 @@ export function CampaignDropdown({
                 }}
                 onKeyDown={handleListKeyDown}
               />
-              <small>{visibleOptions.length} of {options.length}</small>
             </label>
           ) : null}
           <div
@@ -228,7 +236,6 @@ export function CampaignDropdown({
                 {option.badge ? <em className={option.badgeClassName}>{option.badge}</em> : null}
                 <span>
                   <strong>{option.label}</strong>
-                  {option.description ? <small>{option.description}</small> : null}
                   {option.meta ? <small>{option.meta}</small> : null}
                 </span>
                 {option.value === value ? <Check size={13} /> : <i aria-hidden="true" />}
@@ -264,20 +271,139 @@ export function filterCampaignCases(
       || left.variation_name.localeCompare(right.variation_name));
 }
 
-export function CampaignLab({ api, onNotice }: { api: ControlApi; onNotice: (message: string) => void }) {
+export function CampaignLab({
+  api,
+  onNotice,
+  onActiveCaseChange,
+  onCampaignRunChange,
+  onExecutionModeChange,
+}: {
+  api: ControlApi;
+  onNotice: (message: string) => void;
+  onActiveCaseChange?: (campaignCase: CampaignCaseView | undefined) => void;
+  onCampaignRunChange?: (run: CampaignRunSummary | undefined) => void;
+  onExecutionModeChange?: (mode: CampaignRunMode) => void;
+}) {
   const [open, setOpen] = useState(false);
+  const [workspaceTab, setWorkspaceTab] = useState<CampaignWorkspaceTab>("catalog");
+  const [preferencesReady, setPreferencesReady] = useState(false);
   const [catalog, setCatalog] = useState<CampaignCatalogView>();
   const [workspace, setWorkspace] = useState<CampaignWorkspaceView>();
   const [selectedId, setSelectedId] = useState("");
   const [environment, setEnvironment] = useState<EnvironmentFilter>("SIMULATION");
   const [fleetSize, setFleetSize] = useState<FleetSizeFilter>("1");
   const [cluster, setCluster] = useState<ClusterFilter>("all");
+  const [runMode, setRunMode] = useState<CampaignRunMode>("OPERATOR_OBSERVED_REALTIME");
   const [busy, setBusy] = useState<string>();
   const [preview, setPreview] = useState<Record<string, unknown>>();
   const [advanced, setAdvanced] = useState(false);
   const [seed, setSeed] = useState("42");
   const [repetitions, setRepetitions] = useState("1");
   const [observation, setObservation] = useState("");
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const workspaceRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const selectedIdRef = useRef(selectedId);
+
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
+
+  /* Local storage is an external preference source hydrated after mount. */
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(CAMPAIGN_WORKSPACE_PREFERENCES_KEY);
+      if (stored) {
+        const preferences = JSON.parse(stored) as Record<string, unknown>;
+        if (typeof preferences.open === "boolean") setOpen(preferences.open);
+        if (CAMPAIGN_WORKSPACE_TABS.some((tab) => tab.id === preferences.tab)) {
+          setWorkspaceTab(preferences.tab as CampaignWorkspaceTab);
+        }
+        if (preferences.environment === "SIMULATION" || preferences.environment === "REAL") {
+          setEnvironment(preferences.environment);
+        }
+        if (FLEET_SIZES.includes(preferences.fleetSize as FleetSizeFilter)) {
+          setFleetSize(preferences.fleetSize as FleetSizeFilter);
+        }
+        if (
+          preferences.cluster === "all"
+          || MISSION_CLUSTERS.some((item) => item.id === preferences.cluster)
+        ) {
+          setCluster(preferences.cluster as ClusterFilter);
+        }
+        if (
+          preferences.runMode === "AUTOMATED_ACCELERATED"
+          || preferences.runMode === "OPERATOR_OBSERVED_REALTIME"
+        ) {
+          setRunMode(preferences.runMode);
+        }
+        if (typeof preferences.selectedId === "string") setSelectedId(preferences.selectedId);
+      }
+    } catch {
+      window.localStorage.removeItem(CAMPAIGN_WORKSPACE_PREFERENCES_KEY);
+    } finally {
+      setPreferencesReady(true);
+    }
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (!preferencesReady) return;
+    window.localStorage.setItem(CAMPAIGN_WORKSPACE_PREFERENCES_KEY, JSON.stringify({
+      open,
+      tab: workspaceTab,
+      environment,
+      fleetSize,
+      cluster,
+      runMode,
+      selectedId,
+    }));
+  }, [cluster, environment, fleetSize, open, preferencesReady, runMode, selectedId, workspaceTab]);
+
+  useEffect(() => {
+    onExecutionModeChange?.(runMode);
+  }, [onExecutionModeChange, runMode]);
+
+  useEffect(() => {
+    if (!open) return;
+    const previouslyFocused = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : undefined;
+    const launcher = launcherRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const focusFrame = window.requestAnimationFrame(() => closeButtonRef.current?.focus());
+    const handleWorkspaceKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+        return;
+      }
+      if (event.key !== "Tab" || !workspaceRef.current) return;
+      const focusable = [...workspaceRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )].filter((element) => !element.hidden);
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", handleWorkspaceKeyDown);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener("keydown", handleWorkspaceKeyDown);
+      document.body.style.overflow = previousOverflow;
+      if (previouslyFocused?.isConnected) previouslyFocused.focus();
+      else launcher?.focus();
+    };
+  }, [open]);
 
   const refresh = async () => {
     const [nextCatalog, nextWorkspace] = await Promise.all([api.campaignCatalog(), api.campaignState()]);
@@ -287,12 +413,15 @@ export function CampaignLab({ api, onNotice }: { api: ControlApi; onNotice: (mes
   };
 
   useEffect(() => {
-    if (!open || catalog) return;
+    if (!preferencesReady || catalog) return;
     let cancelled = false;
     void Promise.all([api.campaignCatalog(), api.campaignState()])
       .then(([nextCatalog, nextWorkspace]) => {
         if (cancelled) return;
+        const preferredId = selectedIdRef.current;
         const initialCase = nextCatalog.cases.find(
+          (item) => item.case_id === preferredId,
+        ) ?? nextCatalog.cases.find(
           (item) => item.case_id === nextWorkspace.active_case_id,
         ) ?? nextCatalog.cases.find(
           (item) => item.environment === "SIMULATION" && item.drone_count === 1,
@@ -300,7 +429,7 @@ export function CampaignLab({ api, onNotice }: { api: ControlApi; onNotice: (mes
         setCatalog(nextCatalog);
         setWorkspace(nextWorkspace);
         setSelectedId(initialCase?.case_id ?? "");
-        if (initialCase) {
+        if (initialCase && !preferredId) {
           setEnvironment(initialCase.environment);
           setFleetSize(String(initialCase.drone_count) as FleetSizeFilter);
         }
@@ -313,7 +442,7 @@ export function CampaignLab({ api, onNotice }: { api: ControlApi; onNotice: (mes
     return () => {
       cancelled = true;
     };
-  }, [api, open, catalog, onNotice]);
+  }, [api, catalog, onNotice, preferencesReady]);
 
   const cases = useMemo(
     () => filterCampaignCases(catalog?.cases ?? [], environment, cluster, fleetSize),
@@ -321,7 +450,42 @@ export function CampaignLab({ api, onNotice }: { api: ControlApi; onNotice: (mes
   );
   const selected = cases.find((item) => item.case_id === selectedId);
   const active = catalog?.cases.find((item) => item.case_id === workspace?.active_case_id);
+  const activeCampaignRun = workspace?.runs.toReversed().find((run) => (
+    run.locked_inputs.case_id === workspace.active_case_id
+    && (run.status === "QUEUED" || run.status === "RUNNING")
+  ));
   const latestReview = workspace?.reviews.at(-1);
+
+  useEffect(() => {
+    if (!catalog || !workspace) return;
+    onActiveCaseChange?.(active);
+    if (activeCampaignRun) onCampaignRunChange?.(activeCampaignRun);
+  }, [active, activeCampaignRun, catalog, onActiveCaseChange, onCampaignRunChange, workspace]);
+
+  useEffect(() => {
+    if (!activeCampaignRun) return;
+    let cancelled = false;
+    let timer: number | undefined;
+    const poll = async () => {
+      try {
+        const nextWorkspace = await api.campaignState();
+        if (cancelled) return;
+        setWorkspace(nextWorkspace);
+        const tracked = nextWorkspace.runs.find((run) => run.run_id === activeCampaignRun.run_id);
+        if (tracked?.status === "QUEUED" || tracked?.status === "RUNNING") {
+          timer = window.setTimeout(poll, 500);
+        }
+      } catch {
+        if (!cancelled) timer = window.setTimeout(poll, 2_000);
+      }
+    };
+    timer = window.setTimeout(poll, 500);
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [activeCampaignRun, api]);
+
   const availableFleetSizes = useMemo(() => new Set(
     (catalog?.cases ?? [])
       .filter((item) => item.environment === environment)
@@ -332,20 +496,16 @@ export function CampaignLab({ api, onNotice }: { api: ControlApi; onNotice: (mes
     {
       value: "all",
       label: "All mission clusters",
-      meta: "Browse the complete catalog",
-      description: "Basic execution through recovery and replanning.",
     },
     ...MISSION_CLUSTERS.map((item) => ({
       value: item.id,
       label: item.label,
-      meta: item.description,
     })),
   ], []);
   const caseOptions = useMemo<CampaignDropdownOption[]>(() => cases.map((item) => ({
     value: item.case_id,
     label: humanizeCampaignValue(item.family),
-    meta: `${humanizeCampaignValue(item.variation_name)} · Difficulty ${item.difficulty}/10 · ${item.drone_count}D`,
-    description: item.purpose,
+    meta: humanizeCampaignValue(item.variation_name),
     badge: lifecycleLabel(item.lifecycle),
     badgeClassName: `state-${item.lifecycle.toLowerCase()}`,
   })), [cases]);
@@ -404,80 +564,136 @@ export function CampaignLab({ api, onNotice }: { api: ControlApi; onNotice: (mes
     }
   };
 
-  return (
-    <section className="campaign-lab" aria-label="Mission development laboratory">
-      <button className="campaign-lab-toggle" type="button" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
-        <Beaker size={15} />
-        <span><strong>Campaign laboratory</strong>{active ? <small>Active · {active.family}</small> : null}</span>
-        <ChevronDown className={open ? "is-open" : ""} size={15} />
-      </button>
-      {open ? (
-        <div className="campaign-lab-body">
-          {!catalog ? <div className="campaign-loading"><LoaderCircle className="spin" size={16} />Loading immutable cases</div> : (
-            <>
-              {workspace?.locked_inputs && active ? (
-                <header className="campaign-active-header">
-                  <span>ACTIVE DEVELOPMENT</span>
-                  <strong>{active.case_id}</strong>
-                  <small>seed {workspace.locked_inputs.seed} · {workspace.locked_inputs.backend_profile_id} · planner {workspace.locked_inputs.planner_implementation_version}</small>
-                  <code>{workspace.locked_inputs.case_sha256.slice(0, 12)}…</code>
+  const footerActions = (
+    <div className="campaign-actions">
+      <button type="button" disabled={!selected || Boolean(busy)} onClick={() => selected && void act("Static validation complete", () => api.staticValidateCampaignCase(selected.case_id))}>Validate</button>
+      <button type="button" disabled={!selected || selected.case_id === active?.case_id || selected.environment === "REAL" || selected.implementation_status !== "EXECUTABLE" || Boolean(busy)} onClick={() => selected && void act("Active mission locked", () => api.setActiveCampaignCase(selected.case_id, "operator selected in campaign workspace"))}>Set active</button>
+      <button type="button" disabled={!active || Boolean(busy)} onClick={() => void act("Plan preview ready", async () => {
+        setPreview(await api.previewActiveCampaign());
+        setWorkspaceTab("run");
+      })}>Preview plan</button>
+    </div>
+  );
+
+  const workspaceOverlay = open && typeof document !== "undefined" ? createPortal(
+    <div className="campaign-workspace-backdrop">
+      <section
+        ref={workspaceRef}
+        className="campaign-workspace"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="campaign-workspace-title"
+      >
+        <header className="campaign-workspace-header">
+          <div className="campaign-workspace-title">
+            <span><Beaker size={17} /></span>
+            <div>
+              <h2 id="campaign-workspace-title">Campaign Laboratory</h2>
+              <small>{active
+                ? `Active · ${humanizeCampaignValue(active.family)} · ${lifecycleLabel(active.lifecycle)}`
+                : "No active mission"}</small>
+            </div>
+          </div>
+          <div className="campaign-filter campaign-workspace-environment" role="group" aria-label="Environment">
+            {(["SIMULATION", "REAL"] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                className={environment === value ? "is-selected" : ""}
+                onClick={() => chooseFilters(value, cluster, fleetSize, true)}
+              >
+                {value === "SIMULATION" ? "Simulation" : "Real"}
+              </button>
+            ))}
+          </div>
+          <button ref={closeButtonRef} className="campaign-workspace-close" type="button" aria-label="Close Campaign Laboratory" onClick={() => setOpen(false)}><X size={18} /></button>
+        </header>
+
+        <div className="campaign-workspace-tabs" role="tablist" aria-label="Campaign Laboratory sections">
+          {CAMPAIGN_WORKSPACE_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              id={`campaign-workspace-tab-${tab.id}`}
+              type="button"
+              role="tab"
+              aria-selected={workspaceTab === tab.id}
+              aria-controls={`campaign-workspace-panel-${tab.id}`}
+              className={workspaceTab === tab.id ? "is-selected" : ""}
+              onClick={() => setWorkspaceTab(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="campaign-workspace-body">
+          {!catalog ? <div className="campaign-loading"><LoaderCircle className="spin" size={16} />Loading campaign workspace</div> : null}
+
+          {catalog && workspaceTab === "catalog" ? (
+            <section id="campaign-workspace-panel-catalog" className="campaign-catalog-workspace" role="tabpanel" aria-labelledby="campaign-workspace-tab-catalog">
+              <div className="campaign-catalog-controls">
+                <div className="campaign-filter" role="group" aria-label="Fleet size">
+                  {FLEET_SIZES.map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      className={fleetSize === value ? "is-selected" : ""}
+                      disabled={!availableFleetSizes.has(value)}
+                      onClick={() => chooseFilters(environment, cluster, value)}
+                    >
+                      {value}D
+                    </button>
+                  ))}
+                </div>
+                <CampaignDropdown
+                  label="Mission cluster"
+                  value={cluster}
+                  options={clusterOptions}
+                  onChange={(nextCluster) => chooseFilters(
+                    environment,
+                    nextCluster as ClusterFilter,
+                    fleetSize,
+                    true,
+                  )}
+                />
+                <CampaignDropdown
+                  label="Mission case"
+                  value={selectedId}
+                  options={caseOptions}
+                  searchable
+                  onChange={(nextCaseId) => {
+                    setSelectedId(nextCaseId);
+                    setPreview(undefined);
+                  }}
+                />
+              </div>
+              <div className="campaign-case-detail">
+                {selected ? (
+                  <>
+                    <header className="campaign-case-detail-header">
+                      <div>
+                        <small>{humanizeCampaignValue(selected.variation_name)}</small>
+                        <h3>{humanizeCampaignValue(selected.family)}</h3>
+                      </div>
+                      <span className={`campaign-status state-${selected.lifecycle.toLowerCase()}`}>{lifecycleLabel(selected.lifecycle)}</span>
+                    </header>
+                    <CaseSummary campaignCase={selected} />
+                  </>
+                ) : <div className="campaign-workspace-empty"><CircleAlert size={16} />Select a mission case</div>}
+              </div>
+            </section>
+          ) : null}
+
+          {catalog && workspaceTab === "run" ? (
+            <section id="campaign-workspace-panel-run" className="campaign-run-workspace" role="tabpanel" aria-labelledby="campaign-workspace-tab-run">
+              {active ? (
+                <header className="campaign-case-detail-header">
+                  <div><small>Active mission</small><h3>{humanizeCampaignValue(active.family)}</h3></div>
+                  <span className={`campaign-status state-${active.lifecycle.toLowerCase()}`}>{lifecycleLabel(active.lifecycle)}</span>
                 </header>
-              ) : <div className="campaign-no-active"><CircleAlert size={14} />No active development case</div>}
-
-              <div className="campaign-filter campaign-environment-filter" role="group" aria-label="Environment">
-                {(["SIMULATION", "REAL"] as const).map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    className={environment === value ? "is-selected" : ""}
-                    onClick={() => chooseFilters(value, cluster, fleetSize, true)}
-                  >
-                    {value === "SIMULATION" ? "Simulation" : "Real"}
-                  </button>
-                ))}
-              </div>
-              <div className="campaign-filter" role="group" aria-label="Fleet size">
-                {FLEET_SIZES.map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    className={fleetSize === value ? "is-selected" : ""}
-                    disabled={!availableFleetSizes.has(value)}
-                    onClick={() => chooseFilters(environment, cluster, value)}
-                  >
-                    {value}D
-                  </button>
-                ))}
-              </div>
-              <CampaignDropdown
-                label="Mission cluster"
-                value={cluster}
-                options={clusterOptions}
-                onChange={(nextCluster) => chooseFilters(
-                  environment,
-                  nextCluster as ClusterFilter,
-                  fleetSize,
-                  true,
-                )}
-              />
-              <CampaignDropdown
-                label="Mission case"
-                value={selectedId}
-                options={caseOptions}
-                searchable
-                onChange={(nextCaseId) => {
-                  setSelectedId(nextCaseId);
-                  setPreview(undefined);
-                }}
-              />
-              {selected ? <CaseSummary campaignCase={selected} /> : null}
-              <div className="campaign-actions">
-                <button type="button" disabled={!selected || Boolean(busy)} onClick={() => selected && void act("Static validation complete", () => api.staticValidateCampaignCase(selected.case_id))}>Validate</button>
-                <button type="button" disabled={!selected || selected.case_id === active?.case_id || selected.environment === "REAL" || selected.implementation_status !== "EXECUTABLE" || Boolean(busy)} onClick={() => selected && void act("Active mission locked", () => api.setActiveCampaignCase(selected.case_id, "operator selected in campaign panel"))}>Set active</button>
-                <button type="button" disabled={!active || Boolean(busy)} onClick={() => void act("Plan preview ready", async () => setPreview(await api.previewActiveCampaign()))}>Preview plan</button>
-              </div>
-
-              <button className="campaign-advanced-toggle" type="button" aria-expanded={advanced} onClick={() => setAdvanced((value) => !value)}>Bounded advanced inputs <ChevronDown className={advanced ? "is-open" : ""} size={13} /></button>
+              ) : <div className="campaign-workspace-empty"><CircleAlert size={16} />Choose and activate a mission from the Catalog tab</div>}
+              {activeCampaignRun ? <div className="campaign-running"><LoaderCircle className="spin" size={14} />{humanizeCampaignValue(activeCampaignRun.status)} run</div> : null}
+              <button className="campaign-advanced-toggle" type="button" aria-expanded={advanced} onClick={() => setAdvanced((value) => !value)}>Advanced inputs <ChevronDown className={advanced ? "is-open" : ""} size={13} /></button>
               {advanced ? (
                 <div className="campaign-advanced">
                   <label>Seed<input type="number" min="0" value={seed} onChange={(event) => setSeed(event.target.value)} /></label>
@@ -486,49 +702,79 @@ export function CampaignLab({ api, onNotice }: { api: ControlApi; onNotice: (mes
                     if (!active) return;
                     const childId = `${active.case_id}.child-${Date.now()}`;
                     void act("Child case created", () => api.createCampaignChild(childId, { execution: { seed: Number(seed), repetitions: Number(repetitions) } }));
-                  }}>Create immutable child</button>
+                  }}>Save as new case</button>
                 </div>
               ) : null}
-
               {preview ? <PlanPreview value={preview} /> : null}
-              <div className="campaign-run-actions">
-                <button type="button" disabled={!active || Boolean(busy)} onClick={() => void act("Accelerated campaign run complete", () => api.runActiveCampaign("AUTOMATED_ACCELERATED"))}><Play size={13} />Accelerated</button>
-                <button type="button" disabled={!active || Boolean(busy)} onClick={() => void act("Realtime observation complete", () => api.runActiveCampaign("OPERATOR_OBSERVED_REALTIME"))}><Play size={13} />Observe realtime</button>
-                <button type="button" disabled={!active || Boolean(busy)} onClick={() => void act("Same-input rerun complete", () => api.runActiveCampaign("AUTOMATED_ACCELERATED"))}><RotateCcw size={13} />Same inputs</button>
+              <div className="campaign-run-mode" role="radiogroup" aria-label="Campaign execution mode">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={runMode === "OPERATOR_OBSERVED_REALTIME"}
+                  className={runMode === "OPERATOR_OBSERVED_REALTIME" ? "is-selected mode-realtime" : ""}
+                  disabled={Boolean(activeCampaignRun)}
+                  onClick={() => setRunMode("OPERATOR_OBSERVED_REALTIME")}
+                ><Clock3 size={14} />Realtime</button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={runMode === "AUTOMATED_ACCELERATED"}
+                  className={runMode === "AUTOMATED_ACCELERATED" ? "is-selected mode-accelerated" : ""}
+                  disabled={Boolean(activeCampaignRun)}
+                  onClick={() => setRunMode("AUTOMATED_ACCELERATED")}
+                ><FastForward size={14} />Accelerated</button>
               </div>
+            </section>
+          ) : null}
 
+          {catalog && workspaceTab === "review" ? (
+            <section id="campaign-workspace-panel-review" className="campaign-review-workspace" role="tabpanel" aria-labelledby="campaign-workspace-tab-review">
               {latestReview ? (
                 <section className="campaign-review">
-                  <header><span>REVIEW QUEUE</span><strong>{latestReview.status}</strong></header>
-                  <p>{latestReview.analysis.primary_cause.stage} · {Math.round(latestReview.analysis.primary_cause.confidence * 100)}% — {latestReview.analysis.primary_cause.reason}</p>
-                  <small>Source-clock motion · aligned wall-clock fleet separation · raw evidence only</small>
-                  <textarea aria-label="Operator observation" placeholder={latestReview.operator_questions[0] ?? "Operator observation"} value={observation} onChange={(event) => setObservation(event.target.value)} />
+                  <header><span>Latest review</span><strong>{humanizeCampaignValue(latestReview.status)}</strong></header>
+                  <p>{latestReview.analysis.primary_cause.reason}</p>
+                  <label className="campaign-observation-field">
+                    <span>Operator comment</span>
+                    <textarea aria-label="Operator observation" placeholder={latestReview.operator_questions[0] ?? "Add an operator observation"} value={observation} onChange={(event) => setObservation(event.target.value)} />
+                  </label>
                   <div>
                     <button type="button" disabled={!observation.trim() || Boolean(busy)} onClick={() => void act("Observation added", async () => { await api.addCampaignObservation(latestReview.review_id, observation); setObservation(""); })}>Add note</button>
                     <button type="button" disabled={Boolean(busy)} onClick={() => void act("Review approved", () => api.decideCampaignReview(latestReview.review_id, "APPROVE", "operator approved campaign evidence"))}><Check size={12} />Approve</button>
                     <button type="button" disabled={Boolean(busy)} onClick={() => void act("Rerun requested", () => api.decideCampaignReview(latestReview.review_id, "NEEDS_RERUN", "operator requested same-input rerun"))}>Needs rerun</button>
                   </div>
                 </section>
-              ) : null}
-              {busy ? <div className="campaign-busy"><LoaderCircle className="spin" size={13} />{busy}</div> : null}
-            </>
-          )}
+              ) : <div className="campaign-workspace-empty"><CircleAlert size={16} />No review is available yet</div>}
+            </section>
+          ) : null}
         </div>
-      ) : null}
-    </section>
+
+        <footer className="campaign-workspace-footer">
+          {footerActions}
+        </footer>
+      </section>
+    </div>,
+    document.body,
+  ) : null;
+
+  return (
+    <>
+      <section className="campaign-lab" aria-label="Mission development laboratory">
+        <button ref={launcherRef} className="campaign-lab-toggle" type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>
+          <Beaker size={15} />
+          <span><strong>Campaign Laboratory</strong>{active ? <small>Active · {humanizeCampaignValue(active.family)} · {lifecycleLabel(active.lifecycle)}</small> : <small>Open mission development workspace</small>}</span>
+          <em>Open <Maximize2 size={13} /></em>
+        </button>
+      </section>
+      {workspaceOverlay}
+    </>
   );
 }
 
 export function CaseSummary({ campaignCase }: { campaignCase: CampaignCaseView }) {
-  const cluster = MISSION_CLUSTERS.find((item) => item.id === campaignCase.cluster);
   return (
     <article className="campaign-case-summary">
-      <header><span className={`campaign-badge state-${campaignCase.lifecycle.toLowerCase()}`}>{lifecycleLabel(campaignCase.lifecycle)}</span><small>{campaignCase.drone_count} drone{campaignCase.drone_count > 1 ? "s" : ""} · Difficulty {campaignCase.difficulty}/10</small></header>
-      <small className="campaign-case-cluster">{cluster?.label} · {campaignCase.environment} · {campaignCase.authorization}</small>
-      <p>{campaignCase.purpose}</p>
       <div><span>What it does</span><p>{campaignCase.behavior_under_test}</p></div>
       <div><span>Expected outcome</span><p>{campaignCase.expected_outcome}</p></div>
-      <div><span>Planner may use</span><p>{campaignCase.allowed_strategies.map((item) => item.replaceAll("_", " ").toLowerCase()).join(" · ")}</p></div>
     </article>
   );
 }
@@ -540,9 +786,8 @@ function PlanPreview({ value }: { value: Record<string, unknown> }) {
   const selected = selectedIndex >= 0 && typeof candidates[selectedIndex] === "object" ? candidates[selectedIndex] as Record<string, unknown> : undefined;
   return (
     <article className="campaign-plan-preview">
-      <header><span>PRE-PLAY PLAN</span><strong>{String(selected?.strategy ?? plan.status ?? "BLOCKED")}</strong></header>
+      <header><span>PLAN PREVIEW</span><strong>{humanizeCampaignValue(String(selected?.strategy ?? plan.status ?? "BLOCKED"))}</strong></header>
       <p>{String(plan.optimality_claim ?? plan.blocking_reason ?? "Bounded plan ready")}</p>
-      <small>{candidates.length} retained candidates · {candidates.filter((item) => (item as Record<string, unknown>).status === "REJECTED").length} rejected · source step {String(plan.prediction_step_s ?? "—")} s</small>
     </article>
   );
 }

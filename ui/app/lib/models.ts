@@ -250,6 +250,37 @@ export interface CampaignCatalogView {
   hierarchy: Record<string, Record<string, Record<string, Record<string, string[]>>>>;
 }
 
+export type CampaignRunStatus = "QUEUED" | "RUNNING" | "SUCCEEDED" | "ABORTED" | "FAILED" | "CANCELLED_BEFORE_LAUNCH";
+export type CampaignRunMode = "AUTOMATED_ACCELERATED" | "OPERATOR_OBSERVED_REALTIME";
+
+export interface CampaignRunSummary {
+  run_id: string;
+  mode: CampaignRunMode;
+  status: CampaignRunStatus;
+  failure_reason?: string;
+}
+
+export interface CampaignRunView extends CampaignRunSummary {
+  locked_inputs: {
+    case_id: string;
+    case_sha256: string;
+    seed: number;
+    backend_profile_id: string;
+    configuration_sha256: string;
+    planner_implementation_id: string;
+    planner_implementation_version: string;
+    planner_settings_sha256: string;
+    comparison_baseline_sha256?: string;
+  };
+  requested_at_utc: string;
+  started_at_utc?: string;
+  finished_at_utc?: string;
+}
+
+export interface CampaignRunStartView extends CampaignRunSummary {
+  accepted: true;
+}
+
 export interface CampaignWorkspaceView {
   active_case_id?: string;
   locked_inputs?: {
@@ -262,6 +293,7 @@ export interface CampaignWorkspaceView {
     planner_settings_sha256: string;
     comparison_baseline_sha256?: string;
   };
+  runs: CampaignRunView[];
   reviews: Array<{
     review_id: string;
     run_id: string;

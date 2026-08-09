@@ -3,16 +3,82 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { deterministicDashboard } from "../app/lib/fixtures";
 import { FixtureGallery } from "../app/components/FixtureGallery";
-import { armActionEnabled, ControlCenter, controlActionsEnabled, DeploymentSummary, LowBatterySimulationDialog, missionCompletionNotice, missionIdForRunningReference, missionPreviewHomeBases, MissionPlanReview, ModeBadge, SafetyDialog, simulationBatteryControlEnabled, simulationBatteryStartRisk, Toast, toggleVehicleSelection, TOAST_DURATION_MS, TOAST_FAILURE_DURATION_MS, vehiclesForTargetSelection, withObservationFocus, withVehicleTargetSelection } from "../app/components/ControlCenter";
+import { armActionEnabled, campaignDockModePresentation, ControlCenter, controlActionsEnabled, DeploymentSummary, LowBatterySimulationDialog, missionCompletionNotice, missionIdForRunningReference, missionPreviewHomeBases, MissionPlanReview, ModeBadge, SafetyDialog, simulationBatteryControlEnabled, simulationBatteryStartRisk, Toast, toggleVehicleSelection, TOAST_DURATION_MS, TOAST_FAILURE_DURATION_MS, vehiclesForTargetSelection, withObservationFocus, withVehicleTargetSelection } from "../app/components/ControlCenter";
+import { campaignMissionPreview } from "../app/lib/campaign-preview";
 import { formatClockContext } from "../app/components/RoomScene";
 import { FlightReadout, RunFilesControl } from "../app/components/TelemetryDock";
-import type { FleetSessionView, MissionPreview } from "../app/lib/models";
+import type { CampaignCaseView, FleetSessionView, MissionPreview } from "../app/lib/models";
 
 describe("operator components", () => {
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
     vi.restoreAllMocks();
+  });
+
+  it("maps the persisted campaign mode to the bottom Play label and color", () => {
+    expect(campaignDockModePresentation("AUTOMATED_ACCELERATED")).toEqual({
+      label: "Accelerated",
+      actionLabel: "accelerated",
+      buttonClassName: "campaign-mode-accelerated",
+    });
+    expect(campaignDockModePresentation("OPERATOR_OBSERVED_REALTIME")).toEqual({
+      label: "Realtime",
+      actionLabel: "realtime",
+      buttonClassName: "",
+    });
+  });
+
+  it("adapts a campaign plan into the shared mission preview scene", () => {
+    const campaignCase = {
+      case_id: "1d.altitude_transition.canonical_nominal",
+      case_sha256: "a".repeat(64),
+      purpose: "Preview one altitude transition drone",
+      expected_outcome: "The route completes",
+      environment: "SIMULATION",
+      allowed_strategies: ["DIRECT"],
+    } as CampaignCaseView;
+    const preview = campaignMissionPreview(campaignCase, {
+      plan: {
+        status: "READY",
+        planner_id: "bounded-planner",
+        planner_version: "1.0.0",
+        plan_sha256: "b".repeat(64),
+        selected_candidate_index: 0,
+        retained_candidates: [{
+          predicted_battery_end_percent: { Alpha: 96 },
+          routes: [{
+            role_id: "Alpha",
+            route_duration_s: 12,
+            points_m: [
+              { x: -1.5, y: 0, z: 0.3 },
+              { x: 1.5, y: 0, z: 0.3 },
+            ],
+          }],
+        }],
+      },
+      schedule: {
+        schedule_sha256: "c".repeat(64),
+        source_schedule_duration_s: 16,
+        roles: [{ role_id: "Alpha", energy: { route_energy_percent: 4 } }],
+      },
+    });
+
+    expect(preview).toMatchObject({
+      missionId: "campaign:1d.altitude_transition.canonical_nominal",
+      plan: { status: "APPROVED" },
+      vehicles: [{
+        vehicleId: "Alpha",
+        home: { x: -1.5, y: 0, z: 0 },
+        start: { x: -1.5, y: 0, z: 0 },
+        batteryPercent: 96,
+      }],
+    });
+    expect(preview?.vehicles[0]?.plannedCommands.map((command) => command.action)).toEqual([
+      "takeoff",
+      "move_relative",
+      "land",
+    ]);
   });
 
   it("dismisses status banners automatically after a few seconds", () => {

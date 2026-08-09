@@ -134,6 +134,7 @@ def create_app(
 ) -> FastAPI:
     authenticator = LocalAuthenticator(local_token)
     idempotency = IdempotencyStore()
+    campaign_run_tasks: set[asyncio.Task[None]] = set()
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -142,6 +143,10 @@ def create_app(
         try:
             yield
         finally:
+            for task in tuple(campaign_run_tasks):
+                task.cancel()
+            if campaign_run_tasks:
+                await asyncio.gather(*campaign_run_tasks, return_exceptions=True)
             if manage_runtime:
                 await runtime.stop()
 
@@ -239,11 +244,7 @@ def create_app(
                 catalog=CampaignCatalog(
                     repository / "missions" / "campaigns" / "sim" / "cases",
                     additional_roots=(
-                        repository
-                        / "missions"
-                        / "campaigns"
-                        / "real"
-                        / "authorized_cases",
+                        repository / "missions" / "campaigns" / "real" / "authorized_cases",
                     ),
                     policy=runtime.supervisor.policy,
                 ),
@@ -449,33 +450,54 @@ def create_app(
         )
         return {**child.model_dump(mode="json"), "case_sha256": child.case_sha256}
 
-    @router.post("/campaign/runs")
+    @router.post("/campaign/runs", status_code=202)
     async def campaign_run(
         body: CampaignRunRequest,
         context: OperatorContext = Depends(operator_context),
     ) -> dict[str, Any]:
-        try:
-            review = await campaign_service().run_active(
-                body.mode,
-                idempotency_key=context.request_id,
+        service = campaign_service()
+        existing_run_id = service.state.idempotency.get(context.request_id)
+        if existing_run_id is None:
+
+            async def execute_campaign() -> None:
+                try:
+                    await service.run_active(
+                        body.mode,
+                        idempotency_key=context.request_id,
+                    )
+                except asyncio.CancelledError:
+                    raise
+                except Exception:
+                    # CampaignService persists the authoritative FAILED record.
+                    # The workspace polling endpoint exposes that reason to the UI.
+                    return
+
+            task = asyncio.create_task(
+                execute_campaign(),
+                name=f"campaign-api-{context.request_id}",
             )
-        except RuntimeError as error:
-            unavailable = (
-                str(error)
-                == "campaign execution requires an explicitly configured Fast Sim executor"
-            )
+            campaign_run_tasks.add(task)
+            task.add_done_callback(campaign_run_tasks.discard)
+            # run_active persists QUEUED before its first executor wait. Yielding
+            # once lets this request return the durable run identity immediately.
+            await asyncio.sleep(0)
+            existing_run_id = service.state.idempotency.get(context.request_id)
+
+        if existing_run_id is None:
             raise HTTPException(
-                status_code=409 if unavailable else 500,
+                status_code=500,
                 detail={
-                    "code": (
-                        "CAMPAIGN_EXECUTOR_UNAVAILABLE"
-                        if unavailable
-                        else "CAMPAIGN_EXECUTION_FAILED"
-                    ),
-                    "message": str(error),
+                    "code": "CAMPAIGN_EXECUTION_FAILED",
+                    "message": "campaign run could not be queued",
                 },
-            ) from error
-        return review.model_dump(mode="json")
+            )
+        record = next(item for item in service.state.runs if item.run_id == existing_run_id)
+        return {
+            "accepted": True,
+            "run_id": record.run_id,
+            "mode": record.mode.value,
+            "status": record.status.value,
+        }
 
     @router.post("/campaign/runs/{run_id}/cancel")
     async def campaign_cancel_run(run_id: str) -> dict[str, Any]:
@@ -515,10 +537,14 @@ def create_app(
         body: ReasonRequest,
         context: OperatorContext = Depends(operator_context),
     ) -> dict[str, Any]:
-        return campaign_service().promote_active(
-            operator_id=context.client_id,
-            reason=body.reason,
-        ).model_dump(mode="json")
+        return (
+            campaign_service()
+            .promote_active(
+                operator_id=context.client_id,
+                reason=body.reason,
+            )
+            .model_dump(mode="json")
+        )
 
     @router.get("/campaign/wp25-matrix")
     async def campaign_wp25_matrix() -> dict[str, Any]:

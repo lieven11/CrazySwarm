@@ -3,6 +3,8 @@ import type {
   AuthorityClass,
   BackendRole,
   CampaignCatalogView,
+  CampaignRunMode,
+  CampaignRunStartView,
   CampaignWorkspaceView,
   DashboardModel,
   DeckView,
@@ -388,8 +390,12 @@ export class ControlApi {
     return this.request("/api/v1/campaign/active/preview");
   }
 
-  async runActiveCampaign(mode: "AUTOMATED_ACCELERATED" | "OPERATOR_OBSERVED_REALTIME"): Promise<Record<string, unknown>> {
-    return this.post("/api/v1/campaign/runs", { mode });
+  async runActiveCampaign(mode: CampaignRunMode): Promise<CampaignRunStartView> {
+    return this.post<CampaignRunStartView>("/api/v1/campaign/runs", { mode });
+  }
+
+  async cancelCampaignRun(runId: string): Promise<void> {
+    await this.post(`/api/v1/campaign/runs/${encodeURIComponent(runId)}/cancel`, {});
   }
 
   async createCampaignChild(childCaseId: string, updates: Record<string, unknown>): Promise<Record<string, unknown>> {

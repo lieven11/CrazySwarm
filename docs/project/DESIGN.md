@@ -320,6 +320,32 @@ Engineering remains a separate sheet because connection, authority, manual fligh
 
 An expanded flight panel starts below the top-right vehicle and Engineering controls. These surfaces must never intersect or rely on z-index to cover one another. The flight panel scrolls internally between the top and bottom safe areas. On narrow screens, opening flight details hides scene controls until the panel closes.
 
+### Campaign workspace
+
+Campaign development opens as one bounded workspace rather than expanding a dense
+catalog inside the narrow mission panel.
+
+- The mission panel contains one quiet, neutral-black launcher. Opening it presents a
+  centered black workspace with `Catalog`, `Active run`, and `Review` tabs; generic
+  workspace chrome never uses a blue outline or blue fill.
+- The Catalog tab uses a two-pane layout: fleet, cluster, and case controls on the
+  left; the selected case's plain-language behavior and expected outcome on the
+  right. On narrow screens the panes become one vertical flow.
+- The dialog traps focus, closes with Escape, returns focus to its launcher, and
+  restores the operator's last tab and catalog filters.
+- `Set active` projects the immutable campaign case into the ordinary bottom mission
+  capsule. Its title, fleet size, Play control, running state, and Abort-and-land
+  control use the same interaction location as a Python mission.
+- Execution mode is an explicit persisted choice. `Accelerated` maps to
+  `AUTOMATED_ACCELERATED` and is the one deliberate blue execution treatment;
+  `Observe realtime` maps to `OPERATOR_OBSERVED_REALTIME` and uses the ordinary white
+  selected treatment. The bottom Play control mirrors the selected mode and color,
+  and never silently falls back to accelerated execution.
+- Campaign Play returns a durable run identity immediately. Execution continues in
+  the local service while the UI polls persisted status; a long accelerated or
+  realtime run must never be reported as an offline simulator merely because it
+  outlives a proxy request timeout.
+
 ### Dense selection menus
 
 Catalog selectors use the same dense-black language as Run files rather than the

@@ -1,8 +1,10 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  CampaignDropdown,
   CaseSummary,
   filterCampaignCases,
+  humanizeCampaignValue,
 } from "../app/components/CampaignLab";
 import type { CampaignCaseView } from "../app/lib/models";
 
@@ -89,5 +91,46 @@ describe("campaign laboratory", () => {
     expect(screen.getByText(value.expected_outcome)).toBeVisible();
     expect(screen.queryByText("Expected")).toBeNull();
     expect(screen.queryByText(/aaaaaaaaaaaaaaaaaaaa/)).toBeNull();
+  });
+
+  it("opens a bounded searchable menu with readable color-coded statuses", () => {
+    const onChange = vi.fn();
+    render(
+      <CampaignDropdown
+        label="Mission case"
+        value="altitude"
+        searchable
+        onChange={onChange}
+        options={[
+          {
+            value: "altitude",
+            label: "Altitude transition",
+            meta: "Canonical nominal · Difficulty 2/10 · 1D",
+            badge: "Not started",
+            badgeClassName: "state-defined_not_run",
+          },
+          {
+            value: "curved",
+            label: "Curved route",
+            meta: "Wide · Difficulty 3/10 · 1D",
+            badge: "Completed",
+            badgeClassName: "state-promoted",
+          },
+        ]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Altitude transition/i }));
+    expect(screen.getByRole("listbox", { name: "Mission case" })).toBeVisible();
+    expect(screen.getByRole("option", { name: /Not started.*Altitude transition/i }))
+      .toHaveClass("is-selected");
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "curved" } });
+    fireEvent.click(screen.getByRole("option", { name: /Completed.*Curved route/i }));
+    expect(onChange).toHaveBeenCalledWith("curved");
+  });
+
+  it("turns immutable identifiers into operator-facing names", () => {
+    expect(humanizeCampaignValue("continuous_waypoint_sequence"))
+      .toBe("Continuous waypoint sequence");
   });
 });

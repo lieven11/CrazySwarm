@@ -320,6 +320,41 @@ Engineering remains a separate sheet because connection, authority, manual fligh
 
 An expanded flight panel starts below the top-right vehicle and Engineering controls. These surfaces must never intersect or rely on z-index to cover one another. The flight panel scrolls internally between the top and bottom safe areas. On narrow screens, opening flight details hides scene controls until the panel closes.
 
+### Dense selection menus
+
+Catalog selectors use the same dense-black language as Run files rather than the
+operating system's native select window.
+
+- The closed control is a quiet 44 px black-glass row with a readable title, one line
+  of secondary context, and a restrained chevron.
+- The open menu is bounded to the width of its control and at most 45% of the viewport
+  height. Long catalogs scroll inside the menu and never create a screen-sized native
+  window.
+- Mission-case menus begin with search and a visible result count. Names are converted
+  from identifiers to title case; underscores and internal lifecycle codes are not
+  operator-facing copy.
+- Options are separated near-black rounded rows. The status sits in a stable left
+  column, the mission name and context occupy the center, and the current selection
+  receives a cyan check at the right. Hover/focus changes the edge and surface only;
+  it never replaces the status color.
+- Keyboard behavior is mandatory: Enter/Space opens, arrows and Home/End move through
+  results, Enter selects, Escape closes, and focus returns to the trigger.
+
+Campaign lifecycle states use both plain language and color, so color is never the
+only carrier of meaning:
+
+| Internal lifecycle | Operator label | Color | Meaning |
+| --- | --- | --- | --- |
+| `DEFINED_NOT_RUN` | `Not started` | Neutral gray | Registered but never run |
+| `READY` | `Ready` | Observed cyan | Static checks passed and available to begin |
+| `ACTIVE_DEVELOPMENT` | `In progress` | Warning amber | Explicitly selected development work |
+| `BASELINED` | `Reviewed` | Replay violet | Accepted evidence is bound as a baseline |
+| `PROMOTED` | `Completed` | Healthy green | Qualification and promotion are complete |
+| `BLOCKED` | `Blocked` | Danger red | A recorded reason prevents progress |
+
+These meanings and colors remain consistent in selectors, summaries, review queues,
+and future campaign-history surfaces.
+
 ## 8. Scene treatment
 
 - Use a true-black renderer background.

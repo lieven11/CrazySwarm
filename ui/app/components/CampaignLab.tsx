@@ -1,7 +1,8 @@
 "use client";
 
 import { Beaker, Check, ChevronDown, CircleAlert, LoaderCircle, Play, RotateCcw } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import type { ControlApi } from "../lib/api";
 import type { CampaignCaseView, CampaignCatalogView, CampaignWorkspaceView } from "../lib/models";
 
@@ -12,28 +13,235 @@ type EnvironmentFilter = CampaignCaseView["environment"];
 export const MISSION_CLUSTERS: ReadonlyArray<{
   id: CampaignCaseView["cluster"];
   label: string;
+  description: string;
 }> = [
   {
     id: "BASIC_FLIGHT_AND_ROUTE_FOLLOWING",
     label: "Basic flight & routes",
+    description: "Takeoff, tracking, smooth routes, goals, boundaries, and landing.",
   },
   {
     id: "GEOMETRIC_CONFLICT_RESOLUTION",
     label: "Conflict resolution",
+    description: "Separation through timing, speed, detours, or altitude.",
   },
   {
     id: "CONSTRAINTS_AND_OPTIMIZATION",
     label: "Constraints & optimization",
+    description: "Hard limits and objective-ordered planner decisions.",
   },
   {
     id: "COORDINATION_AND_ALLOCATION",
     label: "Coordination & allocation",
+    description: "Roles, task ownership, priority, reserve selection, and handover.",
   },
   {
     id: "FAILURE_RECOVERY_AND_REPLANNING",
     label: "Recovery & replanning",
+    description: "Safe rejection, atomic replanning, recovery, and abort behavior.",
   },
 ];
+
+type CampaignDropdownOption = {
+  value: string;
+  label: string;
+  meta?: string;
+  description?: string;
+  badge?: string;
+  badgeClassName?: string;
+};
+
+export function humanizeCampaignValue(value: string): string {
+  const words = value.replaceAll("_", " ").trim().toLowerCase();
+  return words ? words[0].toUpperCase() + words.slice(1) : value;
+}
+
+function lifecycleLabel(value: string): string {
+  const labels: Record<string, string> = {
+    ACTIVE_DEVELOPMENT: "In progress",
+    BASELINED: "Reviewed",
+    BLOCKED: "Blocked",
+    DEFINED_NOT_RUN: "Not started",
+    PROMOTED: "Completed",
+    READY: "Ready",
+  };
+  return labels[value] ?? humanizeCampaignValue(value);
+}
+
+export function CampaignDropdown({
+  label,
+  value,
+  options,
+  onChange,
+  searchable = false,
+}: {
+  label: string;
+  value: string;
+  options: CampaignDropdownOption[];
+  onChange: (value: string) => void;
+  searchable?: boolean;
+}) {
+  const id = useId();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const selected = options.find((option) => option.value === value) ?? options[0];
+  const visibleOptions = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return options;
+    return options.filter((option) => (
+      `${option.label} ${option.meta ?? ""} ${option.description ?? ""} ${option.badge ?? ""}`
+        .toLowerCase()
+        .includes(needle)
+    ));
+  }, [options, query]);
+  const [highlighted, setHighlighted] = useState(0);
+
+  const openMenu = () => {
+    setHighlighted(Math.max(0, options.findIndex((option) => option.value === value)));
+    setOpen(true);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    (searchable ? searchRef.current : listRef.current)?.focus();
+
+    const closeOnOutsidePress = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+        setQuery("");
+      }
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePress);
+    return () => document.removeEventListener("pointerdown", closeOnOutsidePress);
+  }, [open, searchable]);
+
+  const close = () => {
+    setOpen(false);
+    setQuery("");
+    triggerRef.current?.focus();
+  };
+
+  const select = (option: CampaignDropdownOption) => {
+    onChange(option.value);
+    close();
+  };
+
+  const handleListKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      close();
+      return;
+    }
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      if (!visibleOptions.length) return;
+      const direction = event.key === "ArrowDown" ? 1 : -1;
+      setHighlighted((current) => (current + direction + visibleOptions.length) % visibleOptions.length);
+      listRef.current?.focus();
+      return;
+    }
+    if (event.key === "Home" || event.key === "End") {
+      event.preventDefault();
+      setHighlighted(event.key === "Home" ? 0 : Math.max(0, visibleOptions.length - 1));
+      listRef.current?.focus();
+      return;
+    }
+    if (event.key === "Enter" && visibleOptions[highlighted]) {
+      event.preventDefault();
+      select(visibleOptions[highlighted]);
+    }
+  };
+
+  const openWithKeyboard = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (["ArrowDown", "ArrowUp", "Enter", " "].includes(event.key)) {
+      event.preventDefault();
+      openMenu();
+    }
+  };
+
+  return (
+    <div className="campaign-dropdown" ref={rootRef}>
+      <span className="campaign-dropdown-label">{label}</span>
+      <button
+        ref={triggerRef}
+        type="button"
+        className="campaign-dropdown-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={`${id}-listbox`}
+        disabled={!selected}
+        onClick={() => open ? close() : openMenu()}
+        onKeyDown={openWithKeyboard}
+      >
+        <span>
+          <strong>{selected?.label ?? "No matching cases"}</strong>
+          {selected?.meta ? <small>{selected.meta}</small> : null}
+        </span>
+        {selected?.badge ? (
+          <em className={selected.badgeClassName}>{selected.badge}</em>
+        ) : null}
+        <ChevronDown className={open ? "is-open" : ""} size={14} />
+      </button>
+      {open ? (
+        <div className="campaign-dropdown-popover">
+          {searchable ? (
+            <label className="campaign-dropdown-search">
+              <span className="sr-only">Search {label.toLowerCase()}</span>
+              <input
+                ref={searchRef}
+                type="search"
+                value={query}
+                placeholder="Search mission cases…"
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setHighlighted(0);
+                }}
+                onKeyDown={handleListKeyDown}
+              />
+              <small>{visibleOptions.length} of {options.length}</small>
+            </label>
+          ) : null}
+          <div
+            ref={listRef}
+            id={`${id}-listbox`}
+            className={`campaign-dropdown-list ${options.some((option) => option.badge) ? "has-status" : ""}`}
+            role="listbox"
+            aria-label={label}
+            tabIndex={-1}
+            onKeyDown={handleListKeyDown}
+          >
+            {visibleOptions.map((option, index) => (
+              <button
+                key={option.value}
+                type="button"
+                role="option"
+                aria-selected={option.value === value}
+                className={`${index === highlighted ? "is-highlighted" : ""} ${option.value === value ? "is-selected" : ""}`}
+                onMouseEnter={() => setHighlighted(index)}
+                onClick={() => select(option)}
+              >
+                {option.badge ? <em className={option.badgeClassName}>{option.badge}</em> : null}
+                <span>
+                  <strong>{option.label}</strong>
+                  {option.description ? <small>{option.description}</small> : null}
+                  {option.meta ? <small>{option.meta}</small> : null}
+                </span>
+                {option.value === value ? <Check size={13} /> : <i aria-hidden="true" />}
+              </button>
+            ))}
+            {!visibleOptions.length ? (
+              <p className="campaign-dropdown-empty">No mission cases match that search.</p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 const clusterOrder = new Map(MISSION_CLUSTERS.map((item, index) => [item.id, index]));
 
@@ -104,6 +312,27 @@ export function CampaignLab({ api, onNotice }: { api: ControlApi; onNotice: (mes
   const selected = cases.find((item) => item.case_id === selectedId);
   const active = catalog?.cases.find((item) => item.case_id === workspace?.active_case_id);
   const latestReview = workspace?.reviews.at(-1);
+  const clusterOptions = useMemo<CampaignDropdownOption[]>(() => [
+    {
+      value: "all",
+      label: "All mission clusters",
+      meta: "Browse the complete catalog",
+      description: "Basic execution through recovery and replanning.",
+    },
+    ...MISSION_CLUSTERS.map((item) => ({
+      value: item.id,
+      label: item.label,
+      meta: item.description,
+    })),
+  ], []);
+  const caseOptions = useMemo<CampaignDropdownOption[]>(() => cases.map((item) => ({
+    value: item.case_id,
+    label: humanizeCampaignValue(item.family),
+    meta: `${humanizeCampaignValue(item.variation_name)} · Difficulty ${item.difficulty}/10 · ${item.drone_count}D`,
+    description: item.purpose,
+    badge: lifecycleLabel(item.lifecycle),
+    badgeClassName: `state-${item.lifecycle.toLowerCase()}`,
+  })), [cases]);
 
   const chooseFilters = (
     nextEnvironment: EnvironmentFilter,
@@ -177,28 +406,26 @@ export function CampaignLab({ api, onNotice }: { api: ControlApi; onNotice: (mes
                   </button>
                 ))}
               </div>
-              <label className="campaign-cluster-select">
-                <select
-                  aria-label="Mission cluster"
-                  value={cluster}
-                  onChange={(event) => chooseFilters(
-                    environment,
-                    event.target.value as ClusterFilter,
-                    fleetSize,
-                  )}
-                >
-                  <option value="all">All mission clusters</option>
-                  {MISSION_CLUSTERS.map((item) => (
-                    <option key={item.id} value={item.id}>{item.label}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="campaign-case-select">
-                <span>Mission case</span>
-                <select value={selectedId} onChange={(event) => { setSelectedId(event.target.value); setPreview(undefined); }}>
-                  {cases.map((item) => <option key={item.case_id} value={item.case_id}>{item.family} · {item.variation_name} [{item.lifecycle}]</option>)}
-                </select>
-              </label>
+              <CampaignDropdown
+                label="Mission cluster"
+                value={cluster}
+                options={clusterOptions}
+                onChange={(nextCluster) => chooseFilters(
+                  environment,
+                  nextCluster as ClusterFilter,
+                  fleetSize,
+                )}
+              />
+              <CampaignDropdown
+                label="Mission case"
+                value={selectedId}
+                options={caseOptions}
+                searchable
+                onChange={(nextCaseId) => {
+                  setSelectedId(nextCaseId);
+                  setPreview(undefined);
+                }}
+              />
               {selected ? <CaseSummary campaignCase={selected} /> : null}
               <div className="campaign-actions">
                 <button type="button" disabled={!selected || Boolean(busy)} onClick={() => selected && void act("Static validation complete", () => api.staticValidateCampaignCase(selected.case_id))}>Validate</button>
@@ -252,7 +479,7 @@ export function CaseSummary({ campaignCase }: { campaignCase: CampaignCaseView }
   const cluster = MISSION_CLUSTERS.find((item) => item.id === campaignCase.cluster);
   return (
     <article className="campaign-case-summary">
-      <header><span className={`campaign-badge state-${campaignCase.lifecycle.toLowerCase()}`}>{campaignCase.lifecycle}</span><small>{campaignCase.drone_count} drone{campaignCase.drone_count > 1 ? "s" : ""} · Difficulty {campaignCase.difficulty}/10</small></header>
+      <header><span className={`campaign-badge state-${campaignCase.lifecycle.toLowerCase()}`}>{lifecycleLabel(campaignCase.lifecycle)}</span><small>{campaignCase.drone_count} drone{campaignCase.drone_count > 1 ? "s" : ""} · Difficulty {campaignCase.difficulty}/10</small></header>
       <small className="campaign-case-cluster">{cluster?.label} · {campaignCase.environment} · {campaignCase.authorization}</small>
       <p>{campaignCase.purpose}</p>
       <div><span>What it does</span><p>{campaignCase.behavior_under_test}</p></div>

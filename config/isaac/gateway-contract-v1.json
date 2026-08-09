@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "protocol_version": "1.3.0",
+  "adapter_contract_version": "1.0.0",
+  "authority": "SIMULATION_ONLY",
+  "transports": {
+    "local_headless": "bounded JSON lines over a directly managed child process; no shell",
+    "remote_headless": "bounded JSON lines over certificate-validated TLS 1.3",
+    "authentication": "per-session bearer secret of at least 32 characters; never stored in evidence",
+    "unsecured_tcp": "UNSUPPORTED"
+  },
+  "queue_policy": {
+    "telemetry_bound": 100,
+    "overflow": "DROP_OLDEST_AND_INCREMENT_COUNTER",
+    "commands": "SERIAL_ONE_IN_FLIGHT",
+    "automatic_retry_after_unknown_outcome": false,
+    "maximum_message_bytes": 1048576
+  },
+  "operations": {
+    "allowed": ["connect", "bind_run", "command", "snapshot", "health", "step", "reset_clock", "disconnect"],
+    "manual_step": {
+      "minimum_steps": 1,
+      "maximum_steps": 10000,
+      "fixed_step_s": 0.01,
+      "result": "ONE_CANONICAL_TELEMETRY_SAMPLE_AFTER_ALL_REQUESTED_STEPS"
+    }
+  },
+  "fleet_binding": {
+    "required_fields": ["fleet_session_id", "fleet_run_id", "deployment_sha256", "task_id", "task_lease_generation", "backend_namespace", "preparation_state"],
+    "preparation_state": "READY",
+    "namespace_policy": "the run binding namespace must equal the namespace selected when that vehicle connected",
+    "ownership_policy": "every coordinated command must match the current task lease generation and complete fleet binding",
+    "cross_namespace_policy": "REJECT_IDENTITY_MISMATCH"
+  },
+  "clock": {
+    "owner": "ISAAC_SIMULATION_CONTEXT",
+    "fixed_step_s": 0.01,
+    "source_clock_id_required": true,
+    "source_clock_epoch_increments_on_reset": true,
+    "source_time_must_be_monotonic_within_epoch": true,
+    "receive_time": "CONTROL_CENTER_MONOTONIC",
+    "wall_time": "DISPLAY_AND_EVIDENCE_ONLY"
+  },
+  "frames": {
+    "canonical": "crazyswarm-frames-v1",
+    "world_and_home": "right-handed +X room-forward/east, +Y room-left/north, +Z up",
+    "body": "right-handed +X forward, +Y left, +Z up",
+    "usd_stage": "Y-up stages are rejected; the generated scene is Z-up and metresPerUnit=1",
+    "ros": "REP-103-compatible right-handed ENU at the gateway ROS edge",
+    "quaternion": "Hamilton wxyz at the canonical gateway boundary"
+  },
+  "ros2": {
+    "namespace_pattern": "/cfNN",
+    "topics": [
+      {"name": "/cfNN/command/high_level", "type": "crazyswarm_interfaces/msg/HighLevelCommand", "qos": "RELIABLE_KEEP_LAST_10", "rate": "EVENT_DRIVEN"},
+      {"name": "/cfNN/telemetry/state", "type": "crazyswarm_interfaces/msg/VehicleState", "qos": "RELIABLE_KEEP_LAST_10", "rate_hz": 20},
+      {"name": "/cfNN/telemetry/pose_estimate", "type": "geometry_msgs/msg/PoseStamped", "qos": "BEST_EFFORT_KEEP_LAST_5", "rate_hz": 100},
+      {"name": "/cfNN/telemetry/pose_truth", "type": "geometry_msgs/msg/PoseStamped", "qos": "BEST_EFFORT_KEEP_LAST_5", "rate_hz": 100},
+      {"name": "/cfNN/sensors/imu", "type": "sensor_msgs/msg/Imu", "qos": "BEST_EFFORT_KEEP_LAST_5", "rate_hz": 100},
+      {"name": "/cfNN/sensors/flow", "type": "crazyswarm_interfaces/msg/FlowLike", "qos": "BEST_EFFORT_KEEP_LAST_5", "rate_hz": 100},
+      {"name": "/cfNN/sensors/range/front", "type": "sensor_msgs/msg/Range", "qos": "BEST_EFFORT_KEEP_LAST_5", "rate_hz": 20},
+      {"name": "/cfNN/sensors/range/back", "type": "sensor_msgs/msg/Range", "qos": "BEST_EFFORT_KEEP_LAST_5", "rate_hz": 20},
+      {"name": "/cfNN/sensors/range/left", "type": "sensor_msgs/msg/Range", "qos": "BEST_EFFORT_KEEP_LAST_5", "rate_hz": 20},
+      {"name": "/cfNN/sensors/range/right", "type": "sensor_msgs/msg/Range", "qos": "BEST_EFFORT_KEEP_LAST_5", "rate_hz": 20},
+      {"name": "/cfNN/sensors/range/up", "type": "sensor_msgs/msg/Range", "qos": "BEST_EFFORT_KEEP_LAST_5", "rate_hz": 20},
+      {"name": "/cfNN/sensors/range/down", "type": "sensor_msgs/msg/Range", "qos": "BEST_EFFORT_KEEP_LAST_5", "rate_hz": 20},
+      {"name": "/clock", "type": "rosgraph_msgs/msg/Clock", "qos": "RELIABLE_KEEP_LAST_1", "rate_hz": 100}
+    ],
+    "services": [
+      {"name": "/crazyswarm_sim/ready", "type": "crazyswarm_interfaces/srv/Readiness"},
+      {"name": "/crazyswarm_sim/step", "type": "crazyswarm_interfaces/srv/Step"},
+      {"name": "/crazyswarm_sim/pause", "type": "std_srvs/srv/SetBool"},
+      {"name": "/crazyswarm_sim/reset", "type": "crazyswarm_interfaces/srv/Reset"}
+    ],
+    "failure_policy": "wrong namespace, identity, frame, stale epoch, queue overflow or ROS graph loss becomes named gateway health/failure; it is never a numeric sample"
+  },
+  "outputs": {
+    "required": ["state", "pose_estimate", "pose_truth_distinct_from_estimate", "imu", "flow_like", "ranges_six_direction", "gateway_health", "clock"],
+    "optional": ["modeled_battery", "modeled_motors", "render_stream"],
+    "unsupported_minimal_profile": ["physical_radio_rssi", "physical_packet_loss", "camera", "depth", "rtx_lidar", "replicator_labels"],
+    "absence_policy": "UNAVAILABLE_WITHOUT_VALUE"
+  }
+}

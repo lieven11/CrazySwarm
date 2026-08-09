@@ -1,0 +1,601 @@
+ARCHIVED_NON_AUTHORITATIVE_DETAIL_SOURCE: YES
+CURRENT_STATUS_LEDGER: docs/work-packages/COMPLETED.md
+
+# CrazySwarm Fast Sim physical-fidelity work packet
+
+| Field | Value |
+|---|---|
+| Packet ID | `FAST-SIM-PHYS-WP` |
+| Document status | `SOFTWARE_QUALIFIED_CONFIGURED_UNQUALIFIED` |
+| Execution queue | `SEPARATE_FROM_ACTIVE_SOFTWARE_WP` |
+| Scope authority | `FAST_SIM_ONLY` |
+| Planning authorization | User accepted this as step 2 of the next-work sequence on 2026-08-07 |
+| Isaac scope | Out of scope; not evaluated or modified by this packet |
+| Physical flight authorized | No |
+| Hardware-qualified parameters available | No |
+| Digital twin enabled | No |
+| Last reconciled | 2026-08-07 |
+
+## Execution isolation
+
+This is an independent work queue for Fast Sim physical-fidelity changes. It is
+deliberately separate from [`ACTIVE_SOFTWARE_WP.md`](ACTIVE_SOFTWARE_WP.md), which
+may be consumed by another running command.
+
+- Do not infer authorization to execute this packet from the active software packet.
+- Start this packet only when the user or operator explicitly names this file or
+  `FAST-SIM-PHYS-WP`.
+- Do not mark tasks here complete because related behavior exists in the current
+  simulator; completion requires the new verification and acceptance evidence below.
+- Do not edit, reorder, or close tasks in `ACTIVE_SOFTWARE_WP.md` while implementing
+  this packet unless the user separately requests that integration.
+- Do not add Isaac implementation opportunistically. Any later live-Isaac work gets
+  its own explicit task after the current active-software execution is reconciled.
+
+The user selected this packet as the second step in the planned sequence. The
+software-only implementation and qualification gate completed on 2026-08-07 after
+the active baseline's executable gates became green. Exact-aircraft calibration and
+physical validation remain external Reality work.
+
+## Outcome
+
+Fast Sim remains deterministic and fast while gaining the minimum physical coupling
+needed to reason about flight performance: battery state and terminal voltage affect
+available motor voltage, current, thrust, saturation, and endurance; rotor forces use
+the physical vehicle geometry; payload and center of mass affect dynamics; modeled
+sensor errors affect the estimator/control path; and bounded aerodynamic corrections
+cover the low-speed indoor operating envelope.
+
+The result is still a reduced-order engineering simulator. It must not be described
+as hardware-qualified, a digital twin, blade-resolved aerodynamics, or a replacement
+for measured bench and contained-flight evidence.
+
+## Fast Sim versus Isaac decision
+
+The implementation in this packet belongs in Fast Sim:
+
+- battery open-circuit voltage, internal resistance, discharge and recovery;
+- averaged electrical current and power limits;
+- firmware-style battery thrust compensation and PWM saturation;
+- voltage-dependent motor/propeller thrust and actuator response;
+- exact rotor positions, reaction torque, mass, payload, center of mass and inertia;
+- per-motor variation and failure/degradation overlays;
+- IMU, Flow, range and estimator error models appropriate to fast simulation;
+- body-axis drag and a reduced-order ground-effect model; and
+- deterministic qualification matrices for the above.
+
+There is no current Isaac task to add to `ACTIVE_SOFTWARE_WP.md`. A future live Isaac
+worker should consume the same versioned vehicle/powertrain parameter set and apply
+the same rotor forces to its rigid body. Isaac remains the later target for resolved
+body contact, friction, bounce, tumble, detailed collision geometry, complex raycast
+occlusion, and rendered camera/depth sensors. Isaac does not supply Crazyflie battery,
+motor, propeller, or wake physics automatically.
+
+Blade-resolved propeller flow, CFD-quality wall/ceiling interaction, detailed swarm
+wakes, crash deformation, and thermal damage are not silently assigned to either
+backend by this packet. They require a separate future decision and evidence plan.
+
+## Historical model-v1 baseline and reason physical fidelity was reopened
+
+The preserved model-v1 baseline was internally stable but had the following verified
+limitations. Model v2 corrects these software-structure issues without relabeling the
+historical v1 evidence:
+
+- Motor target thrust depends on normalized command and configured maximum thrust,
+  not on battery voltage.
+- Battery voltage is calculated after motor thrust/current and affects only telemetry
+  and hard cutoff.
+- A forced 5% takeoff and 10-second hover produces the same altitude, thrust demand,
+  peak current, and motor command as a 100% run.
+- A direct 120-second hover starting at 5% can reach 0% state of charge and continue
+  flying because the modeled hover voltage remains slightly above cutoff.
+- The normal supervisor correctly masks part of this plant defect by rejecting
+  takeoff below 30% and requesting recovery at the critical threshold.
+- Full command produces an abrupt voltage-cutoff cliff instead of progressively
+  reduced thrust headroom.
+- The current motor mixer is a plus layout; the Crazyflie firmware force/torque
+  distribution represents an X layout.
+- `center_of_mass_body_m` is declared but does not enter the force or torque equations.
+- Payload changes total mass but does not update combined center of mass or inertia.
+- The IMU output is exact physics specific force and angular rate. The accumulated
+  error currently called drift is injected into horizontal position/Flow estimation,
+  not into an IMU bias/noise process.
+- Current variation is a consequence of controller command variation only; PWM ripple,
+  commutation, electrical measurement noise, and motor vibration are not modeled.
+- Aerodynamics are limited to one isotropic linear-drag coefficient; ground effect,
+  body-axis quadratic drag, rotor gyroscopic effects, and propeller variation are absent.
+
+Focused software verification at review time passed 47 physics, qualification, and
+estimator tests. Those tests establish software consistency, not physical accuracy.
+
+## Physical-claim and provenance rules
+
+No coefficient may be invented merely to make a trajectory look realistic.
+
+1. Exact-aircraft controlled measurements with uncertainty are the preferred source.
+2. Official Bitcraze data for the exact airframe, battery, motor, propeller and firmware
+   configuration may seed a `CONFIGURED_UNQUALIFIED` model with recorded URL/version.
+3. Data for an older or different Crazyflie configuration must remain explicitly
+   identified as a provisional reference and may not be relabeled as the selected unit.
+4. Generic quadrotor values, untraceable forum values, and visually tuned coefficients
+   are not acceptable physical evidence.
+5. Every physical parameter records value, unit, source, source version/date, applicable
+   hardware configuration, qualification class, and uncertainty when available.
+6. Until bench evidence exists, all executable physical coefficients remain
+   `CONFIGURED_UNQUALIFIED`, even if their structure is physically motivated.
+7. `PHYSICALLY_MEASURED` is permitted only after the existing Reality hardware procedure
+   produces immutable reviewed evidence for the exact aircraft/configuration.
+8. Software tests may verify equations, invariants and deterministic behavior; they may
+   not promote a parameter or outcome to physical truth.
+
+## Compatibility and model-version policy
+
+These changes intentionally alter canonical dynamics. They must not be hidden under
+`crazyflie-6dof@1.0.0`.
+
+- Introduce a new physics model version, provisionally `crazyflie-6dof@2.0.0`.
+- Preserve model-v1 receipts, replay identity, and the ability to identify old runs.
+- Do not silently reinterpret old scenario hashes with new powertrain semantics.
+- Add an explicit migration for legacy battery drain fields or reject ambiguous input.
+- Keep simulator adapter contract `1.0.0` unless command, frame, unit, state, or required
+  signal meaning actually changes.
+- Regenerate canonical outcome hashes only after old/new comparisons and an intentional
+  model-version review.
+
+## Dependency and execution order
+
+```text
+FAST-SIM-PHYS-WP-00 contracts, evidence and version boundary
+        |
+        +--------------------+--------------------+
+        |                    |                    |
+        v                    v                    v
+WP-01 battery/powertrain  WP-02 geometry      WP-03 sensors/estimator
+        |                    |                    |
+        +--------------------+--------------------+
+                             |
+                             v
+                    WP-04 reduced aerodynamics
+                             |
+                             v
+                    WP-05 integrated qualification
+```
+
+WP-01 and WP-02 are the first implementation priority. WP-03 and WP-04 must not delay
+correction of the impossible low-state-of-charge behavior.
+
+### Authorized software-only completion boundary
+
+This packet's next execution is bounded to a software-qualified, configured model.
+It must complete all work that does not require an exact aircraft:
+
+- strict parameter/provenance validation and old-configuration migration;
+- explicit per-motor degradation/failure state and fault plumbing;
+- battery/load/condition/controller/timestep matrices;
+- mass, center-of-mass, payload, motor-mismatch, sensor, estimator, drag, and
+  ground-effect software matrices within declared configured envelopes;
+- deterministic seed repetitions, fixed-step convergence, long-duration stability,
+  one/three-vehicle performance, cleanup, and replay checks;
+- intentional model-v1/model-v2 canonical comparison and compatibility evidence; and
+- reconciled machine-readable fidelity, limitation, API, and documentation output.
+
+The following remain open until Reality WP-04 through WP-06 provide reviewed
+measurements: exact-aircraft battery/endurance qualification, physical thrust/current
+curves, sensor coefficients, aerodynamic calibration, controller-gain transfer,
+external-reference residuals, and digital-twin accuracy.
+
+The permitted pre-hardware exit classification is
+`SOFTWARE_QUALIFIED_CONFIGURED_UNQUALIFIED`. It may not be relabeled
+`PHYSICALLY_MEASURED`, `HARDWARE_QUALIFIED`, or `DIGITAL_TWIN`.
+
+### Post-qualification mission use
+
+This packet is no longer the active feature queue. Its qualified v2 plant now supports
+the mission-relevance ladder in `ACTIVE_SOFTWARE_WP.md`: single-drone regression, two
+independent roles, prepared reserve, live persistent-coverage handover, crossing-route
+separation, leader loss, and combined mission faults. New mission behavior belongs in
+ACTIVE-WP-09/10; only a discovered Fast Sim physics or sensor defect reopens this packet.
+
+Fast Sim is sufficient for task authority, coordination, recovery, evidence, replay and
+cleanup development. Exact endurance, contact/docking physics, firmware equivalence and
+physical accuracy remain Reality/Isaac work and must not block the software mission ladder.
+
+## Software closeout checkpoint — 2026-08-07
+
+The software-qualified release is executable under `crazyflie-6dof@2.0.0`:
+
+- normalized commands have the single meaning `NORMALIZED_DESIRED_THRUST`;
+- battery OCV, load-line voltage, averaged current, filtered compensation, PWM,
+  cubic voltage/thrust, current limiting, saturation, persistence and depleted cutoff
+  are causally coupled;
+- model v1 remains explicitly selectable through `PhysicsModelConfig.legacy_v1()`;
+- X-layout rotor forces/moments, combined payload center of mass/inertia and deterministic
+  per-motor scales are active;
+- body-axis linear/quadratic drag and disabled-by-default bounded ground effect are active;
+- a sampled/held IMU with independent clock, latency and structured configurable errors
+  is active, with all default error coefficients zero;
+- sampled/held Flow and range observations drive the reduced-order estimator; normal v2
+  controller state does not copy horizontal physics truth; and
+- focused v2 evidence is recorded in
+  `config/qualification/fast-sim-physical-v2.json`.
+
+The authorized software boundary is complete. Flow/range observations are independently
+sampled and held, actuator degradation/loss is plant-visible, the complete configured
+matrix and v1/v2 comparison are executable, and an immutable calibration-import path
+creates a new model version and configuration hash. Exact-aircraft bench/flight evidence
+remains open and prevents any hardware-qualified or digital-twin claim.
+
+The qualification artifact records 168 powertrain cases, 6 mechanical/actuator cases,
+15 seeded sensor cases, a finite 120-second plant run, and a three-vehicle workload at
+21.619 represented vehicle-seconds per wall-second on the recorded review run. All software
+invariants pass. Its normalized report SHA-256 is
+`b8a8ad321ef3314e5ba96c2b8f747f134260275098dfa0dafb082f5f0dbdec37`. Volatile
+wall time and derived throughput remain visible in the artifact but are explicitly
+excluded from normalized identity.
+
+---
+
+## FAST-SIM-PHYS-WP-00 — Freeze contracts, provenance and the v2 baseline
+
+**Priority:** P0 critical
+**Status:** Software complete
+**Depends on:** Existing Fast Sim v1 and Reality WP-00 through WP-03 software evidence
+
+### Outcome
+
+The project has an explicit v2 physical-model boundary, parameter provenance schema,
+legacy migration decision, and reproducible baseline probes before dynamics change.
+
+### Tasks
+
+- [x] Record the current 100%, 50%, 30%, 20%, 10%, 5% and 0% battery probe outputs,
+      including commanded/actual thrust, current, loaded voltage, position, saturation,
+      cutoff, and final state of charge.
+- [x] Freeze the current 5%-versus-100% equality and zero-SOC sustained-hover behavior
+      as regression tests that must fail after the physical correction is enabled.
+- [x] Define whether the actuator input represents desired thrust, normalized force,
+      motor voltage, or raw PWM. Do not overload one percentage with multiple meanings.
+- [x] Define versioned battery, motor, propeller, rotor-layout, payload, sensor and
+      aerodynamic parameter schemas with per-field provenance.
+- [x] Define a bounded deterministic electrical solve with convergence/failure behavior.
+- [x] Define state, telemetry and evidence fields for requested thrust, applied PWM,
+      available thrust, saturation, terminal voltage, total current and cutoff reason.
+- [x] Decide and document the v2 model version and v1 scenario migration rules.
+- [x] Preserve absence semantics: unsupported measured RPM/current or sensor values must
+      not be fabricated merely because Fast Sim has internal model state.
+- [x] Add a machine-readable qualification artifact dedicated to this packet.
+
+### Verification
+
+- Schema round-trip, strict unknown-field rejection and canonical SHA-256 tests.
+- Old run receipts and replay remain identifiable as model v1.
+- New configuration changes alter the recorded model/configuration identity.
+- Static checks reject a physical parameter without unit, provenance or qualification.
+
+### Acceptance
+
+- The actuator command has one unambiguous meaning at every layer.
+- Model v1 and v2 cannot be confused in execution, evidence or replay.
+- No canonical hash is updated as an incidental consequence of implementation.
+
+---
+
+## FAST-SIM-PHYS-WP-01 — Couple battery, electrical power and motor thrust
+
+**Priority:** P0 critical
+**Status:** Software complete
+**Depends on:** FAST-SIM-PHYS-WP-00
+
+### Outcome
+
+Battery state and load determine terminal voltage; terminal voltage and compensated PWM
+determine motor voltage, current, thrust and saturation; zero available energy cannot
+produce sustained positive thrust.
+
+### Tasks
+
+- [x] Replace the linear full-to-empty voltage interpolation with a configurable
+      open-circuit-voltage-versus-state-of-charge curve or table.
+- [x] Retain Coulomb counting but define capacity at the modeled condition and prevent
+      state-of-charge clamping from creating unlimited residual energy.
+- [x] Solve terminal voltage and total current consistently, including electronics/deck
+      parasitic load and connector/internal resistance.
+- [x] Add a bounded load-line solution for `V_terminal = OCV - I_total * R_effective`;
+      non-convergence must fail explicitly, never reuse a plausible-looking stale value.
+- [x] Add firmware-style battery compensation that converts desired thrust/motor voltage
+      to PWM using filtered terminal voltage.
+- [x] Model the measured nonlinear motor-voltage-to-thrust relation with a versioned
+      polynomial or lookup table and explicit valid range.
+- [x] Model averaged motor current consistently with motor voltage/thrust. Do not resolve
+      high-frequency PWM ripple at a 100 Hz physics step; use a documented averaged model.
+- [x] Apply per-motor PWM, motor-current and thrust limits plus a battery total-current or
+      power limit appropriate to the configured cell.
+- [x] Expose requested versus available thrust and motor saturation in model telemetry.
+- [x] Make maximum available thrust non-increasing as terminal voltage falls for an
+      otherwise identical hardware state.
+- [x] Add undervoltage persistence/hysteresis or recovery semantics so a single numerical
+      crossing is not confused with a fully modeled cutoff/recovery cycle.
+- [x] Guarantee that zero state of charge, invalid cell state, or an authoritative cutoff
+      cannot sustain hover thrust.
+- [x] Add optional condition inputs for capacity scale, resistance scale, battery age and
+      temperature; keep them neutral and unqualified until evidence exists.
+- [x] Preserve the supervisor's 30% takeoff gate and critical-battery recovery behavior;
+      the plant correction must not weaken policy.
+- [x] Remove or explicitly migrate legacy percentage-per-second drain behavior so it does
+      not double count energy with the electrical model.
+
+### Verification matrix
+
+- State of charge: 100%, 50%, 30%, 20%, 10%, 5% and 0%.
+- Load: idle, steady hover, vertical acceleration, maximum collective and asymmetric
+  attitude correction.
+- Battery condition: nominal, increased resistance, reduced capacity and configured
+  temperature/age scale.
+- Controller mode: compensation enabled, compensation disabled, saturation and cutoff.
+- Fixed step: 0.005 s, 0.010 s and 0.020 s.
+
+### Required invariants
+
+- Electrical energy does not increase without an explicit charging source.
+- Applied motor power and thrust never exceed configured voltage/current/PWM limits.
+- A lower terminal-voltage ceiling cannot provide more maximum thrust than a higher one.
+- Compensation may preserve hover thrust only while sufficient PWM/current headroom exists.
+- At low voltage, required PWM rises before saturation; after saturation, thrust shortfall
+  is visible to the controller and telemetry.
+- State of charge at zero cannot remain airborne indefinitely.
+- Cutoff state, reason and recovery behavior are deterministic and evidence-visible.
+
+### Acceptance
+
+- The old diagnostic in which 5% and 100% have identical complete performance no longer
+  passes. Equal hover thrust is allowed only when battery compensation has headroom, and
+  then PWM/headroom/power state must still differ physically.
+- Forced 5% operation either retains only measured/calibrated limited authority or reaches
+  saturation/cutoff; it never receives unbounded nominal authority.
+- The normal supervised 5% preflight remains rejected.
+- Endurance and maximum-thrust claims remain `CONFIGURED_UNQUALIFIED` until bench data exists.
+
+---
+
+## FAST-SIM-PHYS-WP-02 — Correct rotor geometry, mass properties and unit variation
+
+**Priority:** P0 high
+**Status:** Software complete
+**Depends on:** FAST-SIM-PHYS-WP-00
+
+### Outcome
+
+Forces and moments follow explicit rotor positions about the modeled center of mass, and
+payload/motor differences alter translational and rotational response consistently.
+
+### Tasks
+
+- [x] Replace plus-layout hard-coded torque equations with explicit per-rotor body-frame
+      position and thrust-axis vectors.
+- [x] Compute each thrust moment using the vector cross product about center of mass.
+- [x] Configure and verify the Crazyflie X layout, motor numbering, spin directions and
+      firmware-compatible roll/pitch/yaw signs.
+- [x] Retain reaction torque as an explicit per-rotor model with calibrated sign/value.
+- [x] Apply `center_of_mass_body_m` in the rigid-body equations rather than metadata only.
+- [x] Define payload position, mass and inertia, then combine base and payload properties
+      with the parallel-axis theorem.
+- [x] Reject impossible or non-positive-definite mass/inertia configurations.
+- [x] Add per-motor thrust scale, time constant, current scale and health state for
+      deterministic unit variation and degradation cases.
+- [x] Separate nominal controller parameters from actual plant parameters so calibration
+      mismatch remains deliberate and visible.
+- [x] Add motor-loss/degradation fault injection without converting a failed actuator into
+      a generic sensor or numerical fault.
+
+### Verification
+
+- Independent analytic force/moment checks for every single rotor.
+- Golden roll, pitch and yaw sign tests against the pinned firmware mixer convention.
+- Symmetric collective produces no unintended roll/pitch moment at nominal center of mass.
+- Offset payload produces the expected static moment and changed inertia response.
+- Rotor permutation, wrong spin direction and invalid inertia fail validation.
+- Per-motor mismatch produces deterministic, seed-independent plant asymmetry unless a
+  seeded distribution is explicitly selected.
+
+### Acceptance
+
+- The simulator no longer claims a physical Crazyflie while using the plus-layout mixer.
+- Center of mass and payload parameters demonstrably change forces/moments and response.
+- Controller saturation and stability are requalified with the X layout.
+
+---
+
+## FAST-SIM-PHYS-WP-03 — Make sensor and estimator errors physically structured
+
+**Priority:** P1 high
+**Status:** Software structure complete; measured coefficients deferred
+**Depends on:** FAST-SIM-PHYS-WP-00; measured values may depend on Reality WP-04
+
+### Outcome
+
+Sensor telemetry and controller estimates are driven by explicit sampled sensor models,
+not mislabeled truth or directly injected position drift, while Fast Sim retains a clearly
+named reduced-order estimator boundary.
+
+### Tasks
+
+- [x] Add independent sensor sample clocks, latency buffers and held-sample semantics;
+      sensor rate must not be silently identical to physics rate.
+- [x] Add per-axis IMU white noise, constant bias, bias random walk, scale error,
+      misalignment, bandwidth/filtering, clipping and timestamp latency.
+- [x] Keep IMU values exact when all configured error coefficients are zero.
+- [ ] Source IMU coefficients from exact hardware evidence or an explicitly recorded
+      official datasheet baseline; do not tune them to create attractive drift.
+- [x] Separate physical IMU errors from Flow/position-estimator drift in telemetry,
+      documentation and tests.
+- [ ] Model accelerometer vibration as a bounded sampled/filtered error or aggregate
+      variance appropriate to Fast Sim; do not attempt blade-resolved vibration.
+- [x] Model Flow observation error as a function of height, tilt, motion, surface/lighting
+      class, blur/quality limit, mounting alignment, latency and dropout.
+- [x] Ensure Flow output is an observation consumed by the estimator path, not merely
+      perfect body velocity accompanied by an unrelated position random walk.
+- [x] Preserve explicit range `VALID`, `NO_HIT`, `CLIPPED`, `STALE` and `UNAVAILABLE`
+      states while adding mounting transform, beam width/bias and material/angle effects
+      only where evidence supports them.
+- [x] Add barometer/altitude observation scope or explicitly mark it unsupported for the
+      selected Flow profile; never substitute perfect z truth silently.
+- [x] Decide whether to use a firmware software-in-the-loop estimator/controller binding.
+      If not selected, retain the reduced-order estimator name and document every mismatch
+      from the pinned firmware estimator.
+- [x] Ensure controller estimates derive only from permitted estimator outputs; physics
+      truth remains comparator evidence.
+- [x] Keep modeled current as plant state. Add current-measurement noise only if a selected
+      physical source actually measures current.
+
+### Verification
+
+- Seeded repeatability plus statistical checks across a declared seed count.
+- Allan-deviation/noise-density comparison when physical IMU logs become available.
+- Bias, random walk, clipping, latency and dropout each change estimator/control outcomes
+  through separate tests.
+- Snapshot polling cannot create fresh noise or alter dynamics.
+- Flow surface/light/height degradation changes observation quality and, when applicable,
+  estimator performance rather than only a display percentage.
+- Complete required-sensor loss still triggers the existing fail-closed recovery path.
+
+### Acceptance
+
+- Documentation no longer describes position random walk as IMU drift.
+- No normal controller state is copied from current physics truth without passing through
+  its declared estimator/latency boundary.
+- All noise/bias coefficients retain provenance and qualification class.
+
+---
+
+## FAST-SIM-PHYS-WP-04 — Add reduced-order indoor aerodynamics
+
+**Priority:** P1 medium
+**Status:** Software complete with unqualified optional coefficients
+**Depends on:** FAST-SIM-PHYS-WP-01, FAST-SIM-PHYS-WP-02
+
+### Outcome
+
+Low-speed indoor flight includes the dominant inexpensive aerodynamic corrections without
+turning Fast Sim into CFD or reducing deterministic accelerated performance.
+
+### Tasks
+
+- [x] Replace or extend isotropic linear drag with body-axis linear/quadratic drag whose
+      coefficient source and valid speed range are explicit.
+- [x] Add a bounded ground-effect correction based on rotor/floor distance and attitude,
+      disabled unless supported by configured provenance.
+- [x] Consider simple ceiling/wall-effect corrections only after evidence demonstrates a
+      mission-relevant effect; otherwise keep them explicitly unsupported.
+- [ ] Add separate spin-up and spin-down actuator dynamics if bench response supports them.
+- [ ] Add reduced-order rotor gyroscopic/reaction effects only where they materially change
+      the qualified low-speed envelope.
+- [x] Add propeller/motor efficiency and wear scales through the per-motor model rather than
+      arbitrary world forces.
+- [x] Retain deterministic force-impulse disturbance tests.
+- [x] Keep external wind/gust modeling out of this packet, per the current scope decision.
+- [x] Keep inter-vehicle aerodynamic wake, vortex-ring state and CFD out of Fast Sim v2
+      unless a separate packet authorizes a validated reduced-order model.
+
+### Verification
+
+- Drag always dissipates energy in its declared valid range.
+- Zero velocity produces zero aerodynamic drag.
+- Body-axis rotation transforms aerodynamic force consistently.
+- Ground effect is bounded, continuous at its activation limits and vanishes outside its
+  declared range.
+- Cross-timestep convergence remains within newly versioned tolerances.
+- Accelerated one- and three-vehicle simulations remain faster than wall time under the
+  existing qualification workload.
+
+### Acceptance
+
+- The model captures only effects supported by explicit equations and provenance.
+- Unsupported wake/CFD behavior remains absent rather than represented by decorative noise.
+- Fast Sim retains its CI and fault-sweep role.
+
+---
+
+## FAST-SIM-PHYS-WP-05 — Integrated physical-fidelity qualification and release
+
+**Priority:** P0 release gate
+**Status:** Software-qualified; physical comparison deferred
+**Depends on:** FAST-SIM-PHYS-WP-01 through FAST-SIM-PHYS-WP-04
+
+### Outcome
+
+Model v2 has reproducible software evidence, explicit physical claim limits, intentional
+canonical changes, and a calibrated path for later bench and flight residual comparison.
+
+### Tasks
+
+- [x] Run the complete state-of-charge/load/condition/fixed-step matrix from WP-01.
+- [x] Run mass, center-of-mass, payload, motor mismatch and actuator-fault matrices.
+- [x] Run IMU/Flow/range/latency/dropout estimator and health matrices.
+- [x] Run drag and ground-effect height/attitude matrices within their valid envelope.
+- [x] Repeat nominal and failure cases across declared seeds and record distributions,
+      not only one successful trace.
+- [x] Add maximum climb acceleration, hover PWM margin, thrust shortfall, energy use,
+      voltage sag, current limit and cutoff reason to qualification evidence.
+- [x] Compare old model-v1 and new model-v2 canonical missions and explain every material
+      outcome difference.
+- [x] Update canonical hashes only after explicit review; preserve v1 outcome artifacts.
+- [x] Update fidelity/limitation APIs and documentation so every modeled and omitted effect
+      is machine-readable.
+- [x] Run unit, integration, strict type, lint, API, UI, replay, safety, fleet and complete
+      Fast Sim regression suites.
+- [x] Record accelerated performance, task/queue bounds and long-duration finite-state
+      behavior.
+- [x] Produce a bench-calibration import path that creates a new parameter set and hash;
+      never overwrite the configured-unqualified default in place.
+- [ ] When physical evidence exists, compare simulator versus external-reference and
+      onboard observations with uncertainty. Do not tune and validate on the same trials
+      without an explicit split.
+
+### Release acceptance
+
+- Zero-SOC sustained powered hover is impossible.
+- Voltage, current, PWM, thrust and energy are causally coupled and bounded.
+- Low battery reduces available maneuver headroom even when compensation temporarily
+  maintains hover thrust.
+- The 5% case is rejected by normal policy and is physically bounded when forced in a
+  plant-only diagnostic.
+- Rotor geometry, center of mass, payload and per-motor state affect dynamics correctly.
+- IMU and Flow errors are distinct and reach control through the estimator boundary.
+- Every coefficient and claim has provenance and qualification status.
+- Model-v1 evidence remains replayable and cannot be mistaken for model v2.
+- No live Isaac, physical flight, or digital-twin claim is implied by this software gate.
+
+## Planned deliverables
+
+- Versioned powertrain, rotor-geometry, sensor and aerodynamic model modules under
+  `src/crazyswarm_app/simulation/`.
+- Strict model-v2 parameter and provenance schemas.
+- Battery-authority, payload/CoM, sensor-error and ground-effect scenarios under `config/`.
+- A model-v2 machine-readable qualification report under `config/qualification/`.
+- Focused unit/analytic references plus integrated mission/safety regression tests.
+- Updated Fast Sim fidelity, limitation, compatibility and migration documentation.
+- Immutable old/new canonical comparison evidence.
+
+## Official reference starting points
+
+- Crazyflie battery compensation:
+  https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/functional-areas/battery_compensation/
+- Crazyflie PWM/thrust/current investigation:
+  https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/functional-areas/pwm-to-thrust/
+- Crazyflie state estimation:
+  https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/functional-areas/sensor-to-control/state_estimators/
+- Crazyflie 2.1+ datasheet:
+  https://www.bitcraze.io/documentation/hardware/crazyflie_2_1_plus/crazyflie_2_1_plus-datasheet.pdf
+- Stock 250 mAh battery datasheet:
+  https://www.bitcraze.io/documentation/hardware/250mah_battery/250mah_battery-datasheet.pdf
+- Official force/torque mixer source:
+  https://github.com/bitcraze/crazyflie-firmware/blob/master/src/modules/src/power_distribution_quadrotor.c
+- Isaac rigid-body fundamentals, for later backend boundary only:
+  https://docs.isaacsim.omniverse.nvidia.com/latest/physics/simulation_fundamentals.html
+
+## Final packet boundary
+
+Completion of this packet means the Fast Sim physical structure is improved and
+software-qualified within declared limits. It does not mean the exact aircraft has been
+measured, that endurance or controller gains are hardware-qualified, that Isaac has run,
+or that the simulator is a digital twin.

@@ -54,3 +54,6 @@ evidence:
   database_path: .cache/crazyswarm/evidence.sqlite3
   recorder_buffer_size: 8192
   retention_days: 30
+run_files:
+  directory: run-files
+  keep_latest_missions: 100

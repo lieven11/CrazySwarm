@@ -1,6 +1,10 @@
 {
   "schema_version": 1,
   "release_id": "fast-sim-reference-v1",
+  "model_version": "1.0.0",
+  "outcome_record_revision": "execution-authority-and-goal-landing-v2",
+  "historical_reference": "config/qualification/canonical-scenarios-v1-history.json",
+  "pre_wp20_historical_reference": "config/qualification/canonical-scenarios-v1-pre-wp20-history.json",
   "process_repetitions": 2,
   "scenarios": [
     {
@@ -11,8 +15,8 @@
       "all_vehicles": false,
       "expected_status": "SUCCEEDED",
       "expected_reason_code": "MISSION_COMPLETED",
-      "expected_scenario_sha256": "06a513639f3871338faa0082f53cb724a3a6e9c7614394d4c6b368e3d6add764",
-      "expected_outcome_sha256": "fbc6c3ed5b98a599c48e1d8e6c8cc1fca2f08af8be42b553b7693b0ddb29bbb1"
+      "expected_scenario_sha256": "8a0137811959dedb31d23f9dd4f113af6227aa953e70daf68f2a315aaae39767",
+      "expected_outcome_sha256": "59620fae250c2ac49805297ffd2d415937de00df469a3d836bd4a2448d21619f"
     },
     {
       "id": "move-return",
@@ -22,8 +26,8 @@
       "all_vehicles": false,
       "expected_status": "SUCCEEDED",
       "expected_reason_code": "MISSION_COMPLETED",
-      "expected_scenario_sha256": "b3f6fcf2d86243988b4c133bc355d0fccf82937167f398980302adb6c46e1921",
-      "expected_outcome_sha256": "8f196d1df16f6794841ac0235ddb9a9900ae4a5fd0b3395b4332dcba44924373"
+      "expected_scenario_sha256": "726645d94995dc49a87e4969f5efdd9ef0598d9f7b37804a42f735257bf834ec",
+      "expected_outcome_sha256": "fb311148a9e09a71898eaee1ff47869c14e3c6a83a79ceb0e519291f95641cc6"
     },
     {
       "id": "failure",
@@ -33,8 +37,8 @@
       "all_vehicles": false,
       "expected_status": "FAILED",
       "expected_reason_code": "LINK_LOST",
-      "expected_scenario_sha256": "6e363bd1ed07dc94de15bdf95ada8fb21320ab21a4b52608096d45586f565b9c",
-      "expected_outcome_sha256": "8699697648555d1719a8681bc03214e827bbae1414af27195fe7a0bcb00f4a66"
+      "expected_scenario_sha256": "514dbada809e7f64a21a053f81577e2aabae35f67598928714231384264e15a1",
+      "expected_outcome_sha256": "78c7fd4b743a7d2e673440c2033954b87368f46cdb176303122ba98dfcaeb7d0"
     },
     {
       "id": "three-vehicle",
@@ -44,8 +48,8 @@
       "all_vehicles": true,
       "expected_status": "SUCCEEDED",
       "expected_reason_code": "MISSION_COMPLETED",
-      "expected_scenario_sha256": "cdf1c5a5ab6f410d6762d885f9d2f1293a46db7a85b48f9dd1b03029ee84d47a",
-      "expected_outcome_sha256": "d4c940d1505fce3a28eb7608f1dba6ea8c709ff4c2dd48492d29a543ed63d870"
+      "expected_scenario_sha256": "f8bbc8658bfc19f518db26c2fe5ad51a33d399fd28641e53d60f84a4d0013914",
+      "expected_outcome_sha256": "6863c3cbf932ba2248995cc44148c6cd831c1078006d0da4aac679bb98c9fc96"
     }
   ]
 }

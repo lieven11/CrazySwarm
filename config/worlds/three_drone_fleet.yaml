@@ -1,0 +1,25 @@
+schema_version: 1
+scenario_id: three-drone-persistent-coverage-v1
+world:
+  world_id: three-drone-coverage-room
+  width_m: 8.0
+  depth_m: 6.0
+  height_m: 3.0
+  obstacles: []
+simulation:
+  seed: 311
+  fixed_step_s: 0.01
+  clock_mode: accelerated
+  speed: 25.0
+  battery_start_percent: 100.0
+vehicles:
+  - vehicle_id: cf01
+    display_name: Coverage One
+    position_m: {x: -1.2, y: 0.0, z: 0.0}
+  - vehicle_id: cf02
+    display_name: Coverage Two
+    position_m: {x: 1.2, y: 0.0, z: 0.0}
+  - vehicle_id: cf03
+    display_name: Coverage Reserve
+    position_m: {x: 0.0, y: -1.5, z: 0.0}
+faults: []

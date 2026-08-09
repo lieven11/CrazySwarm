@@ -50,24 +50,30 @@ def test_vehicle_inspection_and_parameter_capability(
     }
 
 
-def test_simulation_observations_are_absent_until_an_explicit_mission(
+def test_simulation_idle_snapshot_is_visible_without_mission_evidence(
     api_client: tuple[TestClient, ApplicationRuntime],
 ) -> None:
     client, _ = api_client
     state = client.get("/api/v1/state", headers=auth_headers()).json()
     before = state["vehicles"][0]
     assert state["configured_flight_volume"]["maximum_m"]["z"] == 1.0
-    assert before["telemetry"] is None
-    assert before["observation"] == {
-        "status": "NOT_STARTED",
-        "source_class": "UNAVAILABLE",
-        "run_id": None,
-        "fidelity_manifest_id": "crazyflie-6dof-v1",
-        "physical_radio_available": False,
-        "fields": {},
+    assert state["safety_policy"] == {
+        "minimum_takeoff_battery_percent": 30.0,
+        "critical_battery_percent": 10.0,
     }
+    assert before["telemetry"]["telemetry"]["position_m"] == {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+    }
+    assert before["observation"]["status"] == "NOT_STARTED"
+    assert before["observation"]["source_class"] == "SIMULATED_MODEL"
+    assert before["observation"]["run_id"] is None
+    assert before["observation"]["fidelity_manifest_id"] == "crazyflie-6dof-v2"
+    assert before["observation"]["physical_radio_available"] is False
+    assert before["observation"]["fields"]["position_m"]["source_class"] == ("SIMULATED_MODEL")
 
-    # Connecting is an internal safety action, not permission to manufacture an observation.
+    # Connecting may update idle state, but it still must not manufacture mission evidence.
     assert (
         client.post(
             "/api/v1/vehicles/sim01/connect", headers=auth_headers("truth-connect")
@@ -76,7 +82,9 @@ def test_simulation_observations_are_absent_until_an_explicit_mission(
     )
     connected = client.get("/api/v1/state", headers=auth_headers()).json()["vehicles"][0]
     assert connected["state"] == "READY"
-    assert connected["telemetry"] is None
+    assert connected["telemetry"] is not None
+    assert connected["observation"]["status"] == "NOT_STARTED"
+    assert connected["observation"]["run_id"] is None
 
 
 def test_simulation_fidelity_manifest_declares_modeled_and_omitted_outputs(

@@ -51,10 +51,7 @@ class SimulationClock:
         if self.mode is ClockMode.REALTIME and duration_s > 0.0:
             wall_now_s = time.monotonic()
             idle_reset_s = max(0.1, 5.0 * self.fixed_step_s / self.speed)
-            if (
-                self._wall_deadline_s is None
-                or wall_now_s - self._wall_deadline_s > idle_reset_s
-            ):
+            if self._wall_deadline_s is None or wall_now_s - self._wall_deadline_s > idle_reset_s:
                 self._wall_deadline_s = wall_now_s
             self._wall_deadline_s += duration_s / self.speed
             await asyncio.sleep(max(0.0, self._wall_deadline_s - time.monotonic()))

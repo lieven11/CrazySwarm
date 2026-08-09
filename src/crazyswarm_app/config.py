@@ -23,6 +23,7 @@ class AppConfig(BaseModel):
     simulation: SimulationConfig = Field(default_factory=SimulationConfig)
     api: ApiConfig = Field(default_factory=lambda: ApiConfig())
     evidence: EvidenceConfig = Field(default_factory=lambda: EvidenceConfig())
+    run_files: RunFilesConfig = Field(default_factory=lambda: RunFilesConfig())
 
 
 class ApiConfig(BaseModel):
@@ -61,6 +62,13 @@ class EvidenceConfig(BaseModel):
     database_path: Path = Path(".cache/crazyswarm/evidence.sqlite3")
     recorder_buffer_size: int = Field(default=8192, ge=256)
     retention_days: int = Field(default=30, ge=1)
+
+
+class RunFilesConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    directory: Path = Path("run-files")
+    keep_latest_missions: int = Field(default=100, ge=1)
 
 
 def load_config(path: Path) -> AppConfig:

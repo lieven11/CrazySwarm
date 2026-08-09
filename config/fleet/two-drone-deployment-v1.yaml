@@ -1,0 +1,69 @@
+schema_version: 1
+deployment_id: two-drone-foundation-v1
+
+fleet:
+  - vehicle_id: cf01
+    display_name: Coverage One
+    home: {x: -1.0, y: 0.0, z: 0.0}
+    initial_role: ACTIVE
+    required: true
+    required_capabilities: [relative_positioning, high_level_commands]
+  - vehicle_id: cf02
+    display_name: Coverage Two
+    home: {x: 1.0, y: 0.0, z: 0.0}
+    initial_role: ACTIVE
+    required: true
+    required_capabilities: [relative_positioning, high_level_commands]
+
+zones:
+  - zone_id: zone-a
+    geometry:
+      minimum_m: {x: -1.2, y: -0.2, z: 0.0}
+      maximum_m: {x: -0.8, y: 0.2, z: 0.5}
+  - zone_id: zone-b
+    geometry:
+      minimum_m: {x: 0.8, y: -0.2, z: 0.0}
+      maximum_m: {x: 1.2, y: 0.2, z: 0.5}
+
+tasks:
+  - task_id: inspect-a
+    task_type: inspect-zone
+    zone_id: zone-a
+    priority: 100
+    mission_id: hover
+    mission_parameters:
+      height_m: 0.2
+      duration_s: 0.5
+      takeoff_duration_s: 2.0
+      landing_duration_s: 2.0
+    required_capabilities: [relative_positioning, high_level_commands]
+    completion_progress_percent: 100.0
+    estimated_duration_s: 4.5
+    estimated_energy_percent: 2.0
+    energy_margin_percent: 10.0
+  - task_id: inspect-b
+    task_type: inspect-zone
+    zone_id: zone-b
+    priority: 100
+    mission_id: hover
+    mission_parameters:
+      height_m: 0.2
+      duration_s: 0.5
+      takeoff_duration_s: 2.0
+      landing_duration_s: 2.0
+    required_capabilities: [relative_positioning, high_level_commands]
+    completion_progress_percent: 100.0
+    estimated_duration_s: 4.5
+    estimated_energy_percent: 2.0
+    energy_margin_percent: 10.0
+
+constraints:
+  warning_separation_m: 0.75
+  critical_separation_m: 0.5
+  observation_freshness_s: 1.0
+  child_failure_policy: CONTINUE_HEALTHY
+
+docks: []
+completion_policy:
+  require_all_tasks: true
+  allow_partial_fleet: false

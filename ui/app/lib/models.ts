@@ -9,6 +9,8 @@ export type EvidenceClass =
   | "UNAVAILABLE";
 export type Freshness = "current" | "stale" | "invalid" | "absent";
 export type Health = "HEALTHY" | "DEGRADED" | "FAILED" | "UNKNOWN";
+export type BackendRole = "FAST_SIM" | "ISAAC_SIM" | "REAL_CRAZYFLIE" | "REPLAY" | "TWIN_OBSERVER";
+export type AuthorityClass = "SIMULATION" | "PHYSICAL" | "OBSERVATION_ONLY";
 
 export interface Vec3 {
   x: number;
@@ -26,6 +28,8 @@ export interface Provenance {
   replayTimeS?: number;
   sourceClockId?: string;
   sourceClockEpoch?: number;
+  sequence?: number;
+  correlationId?: string;
   ageMs?: number;
   unit: string;
   frame: "world" | "home" | "body" | "sensor";
@@ -104,11 +108,13 @@ export interface TelemetryView {
 export interface VehicleView {
   id: string;
   name: string;
-  adapter: "sim" | "cflib" | "replay";
+  adapter: string;
+  backendRole: BackendRole;
+  authorityClass: AuthorityClass;
   selected: boolean;
   state: string;
   commandAuthority: boolean;
-  observationStatus: "NOT_STARTED" | "ACTIVE" | "COMPLETED_SNAPSHOT" | "UNAVAILABLE";
+  observationStatus: "NOT_STARTED" | "ACTIVE" | "CURRENT" | "STALE" | "COMPLETED_SNAPSHOT" | "UNAVAILABLE";
   observationClass: EvidenceClass;
   observationRunId?: string;
   telemetry?: TelemetryView;
@@ -196,9 +202,135 @@ export interface MissionOption {
   sourceKind: "UPLOADED_PYTHON";
   sourceFilename: string;
   sourceSha256: string;
+  packageSchemaVersion: 1 | 2;
+  logicalRoles: Array<{
+    roleId: string;
+    logicalVehicleId: string;
+    initialRole: "ACTIVE" | "RESERVE";
+  }>;
   plannedCommands: Array<{
     action: "takeoff" | "hover" | "move_relative" | "land";
     arguments: Record<string, number | string>;
+  }>;
+}
+
+export type CampaignLifecycle = "DEFINED_NOT_RUN" | "READY" | "ACTIVE_DEVELOPMENT" | "BASELINED" | "PROMOTED" | "BLOCKED";
+
+export interface CampaignCaseView {
+  case_id: string;
+  case_sha256: string;
+  cluster: "BASIC_FLIGHT_AND_ROUTE_FOLLOWING" | "GEOMETRIC_CONFLICT_RESOLUTION" | "CONSTRAINTS_AND_OPTIMIZATION" | "COORDINATION_AND_ALLOCATION" | "FAILURE_RECOVERY_AND_REPLANNING";
+  family: string;
+  variation_name: string;
+  purpose: string;
+  behavior_under_test: string;
+  expected_outcome: string;
+  drone_count: 1 | 2 | 3;
+  environment: "SIMULATION" | "REAL";
+  authorization: "SOFTWARE_SIMULATION_ONLY" | "NOT_AUTHORIZED";
+  implementation_status: "EXECUTABLE" | "PLANNED_NOT_EXECUTABLE";
+  lifecycle: CampaignLifecycle;
+  allowed_strategies: string[];
+  objective_order: string[];
+  expected_decisions: string[];
+  execution_eligibility: "STATIC_VALIDATE_ONLY" | "AUTOMATED_ACCELERATED" | "OPERATOR_OBSERVED_REALTIME" | "BOTH";
+  operator_observation_questions: string[];
+  difficulty: number;
+  prerequisites: string[];
+  execution: {
+    seed: number;
+    repetitions: number;
+    backend_profile_id: string;
+    configuration_sha256: string;
+  };
+}
+
+export interface CampaignCatalogView {
+  cases: CampaignCaseView[];
+  hierarchy: Record<string, Record<string, Record<string, Record<string, string[]>>>>;
+}
+
+export interface CampaignWorkspaceView {
+  active_case_id?: string;
+  locked_inputs?: {
+    case_sha256: string;
+    seed: number;
+    backend_profile_id: string;
+    configuration_sha256: string;
+    planner_implementation_id: string;
+    planner_implementation_version: string;
+    planner_settings_sha256: string;
+    comparison_baseline_sha256?: string;
+  };
+  reviews: Array<{
+    review_id: string;
+    run_id: string;
+    case_id: string;
+    status: string;
+    operator_questions: string[];
+    operator_observations: string[];
+    approval?: { decision: "APPROVE" | "REJECT" | "NEEDS_RERUN" };
+    analysis: {
+      mission_outcome: string;
+      minimum_truth_separation_m?: number;
+      primary_cause: { stage: string; confidence: number; reason: string };
+    };
+  }>;
+}
+
+export interface MissionPreview {
+  missionId: string;
+  sourceSha256: string;
+  plan: {
+    id: string;
+    sha256: string;
+    safetyCaseSha256: string;
+    status: "APPROVED" | "REQUIRES_CONFIRMATION" | "BLOCKED";
+    objective: string;
+    plugins: Array<{
+      id: string;
+      kind: "ROUTE_PLANNER" | "FLEET_POLICY" | "RECOVERY_STRATEGY";
+      version: string;
+      capabilities: string[];
+      manifestSha256: string;
+    }>;
+    phases: Array<{
+      id: string;
+      objective: string;
+      roleIds: string[];
+      maximumDurationS: number;
+    }>;
+    routes: Array<{
+      roleId: string;
+      status: "READY" | "BLOCKED";
+      durationS: number;
+      energyPercent: number;
+      lengthM: number;
+      waypointCount: number;
+      findings: string[];
+    }>;
+    findings: Array<{
+      code: string;
+      severity: "INFO" | "WARNING" | "BLOCKER";
+      message: string;
+      roleId?: string;
+      requiresConfirmation: boolean;
+    }>;
+  };
+  vehicles: Array<{
+    roleId: string;
+    vehicleId: string;
+    displayName: string;
+    initialRole: "ACTIVE" | "RESERVE";
+    home: Vec3;
+    start: Vec3;
+    batteryPercent?: number;
+    minimumBatteryPercent?: number;
+    existingVehicle: boolean;
+    backendRole?: BackendRole;
+    vehicleState?: string;
+    previewFidelity: "EXACT_ROLE" | "STATIC_BOUNDS";
+    plannedCommands: MissionOption["plannedCommands"];
   }>;
 }
 
@@ -209,6 +341,7 @@ export interface MissionRunView {
   phase: string;
   status: "RUNNING" | "SUCCEEDED" | "ABORTED" | "FAILED";
   parameters: Record<string, number | string | boolean>;
+  resultReasonCode?: string;
   resultMessage?: string;
 }
 
@@ -219,6 +352,33 @@ export interface RunHistoryView {
   status: "SUCCEEDED" | "ABORTED" | "FAILED" | "INCOMPLETE";
   configurationHash: string;
   startedAtUtc: string;
+  telemetryCsv?: RunArtifactView;
+}
+
+export interface RunArtifactView {
+  kind: "TELEMETRY_CSV";
+  filename: string;
+  mediaType: "text/csv";
+  schemaVersion: "run-telemetry-v1";
+  downloadUrl: string;
+  available: boolean;
+  unavailableReason?: string;
+  rowCount: number;
+}
+
+export interface RunFileMissionView {
+  missionExecutionId: string;
+  missionId: string;
+  missionName: string;
+  status: "SUCCEEDED" | "ABORTED" | "FAILED" | "INCOMPLETE";
+  startedAtUtc: string;
+  completedAtUtc?: string;
+  telemetryRowCount: number;
+  filename?: string;
+  downloadUrl?: string;
+  available: boolean;
+  sizeBytes?: number;
+  sha256?: string;
 }
 
 export interface ReplayView {
@@ -240,6 +400,77 @@ export interface FidelityManifest {
   limitations: string[];
 }
 
+export interface FleetVehicleLifecycleView {
+  id: string;
+  home?: Vec3;
+  registration: "DECLARED" | "DISCOVERED" | "IDENTITY_BOUND" | "VERIFIED";
+  connection: "DISCONNECTED" | "CONNECTING" | "READY" | "FAULT";
+  missionRole: "UNASSIGNED" | "ACTIVE" | "RESERVE" | "HANDOVER" | "RETURNING" | "DOCKED" | "CHARGING";
+  observation: "NOT_OBSERVED" | "CURRENT" | "STALE" | "COMPLETED_SNAPSHOT";
+  preflightApproved: boolean;
+  readinessSamples: number;
+  readinessReason: string;
+  faultReason?: string;
+}
+
+export interface FleetTaskView {
+  id: string;
+  zoneId: string;
+  priority: number;
+  state: "DECLARED" | "ASSIGNED" | "IN_PROGRESS" | "PAUSED" | "RETRY_PENDING" | "COMPLETED" | "ABORTED";
+  ownerVehicleId?: string;
+  progressPercent: number;
+  leaseGeneration: number;
+}
+
+export interface FleetHandoverView {
+  id: string;
+  taskId: string;
+  outgoingVehicleId: string;
+  incomingVehicleId?: string;
+  phase: string;
+  incomingLeaseGeneration?: number;
+  takeoverConfirmed: boolean;
+  reason: string;
+  releaseReason?: string;
+}
+
+export interface FleetDockView {
+  id: string;
+  health: string;
+  reservations: Array<{
+    vehicleId: string;
+    state: string;
+    modeledChargingConfirmed: boolean;
+    terminalReason?: string;
+  }>;
+}
+
+export interface FleetSessionView {
+  id: string;
+  deploymentId: string;
+  missionId?: string;
+  backend: "FAST_SIM" | "MOCK_ISAAC" | "ISAAC" | "CRAZYFLIE";
+  status: "DECLARED" | "PREPARING" | "OBSERVING" | "READY" | "FAULT" | "CLOSED";
+  runId?: string;
+  runStatus: string;
+  resultReasonCode?: string;
+  resultMessage?: string;
+  vehicles: FleetVehicleLifecycleView[];
+  tasks: FleetTaskView[];
+  vehicleStates: Record<string, string>;
+  handovers: FleetHandoverView[];
+  docks: FleetDockView[];
+  minimumSeparationM?: number;
+  warningViolations: number;
+  criticalViolations: number;
+  authorityTransitionCount: number;
+  warningSeparationM: number;
+  criticalSeparationM: number;
+  missionDerived: boolean;
+  createdAtMonotonicS: number;
+}
+
 export interface DashboardModel {
   mode?: OperatingMode;
   apiConnected: boolean;
@@ -251,5 +482,10 @@ export interface DashboardModel {
   latestRun?: MissionRunView;
   fidelity?: FidelityManifest;
   twins: TwinSessionView[];
+  fleetSessions: FleetSessionView[];
+  safetyPolicy?: {
+    minimumTakeoffBatteryPercent: number;
+    criticalBatteryPercent: number;
+  };
   fault?: { code: string; message: string };
 }

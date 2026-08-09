@@ -1,0 +1,799 @@
+ARCHIVED_NON_AUTHORITATIVE_SNAPSHOT: 2026-08-07
+CURRENT_ACTIVE_LEDGER: docs/work-packages/ACTIVE.md
+
+# CrazySwarm active software work packet
+
+| Field | Value |
+|---|---|
+| Document status | `EXECUTABLE_GATES_GREEN_BASELINE_COMMIT_PENDING_WP09_IN_PROGRESS` |
+| Planning authority | Active half of the two-document master work-packet set |
+| Completed history | [`COMPLETED_SOFTWARE_WP.md`](COMPLETED_SOFTWARE_WP.md) |
+| Reopened scopes | `ACTIVE-WP-01`, `ACTIVE-WP-02`, `ACTIVE-WP-04` |
+| Completed scopes moved out | `ACTIVE-WP-03`, `ACTIVE-WP-05` through `ACTIVE-WP-08` |
+| Newly planned scopes | `ACTIVE-CLOSEOUT-WP-00`, `FAST-SIM-PHYS-WP`, `ACTIVE-WP-09`, `ACTIVE-WP-10` |
+| Default backend | `FAST_SIM` |
+| Physical flight authorized | No |
+| Digital twin enabled | No |
+| Last reconciled | 2026-08-07 |
+
+## Planning status and authorization
+
+The reopened software integration is implemented and has broad functional test
+coverage, but the current dirty working tree must be revalidated before WP-01,
+WP-02, and WP-04 move to completed history. The previously recorded closeout is
+historical evidence; it is not a substitute for validating the current tree.
+
+On 2026-08-07 the user accepted the next-work order for packet definition:
+
+1. stabilize and freeze the current software baseline;
+2. close the software-only Fast Sim physical-model-v2 qualification;
+3. integrate the primary three-drone persistent-coverage mission end to end; and
+4. add crossing-route separation and leader-follower/leader-loss missions.
+
+This records scope and order. No item is marked complete merely because its
+requirements are now written.
+
+No physical Crazyflie, radio, propeller/motor action, live Isaac installation,
+NVIDIA-host mutation, or digital-twin claim is authorized by this packet.
+
+## Why WP-01, WP-02, and WP-04 were partially reopened
+
+The backend fleet capabilities were implemented and qualified, but the normal
+uploaded-mission path and the fleet operator path were separate when this scope
+was reopened. The implementation closeout below records their later unification;
+current-tree revalidation is the remaining closeout gate.
+
+The default dashboard starts Fast Sim from `config/worlds/one_drone.yaml`, which
+declares `sim01`. The visible fleet control submits a fixed two-drone deployment
+containing `cf01` and `cf02`. Fleet preparation correctly fails closed because
+the discovered runtime fleet does not match the declared identities. This is an
+integration/provisioning defect, not a reason to weaken identity verification.
+
+The current UI also requires a separate `Declare two-drone fleet` workflow while
+the normal Play button starts one uploaded mission on one selected vehicle. The
+desired product behavior is one mission-driven path:
+
+```text
+upload/select Python mission
+-> press the existing Play button
+-> derive the logical deployment from the immutable mission artifact
+-> provision Fast Sim vehicles or verify backend bindings
+-> show real preparation states for every required vehicle
+-> start only after current telemetry and approved preflight
+-> execute one or many child missions through the existing safety/fleet layers
+```
+
+There must be no normal-operator switch or button for “single drone” versus
+“multi-drone.” Fleet size and roles come from the uploaded mission artifact.
+
+## Completed baseline that must be preserved
+
+The following qualified work remains valid and is not being discarded:
+
+- Versioned mission, deployment, binding, and fleet-session artifacts with
+  deterministic SHA-256 identity.
+- Explicit declared/discovered/bound/verified, connection, observation,
+  preflight, and mission-role state axes.
+- Fail-closed missing, duplicate, unexpected, and cross-bound identity behavior.
+- A fleet coordinator above `MissionRunner`, independent child runs, immutable
+  command routing, individual abort, sequential launch, and active separation.
+- Fast Sim/mock-Isaac normalized two-drone parity:
+  `edf5ae87654847cdefd8d32576ccd64dd46c8e90f432602c88f99d2fb3f5ba0a`.
+- Persistent three-drone software qualification:
+  `3f044174fdbaadb3c318ad4ac4fa3f85ac7fb065e9c723617c3f4e82e09feee2`.
+- The historical 392-test Python and 49-test UI baseline recorded at the previous
+  closeout; the current reviewed tree now passes the larger gate recorded below.
+
+Active WP-03 and Active WP-05 through Active WP-08 are not reopened. Their
+completed software scope is now recorded in
+[`COMPLETED_SOFTWARE_WP.md`](COMPLETED_SOFTWARE_WP.md). Changes in this packet
+must run their regression suites but must not redesign their task, handover,
+dock, metric, qualification, or gateway algorithms without a new decision.
+
+## Development Guide alignment
+
+This reopening implements the guide’s existing architecture rather than adding a
+new product mode:
+
+- Mission, fleet manager, vehicle adapter, supervisor, and ground station remain
+  separate layers.
+- The exact uploaded mission artifact and SHA-256 reach each backend without
+  UI-authored mission changes.
+- Fast Sim remains the deterministic backend and provisions virtual vehicles from
+  a versioned logical deployment.
+- Real hardware discovery remains explicit and cannot bind the first aircraft
+  found automatically.
+- Every vehicle is displayed and monitored independently, including battery,
+  readiness, mission state, fault state, and separation.
+- Browser code displays state and requests intent; it never runs fleet allocation,
+  a flight-control loop, or safety policy.
+
+## Target architecture
+
+```text
+immutable uploaded Python
+        |
+        v
+MissionPackage v1/v2 parser
+        |
+        v
+logical DeploymentPlanner
+        |
+        v
+BackendVehicleProvider
+  |          |             |
+  |          |             +-> real: verify pre-approved physical bindings
+  |          +----------------> Isaac/mock: create or verify namespaces
+  +---------------------------> Fast Sim: create session-scoped virtual vehicles
+        |
+        v
+FleetPreparation
+DECLARE -> DISCOVER/BACKEND INIT -> VERIFY -> CONNECT -> OBSERVE -> PREFLIGHT
+        |
+        v
+ExecutionCoordinator
+  |-- one required role  -> MissionRunner
+  +-- multiple roles     -> FleetCoordinator -> MissionRunner per role
+```
+
+The Python file declares logical mission intent. It never constructs
+`FastSimVehicle`, `IsaacSimVehicle`, `CrazyflieVehicle`, a radio URI, an Isaac
+prim, a namespace, or simulator parameters.
+
+The world/environment supplies room geometry, obstacles, simulation model, seed,
+clock, and fault overlay. It does not fix the number of mission vehicles. The
+mission package supplies logical roles, required capabilities, homes, tasks, and
+optional reserve roles. The backend provider resolves those logical requirements.
+
+## Dependency and execution order
+
+```text
+ACTIVE-WP-01 mission/deployment contract and backend provisioning
+        |
+        +----------------------+
+        |                      |
+        v                      v
+ACTIVE-WP-02 startup/UI   ACTIVE-WP-04 unified execution coordinator
+        |                      |
+        +-----------+----------+
+                    v
+        one/two/three-drone regression and qualification
+```
+
+Do not remove the normal fleet panel or change the uploaded mission language
+until the replacement contracts and API path have passing tests.
+
+## ACTIVE-WP-01 — Mission-derived deployment and backend provisioning
+
+**Development Guide alignment:** System architecture, Simulation S1/S4, Stages
+4–6.
+
+### Outcome
+
+One immutable uploaded Python artifact declares whether the mission needs one,
+two, or three logical vehicles. A backend-neutral planner creates a deterministic
+deployment, and a backend provider either provisions matching virtual vehicles or
+verifies explicitly approved physical bindings.
+
+Existing `async def mission(drone)` artifacts remain valid one-drone missions.
+A versioned mission-package extension adds logical roles without putting backend
+identifiers in mission code.
+
+### Draft mission-package direction
+
+The syntax is frozen and tested in
+[`docs/MISSION_PACKAGE_V2.md`](../docs/MISSION_PACKAGE_V2.md). It is a statically
+validated literal declaration plus bounded mission behavior:
+
+```python
+MISSION = {
+    "schema_version": 2,
+    "roles": {
+        "zone_a": {
+            "logical_vehicle_id": "drone-a",
+            "home_m": [-1.0, 0.0, 0.0],
+        },
+        "zone_b": {
+            "logical_vehicle_id": "drone-b",
+            "home_m": [1.0, 0.0, 0.0],
+        },
+    },
+}
+
+async def mission(drone):
+    # Executed once for each assigned role through the restricted mission worker.
+    ...
+```
+
+The parser may expose an immutable role/task context, but it must retain the
+current source, syntax, command, observation, duration, and process-isolation
+budgets. Direct imports, adapter access, filesystem, network, shell, reflection,
+and unbounded control flow remain forbidden.
+
+### Reopened tasks
+
+- [ ] Define and freeze `MissionPackage` schema v2 for logical roles, stable
+      logical IDs, homes, capabilities, tasks, zones, and optional reserve roles.
+- [ ] Preserve all existing v1 `async def mission(drone)` files as implicit
+      one-role packages with unchanged source hashes and normalized intent.
+- [ ] Define an explicit migration/compatibility policy for v1 and v2 artifacts.
+- [ ] Keep backend identifiers, simulator model parameters, fault schedules,
+      radio URIs, Isaac namespaces, and physical serial/address data outside the
+      mission package.
+- [ ] Separate environment/world configuration from mission vehicle count and
+      deployment.
+- [ ] Add a deterministic `DeploymentPlanner` that derives the same logical
+      deployment and hashes for equivalent Fast Sim, mock-Isaac, and real-fake
+      inputs.
+- [ ] Add a `BackendVehicleProvider` contract with session-scoped provision,
+      discovery/verification, telemetry attachment, and cleanup behavior.
+- [ ] Make Fast Sim create exactly the required session vehicles from the shared
+      vehicle model and mission-derived deployment without restarting the server.
+- [ ] Make mock Isaac create/verify one namespace per logical vehicle without
+      changing mission meaning.
+- [ ] Require a pre-approved binding profile for real adapters; never choose the
+      first discovered aircraft or silently substitute a missing vehicle.
+- [ ] Replace the generic identity toast with structured missing, unexpected,
+      duplicate, and binding-mismatch details while retaining fail-closed behavior.
+- [ ] Bind mission-package, deployment, binding, model/world, run, role, task, and
+      vehicle identities to commands, observations, results, evidence, and replay.
+
+### Acceptance
+
+- [ ] Uploading an existing v1 move/return mission provisions exactly one logical
+      Fast Sim vehicle and produces its existing normalized intent.
+- [ ] Uploading a v2 two-role mission provisions exactly two logical Fast Sim
+      vehicles without a CLI scenario switch or fleet button.
+- [ ] Logical vehicle IDs, mission SHA, and deployment SHA remain identical across
+      Fast Sim, mock Isaac, and fake-real planning under equivalent inputs.
+- [ ] The default one-drone environment no longer conflicts with a mission-derived
+      two-drone deployment.
+- [ ] An absent or wrong physical identity prevents readiness and reports the
+      exact mismatch without automatic rebinding.
+- [ ] No mission or fleet module imports a concrete simulator, Isaac, ROS, radio,
+      or Crazyflie transport type.
+
+## ACTIVE-WP-02 — One-click preparation with visible real lifecycle states
+
+**Development Guide alignment:** Ground station, Simulation S4, Stage 0 control
+chain, Stage 2 state supervision, Stage 5 multi-vehicle display.
+
+### Outcome
+
+The existing mission Play button launches one backend-owned preparation and run
+workflow for any declared fleet size. There is no separate multi-drone mode or
+normal-operator fleet setup panel.
+
+Preparation is automatic but not hidden. The application shows actual recorded
+states for every required logical vehicle and does not arm until identity,
+connection, telemetry, and preflight policies pass.
+
+### Canonical startup
+
+```text
+1. Validate the immutable uploaded mission package.
+2. Derive and hash the logical deployment.
+3. Display DECLARED / NOT_OBSERVED placeholders for every required role.
+4. Initialize Fast Sim, initialize/load Isaac, or discover approved real devices.
+5. Bind and verify every required logical identity.
+6. Connect every required vehicle explicitly.
+7. Observe enough fresh telemetry to satisfy a source-aware readiness window.
+8. Run per-vehicle and fleet preflight.
+9. Claim command authority.
+10. Arm active roles sequentially; keep reserve roles ready and disarmed.
+11. Execute while displaying every member independently.
+12. Land/disarm, preserve terminal snapshots, and apply explicit disconnect policy.
+```
+
+No artificial backend delay may be introduced merely to make the animation
+visible. The observation window must be a meaningful readiness rule—such as a
+configured number/duration of fresh identity-correct telemetry samples with valid
+localization, battery, and required capabilities. The UI may retain completed
+events long enough to read them without changing operational timestamps.
+
+### Reopened tasks
+
+- [ ] Replace the separate single-mission and fleet-start UI paths with one
+      mission-package start request from the existing Play button.
+- [ ] Remove `vehicle_id` and UI-authored fleet assignments from the normal
+      uploaded-mission start contract; resolve roles in production planning code.
+- [ ] Keep explicit backend choice only where a backend is genuinely available;
+      do not add a single/multi-drone choice.
+- [ ] Expose a server-owned execution-session view before a `MissionRun` or child
+      run begins.
+- [ ] Add a source-aware telemetry stabilization/readiness window and record why
+      each vehicle is waiting, ready, stale, or failed.
+- [ ] Display compact per-vehicle startup progress using actual preparation events:
+      declared, backend initialized/discovered, verified, connected, observed,
+      preflight-approved, ready, starting, and terminal.
+- [ ] Remove the normal `Declare two-drone fleet` panel after the unified path is
+      passing; retain qualification, replay, and expert controls in the engineering
+      area or evidence views.
+- [ ] Preserve the current simple single-drone layout when a mission declares one
+      role.
+- [ ] When more than one role exists, add only an automatic compact member summary
+      showing logical ID/role, lifecycle/mission state, battery, and fault status.
+- [ ] Allow selecting a member for the existing detailed telemetry without making
+      manual selection part of mission allocation.
+- [ ] Track planned and observed paths per vehicle in the 3D room; continue
+      rendering all current member observations with truthful provenance.
+- [ ] Preserve whole-run Abort and land; place individual-member abort/land in the
+      expanded member or engineering controls without adding a fleet mode.
+- [ ] Reconstruct preparation, authority, member telemetry, and run state after a
+      browser reload without changing server-owned state.
+- [ ] Preserve `NOT_OBSERVED`, `CURRENT`, `STALE`, `COMPLETED_SNAPSHOT`, and
+      unavailable values without invented telemetry.
+
+### Acceptance
+
+- [ ] The normal screen has one upload/select/Play workflow and no multi-drone
+      enable, declare, connect, observe, preflight, or start buttons.
+- [ ] A one-drone mission looks and behaves like the current simple simulator.
+- [ ] A two-drone mission automatically displays both drones and both battery
+      states before and during execution.
+- [ ] Every required vehicle visibly progresses through real preparation states;
+      no active role arms before current telemetry and approved preflight.
+- [ ] A reserve role remains connected, observed, ready, and disarmed.
+- [ ] Browser reload during preparation or execution preserves the same session,
+      authority, identities, telemetry sources, and safety state.
+- [ ] A failed member shows a specific blocking reason and cannot become plausible
+      ready/armed/flying telemetry.
+
+## ACTIVE-WP-04 — Unified one/multi-vehicle execution coordinator
+
+**Development Guide alignment:** Simulation S4, Stage 5, and the integration
+boundary to completed Stages 4, 6, 7, and 8 software capabilities.
+
+### Outcome
+
+One `ExecutionCoordinator` owns the operator request from preparation through
+terminal result. It uses `MissionRunner` for every per-vehicle behavior and the
+existing `FleetCoordinator` whenever multiple roles, shared tasks, separation,
+reserve, or handover semantics are required.
+
+Fleet decisions stay in production mission/fleet software. Fast Sim, Isaac, and
+real adapters provide motion, battery, observations, acknowledgements, and
+backend lifecycle only.
+
+### Reopened tasks
+
+- [ ] Add a backend-neutral `ExecutionCoordinator` façade for mission-package
+      validation, deployment planning, provisioning, preparation, execution,
+      cancellation, cleanup, evidence, and terminal status.
+- [ ] Route an implicit one-role v1 package through the same preparation contract
+      while preserving the existing `MissionRunner` behavior and results.
+- [ ] Route multiple roles through the existing `FleetCoordinator`, with one
+      supervised `MissionRunner` child per current task owner.
+- [ ] Execute bounded uploaded mission behavior once per assigned logical role and
+      expose only immutable role/task context to mission code.
+- [ ] Move assignment creation out of UI array ordering and into the deterministic
+      production allocator/planner.
+- [ ] Support session-scoped vehicle registration, telemetry consumers, authority,
+      run bindings, and bounded cleanup without leaking tasks or subscriptions.
+- [ ] Retain sequential launch, per-pair warning/critical separation, stale-member
+      policy, individual abort, and explicit peer continue/hold/land policy.
+- [ ] Preserve whole-run cancel/abort semantics separately from individual-member
+      abort and never implicitly command a healthy peer.
+- [ ] Allow a mission package with a reserve role to use the completed WP-05
+      allocator/handover logic without reimplementing it in mission Python or the
+      simulator.
+- [ ] Produce one top-level execution result with per-member child results, task
+      ownership/progress, minimum separation, preparation evidence, and explicit
+      succeeded/degraded/aborted/failed status.
+- [ ] Preserve command-free replay and exact identity/provenance through the
+      unified operator path.
+- [ ] Retain Fast Sim fallback and explicit results when an Isaac/mock gateway or
+      one member becomes unavailable.
+
+### Acceptance
+
+- [ ] The same start endpoint and Play button run existing one-drone, uploaded
+      two-drone, and uploaded three-role/reserve mission packages.
+- [ ] Two mission-derived vehicles complete independent role behavior with no ID,
+      command, observation, task, or authority crossing.
+- [ ] Launch remains sequential and separation intervention remains active for
+      every applicable pair.
+- [ ] One member can abort or fail while the configured policy controls what the
+      healthy peer does.
+- [ ] A three-role mission can keep one member connected/observed/disarmed in
+      reserve and use the completed atomic-handover implementation.
+- [ ] Shutdown leaves zero mission tasks, fleet tasks, telemetry tasks,
+      subscriptions, task leases, temporary workers, and session-created vehicles.
+
+## Required validation matrix
+
+| Case | Required result |
+|---|---|
+| Existing v1 move/return upload | One logical vehicle; unchanged source hash, intent, safety, evidence, and simple UI |
+| v2 two-role independent mission | Two vehicles provision automatically; both visible with battery/state; sequential launch; no crossed identity |
+| v2 two-role separation fault | Warning/critical policy intervenes before unsafe continuation |
+| v2 three-role persistent mission | Two active plus one connected/observed/disarmed reserve; completed WP-05 handover remains valid |
+| Default world plus two-role mission | World geometry/model retained; fleet derived from mission; no `sim01` versus `cf01/cf02` mismatch |
+| Missing/wrong/duplicate binding | Start blocked with structured identity evidence; no silent substitution |
+| Browser reload during preparation/run | Server session, authority, progress, and observations preserved |
+| Fast Sim versus mock Isaac | Same mission/deployment identity and equivalent normalized intent/outcome under equivalent observations |
+| Fake-real adapter | Same semantic preparation order; exact pre-approved identity required; no physical claim |
+| Cancellation/shutdown/load | Explicit terminal result and zero leaked tasks, workers, leases, subscriptions, queues, or session vehicles |
+
+The qualification must include focused contract/API/UI tests, the full Python and
+UI regression baseline, clean-process deterministic repetitions, OpenAPI/client
+regeneration, a production UI build, rendered-page checks, and the existing
+three-vehicle load budget.
+
+## Implementation closeout submitted for user review
+
+- [x] Mission package v2 is frozen in
+      [`docs/MISSION_PACKAGE_V2.md`](../docs/MISSION_PACKAGE_V2.md); v1 source
+      hashes and direct `MissionRunner` behavior remain compatible.
+- [x] Mission planning now derives one, two, or three logical vehicles, roles,
+      zones, tasks, homes, capabilities, energy estimates, assignments, and a
+      deterministic backend-neutral deployment.
+- [x] Fast Sim and mock Isaac provision session vehicles from that deployment;
+      physical planning requires an exact operator-approved binding profile.
+- [x] The uploaded-mission start body no longer requires a UI-selected vehicle;
+      the old optional field is accepted only for v1 client compatibility.
+- [x] The existing Play button owns validation, deployment, provisioning,
+      identity verification, connection, telemetry readiness, preflight,
+      execution, cancellation, safe disconnect, and cleanup.
+- [x] The separate normal fleet setup/start panel is removed. Multi-role missions
+      automatically show a passive compact member summary with logical role,
+      lifecycle/readiness, battery, backend, allocation, and separation policy.
+- [x] The same restricted mission source runs once per active role with immutable
+      `drone.role`; reserve roles remain connected/observed/preflight-approved and
+      disarmed.
+- [x] One-role packages use `MissionRunner`; multi-role packages use the existing
+      `FleetCoordinator`, deterministic production assignments, independent child
+      runs, verified namespaces, sequential launch, and separation enforcement.
+- [x] The top-level execution record contains mission/deployment/binding identity,
+      preparation evidence, per-member/fleet results, terminal reason, and status.
+- [x] Browser reload reconstructs the active execution from server state; observed
+      paths are retained independently per vehicle and member selection changes
+      telemetry focus only, never allocation.
+- [x] Focused Fast Sim, mock-Isaac, fake-real planning, two-role, three-role
+      reserve, backend-routing, shutdown-cleanup, parser, API, and UI tests pass.
+- [x] Revalidate the current tree. The 2026-08-07 closeout passes 437 Python tests
+      with one truthful live-Isaac skip, Ruff, strict MyPy over 156 source files,
+      canonical clean-process repetitions, four release-artifact tests, fleet
+      foundation/persistent/load qualification, and `git diff --check`. The pinned
+      Node 24.14.0/npm 11.9.0 UI gate passes lint, typecheck, 66 unit tests, production
+      build, 3 rendered-HTML tests, identical regenerated OpenAPI/client output, and
+      a zero-vulnerability npm audit.
+
+The detailed unchecked items above are retained as the user-approved planning
+record. This closeout is the implemented mapping submitted for acceptance; after
+review, WP-01, WP-02, and WP-04 can be moved to completed history without losing
+the original rationale or acceptance matrix.
+
+## Authorized next software sequence
+
+The next scopes are ordered and gated as follows:
+
+```text
+ACTIVE-CLOSEOUT-WP-00 clean current baseline
+        |
+        v
+FAST-SIM-PHYS-WP software-only v2 release
+        |
+        v
+ACTIVE-WP-09 end-to-end persistent coverage
+        |
+        v
+ACTIVE-WP-10 crossing-route and leader-loss missions
+        |
+        v
+NVIDIA-ISAAC-WP-01 host qualification and bounded minimal live path
+```
+
+NVIDIA read-only compatibility diagnostics may be prepared in parallel, but a
+large runtime installation, host mutation, or live-scene claim remains subject to
+the separate NVIDIA permissions and gates below.
+
+## Mission-relevance ladder and current implementation state
+
+Fast Sim mission development follows one product-directed ladder. Do not add unrelated
+manipulation, dense-formation, or decorative scenarios ahead of these gates.
+
+| Step | Mission capability | Work-packet owner | Current state | Exit evidence |
+|---|---|---|---|---|
+| 1 | Single-drone motion, sensing, abort, emergency and low-battery recovery | Completed software history | `IMPLEMENTED` | Existing mission/safety regression and canonical scenarios |
+| 2 | Two independently commanded drones through normal Play | Completed ACTIVE-WP-01/02/04 implementation | `IMPLEMENTED` | `two_role_move.py`, identity isolation, sequential launch and cleanup tests |
+| 3 | Two active coverage roles plus one connected/observed/ready/disarmed reserve | ACTIVE-WP-09 entry | `IMPLEMENTED` | `persistent_coverage_rotation.py` and three-member preparation tests |
+| 4 | Telemetry-triggered reserve launch, confirmed takeover, atomic generation transfer, outgoing return/land and simulated dock/charge | ACTIVE-WP-09 core | `IN_PROGRESS_AUTHORITY_GUARD_IMPLEMENTED` | Actual Fast Sim commands and current telemetry through normal Play |
+| 5 | Crossing routes with active separation intervention | ACTIVE-WP-10A | `PLANNED_AFTER_WP09` | Critical crossing cannot continue without bounded intervention |
+| 6 | Wide leader-follower with deterministic leader-loss hold/land policy | ACTIVE-WP-10B | `PLANNED_AFTER_WP09` | Bounded tracking error and no stale leader authority |
+| 7 | Combined mission-level fault and recovery matrix, then transfer of proven semantics | ACTIVE-WP-09/10 qualification plus external gates | `PARTIAL_SOFTWARE_COMPONENTS_ONLY` | Low battery, stale telemetry, command loss, reserve loss, localization loss and unsafe separation; Isaac/physical remain separately gated |
+
+The next executable unit is step 4. Its first dependency is a guarded authority
+transition for a running fleet child: outgoing active generation 1, reserve staging,
+incoming active generation 2, and outgoing return authority must be distinguishable.
+Old, duplicate, skipped, cross-task, and cross-run commands must continue to fail closed.
+
+## ACTIVE-CLOSEOUT-WP-00 — Stabilize and freeze the current baseline
+
+**Priority:** P0 release prerequisite
+**Status:** Executable gates green; intentional mixed-tree baseline commit pending
+
+### Outcome
+
+The mission-derived one/two/three-vehicle execution work is represented by a clean,
+reviewable repository state with no unresolved test, type, lint, generated-client,
+documentation, or UI verification discrepancy.
+
+### Requirements
+
+- [x] Fix the current strict-MyPy errors without weakening strict checking or
+      excluding the new mission-package tests.
+- [x] Restore a pinned supported Node/npm runtime and run UI lint, TypeScript,
+      unit, production-build, rendered-HTML, accessibility, and renderer checks.
+- [x] Regenerate OpenAPI and the TypeScript client and require a clean generated diff.
+- [x] Reconcile the Fast Sim v1 preserved canonical reference with the model-v2
+      default operator configuration; state explicitly which model each scenario uses.
+- [x] Reconcile this packet, the completed packet, the Development Guide, Fast Sim
+      documentation, qualification counts, hashes, and current gate statuses.
+- [x] Rerun the full Python suite, Ruff, strict MyPy, mission/fleet qualification,
+      deterministic repetitions, replay, load cleanup, API/UI checks, and `git diff --check`.
+- [ ] Review the complete dirty-tree scope, separate unrelated user changes if any,
+      and freeze one intentional baseline commit before starting the next feature scope.
+
+### Acceptance
+
+- [x] Every required executable current-tree gate is green in the reviewed tree.
+- [x] Recorded test counts and hashes match executable evidence from that tree.
+- [x] No documentation claims a packet or model release that the current revision
+      has not passed.
+- [x] ACTIVE-WP-01, ACTIVE-WP-02, and ACTIVE-WP-04 retain the named, evidence-backed
+      mixed-tree baseline-commit blocker rather than a false test or implementation blocker.
+
+## FAST-SIM-PHYS-WP integration gate
+
+The software-only scope of
+[`FAST_SIM_PHYSICAL_FIDELITY_WP.md`](FAST_SIM_PHYSICAL_FIDELITY_WP.md) has reached
+`SOFTWARE_QUALIFIED_CONFIGURED_UNQUALIFIED`. Its closeout covers configuration
+validation, actuator degradation/fault plumbing, legacy-energy migration, deterministic
+matrices, model-v1/model-v2 comparison, performance, replay compatibility, and
+machine-readable fidelity. Physical calibration, exact-aircraft sensor coefficients,
+endurance validation, and digital-twin accuracy remain open until Reality WP-04 through
+WP-06 produce measured evidence.
+
+## ACTIVE-WP-09 — End-to-end three-drone persistent-coverage mission
+
+**Development Guide alignment:** Required simulation scenarios, Stage 6, Stage 8,
+and the primary persistent two-role coverage demonstrator.
+**Priority:** P0 product integration
+**Status:** In progress after Fast Sim physical-model-v2 software closeout
+
+### Outcome
+
+One immutable mission package started through the normal upload/select/Play path
+provisions two active Fast Sim vehicles and one connected, observed, preflight-approved,
+disarmed reserve. A real modeled battery/health condition triggers production fleet
+handover: the reserve launches, confirms takeover, the outgoing vehicle returns and
+lands, and the abstract dock/charging lifecycle begins while required coverage remains
+explicitly measured.
+
+### Implementation checkpoint — 2026-08-07
+
+The portable artifact
+`missions/qualification/persistent_coverage_rotation.py` now declares two active zones,
+energy requirements, separation limits, and one reserve without backend identifiers or
+fault configuration. The existing normal Play path already provisions and prepares all
+three members and keeps the reserve disarmed.
+
+The remaining integration is deliberately not represented by the older synthetic fleet
+qualification. `PersistentCoverageCoordinator`, `DockManager`, and fleet metrics exist,
+but they must be driven from current execution telemetry and actual supervised commands.
+
+The first production slice is now implemented: `FleetAuthorityTransition` and its
+deterministic receipt define a sequence-numbered, identity-bound, authorization-hashed
+task-lease change, and Fast Sim applies it atomically. A same-run direct rebind is
+rejected; stale commands remain rejected after transition; duplicate, skipped, wrong
+lease, cross-vehicle, and cross-run transitions fail closed. Unsupported adapters retain
+the default fail-closed behavior, so this does not claim mock/live Isaac parity.
+
+The next slice must expose this guard through the production execution owner and update
+the command binding used by the child mission, watchdog, recovery, and cleanup as one
+serialized transition. It must then drive reserve staging, generation-2 takeover, and
+outgoing return from current telemetry and supervised commands. Do not weaken the
+simulator's stale/wrong-generation rejection to make the handover appear to pass.
+
+Current-tree verification after this slice: 437 Python tests pass with one intentional
+live-Isaac host skip; Ruff passes; strict MyPy passes over 156 source/test files; and
+`git diff --check` passes. Three focused transition scenarios provide the new positive
+and fail-closed evidence.
+
+### Requirements
+
+- [x] Add a reviewed mission-package-v2 artifact declaring two active zone tasks and
+      one reserve role without backend identifiers, fault schedules, or simulator
+      parameters in mission Python.
+- [x] Add a backend-neutral, auditable in-run fleet-authority transition contract and
+      a Fast Sim guard that rejects direct rebind bypass, stale/duplicate/skipped
+      authority, and cross-bound identities while preserving old-command rejection.
+- [ ] Integrate `PersistentCoverageCoordinator`, `DockManager`, and fleet metrics with
+      the production `ExecutionCoordinator`; do not reproduce allocation/handover logic
+      inside mission Python, UI code, or the simulator adapter.
+- [ ] Derive candidates and handover decisions from current source-aware vehicle
+      telemetry, capability, task, lease, separation, and energy state rather than
+      directly constructed qualification candidates.
+- [ ] Keep the reserve connected, observed, ready, and disarmed until production
+      policy assigns it work.
+- [ ] Execute actual Fast Sim vehicle commands for reserve takeoff, takeover motion,
+      outgoing return, landing, and safe terminal state through `MissionRunner` and
+      `SafetySupervisor`.
+- [ ] Require atomic generation-numbered ownership transfer and reject duplicate,
+      stale, delayed, reordered, or wrong-vehicle task authority.
+- [ ] Enforce pairwise warning/critical separation throughout preparation, launch,
+      takeover, return, and landing—not only at initial preflight.
+- [ ] Model dock reservation, occupancy, queue, landing indication, charging
+      confirmation, failure, and ready-time state without claiming resolved contact,
+      alignment, current, or physical charging.
+- [ ] Record coverage gap, availability, handover duration, minimum separation,
+      energy margin, task ownership, dock state, commands, acknowledgements, faults,
+      terminal member states, and cleanup in evidence and replay.
+- [ ] Add nominal and injected variants for low battery, active loss, reserve loss,
+      command/acknowledgement loss, stale observation, localization/range loss,
+      critical separation, failed takeover, occupied/unavailable dock, failed charging
+      confirmation, cancellation, gateway loss, restart, and application reload.
+- [ ] Preserve backend-neutral identity and normalized intent so the same artifact can
+      later run through mock/live Isaac and explicitly approved real bindings.
+
+### Acceptance
+
+- [ ] The normal Play workflow visibly executes two active vehicles plus one reserve
+      with no operator-authored assignments or separate fleet-mode controls.
+- [ ] Nominal low-battery rotation completes using actual Fast Sim telemetry and
+      commands, not only synthetic state-machine calls.
+- [ ] Takeover is confirmed before outgoing authority is released; no task ever has
+      two current owners.
+- [ ] The non-replaced active vehicle continues according to policy and the measured
+      coverage gap stays inside the declared threshold.
+- [ ] A failed or unsafe replacement retains or terminates authority explicitly and
+      cannot become mission success.
+- [ ] Shutdown leaves no child missions, telemetry consumers, task leases, temporary
+      workers, provider-created vehicles, subscriptions, or queues.
+- [ ] Fast Sim/mock-Isaac normalized semantics remain equivalent where observations
+      and supported effects are equivalent; live Isaac and physical results remain
+      `NOT_RUN`.
+
+## ACTIVE-WP-10 — Supporting multi-drone coordination missions
+
+**Development Guide alignment:** Required formation/leader-follower, separation,
+boundary, and leader-loss scenarios.
+**Priority:** P1 supporting safety/research
+**Status:** Planned after ACTIVE-WP-09
+
+### Outcome
+
+Two bounded supporting missions qualify coordination primitives needed by the
+persistent demonstrator: conflicting crossing routes with active separation, and a
+wide leader-follower route with deterministic leader-loss recovery.
+
+### Requirements
+
+- [ ] Add a two-role crossing-route mission whose nominal paths would enter warning
+      and critical separation bands without fleet intervention.
+- [ ] Demonstrate bounded hold, ordering, reroute, vertical separation, abort, or land
+      actions selected by one documented production separation policy.
+- [ ] Add a wide, low-speed leader-follower mission using the shared simulated global
+      frame, explicit leader/follower roles, a declared offset, and bounded position,
+      speed, acceleration, and separation limits.
+- [ ] Keep peer-state evaluation and coordinated setpoint policy in backend-neutral
+      fleet software. The uploaded `MissionDrone` API continues to expose only the
+      assigned vehicle and immutable role/task context.
+- [ ] Inject leader stale-state, disconnect, localization loss, command loss, delayed
+      peer observations, boundary conflict, and follower loss.
+- [ ] Define one explicit leader-loss policy—hold, land, or reviewed reassignment—and
+      prove that no follower continues against stale leader state.
+- [ ] Record leader/follower error, minimum separation, intervention latency, boundary
+      margin, terminal outcome, identity, and replay evidence across declared seeds.
+- [ ] Keep flocking, dense formations, formation transitions, inter-vehicle wakes,
+      and close physical flight outside this packet.
+
+### Acceptance
+
+- [ ] Crossing routes cannot proceed through a critical separation violation and
+      every intervention is source-aware and replayable.
+- [ ] Leader-follower error and separation remain within declared software thresholds
+      in nominal Fast Sim runs.
+- [ ] Leader loss produces the declared bounded recovery with no stale command authority.
+- [ ] Identity, task, observation, and command routing remain isolated for both vehicles.
+- [ ] These missions remain supporting qualification scenarios; they do not replace
+      the persistent-coverage product milestone or authorize close real formation.
+
+## External continuation when equipment becomes available
+
+### NVIDIA host path
+
+1. Continue NVIDIA WP-01 on the existing HP Victus or another explicitly approved
+   host.
+2. Record exact GPU/VRAM/RAM/storage/driver/OS/thermal/network data.
+3. Recheck official requirements and run the smallest compatibility checker.
+4. Decide `GO_MINIMAL_EXPERIMENT` or `DEFER_RESOURCE_LIMIT` before installation.
+5. Only with explicit permission, pin/install the runtime and run the live
+   launch/ready/step/snapshot/stop/restart fixture.
+6. Stop the pre-hardware live scope at the bounded one-vehicle fixture: empty or
+   primitive scene, gateway readiness, step/observe/basic-command/stop/crash/restart.
+7. WP-03/WP-04 repository scaffolding may consume shared configured parameters,
+   but physical-model/sensor qualification may not close until Reality WP-04 through
+   WP-06 issue the required measured-evidence decision.
+8. Do not start the live multi-drone/default-backend WP-05 qualification merely
+   because the Fast Sim persistent mission is ready.
+
+### Physical Crazyflie path
+
+1. Reality WP-04: exact-hardware discovery, identity, firmware/deck verification,
+   static telemetry, rate/latency/loss, props-off command mapping, and bench evidence.
+2. Reality WP-05: explicitly authorized contained one-drone missions and measured
+   functional limits.
+3. Reality WP-06: synchronized cross-source comparison with an independent
+   reference, bounded calibration inputs, held-out validation, and a new model version.
+
+### External gate status
+
+| Gate | Current status | Required external input |
+|---|---|---|
+| NVIDIA WP-01 | `PRECHECK_DEFER_RESOURCE_LIMIT_WAITING_FOR_MEASURED_HOST` | The reported Victus is below the Isaac 6.0.1 RAM/VRAM minimums; exact local inventory and official checker evidence still require host access |
+| NVIDIA WP-03/WP-04 | `CONFIGURED_UNQUALIFIED_SCAFFOLD_PREPARED` | Generated one-vehicle USD/model/room/sensor-placeholder scaffolding; live Isaac and later Reality evidence remain absent |
+| NVIDIA WP-05/WP-06 | `BLOCKED_BY_HOST_MODEL_SENSOR_MISSION_AND_REAL_MEASUREMENT_GATES` | Passing live scenes and qualified measured comparison inputs |
+| Reality WP-04 | `WAITING_FOR_PHYSICAL_DRONE_AND_ONSITE_CONFIRMATION` | Exact Crazyflie, decks, radio, batteries, bench procedure, and operator permission |
+| Reality WP-05 | `WAITING_FOR_REALITY_WP-04_AND_CONTAINED_FLIGHT` | Contained site, operator/observer, inspections, and flight authorization |
+| Reality WP-06 | `WAITING_FOR_WP-04/WP-05_AND_INDEPENDENT_REFERENCE` | Measured cross-source evidence and qualified reference tracking |
+
+No external gate may be marked complete from synthetic, mock, configured, fake,
+or inferred evidence.
+
+## Out of scope for this active software packet
+
+- Redesigning completed zone/task, persistent handover, dock/charging, metric,
+  deterministic qualification, or gateway algorithms. ACTIVE-WP-09 is authorized
+  to integrate those completed components with live Fast Sim telemetry and commands;
+  an algorithm redesign requires a new recorded decision or a demonstrated defect.
+- Live Isaac installation, PhysX/ROS/OmniGraph execution, rendering, or host claims.
+- Real radio connection, propeller/motor action, or physical flight.
+- Physical sensor calibration, RF behavior, battery endurance, dock contact, or
+  charging confirmation.
+- A digital-twin accuracy or physical-fidelity claim.
+- Tight real formation without independently validated global positioning.
+- Camera/vision, synthetic data, learning systems, or onboard AI without a named
+  bounded mission requirement.
+- Browser-owned fleet allocation, safety policy, backend construction, or
+  flight-control behavior.
+
+## Completion gate for this active packet
+
+The reopened ACTIVE-WP-01/WP-02/WP-04 portion may move to completed history when:
+
+- [x] Mission-package v2 is frozen and every existing v1 uploaded mission remains
+      source/hash/intent compatible.
+- [x] The world/environment is independent of mission vehicle count and Fast Sim
+      provisions one, two, or three session vehicles from mission intent.
+- [x] The normal UI has one upload/select/Play path with no single/multi/fleet
+      enable workflow.
+- [x] Actual preparation states and pre-mission telemetry are visible for every
+      required member before any arming.
+- [x] One-drone presentation remains simple; multi-drone presentation adds only
+      automatic member battery/state information and per-vehicle visualization.
+- [x] Production planning—not UI ordering—owns assignments, reserve selection,
+      separation, handover, cleanup, and terminal policy.
+- [x] Fast Sim, mock Isaac, and fake-real tests preserve mission/deployment
+      identity and equivalent semantic preparation/intent under equivalent inputs.
+- [x] The complete Python, API, UI, OpenAPI, build, rendered-page, deterministic,
+      failure, and three-vehicle load baselines are green.
+- [x] Completed WP-03 and WP-05–08 guarantees remain green without reopening
+      their scope.
+- [x] Every NVIDIA/Reality gate remains open and truthfully labeled;
+      `DIGITAL_TWIN` remains disabled.
+
+After that gate, Active WP-01, WP-02, and WP-04 may be moved into
+[`COMPLETED_SOFTWARE_WP.md`](COMPLETED_SOFTWARE_WP.md). This active master remains
+open for the newly planned sequence until all of the following are also true:
+
+- [x] FAST-SIM-PHYS-WP reaches `SOFTWARE_QUALIFIED_CONFIGURED_UNQUALIFIED` with
+      hardware-dependent calibration items still truthfully open.
+- [ ] ACTIVE-WP-09 passes nominal and injected end-to-end persistent-coverage
+      execution using actual Fast Sim telemetry and commands.
+- [ ] ACTIVE-WP-10 passes crossing-route separation and leader-loss qualification.
+- [ ] The NVIDIA progression/stop decision is recorded without promoting any
+      unrun live, physical, or digital-twin claim.
+
+Live NVIDIA and physical Reality packets remain separate external qualification work.

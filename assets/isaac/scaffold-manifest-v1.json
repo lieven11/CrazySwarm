@@ -1,0 +1,23 @@
+{
+  "artifacts": {
+    "primitive_drone_empty_scene": {
+      "path": "assets/isaac/crazyflie-primitive-empty-scene-v1.usda",
+      "sha256": "28efb8b79584d784dda41f4dfc7b01bc2cee4ec66eb959e39e63ec55fa5654d8"
+    },
+    "primitive_drone_minimal_room": {
+      "path": "assets/isaac/crazyflie-primitive-minimal-room-v1.usda",
+      "sha256": "195831d24eec98bc16918e4cdd58707752fd7f404397a85e44e0563b38d6e6da"
+    }
+  },
+  "digital_twin_enabled": false,
+  "isaac_runtime_result": "NOT_RUN",
+  "manifest_id": "isaac-wp03-wp04-configured-unqualified-v1",
+  "maximum_vehicles": 1,
+  "parameter_configuration_sha256": "753ac988ff2e52951651f8052ba4a2fb9ca9193a205b801d8e1ce54df50329a5",
+  "parameter_set_id": "crazyflie-6dof-1.0.0",
+  "physical_model_authorized": false,
+  "qualification": "CONFIGURED_UNQUALIFIED",
+  "scene_configuration_sha256": "a42d9f26bb05080dea0ebd9b217676b7ccb146e0a34ab21797b29743cffd6592",
+  "scene_id": "isaac-minimal-room-v1",
+  "schema_version": 1
+}

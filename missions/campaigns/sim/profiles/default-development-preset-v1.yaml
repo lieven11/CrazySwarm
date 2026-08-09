@@ -1,0 +1,6 @@
+schema_version: 1
+preset_id: default-campaign-development-v1
+case_id: three_drone_multi_conflict
+case_sha256: 3a41c886c64b5c1c73998164ae41b6a9a6ac1150911f5e7f126688f384b06c96
+backend_profile_id: fast-sim-v1
+physical_flight_authorized: false

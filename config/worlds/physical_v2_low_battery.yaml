@@ -1,0 +1,23 @@
+schema_version: 1
+scenario_id: physical-v2-low-battery-diagnostic
+world:
+  world_id: physical-v2-room
+  width_m: 6.0
+  depth_m: 6.0
+  height_m: 3.0
+  obstacles: []
+simulation:
+  seed: 207
+  fixed_step_s: 0.01
+  clock_mode: accelerated
+  battery_start_percent: 5.0
+  physics:
+    model_version: 2.0.0
+    powertrain_model: BATTERY_COUPLED_V2
+    rotor_layout: X
+vehicles:
+  - vehicle_id: physical-low-battery
+    display_name: Physical v2 low-battery diagnostic
+    position_m: {x: 0.0, y: 0.0, z: 0.0}
+    yaw_rad: 0.0
+faults: []

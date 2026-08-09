@@ -38,6 +38,7 @@ class SafetyPolicyOverride(BaseModel):
     max_mission_duration_s: float | None = Field(default=None, gt=0.0)
     command_timeout_s: float | None = Field(default=None, gt=0.0)
     telemetry_timeout_s: float | None = Field(default=None, gt=0.0)
+    health_watchdog_period_s: float | None = Field(default=None, gt=0.0)
     control_lease_timeout_s: float | None = Field(default=None, gt=0.0)
     preflight_valid_s: float | None = Field(default=None, gt=0.0)
     minimum_takeoff_battery_percent: float | None = Field(default=None, ge=0.0, le=100.0)
@@ -58,6 +59,7 @@ class SafetyPolicy(BaseModel):
     max_mission_duration_s: float = Field(default=300.0, gt=0.0)
     command_timeout_s: float = Field(default=10.0, gt=0.0)
     telemetry_timeout_s: float = Field(default=1.0, gt=0.0)
+    health_watchdog_period_s: float = Field(default=0.02, gt=0.0, le=1.0)
     control_lease_timeout_s: float = Field(default=2.0, gt=0.0)
     preflight_valid_s: float = Field(default=30.0, gt=0.0)
     minimum_takeoff_battery_percent: float = Field(default=30.0, ge=0.0, le=100.0)
@@ -85,6 +87,7 @@ class SafetyPolicy(BaseModel):
             "max_mission_duration_s",
             "command_timeout_s",
             "telemetry_timeout_s",
+            "health_watchdog_period_s",
             "control_lease_timeout_s",
             "preflight_valid_s",
         }

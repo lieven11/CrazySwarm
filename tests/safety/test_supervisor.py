@@ -8,7 +8,12 @@ import pytest
 from crazyswarm_app.domain.commands import MoveRelativeCommand
 from crazyswarm_app.domain.errors import CrazySwarmError, ErrorCode
 from crazyswarm_app.domain.models import (
+    AuthorityClass,
+    BackendRole,
+    CommandCompletionMode,
     OperatingMode,
+    SourceClockPolicy,
+    VehicleBackendProfile,
     VehicleCapability,
     VehicleIdentity,
     VehicleState,
@@ -23,10 +28,22 @@ from crazyswarm_app.simulation.world import IndoorWorld, WorldConfig
 OWNER = "operator-1"
 
 
+class PhysicalProfileSimulation(SimulatedVehicle):
+    @property
+    def backend_profile(self) -> VehicleBackendProfile:
+        return VehicleBackendProfile(
+            role=BackendRole.REAL_CRAZYFLIE,
+            authority=AuthorityClass.PHYSICAL,
+            clock_policy=SourceClockPolicy.REALTIME_MONOTONIC,
+            command_completion=CommandCompletionMode.BLOCKING_COMPLETION,
+        )
+
+
 def make_vehicle(
     *, adapter: str = "sim", config: SimulationConfig | None = None
 ) -> SimulatedVehicle:
-    return SimulatedVehicle(
+    vehicle_type = PhysicalProfileSimulation if adapter == "cflib" else SimulatedVehicle
+    return vehicle_type(
         VehicleIdentity(vehicle_id="vehicle-1", display_name="Vehicle 1", adapter=adapter),
         IndoorWorld(WorldConfig(width_m=4.0, depth_m=4.0, height_m=1.0)),
         config=config,
@@ -71,6 +88,23 @@ async def test_nominal_supervised_hover_lifecycle() -> None:
     assert supervisor.session(vehicle.identity.vehicle_id).state is VehicleState.READY
     assert not (await vehicle.snapshot()).telemetry.armed
     assert any(event.event_type == "COMMAND_COMPLETED" for event in supervisor.events)
+
+
+@pytest.mark.asyncio
+async def test_disconnect_reconciles_completed_landing_during_shutdown() -> None:
+    supervisor, vehicle = await ready_supervisor()
+    session = supervisor.session(vehicle.identity.vehicle_id)
+    # Reproduce cancellation after the adapter has landed but before the owning
+    # command coroutine records its terminal READY transition.
+    session.state = VehicleState.LANDING
+
+    await supervisor.disconnect(vehicle.identity.vehicle_id)
+
+    assert session.state is VehicleState.DISCONNECTED
+    assert any(
+        event.from_state is VehicleState.LANDING and event.to_state is VehicleState.READY
+        for event in supervisor.events
+    )
 
 
 @pytest.mark.asyncio
@@ -201,6 +235,80 @@ async def test_preflight_fails_for_low_battery_and_missing_capability() -> None:
 
 
 @pytest.mark.asyncio
+async def test_confirmed_simulation_override_bypasses_only_battery_policy() -> None:
+    supervisor, vehicle = await ready_supervisor(
+        vehicle=make_vehicle(config=SimulationConfig(battery_start_percent=5.0))
+    )
+
+    rejected = await supervisor.preflight(vehicle.identity.vehicle_id, OWNER)
+    assert not rejected.approved
+    assert {check.code for check in rejected.checks if not check.passed} >= {
+        "BATTERY",
+        "NO_CRITICAL_FAULT",
+    }
+
+    confirmed = await supervisor.preflight(
+        vehicle.identity.vehicle_id,
+        OWNER,
+        allow_simulation_low_battery=True,
+    )
+    assert confirmed.approved
+    battery_checks = {
+        check.code: check
+        for check in confirmed.checks
+        if check.code in {"BATTERY", "NO_CRITICAL_FAULT"}
+    }
+    assert all(check.passed for check in battery_checks.values())
+    assert all("Fast Sim" in check.message for check in battery_checks.values())
+
+    health = supervisor.evaluate_health(
+        vehicle.identity.vehicle_id,
+        allow_simulation_low_battery=True,
+    )
+    assert ErrorCode.CRITICAL_BATTERY.value not in {issue.code for issue in health.issues}
+    assert supervisor.events[-1].details["simulation_low_battery_override"] is True
+
+
+@pytest.mark.asyncio
+async def test_failed_hover_reconciles_adapter_battery_fault_and_ground_impact() -> None:
+    supervisor, vehicle = await ready_supervisor()
+    report = await supervisor.preflight(vehicle.identity.vehicle_id, OWNER)
+    await supervisor.arm(vehicle.identity.vehicle_id, OWNER, report.report_id)
+    await supervisor.takeoff(
+        vehicle.identity.vehicle_id,
+        OWNER,
+        height_m=0.3,
+        duration_s=2.0,
+    )
+    await vehicle.set_battery_level(0.0)
+
+    with pytest.raises(CrazySwarmError) as cutoff:
+        await supervisor.hover(vehicle.identity.vehicle_id, OWNER, 1.0)
+
+    assert cutoff.value.code is ErrorCode.CRITICAL_BATTERY
+    session = supervisor.session(vehicle.identity.vehicle_id)
+    assert session.state is VehicleState.FAULT
+    assert session.telemetry is not None
+    assert session.telemetry.telemetry.state is VehicleState.FAULT
+    assert session.telemetry.telemetry.flying is False
+    assert vehicle.true_position_m.z == pytest.approx(0.0, abs=1e-9)
+
+
+@pytest.mark.asyncio
+async def test_low_battery_override_is_rejected_for_physical_authority() -> None:
+    supervisor, vehicle = await ready_supervisor(vehicle=make_vehicle(adapter="cflib"))
+
+    with pytest.raises(CrazySwarmError) as denied:
+        await supervisor.preflight(
+            vehicle.identity.vehicle_id,
+            OWNER,
+            allow_simulation_low_battery=True,
+        )
+
+    assert denied.value.code is ErrorCode.MODE_NOT_AUTHORIZED
+
+
+@pytest.mark.asyncio
 async def test_emergency_stop_is_distinct_and_latching() -> None:
     supervisor, vehicle = await ready_supervisor()
     report = await supervisor.preflight(vehicle.identity.vehicle_id, OWNER)
@@ -230,7 +338,12 @@ async def test_long_command_retains_control_lease_until_acknowledgement() -> Non
     )
     lease = supervisor.session(vehicle.identity.vehicle_id).lease
     assert lease is not None
-    assert lease.expires_at_monotonic_s > time.monotonic()
+    assert lease.expires_at_monotonic_s - time.monotonic() > supervisor.policy.command_timeout_s
+    promised_expiry = lease.expires_at_monotonic_s
+    supervisor.renew_control(vehicle.identity.vehicle_id, OWNER)
+    renewed = supervisor.session(vehicle.identity.vehicle_id).lease
+    assert renewed is not None
+    assert renewed.expires_at_monotonic_s >= promised_expiry
     await supervisor.emergency_stop(vehicle.identity.vehicle_id, OWNER, reason="lease retained")
 
 

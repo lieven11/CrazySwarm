@@ -3,7 +3,9 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from enum import StrEnum
+from datetime import date, datetime
+from enum import Enum, StrEnum
+from pathlib import Path
 from typing import Annotated, Any, Final, Literal
 
 from pydantic import Field, model_validator
@@ -24,16 +26,38 @@ ADAPTER_CONTRACT_VERSION: Final[Literal["1.0.0"]] = "1.0.0"
 def canonical_json(value: Any) -> str:
     """Serialize shared configuration without adapter- or process-specific ordering."""
 
+    return json.dumps(
+        _canonical_value(value),
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    )
+
+
+def _canonical_value(value: Any) -> Any:
+    if hasattr(value, "canonical_payload"):
+        return _canonical_value(value.canonical_payload())
     if hasattr(value, "model_dump"):
-        value = value.model_dump(mode="json", exclude_none=False)
-    elif isinstance(value, (list, tuple)):
-        value = [
-            item.model_dump(mode="json", exclude_none=False)
-            if hasattr(item, "model_dump")
-            else item
-            for item in value
-        ]
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        return _canonical_value(value.model_dump(mode="python", exclude_none=False))
+    if isinstance(value, Enum):
+        return _canonical_value(value.value)
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    if isinstance(value, Path):
+        return str(value)
+    if isinstance(value, dict):
+        return {str(key): _canonical_value(item) for key, item in value.items()}
+    if isinstance(value, (set, frozenset)):
+        normalized = [_canonical_value(item) for item in value]
+        return sorted(
+            normalized,
+            key=lambda item: json.dumps(
+                item, sort_keys=True, separators=(",", ":"), allow_nan=False
+            ),
+        )
+    if isinstance(value, (list, tuple)):
+        return [_canonical_value(item) for item in value]
+    return value
 
 
 def canonical_sha256(value: Any) -> str:
@@ -183,7 +207,11 @@ class RotorParameters(ContractModel):
     rotation_direction: Literal["CW", "CCW"]
     maximum_thrust_n: Annotated[float, Field(gt=0.0)]
     reaction_torque_per_thrust_m: Annotated[float, Field(gt=0.0)]
+    reaction_torque_sign: Annotated[float, Field(ge=-1.0, le=1.0)] = 1.0
     thrust_curve_exponent: Annotated[float, Field(gt=0.0)] = 1.0
+    thrust_scale: Annotated[float, Field(ge=0.0)] = 1.0
+    current_scale: Annotated[float, Field(ge=0.0)] = 1.0
+    time_constant_scale: Annotated[float, Field(gt=0.0)] = 1.0
 
 
 class InertiaTensor(ContractModel):
@@ -196,8 +224,12 @@ class InertiaTensor(ContractModel):
 
 
 class ActuatorParameters(ContractModel):
-    response: Literal["FIRST_ORDER_THRUST"] = "FIRST_ORDER_THRUST"
+    response: Literal["FIRST_ORDER_THRUST", "FIRST_ORDER_VOLTAGE_LIMITED_THRUST"] = (
+        "FIRST_ORDER_THRUST"
+    )
+    command_semantics: Literal["NORMALIZED_DESIRED_THRUST"] = "NORMALIZED_DESIRED_THRUST"
     time_constant_s: Annotated[float, Field(gt=0.0)]
+    battery_compensation_enabled: bool = False
     command_min: Annotated[float, Field(ge=0.0, le=0.0)] = 0.0
     command_max: Annotated[float, Field(ge=1.0, le=1.0)] = 1.0
 
@@ -205,11 +237,19 @@ class ActuatorParameters(ContractModel):
 class DragParameters(ContractModel):
     linear_n_s_m: Annotated[float, Field(ge=0.0)]
     angular_n_m_s: Annotated[float, Field(ge=0.0)]
-    aerodynamic_model: Literal["LINEAR_BODY_APPROXIMATION"] = "LINEAR_BODY_APPROXIMATION"
+    aerodynamic_model: Literal["LINEAR_BODY_APPROXIMATION", "BODY_AXIS_LINEAR_QUADRATIC"] = (
+        "LINEAR_BODY_APPROXIMATION"
+    )
+    linear_body_scale: Vector3 = Field(default_factory=lambda: Vector3(x=1.0, y=1.0, z=1.0))
+    quadratic_body_n_s2_m2: Vector3 = Field(default_factory=Vector3)
+    ground_effect_strength: Annotated[float, Field(ge=0.0)] = 0.0
 
 
 class BatteryParameters(ContractModel):
-    model: Literal["COULOMB_COUNTING_WITH_RESISTIVE_SAG"] = "COULOMB_COUNTING_WITH_RESISTIVE_SAG"
+    model: Literal[
+        "COULOMB_COUNTING_WITH_RESISTIVE_SAG",
+        "OCV_COULOMB_LOAD_LINE_WITH_COMPENSATION",
+    ] = "COULOMB_COUNTING_WITH_RESISTIVE_SAG"
     capacity_ah: Annotated[float, Field(gt=0.0)]
     full_voltage_v: Annotated[float, Field(gt=0.0)]
     empty_voltage_v: Annotated[float, Field(gt=0.0)]
@@ -217,6 +257,10 @@ class BatteryParameters(ContractModel):
     internal_resistance_ohm: Annotated[float, Field(ge=0.0)]
     idle_current_a: Annotated[float, Field(ge=0.0)]
     maximum_motor_current_a: Annotated[float, Field(gt=0.0)]
+    maximum_total_current_a: Annotated[float, Field(gt=0.0)] | None = None
+    ocv_curve_soc_voltage: tuple[tuple[float, float], ...] = ()
+    cutoff_persistence_s: Annotated[float, Field(ge=0.0)] = 0.0
+    cutoff_recovery_hysteresis_v: Annotated[float, Field(ge=0.0)] = 0.0
 
     @model_validator(mode="after")
     def ordered_voltage(self) -> BatteryParameters:
@@ -256,7 +300,7 @@ class SensorParameters(ContractModel):
 
 
 class VehicleParameterSchema(ContractModel):
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 2
     parameter_set_id: Identifier
     model_id: Identifier
     model_version: str
@@ -279,7 +323,35 @@ class VehicleParameterSchema(ContractModel):
 
     @property
     def sha256(self) -> str:
-        return canonical_sha256(self)
+        if self.schema_version == 2:
+            return canonical_sha256(self)
+        # Preserve the exact v1 hash surface even though the runtime models also accept
+        # additive v2 fields. Old Isaac/mock scenes and receipts must not be reinterpreted.
+        payload = self.model_dump(mode="python", exclude_none=False)
+        for rotor in payload["rotors"]:
+            for field_name in (
+                "reaction_torque_sign",
+                "thrust_scale",
+                "current_scale",
+                "time_constant_scale",
+            ):
+                rotor.pop(field_name)
+        for field_name in ("command_semantics", "battery_compensation_enabled"):
+            payload["actuator"].pop(field_name)
+        for field_name in (
+            "linear_body_scale",
+            "quadratic_body_n_s2_m2",
+            "ground_effect_strength",
+        ):
+            payload["drag"].pop(field_name)
+        for field_name in (
+            "maximum_total_current_a",
+            "ocv_curve_soc_voltage",
+            "cutoff_persistence_s",
+            "cutoff_recovery_hysteresis_v",
+        ):
+            payload["battery"].pop(field_name)
+        return canonical_sha256(payload)
 
 
 class SignalSpecification(ContractModel):
@@ -418,6 +490,13 @@ COMMAND_SEMANTICS: tuple[CommandSemantics, ...] = (
         completion_semantics="relative trajectory completed",
     ),
     CommandSemantics(
+        command=CommandKind.EXECUTE_TRAJECTORY,
+        required_capabilities=frozenset({VehicleCapability.TIME_PARAMETERIZED_TRAJECTORY}),
+        allowed_frames=frozenset({CoordinateFrame.WORLD}),
+        duration_semantics="REQUESTED_TRAJECTORY_DURATION",
+        completion_semantics="accepted absolute trajectory completed within tolerance",
+    ),
+    CommandSemantics(
         command=CommandKind.STOP_AND_HOLD,
         required_capabilities=frozenset({VehicleCapability.HIGH_LEVEL_COMMANDS}),
         duration_semantics="NONE",
@@ -461,6 +540,81 @@ class SimulationRunIdentity(ContractModel):
     @property
     def sha256(self) -> str:
         return canonical_sha256(self)
+
+
+class MissionRunBinding(ContractModel):
+    """Backend-neutral identity handed to an adapter before a mission can command it."""
+
+    mission_run_id: Identifier
+    mission_source_sha256: SHA256 | None = None
+    run_identity_sha256: SHA256 | None = None
+    model_id: Identifier | None = None
+    model_version: str | None = None
+    model_configuration_sha256: SHA256 | None = None
+    scenario_id: Identifier | None = None
+    scenario_configuration_sha256: SHA256 | None = None
+    fleet_session_id: Identifier | None = None
+    fleet_run_id: Identifier | None = None
+    deployment_sha256: SHA256 | None = None
+    task_id: Identifier | None = None
+    task_lease_generation: Annotated[int, Field(ge=1)] | None = None
+    backend_namespace: str | None = Field(default=None, min_length=1, max_length=500)
+    preparation_state: Literal["READY"] | None = None
+
+
+class FleetAuthorityTransition(ContractModel):
+    """One authorized in-run change to the task lease accepted by an adapter."""
+
+    schema_version: Literal[1] = 1
+    transition_id: Identifier
+    sequence: Annotated[int, Field(ge=1)]
+    vehicle_id: Identifier
+    mission_run_id: Identifier
+    fleet_session_id: Identifier
+    fleet_run_id: Identifier
+    deployment_sha256: SHA256
+    expected_task_id: Identifier
+    expected_task_lease_generation: Annotated[int, Field(ge=1)]
+    next_task_id: Identifier
+    next_task_lease_generation: Annotated[int, Field(ge=1)]
+    reason_code: Identifier
+    authorization_sha256: SHA256
+
+    @model_validator(mode="after")
+    def changes_authority(self) -> FleetAuthorityTransition:
+        if (
+            self.expected_task_id,
+            self.expected_task_lease_generation,
+        ) == (self.next_task_id, self.next_task_lease_generation):
+            raise ValueError("authority transition must change the task lease")
+        return self
+
+    @property
+    def sha256(self) -> str:
+        return canonical_sha256(self)
+
+
+class FleetAuthorityTransitionReceipt(ContractModel):
+    """Deterministic evidence that an adapter accepted one authority transition."""
+
+    schema_version: Literal[1] = 1
+    transition_id: Identifier
+    sequence: Annotated[int, Field(ge=1)]
+    vehicle_id: Identifier
+    mission_run_id: Identifier
+    fleet_session_id: Identifier
+    fleet_run_id: Identifier
+    deployment_sha256: SHA256
+    previous_task_id: Identifier
+    previous_task_lease_generation: Annotated[int, Field(ge=1)]
+    current_task_id: Identifier
+    current_task_lease_generation: Annotated[int, Field(ge=1)]
+    reason_code: Identifier
+    authorization_sha256: SHA256
+    previous_binding_sha256: SHA256
+    current_binding_sha256: SHA256
+    transition_sha256: SHA256
+    accepted: Literal[True] = True
 
 
 class AdapterContractManifest(ContractModel):

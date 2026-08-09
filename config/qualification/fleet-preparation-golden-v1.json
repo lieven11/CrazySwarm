@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trace_id": "two-drone-preparation-golden-v1",
+  "events": [
+    {"vehicle_id":"cf01","event_type":"PLACEHOLDER_DECLARED","registration":"DECLARED","connection":"DISCONNECTED","mission_role":"ACTIVE","observation":"NOT_OBSERVED"},
+    {"vehicle_id":"cf02","event_type":"PLACEHOLDER_DECLARED","registration":"DECLARED","connection":"DISCONNECTED","mission_role":"ACTIVE","observation":"NOT_OBSERVED"},
+    {"vehicle_id":"cf01","event_type":"VEHICLE_DISCOVERED","registration":"DISCOVERED","connection":"DISCONNECTED","mission_role":"ACTIVE","observation":"NOT_OBSERVED"},
+    {"vehicle_id":"cf01","event_type":"IDENTITY_BOUND","registration":"IDENTITY_BOUND","connection":"DISCONNECTED","mission_role":"ACTIVE","observation":"NOT_OBSERVED"},
+    {"vehicle_id":"cf01","event_type":"IDENTITY_VERIFIED","registration":"VERIFIED","connection":"DISCONNECTED","mission_role":"ACTIVE","observation":"NOT_OBSERVED"},
+    {"vehicle_id":"cf02","event_type":"VEHICLE_DISCOVERED","registration":"DISCOVERED","connection":"DISCONNECTED","mission_role":"ACTIVE","observation":"NOT_OBSERVED"},
+    {"vehicle_id":"cf02","event_type":"IDENTITY_BOUND","registration":"IDENTITY_BOUND","connection":"DISCONNECTED","mission_role":"ACTIVE","observation":"NOT_OBSERVED"},
+    {"vehicle_id":"cf02","event_type":"IDENTITY_VERIFIED","registration":"VERIFIED","connection":"DISCONNECTED","mission_role":"ACTIVE","observation":"NOT_OBSERVED"},
+    {"vehicle_id":"cf01","event_type":"CONNECTION_STARTED","registration":"VERIFIED","connection":"CONNECTING","mission_role":"ACTIVE","observation":"NOT_OBSERVED"},
+    {"vehicle_id":"cf01","event_type":"CONNECTION_READY","registration":"VERIFIED","connection":"READY","mission_role":"ACTIVE","observation":"NOT_OBSERVED"},
+    {"vehicle_id":"cf02","event_type":"CONNECTION_STARTED","registration":"VERIFIED","connection":"CONNECTING","mission_role":"ACTIVE","observation":"NOT_OBSERVED"},
+    {"vehicle_id":"cf02","event_type":"CONNECTION_READY","registration":"VERIFIED","connection":"READY","mission_role":"ACTIVE","observation":"NOT_OBSERVED"},
+    {"vehicle_id":"cf01","event_type":"TELEMETRY_OBSERVED","registration":"VERIFIED","connection":"READY","mission_role":"ACTIVE","observation":"CURRENT"},
+    {"vehicle_id":"cf02","event_type":"TELEMETRY_OBSERVED","registration":"VERIFIED","connection":"READY","mission_role":"ACTIVE","observation":"CURRENT"},
+    {"vehicle_id":"cf01","event_type":"PREFLIGHT_APPROVED","registration":"VERIFIED","connection":"READY","mission_role":"ACTIVE","observation":"CURRENT"},
+    {"vehicle_id":"cf02","event_type":"PREFLIGHT_APPROVED","registration":"VERIFIED","connection":"READY","mission_role":"ACTIVE","observation":"CURRENT"}
+  ]
+}

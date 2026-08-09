@@ -1,0 +1,255 @@
+ARCHIVED_NON_AUTHORITATIVE_SNAPSHOT: 2026-08-07
+CURRENT_COMPLETED_LEDGER: docs/work-packages/COMPLETED.md
+
+# CrazySwarm completed software work packet
+
+| Field | Value |
+|---|---|
+| Document status | `FROZEN_COMPLETED_HISTORY` |
+| Planning authority | Completed half of the two-document master work-packet set |
+| Companion document | [`ACTIVE_SOFTWARE_WP.md`](ACTIVE_SOFTWARE_WP.md) |
+| Physical flight authorized | No |
+| Digital twin authorized | No |
+| Last reconciled | 2026-08-07 |
+
+## Purpose
+
+This document is the single completed-work entrypoint. It records software work
+that has passed its stated software gate and must remain green while active work
+continues. The older packet files remain detailed evidence and requirement
+records; they are not separate active planning queues.
+
+Completion in this document means only the recorded software scope. It does not
+turn configured simulator values into measured aircraft data, qualify an NVIDIA
+host, authorize flight, or authorize a digital-twin claim.
+
+## Completed scope
+
+| Scope | Completed result | Detailed record |
+|---|---|---|
+| Fast Simulator WP-01 through WP-05 | Deterministic 6-DOF simulator, sensors, faults, evidence, replay, operator view, canonical scenarios, and retained CI/fallback backend | [`FAST_SIMULATOR_WP.txt`](FAST_SIMULATOR_WP.txt) |
+| UI WP-01 through WP-08 | Domain contracts, safety supervisor, mission runtime, evidence, API, operator shell, and source-aware 3D room | [`UI_WP.txt`](UI_WP.txt) |
+| UI WP-09 software portion | Immutable uploaded Python missions and the simulation operator path; hardware execution remains open | [`UI_WP.txt`](UI_WP.txt) |
+| UI WP-10 software foundation | Rigid-body/motor/battery/sensor simulation foundation; real twin qualification remains open | [`UI_WP.txt`](UI_WP.txt) |
+| Reality WP-00 through WP-03 | Immutable baseline, bounded online mission runtime, backend-neutral authority, estimator-in-loop behavior, continuous health enforcement, and fault/load qualification | [`PRE_NVIDIA_MISSION_REALITY_WP.txt`](PRE_NVIDIA_MISSION_REALITY_WP.txt) |
+| NVIDIA WP-00 | Frozen process, gateway, security, identity, time, frame, ROS namespace, and evidence architecture | [`NVIDIA_ISAAC_SIM_WP.txt`](NVIDIA_ISAAC_SIM_WP.txt) |
+| NVIDIA WP-02 architecture/mock scope | `IsaacSimVehicle`, versioned gateway protocol, deterministic mock worker, command/telemetry mapping, bounded queues, lifecycle failure behavior, and same-mission conformance | [`NVIDIA_ISAAC_SIM_WP.txt`](NVIDIA_ISAAC_SIM_WP.txt) |
+| Active WP-03 software scope | Backend-independent zones and tasks, obstacle-aware decomposition, energy/capability gates, progress, leases, retry/reassignment, and replay | [`FLEET_FOUNDATION_WP01_04.md`](../docs/FLEET_FOUNDATION_WP01_04.md) |
+| Active WP-05 software scope | Three-drone/two-role persistent coverage, deterministic allocation, connected disarmed reserve, atomic handover, and stale-owner rejection | [`PERSISTENT_FLEET_WP05_08.md`](../docs/PERSISTENT_FLEET_WP05_08.md) |
+| Active WP-06 software scope | Abstract dock capacity, reservation, queue, retry/divert, modeled charging confirmation, progress, and ready-time scheduling | [`PERSISTENT_FLEET_WP05_08.md`](../docs/PERSISTENT_FLEET_WP05_08.md) |
+| Active WP-07 software scope | Fleet metrics, evidence/replay, 27 injected scenarios × 3 seeds, deterministic parity, and bounded three-vehicle load qualification | [`PERSISTENT_FLEET_WP05_08.md`](../docs/PERSISTENT_FLEET_WP05_08.md) |
+| Active WP-08 software scope | Fleet namespace isolation and gateway protocol `1.3.0` portability across Fast Sim and mock Isaac | [`PERSISTENT_FLEET_WP05_08.md`](../docs/PERSISTENT_FLEET_WP05_08.md) |
+
+Open portions of UI WP-09/WP-10 and UI WP-11 through WP-14 are routed to the
+active master packet or to an external dependency gate. Active WP-01, WP-02, and
+WP-04 are partially reopened for mission-derived provisioning and operator-path
+integration. Their previously qualified foundations remain evidence, but their
+new acceptance gates are not silently marked complete here.
+
+## What was implemented
+
+### Shared application and safety foundation
+
+- A backend-neutral `Vehicle` interface with explicit identity, capability,
+  authority, source-clock, command-completion, and adapter-role declarations.
+- A safety supervisor that owns connection state, command authority, preflight,
+  arming, limits, health/watchdog enforcement, abort-and-land, and emergency stop.
+- A mission runner that executes immutable mission artifacts through the same
+  supervisor path for every conforming adapter.
+- Source-aware telemetry, bounded fan-out, durable evidence, diagnostic export,
+  replay, run identity, configuration hashes, and explicit terminal outcomes.
+- A local authenticated API and truth-first UI that do not place flight control
+  loops in the browser.
+
+### Fast Simulator reference
+
+- Deterministic fixed-timestep six-degree-of-freedom rigid-body integration.
+- Quaternion attitude, angular velocity, gravity, translation, drag, four motor
+  thrust/torque contributions, actuator response, battery load, and voltage sag.
+- Configured room/geofence/obstacle geometry, IMU, Flow-like estimation, six
+  range directions, sensor validity states, latency/loss, and named faults.
+- Real-time and accelerated clocks, deterministic seeds, canonical scenarios,
+  model/configuration hashes, replay, and a source-aware 3D operator observer.
+- Estimator-in-loop operation for normal qualification; model truth is retained
+  only for simulator comparison and evidence.
+
+Fast Sim remains the permanent deterministic CI, failure-sweep, debugging, and
+offline fallback backend. Its coefficients remain `CONFIGURED_UNQUALIFIED` until
+physical evidence supports a new model version.
+
+### Same-source mission and Reality WP-00 through WP-03
+
+- One immutable Python mission artifact is stored and identified by SHA-256.
+- Bounded online mission code can observe canonical position, velocity, attitude,
+  localization, range, battery, link/transport, and health state without direct
+  adapter, filesystem, shell, network, or supervisor access.
+- Fast Sim and the mock Isaac adapter execute the same artifact through identical
+  mission, safety, evidence, and normalized-intent paths.
+- Missing, stale, invalid, wrong-identity, wrong-frame, disconnected, and
+  unknown-command-outcome cases fail explicitly rather than becoming valid zeroes
+  or false mission success.
+- Reality WP-00 through WP-03 record estimator drift, sensor/transport faults,
+  continuous health behavior, cross-adapter intent parity, and accelerated load
+  as software evidence only.
+
+### NVIDIA architecture and mock boundary
+
+- A real `IsaacSimVehicle` application adapter exists behind the shared `Vehicle`
+  interface. No Isaac, ROS, OmniGraph, USD, or PhysX type crosses into mission or
+  application-domain contracts.
+- Gateway protocol 1.3.0 covers lifecycle, capabilities, commands,
+  acknowledgements, observations, health, clocks, frames, identity, and errors.
+- The planned worker can be a managed local/headless subprocess or an explicitly
+  approved authenticated TLS worker.
+- The deterministic mock gateway runs without Isaac, ROS, NVIDIA hardware, or a
+  network service and exercises gateway failure semantics in CI.
+- Mission source hash, run identity, model/configuration identity, and
+  scene/scenario identity are bound before command execution.
+- Bounded telemetry queues, observable drop counters, process/network failure,
+  malformed/stale/wrong-identity rejection, and unknown-outcome behavior exist.
+- A minimal one-vehicle headless scene specification, ROS namespaces, frames,
+  clock rules, and a gated launcher exist. The launcher refuses live execution
+  without an accepted host profile, exact runtime, entrypoint, and credentials.
+
+This enables a future live Isaac worker to replace the mock without changing the
+mission language, UI authority, safety path, telemetry/evidence meaning, or Fast
+Sim fallback behavior.
+
+## Completed fleet-domain work moved from the active packet
+
+These scopes are complete as backend/software capabilities and are not reopened
+by the mission-derived operator integration. They must remain green while Active
+WP-01, WP-02, and WP-04 are changed.
+
+### Completed Active WP-03 — Zone and task mission abstraction
+
+- Versioned zone geometry, task identity/type, priority, constraints,
+  capabilities, completion criteria, progress, and terminal reasons.
+- Logical task state independent from any one child mission run.
+- Duration and modeled energy estimates with configured margins.
+- Pause, resume, retry, reassignment, completion, and abort decisions.
+- Generation-numbered ownership leases and replayable task evidence.
+- Nominal inspection and deterministic obstacle-aware planning scenarios.
+
+Completed acceptance: zone tasks decompose into actions, inadequate capability or
+energy blocks assignment, and evidence replay reconstructs ownership and progress.
+
+### Completed Active WP-05 — Persistent three-drone coverage and handover
+
+- Deterministic allocation by capability, battery/energy margin, availability,
+  distance, task priority, and stable logical identity.
+- Two active roles plus one connected, observed, ready, disarmed reserve.
+- Lease expiry/generation and atomic ownership transfer.
+- Replacement selection and preparation before outgoing release.
+- Confirmed takeover before return/release; unconfirmed termination remains
+  explicitly degraded or failed with outgoing authority retained.
+- Reassignment after low battery, member failure, leader loss, or disconnect.
+- Pairwise separation enforcement during allocation and handover.
+
+Completed acceptance: software scenarios maintain two-role coverage after one
+active member becomes unavailable, never create two current task owners, reject a
+stale owner, and record separation for every pair.
+
+### Completed Active WP-06 — Abstract dock and charging operations
+
+- Dock identity, health, capacity, occupancy, reservations, queues, and supported
+  modeled charging capability.
+- Distinct modeled landing, contact, charging confirmation, charging, and ready
+  states without physical claims.
+- Bounded retry, failure, queue, and diversion policy.
+- Modeled charging progress and estimated-ready time integrated with handover.
+
+Completed acceptance: capacity cannot be double-booked, failed confirmation never
+becomes `CHARGING`, and every queue/failure produces explicit degradation or
+recovery evidence.
+
+### Completed Active WP-07 — Metrics and deterministic qualification
+
+- Coverage gap, availability, pairwise separation, assignment/lease latency,
+  handover, energy, dock, fault-recovery, update-rate, command-latency,
+  position-quality, and drop metrics derived from semantic events.
+- 27 nominal/injected scenarios across three deterministic seeds: 81 outcomes per
+  backend.
+- Clean-process repeatability, Fast Sim/mock-Isaac normalized parity, evidence
+  export, and command-free replay.
+- Bounded three-vehicle API, replay, and storage load qualification with cleanup
+  checks for tasks, workers, subscriptions, leases, and queues.
+
+Completed acceptance: the persistent-coverage software scenario meets its
+declared thresholds, every injected fault ends explicitly, identical inputs
+reproduce normalized outcomes, and the local three-vehicle load stays inside its
+declared budgets.
+
+### Completed Active WP-08 — Mock/live-Isaac portability boundary
+
+- Fleet-session identity, per-vehicle namespaces, preparation states, bounded
+  observations, and all-or-none run binding in the mock gateway.
+- Cross-vehicle and cross-namespace command/telemetry rejection.
+- Equivalent normalized deployment, assignment, handover, and terminal intent
+  across Fast Sim and mock Isaac under equivalent observations.
+- Gateway protocol `1.3.0` frozen without adding Isaac/ROS types to mission or
+  fleet layers.
+- Gateway loss produces an explicit result and retains Fast Sim fallback.
+
+Completed acceptance is software-only: live Isaac, rendering, PhysX, ROS graph,
+host performance, and physical flight remain `NOT_RUN`.
+
+## Recorded completion evidence
+
+The latest software-fleet closeout records 392 passing Python tests, one
+intentionally skipped live-Isaac check, 49 passing UI unit tests, three rendered
+page tests, a successful production UI build, Ruff, strict MyPy, and bounded load
+cleanup on 2026-08-07. Earlier Fast Sim, Reality, and NVIDIA closeouts retain
+their own exact repetitions, hashes, and baseline commit. These are immutable
+recorded closeout results, not a claim that every later dirty working-tree edit
+has been requalified automatically.
+
+Fleet closeout identities:
+
+- Two-drone normalized outcome SHA-256:
+  `edf5ae87654847cdefd8d32576ccd64dd46c8e90f432602c88f99d2fb3f5ba0a`
+- Persistent-fleet normalized report SHA-256:
+  `3f044174fdbaadb3c318ad4ac4fa3f85ac7fb065e9c723617c3f4e82e09feee2`
+
+Primary machine-readable records:
+
+- [`config/qualification/fast-sim-v1.json`](../config/qualification/fast-sim-v1.json)
+- [`config/qualification/reality-wp00-03-software-gate.json`](../config/qualification/reality-wp00-03-software-gate.json)
+- [`config/qualification/nvidia-isaac-architecture-mock-v1.json`](../config/qualification/nvidia-isaac-architecture-mock-v1.json)
+- [`config/qualification/fleet-preparation-golden-v1.json`](../config/qualification/fleet-preparation-golden-v1.json)
+- [`config/qualification/persistent-fleet-scenarios-v1.json`](../config/qualification/persistent-fleet-scenarios-v1.json)
+- [`config/qualification/fleet-load-budgets-v1.json`](../config/qualification/fleet-load-budgets-v1.json)
+- [`config/contracts/simulator-adapter-v1.json`](../config/contracts/simulator-adapter-v1.json)
+- [`config/isaac/gateway-contract-v1.json`](../config/isaac/gateway-contract-v1.json)
+
+## Frozen guarantees to preserve
+
+1. Fast Sim remains available and deterministic without an NVIDIA host.
+2. Mission behavior never imports or commands a concrete adapter directly.
+3. Every command passes through supervisor authority and is bound to vehicle and
+   run identity.
+4. A connected vehicle is not an armed vehicle; discovery never arms or launches.
+5. Missing and invalid observations never become plausible default numbers.
+6. Configured, simulated, measured, replayed, planned, and unavailable data remain
+   visibly and structurally distinct.
+7. An adapter/process/network failure cannot become mission success.
+8. Mission source, configuration, model, scenario, and evidence identity remain
+   immutable and traceable.
+9. `DIGITAL_TWIN` remains disabled until a real adapter, synchronized measured
+   telemetry, and an independent reference pass their qualification gates.
+
+## Explicitly not completed
+
+- No compatible NVIDIA host has passed WP-01 and no live Isaac/ROS/PhysX scene has
+  been run by the recorded architecture/mock closure.
+- No rendered or physically qualified Isaac Crazyflie, room, contact, or virtual
+  sensor result exists yet.
+- No real Crazyflie, deck, radio, battery, command, sensor, or flight result has
+  passed Reality WP-04 through WP-06.
+- No digital-twin, physical prediction, tight formation, real docking, physical
+  RF, or persistent real-fleet claim is authorized.
+- No completed software result proves live-Isaac multi-drone performance,
+  physical fleet allocation, physical separation, physical handover, docking, or
+  persistent real-world coverage.
+
+All remaining work is defined by [`ACTIVE_SOFTWARE_WP.md`](ACTIVE_SOFTWARE_WP.md).

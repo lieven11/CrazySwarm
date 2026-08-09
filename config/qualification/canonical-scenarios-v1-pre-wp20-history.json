@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "artifact_id": "fast-sim-reference-v1-pre-wp20-history",
+  "model_version": "1.0.0",
+  "status": "HISTORICAL_IMMUTABLE_EVIDENCE",
+  "reason_for_successor": "WP-20 added explicit execution-authority receipt fields to every mission result and WP-21 added goal-region landing semantics. The physics model remains version 1.0.0; the outcome-record revision and deterministic endpoint receipts changed. Prior hashes are retained rather than relabeled.",
+  "scenarios": [
+    {
+      "id": "hover",
+      "scenario_sha256": "8a0137811959dedb31d23f9dd4f113af6227aa953e70daf68f2a315aaae39767",
+      "outcome_sha256": "da885d88e993c3d37516e6cf635586ccdf0028b13659358507bb855d493738dc"
+    },
+    {
+      "id": "move-return",
+      "scenario_sha256": "726645d94995dc49a87e4969f5efdd9ef0598d9f7b37804a42f735257bf834ec",
+      "outcome_sha256": "f9583e9cdd5cc375360f7a5397477ffea7a10a315d8b499baf02d7112db44e41"
+    },
+    {
+      "id": "failure",
+      "scenario_sha256": "514dbada809e7f64a21a053f81577e2aabae35f67598928714231384264e15a1",
+      "outcome_sha256": "1c917f2abbabf0e26411c2aad9a7248ccad17eee0308d4b10a0ce69fb1f64e8e"
+    },
+    {
+      "id": "three-vehicle",
+      "scenario_sha256": "f8bbc8658bfc19f518db26c2fe5ad51a33d399fd28641e53d60f84a4d0013914",
+      "outcome_sha256": "be0194213d13559e5b8fd8e00b29033d7764c321581ebbc6cb26d70c5bcc1a28"
+    }
+  ]
+}

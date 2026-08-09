@@ -1,0 +1,75 @@
+{
+  "checker_status": "NOT_RUN",
+  "classification": "REPORTED_PRECHECK_NOT_LIVE_EVIDENCE",
+  "compatible": false,
+  "cpu": "Intel Core i5-13500H",
+  "decision": "DEFER_RESOURCE_LIMIT",
+  "driver_version": "NOT_MEASURED",
+  "findings": [
+    {
+      "blocking": true,
+      "check": "OPERATING_SYSTEM",
+      "measured": "Windows 11 Home",
+      "passed": true,
+      "required": "Windows 11 or Ubuntu 22.04 or Ubuntu 24.04"
+    },
+    {
+      "blocking": true,
+      "check": "PHYSICAL_CPU_CORES",
+      "measured": "NOT_MEASURED",
+      "passed": false,
+      "required": "4"
+    },
+    {
+      "blocking": true,
+      "check": "SYSTEM_RAM_BYTES",
+      "measured": "17179869184",
+      "passed": false,
+      "required": "34359738368"
+    },
+    {
+      "blocking": true,
+      "check": "FREE_STORAGE_BYTES",
+      "measured": "NOT_MEASURED",
+      "passed": false,
+      "required": "53687091200"
+    },
+    {
+      "blocking": true,
+      "check": "VRAM_BYTES",
+      "measured": "6442450944",
+      "passed": false,
+      "required": "17179869184"
+    },
+    {
+      "blocking": true,
+      "check": "GPU_CLASS_OFFICIAL_CHECKER",
+      "measured": "NVIDIA GeForce RTX 4050 Laptop GPU",
+      "passed": false,
+      "required": "NVIDIA GeForce RTX 4080"
+    },
+    {
+      "blocking": true,
+      "check": "OFFICIAL_COMPATIBILITY_CHECKER",
+      "measured": "NOT_RUN",
+      "passed": false,
+      "required": "PASSED"
+    }
+  ],
+  "free_storage_bytes": "NOT_MEASURED",
+  "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU",
+  "headless_gateway_authorized": false,
+  "host_kind": "LOCAL_WINDOWS_VICTUS",
+  "isaac_runtime_version": "NOT_PINNED_RESOURCE_GATE_NOT_GO",
+  "middleware": "NOT_PINNED_RESOURCE_GATE_NOT_GO",
+  "network_path": "NOT_MEASURED",
+  "operating_system": "Windows 11 Home",
+  "paid_cloud_approved": false,
+  "profile_id": "victus-reported-candidate-20260807-gate",
+  "requirements_id": "isaac-sim-6-0-1-official-minimum-20260807",
+  "resource_and_thermal_results": "NOT_RUN",
+  "ros_distribution": "NOT_PINNED_RESOURCE_GATE_NOT_GO",
+  "schema_version": 1,
+  "system_ram_bytes": 17179869184,
+  "vram_bytes": 6442450944
+}

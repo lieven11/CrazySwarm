@@ -1,0 +1,219 @@
+#usda 1.0
+(
+    defaultPrim = "World"
+    metersPerUnit = 1
+    upAxis = "Z"
+    customLayerData = {
+        string qualification = "CONFIGURED_UNQUALIFIED"
+        string implementationStatus = "SCAFFOLD_NOT_RUN_IN_ISAAC"
+        string sceneId = "isaac-minimal-room-v1"
+        string sceneVersion = "1.0.0"
+        string sceneConfigurationSha256 = "a42d9f26bb05080dea0ebd9b217676b7ccb146e0a34ab21797b29743cffd6592"
+        string parameterConfigurationSha256 = "753ac988ff2e52951651f8052ba4a2fb9ca9193a205b801d8e1ce54df50329a5"
+    }
+)
+
+def Xform "World"
+{
+    custom string crazyswarm:qualification = "CONFIGURED_UNQUALIFIED"
+    custom bool crazyswarm:physicalModelAuthorized = false
+    custom bool crazyswarm:digitalTwinEnabled = false
+    def PhysicsScene "PhysicsScene"
+    {
+        vector3f physics:gravityDirection = (0, 0, -1)
+        float physics:gravityMagnitude = 9.80665
+    }
+    def Scope "Environment"
+    {
+        custom string crazyswarm:qualification = "CONFIGURED_UNQUALIFIED"
+        custom string crazyswarm:implementationStatus = "PRIMITIVE_SCAFFOLD_NOT_RUN"
+        def Cube "Floor" (
+            prepend apiSchemas = ["PhysicsCollisionAPI"]
+        )
+        {
+            double size = 1
+            float3 xformOp:scale = (4, 4, 0.05)
+            double3 xformOp:translate = (0, 0, -0.025)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+            bool physics:collisionEnabled = true
+        }
+        def Cube "WallPositiveX" (
+            prepend apiSchemas = ["PhysicsCollisionAPI"]
+        )
+        {
+            double size = 1
+            float3 xformOp:scale = (0.05, 4, 2.5)
+            double3 xformOp:translate = (2.025, 0, 1.25)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+            bool physics:collisionEnabled = true
+        }
+        def Cube "WallNegativeX" (
+            prepend apiSchemas = ["PhysicsCollisionAPI"]
+        )
+        {
+            double size = 1
+            float3 xformOp:scale = (0.05, 4, 2.5)
+            double3 xformOp:translate = (-2.025, 0, 1.25)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+            bool physics:collisionEnabled = true
+        }
+        def Cube "WallPositiveY" (
+            prepend apiSchemas = ["PhysicsCollisionAPI"]
+        )
+        {
+            double size = 1
+            float3 xformOp:scale = (4, 0.05, 2.5)
+            double3 xformOp:translate = (0, 2.025, 1.25)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+            bool physics:collisionEnabled = true
+        }
+        def Cube "WallNegativeY" (
+            prepend apiSchemas = ["PhysicsCollisionAPI"]
+        )
+        {
+            double size = 1
+            float3 xformOp:scale = (4, 0.05, 2.5)
+            double3 xformOp:translate = (0, -2.025, 1.25)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+            bool physics:collisionEnabled = true
+        }
+    }
+    def Scope "Crazyflies"
+    {
+        def Xform "cf01"
+        {
+            custom string crazyswarm:qualification = "CONFIGURED_UNQUALIFIED"
+            custom string crazyswarm:rosNamespace = "cf01"
+            custom string crazyswarm:modelId = "crazyflie-6dof"
+            custom string crazyswarm:modelVersion = "1.0.0"
+            custom string crazyswarm:sourceClass = "SIMULATED_MODEL"
+            double3 xformOp:translate = (0, 0, 0)
+            double xformOp:rotateZ = 0
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateZ"]
+            def Xform "Body" (
+                prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+            )
+            {
+                custom string crazyswarm:qualification = "CONFIGURED_UNQUALIFIED"
+                custom string crazyswarm:frame = "body"
+                bool physics:rigidBodyEnabled = true
+                float physics:mass = 0.032
+                point3f physics:centerOfMass = (0, 0, 0)
+                float3 physics:diagonalInertia = (1.43e-05, 1.43e-05, 2.89e-05)
+                double3 xformOp:translate = (0, 0, 0.0145)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+                def Cube "CollisionVisual" (
+                    prepend apiSchemas = ["PhysicsCollisionAPI"]
+                )
+                {
+                    custom string crazyswarm:qualification = "CONFIGURED_UNQUALIFIED"
+                    double size = 1
+                    float3 xformOp:scale = (0.092, 0.092, 0.029)
+                    uniform token[] xformOpOrder = ["xformOp:scale"]
+                    bool physics:collisionEnabled = true
+                }
+                def Cylinder "Rotor_M1"
+                {
+                    custom string crazyswarm:qualification = "CONFIGURED_UNQUALIFIED"
+                    custom string crazyswarm:rotationDirection = "CCW"
+                    uniform token axis = "Z"
+                    double radius = 0.023
+                    double height = 0.002
+                    double3 xformOp:translate = (0.046, 0, 0)
+                    uniform token[] xformOpOrder = ["xformOp:translate"]
+                }
+                def Cylinder "Rotor_M2"
+                {
+                    custom string crazyswarm:qualification = "CONFIGURED_UNQUALIFIED"
+                    custom string crazyswarm:rotationDirection = "CW"
+                    uniform token axis = "Z"
+                    double radius = 0.023
+                    double height = 0.002
+                    double3 xformOp:translate = (0, 0.046, 0)
+                    uniform token[] xformOpOrder = ["xformOp:translate"]
+                }
+                def Cylinder "Rotor_M3"
+                {
+                    custom string crazyswarm:qualification = "CONFIGURED_UNQUALIFIED"
+                    custom string crazyswarm:rotationDirection = "CCW"
+                    uniform token axis = "Z"
+                    double radius = 0.023
+                    double height = 0.002
+                    double3 xformOp:translate = (-0.046, 0, 0)
+                    uniform token[] xformOpOrder = ["xformOp:translate"]
+                }
+                def Cylinder "Rotor_M4"
+                {
+                    custom string crazyswarm:qualification = "CONFIGURED_UNQUALIFIED"
+                    custom string crazyswarm:rotationDirection = "CW"
+                    uniform token axis = "Z"
+                    double radius = 0.023
+                    double height = 0.002
+                    double3 xformOp:translate = (0, -0.046, 0)
+                    uniform token[] xformOpOrder = ["xformOp:translate"]
+                }
+                def Scope "SensorPlaceholders"
+                {
+                    custom string crazyswarm:qualification = "CONFIGURED_UNQUALIFIED"
+                    custom string crazyswarm:implementationStatus = "PLACEHOLDER_NOT_RUN"
+                    def Xform "Imu"
+                    {
+                        custom string crazyswarm:signal = "imu"
+                        custom string crazyswarm:direction = "+Z"
+                        double3 xformOp:translate = (0, 0, 0)
+                        uniform token[] xformOpOrder = ["xformOp:translate"]
+                    }
+                    def Xform "Flow"
+                    {
+                        custom string crazyswarm:signal = "flow"
+                        custom string crazyswarm:direction = "-Z"
+                        double3 xformOp:translate = (0, 0, -0.01)
+                        uniform token[] xformOpOrder = ["xformOp:translate"]
+                    }
+                    def Xform "RangeFront"
+                    {
+                        custom string crazyswarm:signal = "range/front"
+                        custom string crazyswarm:direction = "+X"
+                        double3 xformOp:translate = (0, 0, 0)
+                        uniform token[] xformOpOrder = ["xformOp:translate"]
+                    }
+                    def Xform "RangeBack"
+                    {
+                        custom string crazyswarm:signal = "range/back"
+                        custom string crazyswarm:direction = "-X"
+                        double3 xformOp:translate = (0, 0, 0)
+                        uniform token[] xformOpOrder = ["xformOp:translate"]
+                    }
+                    def Xform "RangeLeft"
+                    {
+                        custom string crazyswarm:signal = "range/left"
+                        custom string crazyswarm:direction = "+Y"
+                        double3 xformOp:translate = (0, 0, 0)
+                        uniform token[] xformOpOrder = ["xformOp:translate"]
+                    }
+                    def Xform "RangeRight"
+                    {
+                        custom string crazyswarm:signal = "range/right"
+                        custom string crazyswarm:direction = "-Y"
+                        double3 xformOp:translate = (0, 0, 0)
+                        uniform token[] xformOpOrder = ["xformOp:translate"]
+                    }
+                    def Xform "RangeUp"
+                    {
+                        custom string crazyswarm:signal = "range/up"
+                        custom string crazyswarm:direction = "+Z"
+                        double3 xformOp:translate = (0, 0, 0)
+                        uniform token[] xformOpOrder = ["xformOp:translate"]
+                    }
+                    def Xform "RangeDown"
+                    {
+                        custom string crazyswarm:signal = "range/down"
+                        custom string crazyswarm:direction = "-Z"
+                        double3 xformOp:translate = (0, 0, 0)
+                        uniform token[] xformOpOrder = ["xformOp:translate"]
+                    }
+                }
+            }
+        }
+    }
+}

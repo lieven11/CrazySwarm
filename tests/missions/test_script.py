@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -17,6 +19,7 @@ from crazyswarm_app.missions.script import (
     MissionFileLibrary,
     execute_isolated_mission,
     parse_python_mission,
+    preview_isolated_mission_role,
 )
 from crazyswarm_app.safety.supervisor import SafetySupervisor
 from crazyswarm_app.simulation.vehicle import SimulatedVehicle
@@ -54,6 +57,35 @@ def test_parser_accepts_only_a_complete_restricted_mission() -> None:
         )
 
 
+def test_worker_accepts_legacy_record_request_without_protocol_mode() -> None:
+    worker = Path(script_module.__file__).with_name("_mission_worker.py")
+    request = json.dumps(
+        {
+            "source": SOURCE,
+            "source_sha256": hashlib.sha256(SOURCE.encode()).hexdigest(),
+        },
+        separators=(",", ":"),
+    ).encode()
+
+    completed = subprocess.run(
+        [sys.executable, "-I", str(worker)],
+        input=request,
+        capture_output=True,
+        check=False,
+        timeout=2.0,
+    )
+
+    response = json.loads(completed.stdout)
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+    assert response["ok"] is True
+    assert [step["action"] for step in response["steps"]] == [
+        "takeoff",
+        "hover",
+        "move_relative",
+        "land",
+    ]
+
+
 @pytest.mark.asyncio
 async def test_uploaded_file_runs_unchanged_through_simulator(tmp_path: Path) -> None:
     registry = MissionRegistry()
@@ -82,6 +114,36 @@ async def test_uploaded_file_runs_unchanged_through_simulator(tmp_path: Path) ->
     archived_registry = MissionRegistry()
     MissionFileLibrary(tmp_path / "missions", archived_registry).load()
     assert archived_registry.list_metadata() == ()
+
+
+@pytest.mark.asyncio
+async def test_role_preview_records_only_the_selected_fleet_branch() -> None:
+    source = """\
+MISSION = {
+    "schema_version": 2,
+    "roles": {
+        "left": {"logical_vehicle_id": "drone-left", "home_m": [-0.8, 0, 0]},
+        "right": {"logical_vehicle_id": "drone-right", "home_m": [0.8, 0, 0]},
+    },
+}
+async def mission(drone):
+    await drone.takeoff(height_m=0.3, duration_s=2)
+    if drone.role == "left":
+        await drone.move_relative(x_m=-0.1, duration_s=1, frame="home")
+    else:
+        await drone.move_relative(y_m=0.1, duration_s=1, frame="home")
+    await drone.land(duration_s=2)
+"""
+    record = parse_python_mission(filename="roles.py", name="Roles", source=source)
+
+    left = await preview_isolated_mission_role(record, "left")
+    right = await preview_isolated_mission_role(record, "right")
+
+    assert [step.action for step in left] == ["takeoff", "move_relative", "land"]
+    assert left[1].arguments["x_m"] == -0.1
+    assert left[1].arguments["frame"] == "home"
+    assert right[1].arguments["y_m"] == 0.1
+    assert right[1].arguments["frame"] == "home"
 
 
 @pytest.mark.parametrize(

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "requirements_id": "isaac-sim-6-0-1-official-minimum-20260807",
+  "captured_local_date": "2026-08-07",
+  "documentation_release": "6.0.1",
+  "requirements_url": "https://docs.isaacsim.omniverse.nvidia.com/6.0.1/installation/requirements.html",
+  "workstation_install_url": "https://docs.isaacsim.omniverse.nvidia.com/6.0.1/installation/install_workstation.html",
+  "minimum_operating_systems": ["Windows 11", "Ubuntu 22.04", "Ubuntu 24.04"],
+  "minimum_physical_cpu_cores": 4,
+  "minimum_system_ram_bytes": 34359738368,
+  "minimum_free_storage_bytes": 53687091200,
+  "minimum_gpu": "NVIDIA GeForce RTX 4080",
+  "minimum_vram_bytes": 17179869184,
+  "tested_windows_driver": "595.97",
+  "official_checker_required_for_go": true
+}

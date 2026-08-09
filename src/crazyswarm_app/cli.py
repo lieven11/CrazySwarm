@@ -4,12 +4,7 @@ import argparse
 import asyncio
 import json
 import os
-import shutil
-import signal
-import socket
-import subprocess
 import sys
-import time
 from collections.abc import Sequence
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
@@ -18,9 +13,17 @@ from crazyswarm_app import __version__
 from crazyswarm_app.api.app import create_app, generate_local_token
 from crazyswarm_app.api.runtime import create_runtime
 from crazyswarm_app.config import load_config
+from crazyswarm_app.dashboard import run_dashboard
+from crazyswarm_app.dashboard_service import (
+    install_service,
+    restart_service,
+    service_status,
+    uninstall_service,
+)
 from crazyswarm_app.missions.models import MissionResult, MissionStatus
 from crazyswarm_app.missions.registry import default_registry
 from crazyswarm_app.missions.runner import MissionRunner
+from crazyswarm_app.provenance import repository_provenance
 from crazyswarm_app.safety.supervisor import SafetySupervisor
 from crazyswarm_app.simulation.factory import vehicles_from_scenario
 
@@ -62,14 +65,43 @@ def _build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--config", type=Path, default=Path("config/app.yaml"))
     serve.add_argument("--scenario", type=Path, default=Path("config/worlds/one_drone.yaml"))
     serve.add_argument("--port", type=_port_number)
+    serve.add_argument("--reload", action="store_true", help="restart when backend files change")
 
     dashboard = subparsers.add_parser(
         "dashboard", help="start the control UI and local API as one application"
     )
     dashboard.add_argument("--config", type=Path, default=Path("config/app.yaml"))
     dashboard.add_argument("--scenario", type=Path, default=Path("config/worlds/one_drone.yaml"))
-    dashboard.add_argument("--api-port", type=_port_number, default=8001)
+    dashboard.add_argument("--api-port", type=_port_number, default=8011)
     dashboard.add_argument("--ui-port", type=_port_number, default=3001)
+    dashboard.set_defaults(development=True)
+    dashboard.add_argument(
+        "--dev",
+        dest="development",
+        action="store_true",
+        help=argparse.SUPPRESS,
+    )
+    dashboard.add_argument(
+        "--production",
+        dest="development",
+        action="store_false",
+        help=argparse.SUPPRESS,
+    )
+    dashboard.add_argument("--skip-build", action="store_true", help=argparse.SUPPRESS)
+
+    service = subparsers.add_parser(
+        "dashboard-service", help="manage the persistent macOS dashboard service"
+    )
+    service_commands = service.add_subparsers(dest="service_command", required=True)
+    install = service_commands.add_parser("install", help="build and install the user service")
+    install.add_argument("--config", type=Path, default=Path("config/app.yaml"))
+    install.add_argument("--scenario", type=Path, default=Path("config/worlds/one_drone.yaml"))
+    install.add_argument("--api-port", type=_port_number, default=8011)
+    install.add_argument("--ui-port", type=_port_number, default=3001)
+    status = service_commands.add_parser("status", help="check the user service")
+    status.add_argument("--ui-port", type=_port_number, default=3001)
+    service_commands.add_parser("restart", help="restart the user service")
+    service_commands.add_parser("uninstall", help="remove the user service")
     return parser
 
 
@@ -112,12 +144,14 @@ def _overrides(values: list[str]) -> dict[str, object]:
 
 def _health(config_path: Path) -> int:
     config = load_config(config_path)
+    provenance = repository_provenance()
     report = {
         "status": "ok",
         "application_version": __version__,
         "config_schema_version": config.schema_version,
         "default_mode": config.default_mode.value,
         "config_path": str(config_path),
+        **provenance.as_dict(),
         "dependencies": {
             "cflib": _package_version("cflib"),
             "fastapi": _package_version("fastapi"),
@@ -177,11 +211,25 @@ def _missions(args: argparse.Namespace) -> int:
     raise AssertionError(f"unhandled mission command: {args.mission_command}")
 
 
-def _serve(config_path: Path, scenario_path: Path, port_override: int | None = None) -> int:
+def _create_reloadable_app() -> object:
+    config_path = Path(os.environ["CRAZYSWARM_CONFIG_PATH"])
+    scenario_path = Path(os.environ["CRAZYSWARM_SCENARIO_PATH"])
+    token = os.environ["CRAZYSWARM_LOCAL_TOKEN"]
+    config = load_config(config_path)
+    runtime = create_runtime(config, scenario_path)
+    return create_app(runtime, local_token=token)
+
+
+def _serve(
+    config_path: Path,
+    scenario_path: Path,
+    port_override: int | None = None,
+    *,
+    reload: bool = False,
+) -> int:
     import uvicorn
 
     config = load_config(config_path)
-    runtime = create_runtime(config, scenario_path)
     token = os.environ.get("CRAZYSWARM_LOCAL_TOKEN") or generate_local_token()
     port = config.api.port if port_override is None else port_override
     hide_internal_service = os.environ.get("CRAZYSWARM_HIDE_LOCAL_TOKEN") == "1"
@@ -198,6 +246,33 @@ def _serve(config_path: Path, scenario_path: Path, port_override: int | None = N
             }
         )
         print(json.dumps(report, indent=2), file=sys.stderr)
+    if reload:
+        project_root = Path(__file__).resolve().parents[2]
+        os.environ.update(
+            {
+                "CRAZYSWARM_CONFIG_PATH": str(config_path.resolve()),
+                "CRAZYSWARM_SCENARIO_PATH": str(scenario_path.resolve()),
+                "CRAZYSWARM_LOCAL_TOKEN": token,
+            }
+        )
+        uvicorn.run(
+            "crazyswarm_app.cli:_create_reloadable_app",
+            factory=True,
+            host=config.api.bind_host,
+            port=port,
+            access_log=False,
+            log_level="warning" if hide_internal_service else "info",
+            reload=True,
+            reload_dirs=[
+                str(project_root / "src"),
+                str(project_root / "config"),
+                str(project_root / "missions"),
+            ],
+            reload_includes=["*.py", "*.yaml", "*.yml", "*.json"],
+        )
+        return 0
+
+    runtime = create_runtime(config, scenario_path)
     app = create_app(runtime, local_token=token)
     uvicorn.run(
         app,
@@ -207,92 +282,6 @@ def _serve(config_path: Path, scenario_path: Path, port_override: int | None = N
         log_level="warning" if hide_internal_service else "info",
     )
     return 0
-
-
-def _port_available(host: str, port: int) -> bool:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-        probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        try:
-            probe.bind((host, port))
-        except OSError:
-            return False
-    return True
-
-
-def _stop_process(process: subprocess.Popen[bytes]) -> None:
-    if process.poll() is not None:
-        return
-    process.send_signal(signal.SIGTERM)
-    try:
-        process.wait(timeout=5)
-    except subprocess.TimeoutExpired:
-        process.kill()
-        process.wait(timeout=2)
-
-
-def _dashboard(
-    config_path: Path,
-    scenario_path: Path,
-    *,
-    api_port: int,
-    ui_port: int,
-) -> int:
-    if not _port_available("127.0.0.1", api_port):
-        raise RuntimeError(f"API port {api_port} is already in use")
-    if not _port_available("127.0.0.1", ui_port):
-        raise RuntimeError(f"UI port {ui_port} is already in use")
-    npm = shutil.which("npm")
-    if npm is None:
-        raise RuntimeError("npm is required to start the dashboard")
-    project_root = Path(__file__).resolve().parents[2]
-    ui_directory = project_root / "ui"
-    if not (ui_directory / "package.json").exists():
-        raise RuntimeError(f"UI package not found: {ui_directory}")
-
-    config = load_config(config_path)
-    token = generate_local_token()
-    environment = os.environ.copy()
-    environment.update(
-        {
-            "CRAZYSWARM_LOCAL_TOKEN": token,
-            "CRAZYSWARM_HIDE_LOCAL_TOKEN": "1",
-            "CRAZYSWARM_API_URL": f"http://127.0.0.1:{api_port}",
-        }
-    )
-    api_command = [
-        sys.executable,
-        "-m",
-        "crazyswarm_app",
-        "serve",
-        "--config",
-        str(config_path.resolve()),
-        "--scenario",
-        str(scenario_path.resolve()),
-        "--port",
-        str(api_port),
-    ]
-    ui_command = [npm, "run", "dev", "--", "--port", str(ui_port)]
-    api_process = subprocess.Popen(api_command, cwd=project_root, env=environment)
-    ui_process = subprocess.Popen(ui_command, cwd=ui_directory, env=environment)
-    print(
-        json.dumps(
-            {
-                "status": "starting",
-                "url": f"http://localhost:{ui_port}",
-                "mode": config.default_mode.value,
-            },
-            indent=2,
-        )
-    )
-    try:
-        while api_process.poll() is None and ui_process.poll() is None:
-            time.sleep(0.25)
-        return api_process.returncode or ui_process.returncode or 1
-    except KeyboardInterrupt:
-        return 0
-    finally:
-        _stop_process(ui_process)
-        _stop_process(api_process)
 
 
 async def _run_sim_mission(
@@ -331,12 +320,28 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "missions":
         return _missions(args)
     if args.command == "serve":
-        return _serve(args.config, args.scenario, args.port)
+        return _serve(args.config, args.scenario, args.port, reload=args.reload)
     if args.command == "dashboard":
-        return _dashboard(
+        return run_dashboard(
             args.config,
             args.scenario,
             api_port=args.api_port,
             ui_port=args.ui_port,
+            development=args.development,
+            skip_build=args.skip_build,
         )
+    if args.command == "dashboard-service":
+        if args.service_command == "install":
+            return install_service(
+                args.config,
+                args.scenario,
+                api_port=args.api_port,
+                ui_port=args.ui_port,
+            )
+        if args.service_command == "status":
+            return service_status(ui_port=args.ui_port)
+        if args.service_command == "restart":
+            return restart_service()
+        if args.service_command == "uninstall":
+            return uninstall_service()
     raise AssertionError(f"unhandled command: {args.command}")

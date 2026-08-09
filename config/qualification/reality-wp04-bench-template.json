@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "record_id": "REPLACE-bench-record-id",
+  "vehicle_id": "REPLACE-vehicle-id",
+  "selected_uri": "REPLACE-full-radio-uri",
+  "repository_commit": null,
+  "repository_dirty": true,
+  "versions": [
+    {
+      "component": "cflib",
+      "expected_version": "0.1.32",
+      "expected_sha256": null,
+      "observed_version": "0.1.32",
+      "observed_sha256": null,
+      "status": "CONFIGURED_UNQUALIFIED"
+    },
+    {
+      "component": "crazyflie-stm32-firmware",
+      "expected_version": null,
+      "expected_sha256": null,
+      "observed_version": null,
+      "observed_sha256": null,
+      "status": "NOT_RUN"
+    },
+    {
+      "component": "crazyflie-nrf-firmware",
+      "expected_version": null,
+      "expected_sha256": null,
+      "observed_version": null,
+      "observed_sha256": null,
+      "status": "NOT_RUN"
+    },
+    {
+      "component": "stabilizer-controller",
+      "expected_version": null,
+      "expected_sha256": null,
+      "observed_version": null,
+      "observed_sha256": null,
+      "status": "NOT_RUN"
+    },
+    {
+      "component": "stabilizer-estimator",
+      "expected_version": null,
+      "expected_sha256": null,
+      "observed_version": null,
+      "observed_sha256": null,
+      "status": "NOT_RUN"
+    },
+    {
+      "component": "crazyradio-firmware",
+      "expected_version": null,
+      "expected_sha256": null,
+      "observed_version": null,
+      "observed_sha256": null,
+      "status": "NOT_RUN"
+    }
+  ],
+  "decks": [
+    {
+      "parameter": "deck.bcFlow2",
+      "observed_value": null,
+      "revision": null,
+      "self_test": null,
+      "status": "NOT_RUN"
+    },
+    {
+      "parameter": "deck.bcMultiranger",
+      "observed_value": null,
+      "revision": null,
+      "self_test": null,
+      "status": "NOT_RUN"
+    }
+  ],
+  "airframe": {
+    "takeoff_mass_kg": null,
+    "center_of_mass_body_m": null,
+    "deck_mounting_passed": false,
+    "propeller_configuration": null,
+    "motor_configuration": null,
+    "battery_ids": [],
+    "no_visible_damage": false,
+    "no_contamination": false,
+    "inspected_by": null,
+    "inspected_at_utc": null
+  },
+  "connect_cycles_completed": 0,
+  "telemetry_matrix_status": "NOT_RUN",
+  "static_sensor_matrix_status": "NOT_RUN",
+  "props_off_command_status": "NOT_RUN",
+  "reconnect_status": "NOT_RUN",
+  "timing_and_resource_status": "NOT_RUN",
+  "anomalies_open": [],
+  "evidence_sha256": null,
+  "reviewed_by": null,
+  "reviewed_at_utc": null
+}

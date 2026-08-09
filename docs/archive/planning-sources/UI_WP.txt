@@ -1,0 +1,2259 @@
+ARCHIVED_NON_AUTHORITATIVE_DETAIL_SOURCE: YES
+CURRENT_STATUS_LEDGER: docs/work-packages/COMPLETED.md
+CRAZYSWARM_UI_WORK_PACKETS
+FORMAT_VERSION: 2
+CANONICAL_PATH: WorkPackets/UI_WP.txt
+DOCUMENT_STATUS: DETAIL_SOURCE_RECORD_SPLIT_BETWEEN_MASTER_PACKETS
+DOCUMENT_ROLE: DETAILED_REQUIREMENTS_AND_COMPLETION_EVIDENCE
+MASTER_COMPLETED_PACKET: WorkPackets/COMPLETED_SOFTWARE_WP.md
+MASTER_ACTIVE_PACKET: WorkPackets/ACTIVE_SOFTWARE_WP.md
+CREATED_AT_LOCAL_DATE: 2026-08-05
+TOTAL_PACKETS: 14
+TOTAL_FULLY_VERIFIED_PACKETS: 8
+TOTAL_PARTIAL_PACKETS: 2
+TOTAL_OPEN_PACKETS: 4
+REAL_FLIGHT_AUTHORIZED_BY_THIS_DOCUMENT: NO
+
+PURPOSE_BEGIN
+This is the detailed source record for the CrazySwarm operator UI,
+simulation backend, mission runtime, digital twin, real-time observer, and the
+later real Crazyflie and fleet integrations.
+
+Planning status is consolidated into exactly two master packets:
+`WorkPackets/COMPLETED_SOFTWARE_WP.md` and
+`WorkPackets/ACTIVE_SOFTWARE_WP.md`. This file retains detailed requirements and
+completion evidence; its open items are routed through the active master packet.
+
+The intended operator product has exactly two execution paths:
+SIMULATION runs an uploaded Python mission against a declared physics model.
+DIGITAL_TWIN runs the exact same immutable Python artifact against a qualified
+real vehicle and a synchronized simulated twin. Replay may exist as an evidence
+viewer, but it is not a third mission-execution mode. LIVE without a twin is not
+a normal operator workflow. Before a run the dashboard remains observationally
+empty and never invents vehicles or telemetry to fill space.
+
+The mission file is the complete mission definition. The UI may upload, name,
+select, inspect, and start it, but may not recreate or edit its flight commands,
+parameters, or route. Built-in mission choices and dashboard-authored mission
+profiles are excluded from the normal operator route.
+
+This document does not authorize real flight. Hardware execution requires a
+separate operator action, completed preflight checks, a safe test area, and the
+packet-specific gates below. Merely detecting a Crazyradio or Crazyflie must
+never arm, take off, or switch the application from SIM to LIVE.
+PURPOSE_END
+
+STATUS_BOUNDARY_BEGIN
+- Code, screens, mocks, or scaffolding alone do not complete a packet.
+- A packet is complete only when every applicable acceptance and verification
+  item passes and the completion record contains reproducible evidence.
+- Simulation evidence does not qualify real-flight behavior.
+- Real-flight evidence does not qualify multi-drone separation or fleet logic.
+- UI responsiveness does not qualify command timing or safety behavior.
+- A connected vehicle is not an armed vehicle.
+- A normal abort-and-land is distinct from emergency motor stop.
+- Emergency motor stop is a last-resort, latching motor cutoff and must never
+  be presented as an ordinary landing action.
+- Browser or renderer failure must not disable backend safety enforcement.
+- Hardware-dependent checks remain open until the exact drone, radio, decks,
+  firmware, batteries, localization environment, and operator procedure exist.
+- Test fixtures, screenshots, and developer stories are never operational data and
+  must be isolated from the normal dashboard route and labeled TEST FIXTURE.
+- A zero, 100%, healthy badge, vehicle, sensor, or timestamp may not stand in for
+  missing data. No observation means unavailable, absent, or not yet observed.
+STATUS_BOUNDARY_END
+
+DASHBOARD_PHILOSOPHY_BEGIN
+NAME: TRUTH_FIRST_MINIMAL_CONTROL
+1. Evidence before decoration. Every displayed value must come from a current
+   backend observation, an explicitly running simulation model, a mission plan,
+   a saved replay, or versioned configuration.
+2. Absence is meaningful. If no source produced a value, omit the metric or show
+   a quiet "Not available" state only where the missing value affects a decision.
+3. Every value belongs to exactly one visible provenance class: MEASURED_REAL,
+   SIMULATED_MODEL, DERIVED, PLANNED, CONFIGURED, REPLAYED, or UNAVAILABLE.
+4. SIM never means real. Simulated output appears only after an explicit scenario
+   or mission run starts and only for variables the declared model actually computes.
+5. A mission-level kinematic or sensor model is not full physical truth. The UI
+   names its model and limitations and never implies aerodynamic or RF fidelity.
+6. Physical radio link quality, RSSI, battery current, deck readings, IMU samples,
+   and localization do not exist in the UI unless hardware measures them or an
+   explicitly documented model produces a clearly labeled simulated equivalent.
+7. The default screen is mission-first: choose SIMULATION or DIGITAL_TWIN,
+   upload/select one Python mission artifact, then run it. The UI has no mission
+   command or parameter editor. One primary action is visually dominant.
+8. Use progressive disclosure. Idle shows the mission action and configured room;
+   running shows only relevant live/simulated state; completed shows evidence and replay.
+9. Never display the same fact in two panels. Remove decorative KPIs, redundant
+   badges, permanent inspector cards, and explanatory text that does not help a decision.
+10. Visual language is monochrome black, off-white, and neutral gray with generous
+    space, strong typography, hairline borders, and restrained rounded controls.
+    Avoid blue/neon dashboard styling, glow, ornamental gradients, and dense tiles.
+11. Reserve red for emergency/fault action and amber for actionable caution. Mode
+    identity must use text, icon, structure, and labels rather than decorative color.
+12. Developer fixtures may remain for automated tests and a dedicated development
+    route, but the normal operator route must never fall back to them.
+13. Interface copy is functional. Use short labels, values, and actions; no slogans,
+    onboarding prose, filler explanations, or conversational empty-state text.
+14. The local simulator/control service is an implementation detail, not an
+    operator target. One launcher starts the UI and local API, the UI attaches
+    automatically through a same-origin proxy, and no operator copies endpoints
+    or authentication tokens. Connect/disconnect controls refer only to an
+    explicitly selected vehicle adapter, never to the dashboard's own backend.
+DASHBOARD_PHILOSOPHY_END
+
+PRIORITY_MODEL_BEGIN
+P0_FOUNDATION: contracts, simulator, supervisor, missions, evidence, and API.
+P1_OPERATOR_PRODUCT: designed UI, 3D room, engineering controls, digital twin.
+P2_HARDWARE: real adapter and controlled real/shadow qualification.
+P3_FLEET_RELEASE: multi-drone extension and release hardening.
+
+I0_CRITICAL: safety, command authority, identity, state, and evidence integrity.
+I1_HIGH: required product capability or major integration unlock.
+I2_MEDIUM: later fleet, packaging, and operational improvement.
+
+Dependencies override listed order. Developer-only tests may use fixtures while
+backend work is in progress, but the operator route may not consume them and
+integrated acceptance requires the canonical contracts.
+PRIORITY_MODEL_END
+
+OPEN_PRIORITY_INDEX_BEGIN
+01. UI-WP-01 | P0_FOUNDATION | I0_CRITICAL | VERIFIED
+02. UI-WP-02 | P0_FOUNDATION | I1_HIGH | VERIFIED
+03. UI-WP-03 | P0_FOUNDATION | I0_CRITICAL | VERIFIED
+04. UI-WP-04 | P0_FOUNDATION | I1_HIGH | VERIFIED
+05. UI-WP-05 | P0_FOUNDATION | I0_CRITICAL | VERIFIED
+06. UI-WP-06 | P0_FOUNDATION | I0_CRITICAL | VERIFIED
+07. UI-WP-07 | P1_OPERATOR_PRODUCT | I1_HIGH | VERIFIED
+08. UI-WP-08 | P1_OPERATOR_PRODUCT | I1_HIGH | VERIFIED
+09. UI-WP-09 | P1_OPERATOR_PRODUCT | I0_CRITICAL | SOFTWARE_SCOPE_IMPLEMENTED_HARDWARE_VERIFICATION_PENDING
+10. UI-WP-10 | P1_OPERATOR_PRODUCT | I1_HIGH | PHYSICS_FOUNDATION_IMPLEMENTED_REAL_TWIN_QUALIFICATION_PENDING
+11. UI-WP-11 | P2_HARDWARE | I0_CRITICAL | SCAFFOLDING_ALLOWED_HARDWARE_QUALIFICATION_BLOCKED
+12. UI-WP-12 | P2_HARDWARE | I0_CRITICAL | BLOCKED_BY_UI_WP_09_UI_WP_10_UI_WP_11_AND_HARDWARE
+13. UI-WP-13 | P3_FLEET_RELEASE | I1_HIGH | SIMULATION_AFTER_UI_WP_10_HARDWARE_AFTER_UI_WP_12
+14. UI-WP-14 | P3_FLEET_RELEASE | I1_HIGH | BLOCKED_BY_RELEASE_SCOPE_AND_PRECEDING_PACKETS
+OPEN_PRIORITY_INDEX_END
+
+DEPENDENCY_GRAPH_BEGIN
+CORE_VERTICAL_SLICE:
+  UI-WP-01 -> UI-WP-02 + UI-WP-03
+  UI-WP-01 + UI-WP-02 + UI-WP-03 -> UI-WP-04
+  UI-WP-01 + UI-WP-02 -> UI-WP-05
+  UI-WP-03 + UI-WP-04 + UI-WP-05 -> UI-WP-06
+
+OPERATOR_PRODUCT:
+  UI-WP-06 -> UI-WP-07
+  UI-WP-02 + UI-WP-05 + UI-WP-06 + UI-WP-07 -> UI-WP-08
+  UI-WP-03 + UI-WP-06 + UI-WP-07 -> UI-WP-09
+  UI-WP-02 + UI-WP-05 + UI-WP-06 + UI-WP-08 -> UI-WP-10
+
+REAL_DIGITAL_TWIN:
+  UI-WP-01 + UI-WP-03 + UI-WP-04 + UI-WP-05 -> UI-WP-11
+  UI-WP-09 + UI-WP-10 + UI-WP-11 -> UI-WP-12
+
+FLEET_AND_RELEASE:
+  UI-WP-04 + UI-WP-08 + UI-WP-10 -> UI-WP-13_SIMULATION
+  UI-WP-12 -> UI-WP-13_REAL_FLEET
+  scoped completed packets -> UI-WP-14
+DEPENDENCY_GRAPH_END
+
+SYSTEM_INVARIANTS_BEGIN
+1. SIM is the default mode at application startup.
+2. Hardware discovery may connect for inspection but may not arm or fly.
+3. DIGITAL_TWIN requires explicit operator selection, a qualified real adapter,
+   a parallel simulated adapter, and preflight approval.
+4. Every command carries vehicle ID, command ID, timestamp, source, and mode.
+5. Commands are validated by the backend safety supervisor, never only by UI.
+6. Mission control sends high-level intent; the browser never runs a flight
+   control loop and never directly controls individual motors.
+7. Abort-and-land and emergency motor stop are separate commands, styles,
+   confirmations, audit records, and backend paths.
+8. Stale telemetry, lost heartbeat, invalid localization, critical battery,
+   geofence breach, and identity mismatch fail according to explicit policy.
+9. SIMULATION, real observations, simulated twin predictions, and REPLAY evidence
+   are visibly and structurally distinct.
+10. REPLAY cannot emit live commands.
+11. Real and simulated vehicles implement one versioned vehicle contract.
+12. A mission declares its required capabilities and cannot start if the
+    selected vehicle or simulated model does not satisfy them.
+13. Every run ends as SUCCEEDED, ABORTED, or FAILED with a reason and evidence.
+14. Firmware flashing and unrestricted motor testing remain in official
+    CFclient unless separately specified and safety-reviewed in a future packet.
+15. A real-versus-simulated deviation is not called ground-truth error unless
+    a validated global reference such as Lighthouse, Loco/UWB, or motion
+    capture supplies the reference position.
+16. The operator dashboard never falls back to mock or fixture telemetry.
+17. No mission run means no simulated vehicle state, sensor stream, radio metric,
+    battery metric, mission timeline, or fabricated activity state.
+18. Missing and zero are different domain values and remain different through
+    contracts, APIs, storage, UI models, rendering, exports, and tests.
+19. A value unsupported by the selected real or simulated adapter is absent; the
+    UI must not infer or substitute a plausible default.
+20. The normal dashboard shows one source of truth for each fact and one dominant
+    next action; detailed engineering data appears only on request or when relevant.
+21. The operator uses one browser origin. Internal API ports and local credentials
+    remain server-side and are never required inputs in the normal workflow.
+22. Every operator mission is an uploaded immutable Python artifact identified by
+    SHA-256. The same hash is recorded for simulation and digital-twin execution.
+23. The dashboard never provides a second mission definition through profiles,
+    route editing, parameter fields, or built-in takeoff/hover/land choices.
+24. Uploaded Python is validated and executed outside the API trust boundary;
+    unsupported imports, arbitrary host access, and unbounded code are rejected.
+25. Motor, battery, IMU, deck, range, flow, radio, and localization fields appear
+    only when measured by hardware or computed by an explicitly named model.
+26. The `crazyflie-6dof-v1` simulator is configured but not bench-qualified.
+    Raw motor-command Python remains blocked until its safety API and physical
+    parameters are separately validated.
+SYSTEM_INVARIANTS_END
+
+FULL_PACKET_RECORDS_BEGIN
+
+================================================================================================
+BEGIN_WORK_PACKET UI-WP-01
+ID: UI-WP-01
+TITLE: Establish project architecture, domain contracts, and executable skeleton
+STATUS: VERIFIED
+READY_TO_START: COMPLETE
+PRIORITY: P0_FOUNDATION
+IMPORTANCE: I0_CRITICAL
+CLASSIFICATION: ARCHITECTURE_AND_CONTRACTS
+DEPENDS_ON: Existing project Python environment and installed cflib
+OWNER: Codex
+STARTED_AT: 2026-08-05T15:10:00Z
+LAST_UPDATED_AT: 2026-08-05T15:15:52Z
+
+PROBLEM_BEGIN
+The project currently has a development guide and Bitcraze dependencies but no
+application boundary between missions, simulated vehicles, real vehicles,
+telemetry, safety, storage, API, and UI. Building screens or mission scripts
+before defining those contracts would duplicate flight logic and make later
+real/sim parity difficult to verify.
+PROBLEM_END
+
+REQUIRED_OUTCOME_BEGIN
+A typed, versioned application skeleton exists. A mission can target a Vehicle
+interface without knowing whether the implementation is simulated, real, or a
+replay. Commands, telemetry, capabilities, state transitions, mission results,
+and errors have canonical representations and serialization rules.
+REQUIRED_OUTCOME_END
+
+IMPLEMENTATION_TASKS_BEGIN
+TASK-01: [x] Create the src-based Python package and tests structure.
+TASK-02: [x] Define VehicleId, CommandId, MissionRunId, monotonic timestamp,
+             operating mode, and coordinate-frame types.
+TASK-03: [x] Define versioned command models for connect, arm, disarm, takeoff,
+             hover, relative move, stop-and-hold, land, abort, and emergency stop.
+TASK-04: [x] Define telemetry models for pose, velocity, attitude, battery, link,
+             localization, supervisor state, deck state, sensor samples, and faults.
+TASK-05: [x] Define the asynchronous Vehicle interface and capability discovery.
+TASK-06: [x] Define Mission, MissionParameters, MissionContext, and MissionResult.
+TASK-07: [x] Define structured errors and reason codes; prohibit free-form-only
+             failure reporting.
+TASK-08: [x] Add configuration loading with versioned schemas and safe defaults.
+TASK-09: [x] Add a minimal CLI entry point and package-level health command.
+TASK-10: [x] Add formatting, linting, type checking, and unit-test commands.
+IMPLEMENTATION_TASKS_END
+
+OUT_OF_SCOPE_BEGIN
+- Flight physics.
+- A finished web UI.
+- Real radio connection or flight.
+- ROS 2, Gazebo, Webots, or Crazyswarm2 integration.
+OUT_OF_SCOPE_END
+
+DELIVERABLE_CHECKLIST_BEGIN
+DEL-01: [x] Importable application package.
+DEL-02: [x] Versioned command, telemetry, capability, and result contracts.
+DEL-03: [x] Vehicle and Mission interfaces.
+DEL-04: [x] Configuration schema and example configuration.
+DEL-05: [x] CLI health command and contributor setup instructions.
+DELIVERABLE_CHECKLIST_END
+
+ACCEPTANCE_CHECKLIST_BEGIN
+AC-01: [x] All public contracts type-check and serialize deterministically.
+AC-02: [x] An invalid mode, identifier, unit, or coordinate frame fails validation.
+AC-03: [x] No module imports a concrete simulator or Crazyflie adapter through
+            the domain interface layer.
+AC-04: [x] Test fixtures can instantiate commands, telemetry, and mission results.
+AC-05: [x] The default operating mode is SIM.
+AC-06: [x] Unit conventions are documented and SI units are used internally.
+ACCEPTANCE_CHECKLIST_END
+
+VERIFICATION_CHECKLIST_BEGIN
+VER-01: [x] Run the full unit, type, lint, and serialization test suite.
+VER-02: [x] Demonstrate contract round trips using representative JSON payloads.
+VER-03: [x] Review the contracts against SIM, LIVE, SHADOW, and REPLAY needs.
+VERIFICATION_CHECKLIST_END
+
+BLOCKERS_BEGIN
+- NONE_RECORDED
+BLOCKERS_END
+
+CODEX_HANDOFF_BEGIN
+Implement the narrow contract layer before UI or flight behavior. Preserve
+backend command authority, explicit operating modes, SI units, monotonic time,
+vehicle identity, and structured result reasons. Do not add hardware behavior.
+CODEX_HANDOFF_END
+
+COMPLETION_RECORD_BEGIN
+IMPLEMENTATION_COMPLETE: YES
+VERIFICATION_COMPLETE: YES
+COMPLETED_AT: 2026-08-05T15:15:52Z
+COMPLETED_BY: Codex
+CHANGED_FILES_BEGIN
+- .gitignore
+- README.md
+- config/app.yaml
+- pyproject.toml
+- requirements.txt
+- src/crazyswarm_app/__init__.py
+- src/crazyswarm_app/__main__.py
+- src/crazyswarm_app/cli.py
+- src/crazyswarm_app/config.py
+- src/crazyswarm_app/domain/
+- src/crazyswarm_app/missions/
+- src/crazyswarm_app/vehicles/
+- tests/test_cli.py
+- tests/test_config.py
+- tests/test_contracts.py
+CHANGED_FILES_END
+COMMANDS_RUN_BEGIN
+- .venv/bin/python -m crazyswarm_app health --config config/app.yaml
+- .venv/bin/pytest
+- .venv/bin/ruff check .
+- .venv/bin/mypy
+- .venv/bin/python -m pip check
+COMMANDS_RUN_END
+TEST_RESULTS_BEGIN
+- PASS: 13 pytest tests.
+- PASS: Ruff reported all checks passed.
+- PASS: strict mypy reported no issues in 16 source files.
+- PASS: pip reported no broken requirements.
+- PASS: health command loaded schema version 1 with default mode SIM.
+TEST_RESULTS_END
+ACCEPTANCE_EVIDENCE_BEGIN
+- Versioned strict Pydantic command/telemetry/configuration contracts.
+- Deterministic JSON round-trip and invalid-input tests.
+- Backend-neutral Vehicle and Mission interfaces.
+- Executable health command and documented contributor workflow.
+ACCEPTANCE_EVIDENCE_END
+REVIEW_DECISION: VERIFIED
+COMPLETION_RECORD_END
+END_WORK_PACKET UI-WP-01
+
+================================================================================================
+BEGIN_WORK_PACKET UI-WP-02
+ID: UI-WP-02
+TITLE: Build deterministic mission-scoped indoor simulator and configurable room model
+STATUS: VERIFIED
+READY_TO_START: YES
+PRIORITY: P0_FOUNDATION
+IMPORTANCE: I1_HIGH
+CLASSIFICATION: SIMULATION
+DEPENDS_ON: UI-WP-01
+OWNER: Codex
+STARTED_AT: 2026-08-05T15:16:00Z
+LAST_UPDATED_AT: 2026-08-06T13:15:49+02:00
+
+PROBLEM_BEGIN
+Mission and fleet software must be exercised before hardware exists, but a
+high-fidelity motor or aerodynamic simulator would add cost before it improves
+the mission architecture. The project needs a deterministic, fast, controllable
+simulation that matches the Vehicle contract and can inject relevant failures.
+PROBLEM_END
+
+REQUIRED_OUTCOME_BEGIN
+A simulated vehicle can connect, arm, take off, hover, move, stop, land, abort,
+and emergency-stop inside a configured indoor room after an explicit simulation
+mission starts. It publishes only variables computed by its declared model and
+labels them SIMULATED_MODEL with model/version/limitations. Unsupported physical
+signals remain absent. Runs are seedable and can execute in real time or faster.
+REQUIRED_OUTCOME_END
+
+BASELINE_RECOVERY_BEGIN
+PURPOSE: Recover the interrupted existing-simulator workspace once, then treat
+the complete backend, UI, and real-time hover verification as acceptance gates
+before any further simulator improvements.
+RECOVERY_TASKS_BEGIN
+REC-01: [x] Restore `ui/node_modules` exclusively from `ui/package-lock.json`.
+REC-02: [x] Remove pnpm-generated workspace and install residue; npm remains the
+             package manager for the existing UI.
+REC-03: [x] Fix the two strict-mypy errors in the real-time simulation test.
+RECOVERY_TASKS_END
+ACCEPTANCE_GATES_BEGIN
+GATE-01: [x] Run the complete backend pytest suite.
+GATE-02: [x] Run Ruff and strict mypy with no errors.
+GATE-03: [x] Run UI tests, lint, TypeScript checks, and the production build.
+GATE-04: [x] Run `missions/hover30s.py` against the real-time simulator and
+              observe continuous dashboard telemetry for the full 30-second hover.
+GATE-05: [x] Record exact results here before continuing simulator improvements.
+ACCEPTANCE_GATES_END
+POLICY: Dependency restoration is a one-time recovery action. GATE-01 through
+GATE-05 remain work-packet acceptance gates whenever the existing simulator
+baseline is requalified.
+BASELINE_RECOVERY_END
+
+IMPLEMENTATION_TASKS_BEGIN
+TASK-01: [x] Implement a deterministic simulation clock with pause, resume,
+             reset, single-step, real-time, and accelerated modes.
+TASK-02: [x] Implement position, velocity, acceleration, yaw, and altitude state.
+TASK-03: [x] Enforce configurable velocity, acceleration, vertical, and yaw limits.
+TASK-04: [x] Implement arm, takeoff, hover, relative move, stop, land, abort, and
+             emergency-stop transitions through the Vehicle interface.
+TASK-05: [x] Model configurable floor, walls, obstacles, home point, flight
+             volume, and landing zones.
+TASK-06: [x] Model battery depletion, low/critical thresholds, and per-command use.
+TASK-07: [x] Model Flow Deck-like relative drift and height noise.
+TASK-08: [x] Model IMU-derived attitude/acceleration samples at configurable rates.
+TASK-09: [x] Model Multi-ranger ray distances against room geometry.
+TASK-10: [x] Model command latency, acknowledgement latency, packet loss,
+             disconnection, stale telemetry, sensor failure, and localization loss.
+TASK-11: [x] Support deterministic seeds and scenario files.
+TASK-12: [x] Provide one-drone and three-drone test-only example worlds; never
+             auto-select or expose them as active operator vehicles.
+TASK-13: [x] Add a versioned fidelity manifest naming modeled, approximated, and
+             unsupported quantities and the limits of the kinematic model.
+TASK-14: [x] Do not publish operational simulated telemetry until an explicit
+             scenario or mission run starts; configured idle state is not telemetry.
+TASK-15: [x] Preserve absent versus zero at field level and attach source, model,
+             version, unit, frame, time, and validity to each published quantity.
+TASK-16: [x] Remove or rename physical radio-link claims. Packet-loss/latency fault
+             injection is a transport model, not measured RSSI or real RF quality.
+IMPLEMENTATION_TASKS_END
+
+OUT_OF_SCOPE_BEGIN
+- Individual propeller aerodynamics and motor electrical behavior.
+- Claiming parity with physical Crazyflie dynamics.
+- Photorealistic rendering.
+- Automatic reconstruction of a real room.
+- Claiming aerodynamic, motor, battery-electrical, or RF fidelity that is not modeled.
+OUT_OF_SCOPE_END
+
+DELIVERABLE_CHECKLIST_BEGIN
+DEL-01: [x] SimulatedVehicle implementation.
+DEL-02: [x] Simulation clock and world model.
+DEL-03: [x] Deck/sensor simulation models.
+DEL-04: [x] Failure-injection framework.
+DEL-05: [x] Seeded hover, movement, low-battery, and link-loss scenarios.
+DEL-06: [x] Fidelity manifest and mission-scoped publication gate.
+DELIVERABLE_CHECKLIST_END
+
+ACCEPTANCE_CHECKLIST_BEGIN
+AC-01: [x] Identical seed and inputs produce identical telemetry and results.
+AC-02: [x] Hover at 0.30 m for five seconds completes and lands in nominal mode.
+AC-03: [x] Invalid commands and impossible state transitions are rejected.
+AC-04: [x] Simulated sensor data obeys documented units, frames, and update rates.
+AC-05: [x] Range rays match known room geometry within configured tolerance.
+AC-06: [x] Failure scenarios are reproducible and carry explicit reason codes.
+AC-07: [x] Simulation can run faster than real time in automated tests.
+AC-08: [x] Before a simulation run, the API exposes no simulated sensor or vehicle telemetry.
+AC-09: [x] Every simulated value maps to documented model code; unsupported values are absent.
+AC-10: [x] Transport loss/latency cannot be presented as physical radio quality or RSSI.
+AC-11: [x] No default operator route invents one or three simulated vehicles.
+ACCEPTANCE_CHECKLIST_END
+
+VERIFICATION_CHECKLIST_BEGIN
+VER-01: [x] Golden-seed determinism tests pass.
+VER-02: [x] Property tests preserve bounds and prevent impossible battery/state data.
+VER-03: [x] Scenario tests cover nominal and injected-failure runs.
+VER-04: [x] Contract tests pass against the canonical Vehicle interface.
+VER-05: [x] Test no-run, running, stopped, unsupported-field, and zero-versus-absent states.
+VER-06: [x] Audit the API and UI for plausible defaults that lack model provenance.
+VERIFICATION_CHECKLIST_END
+
+BLOCKERS_BEGIN
+- NONE_RECORDED
+BLOCKERS_END
+
+CODEX_HANDOFF_BEGIN
+Build a mission-level simulator, not a motor digital twin. Make time, noise,
+drift, latency, room geometry, sensor decks, battery, and faults configurable
+and deterministic. Publish only model-produced values after explicit execution;
+never pad the contract with plausible telemetry. Do not introduce ROS 2 or a
+heavyweight renderer here.
+CODEX_HANDOFF_END
+
+BASELINE_RECOVERY_RECORD_BEGIN
+RECOVERED_AT: 2026-08-06T13:15:49+02:00
+RECOVERY_RESULT: PASS
+CHANGED_FILES_BEGIN
+- tests/api/test_realtime_simulation.py
+- ui/app/components/RoomScene.tsx
+- WorkPackets/UI_WP.txt
+- REMOVED: ui/pnpm-workspace.yaml
+CHANGED_FILES_END
+COMMANDS_RUN_BEGIN
+- cd ui && npm ci
+- .venv/bin/pytest -q
+- .venv/bin/ruff check .
+- .venv/bin/mypy
+- cd ui && npm run lint
+- cd ui && npm run typecheck
+- cd ui && npm test
+- cd ui && npm ls --depth=0
+- Dashboard browser run of missions/hover30s.py in real time.
+COMMANDS_RUN_END
+TEST_RESULTS_BEGIN
+- PASS: npm restored 571 packages from package-lock.json; no pnpm workspace,
+  lockfile, store, modules metadata, or debug residue remains outside node_modules.
+- PASS: 217 backend tests; one upstream Starlette/httpx deprecation warning.
+- PASS: Ruff reported all checks passed.
+- PASS: strict mypy reported no issues in 76 source files.
+- PASS: ESLint and TypeScript type checking completed with no errors.
+- PASS: 4 Vitest files and 21 UI unit tests.
+- PASS: vinext production build completed; it retained the non-failing large-chunk
+  and static-route-classification advisories.
+- PASS: 3 rendered-HTML tests.
+- NOTE: jsdom reported its expected canvas getContext limitation during UI tests.
+TEST_RESULTS_END
+REALTIME_HOVER_EVIDENCE_BEGIN
+- PASS: dashboard run `run-16141cc89870479c970f8934b372e433` succeeded.
+- PASS: visible telemetry samples at 1.3, 6.3, 11.3, 16.3, 21.3, 26.3,
+  and 31.4 seconds remained ACTIVE/RUNNING; landing was visible at 36.5 seconds,
+  and the completed snapshot was SUCCEEDED at 41.5 seconds.
+- PASS: modeled flow height remained 0.29 m throughout hover; M1 remained at
+  52 percent / 0.078 N / 0.63 A while battery declined from 88.7 to 82.3 percent.
+- PASS: the browser reported no errors during the qualified run.
+- FIXED: interrupted-session testing exposed a canvas ResizeObserver feedback
+  loop that raised a blocking development overlay. RoomScene now sizes on initial
+  render and window resize without observing the canvas it changes.
+REALTIME_HOVER_EVIDENCE_END
+BASELINE_RECOVERY_RECORD_END
+
+COMPLETION_RECORD_BEGIN
+IMPLEMENTATION_COMPLETE: YES
+VERIFICATION_COMPLETE: YES
+COMPLETED_AT: 2026-08-06T00:30:00+02:00
+COMPLETED_BY: Codex
+CHANGED_FILES_BEGIN
+- config/app.yaml
+- config/scenarios/low_battery.yaml
+- config/scenarios/link_loss.yaml
+- config/worlds/one_drone.yaml
+- config/worlds/three_drone.yaml
+- src/crazyswarm_app/config.py
+- src/crazyswarm_app/domain/telemetry.py
+- src/crazyswarm_app/api/app.py
+- src/crazyswarm_app/api/runtime.py
+- src/crazyswarm_app/safety/supervisor.py
+- src/crazyswarm_app/simulation/models.py
+- src/crazyswarm_app/simulation/
+- tests/simulation/
+CHANGED_FILES_END
+COMMANDS_RUN_BEGIN
+- .venv/bin/pytest tests/simulation -q
+- .venv/bin/pytest -q
+- .venv/bin/ruff check .
+- .venv/bin/mypy
+COMMANDS_RUN_END
+TEST_RESULTS_BEGIN
+- PASS: 13 focused simulator tests.
+- PASS: 199 integrated backend tests with one upstream Starlette/httpx warning.
+- PASS: Ruff reported all checks passed.
+- PASS: strict mypy reported no issues in 25 source files.
+TEST_RESULTS_END
+ACCEPTANCE_EVIDENCE_BEGIN
+- Deterministic seed equivalence and accelerated-clock tests.
+- Nominal arm/takeoff/hover/move/abort/land scenario.
+- Known-geometry range intersection tests.
+- Command-drop, disconnect, stale telemetry, sensor failure, localization loss,
+  low-battery, invalid-state, and motion-limit tests.
+- Versioned one-drone, three-drone, low-battery, and link-loss scenario files.
+- `crazyflie-6dof-v1` declares modeled and omitted outputs and limitations.
+- REST and WebSocket publication suppress system-run simulation telemetry.
+- Simulated command transport is explicit `modeled_transport`; physical-radio
+  quality, latency, packet loss, and RSSI remain absent.
+- Field provenance supplies source class, model/version, manifest, unit, frame,
+  timestamp, and validity for every published simulated quantity group.
+ACCEPTANCE_EVIDENCE_END
+REOPEN_REASON: RESOLVED
+REVIEW_DECISION: VERIFIED_TRUTH_FIRST_REVISION
+COMPLETION_RECORD_END
+END_WORK_PACKET UI-WP-02
+
+================================================================================================
+BEGIN_WORK_PACKET UI-WP-03
+ID: UI-WP-03
+TITLE: Implement backend safety supervisor, command authority, and preflight policy
+STATUS: VERIFIED
+READY_TO_START: COMPLETE
+PRIORITY: P0_FOUNDATION
+IMPORTANCE: I0_CRITICAL
+CLASSIFICATION: SAFETY_AND_CONTROL_AUTHORITY
+DEPENDS_ON: UI-WP-01
+OWNER: Codex
+STARTED_AT: 2026-08-05T15:23:00Z
+LAST_UPDATED_AT: 2026-08-05T15:31:14Z
+
+PROBLEM_BEGIN
+A polished interface can make dangerous actions easier to trigger. Safety must
+not depend on button state, browser connectivity, or mission code behaving
+correctly. Real and simulated commands need one authoritative backend policy
+with explicit state, limits, timeouts, and audit records.
+PROBLEM_END
+
+REQUIRED_OUTCOME_BEGIN
+A backend supervisor is the sole authority for arm and movement commands. It
+enforces identity, mode, capability, battery, localization, link, geofence,
+state-transition, heartbeat, and command limits. Normal abort-and-land and
+emergency motor stop are independent paths that can interrupt every mission.
+REQUIRED_OUTCOME_END
+
+IMPLEMENTATION_TASKS_BEGIN
+TASK-01: [x] Implement DISCONNECTED, CONNECTING, READY, ARMING, TAKING_OFF,
+             FLYING, RETURNING, LANDING, ABORTING, FAULT, and EMERGENCY states.
+TASK-02: [x] Define permitted transitions, deadlines, rejection reasons, and
+             idempotency rules.
+TASK-03: [x] Implement explicit SIM/LIVE/SHADOW/REPLAY authority rules.
+TASK-04: [x] Implement preflight checks for identity, mode, capabilities,
+             battery, link, localization, sensor health, and configured boundary.
+TASK-05: [x] Enforce altitude, speed, acceleration, yaw-rate, room/geofence,
+             and mission-duration limits.
+TASK-06: [x] Implement command acknowledgement and timeout supervision.
+TASK-07: [x] Implement backend heartbeat and stale-telemetry policy.
+TASK-08: [x] Implement normal stop, abort-and-land, and return policies.
+TASK-09: [x] Implement separately authorized emergency motor stop with audit event.
+TASK-10: [x] Ensure UI disconnect cannot leave browser-owned command loops running.
+TASK-11: [x] Add an operator preflight checklist and decision record.
+TASK-12: [x] Add configurable policies without allowing runtime relaxation beyond
+             a versioned safety envelope.
+IMPLEMENTATION_TASKS_END
+
+OUT_OF_SCOPE_BEGIN
+- Claiming software can remove physical flight risk.
+- Automatic real arming after device detection.
+- Browser-side enforcement of safety-critical constraints.
+- Firmware-level failsafe replacement.
+OUT_OF_SCOPE_END
+
+DELIVERABLE_CHECKLIST_BEGIN
+DEL-01: [x] Safety state machine and policy engine.
+DEL-02: [x] Preflight report model.
+DEL-03: [x] Validated command gateway.
+DEL-04: [x] Abort-and-land implementation.
+DEL-05: [x] Independent emergency-stop implementation.
+DEL-06: [x] Safety event audit records.
+DELIVERABLE_CHECKLIST_END
+
+ACCEPTANCE_CHECKLIST_BEGIN
+AC-01: [x] Application always starts in SIM and disarmed state.
+AC-02: [x] Hardware discovery cannot arm, take off, or switch modes.
+AC-03: [x] Every invalid transition is rejected and logged with a reason.
+AC-04: [x] REPLAY cannot emit vehicle commands.
+AC-05: [x] Browser refresh/disconnect does not bypass backend supervision.
+AC-06: [x] Abort-and-land remains available during every normal mission state.
+AC-07: [x] Emergency stop uses a distinct command path and cannot be mistaken
+            for normal landing.
+AC-08: [x] Stale telemetry, critical battery, link loss, and localization loss
+            produce the configured deterministic recovery behavior.
+ACCEPTANCE_CHECKLIST_END
+
+VERIFICATION_CHECKLIST_BEGIN
+VER-01: [x] Exhaustively test state-transition pairs.
+VER-02: [x] Inject lost acknowledgements, UI loss, telemetry staleness, and timeouts.
+VER-03: [x] Verify commands outside the envelope never reach an adapter.
+VER-04: [x] Conduct a tabletop review of LIVE and SHADOW authority transitions.
+VERIFICATION_CHECKLIST_END
+
+BLOCKERS_BEGIN
+- NONE_RECORDED
+BLOCKERS_END
+
+CODEX_HANDOFF_BEGIN
+Treat this as a critical backend boundary. Do not implement safety as disabled
+buttons alone. Preserve distinct normal abort and emergency cutoff semantics,
+explicit LIVE/SHADOW selection, fail-closed validation, and complete evidence.
+CODEX_HANDOFF_END
+
+COMPLETION_RECORD_BEGIN
+IMPLEMENTATION_COMPLETE: YES
+VERIFICATION_COMPLETE: YES
+COMPLETED_AT: 2026-08-05T15:31:14Z
+COMPLETED_BY: Codex
+CHANGED_FILES_BEGIN
+- config/app.yaml
+- src/crazyswarm_app/config.py
+- src/crazyswarm_app/safety/
+- src/crazyswarm_app/simulation/vehicle.py
+- tests/safety/
+CHANGED_FILES_END
+COMMANDS_RUN_BEGIN
+- .venv/bin/pytest tests/safety -q
+- .venv/bin/pytest
+- .venv/bin/ruff check .
+- .venv/bin/mypy
+- .venv/bin/python -m pip check
+- .venv/bin/python -m compileall -q src
+- .venv/bin/python -m crazyswarm_app health --config config/app.yaml
+COMMANDS_RUN_END
+TEST_RESULTS_BEGIN
+- PASS: 138 focused safety tests.
+- PASS: 164 integrated tests.
+- PASS: Ruff reported all checks passed.
+- PASS: strict mypy reported no issues in 33 source files.
+- PASS: pip reported no broken requirements.
+- PASS: package compilation and SIM-default health check.
+TEST_RESULTS_END
+ACCEPTANCE_EVIDENCE_BEGIN
+- Exhaustive permitted/rejected state-transition matrix.
+- SIM-default, REPLAY-denial, and explicit LIVE authorization tests.
+- Preflight identity, readiness, battery, link, capability, localization,
+  geofence, and command-authority evidence.
+- Backend-enforced motion envelope and timeout tests.
+- Control-release/expiry abort tests and distinct emergency-stop audit evidence.
+- Deterministic recovery decisions for stale telemetry, critical battery,
+  low link quality, localization loss, geofence breach, and airborne disconnect.
+ACCEPTANCE_EVIDENCE_END
+REVIEW_DECISION: VERIFIED
+COMPLETION_RECORD_END
+END_WORK_PACKET UI-WP-03
+
+================================================================================================
+BEGIN_WORK_PACKET UI-WP-04
+ID: UI-WP-04
+TITLE: Build mission SDK, registry, runner, and initial mission catalog
+STATUS: VERIFIED
+READY_TO_START: COMPLETE
+PRIORITY: P0_FOUNDATION
+IMPORTANCE: I1_HIGH
+CLASSIFICATION: MISSION_RUNTIME
+DEPENDS_ON: UI-WP-01, UI-WP-02, UI-WP-03
+OWNER: Codex
+STARTED_AT: 2026-08-05T17:31:00+02:00
+LAST_UPDATED_AT: 2026-08-05T17:42:31+02:00
+
+PROBLEM_BEGIN
+Independent executable scripts would duplicate connection, preflight, arming,
+logging, landing, and error handling. The UI also needs machine-readable mission
+metadata to populate a dropdown and validated parameter forms safely.
+PROBLEM_END
+
+REQUIRED_OUTCOME_BEGIN
+Missions are registered Python components with stable IDs, typed parameters,
+capability requirements, constraints, descriptions, and completion rules. A
+single runner owns connection, preflight, execution, abort, landing, disarming,
+logging, and final result handling for every backend.
+REQUIRED_OUTCOME_END
+
+IMPLEMENTATION_TASKS_BEGIN
+TASK-01: [x] Define the mission lifecycle and cancellation contract.
+TASK-02: [x] Implement an explicit registry; prohibit arbitrary file execution.
+TASK-03: [x] Expose mission metadata and JSON parameter schemas for UI rendering.
+TASK-04: [x] Implement configuration defaults, named presets, and validated
+             command-line or UI overrides.
+TASK-05: [x] Implement MissionRunner with preflight, timeout, cancellation,
+             abort-and-land, exception handling, result, and cleanup.
+TASK-06: [x] Implement hover mission with height and duration parameters.
+TASK-07: [x] Implement relative move and return-near-home mission.
+TASK-08: [x] Implement square/waypoint-sequence mission for simulation.
+TASK-09: [x] Declare Flow Deck/global-positioning requirements accurately.
+TASK-10: [x] Add CLI commands to list, describe, validate, and run missions.
+TASK-11: [x] Prevent concurrent mission ownership of the same vehicle.
+TASK-12: [x] Add mission version and configuration hash to every run record.
+IMPLEMENTATION_TASKS_END
+
+OUT_OF_SCOPE_BEGIN
+- User-supplied arbitrary Python execution from the browser.
+- Real-flight qualification.
+- Fleet allocation and docking missions.
+OUT_OF_SCOPE_END
+
+DELIVERABLE_CHECKLIST_BEGIN
+DEL-01: [x] Mission SDK and registry.
+DEL-02: [x] MissionRunner.
+DEL-03: [x] Hover, relative move, and square missions.
+DEL-04: [x] Mission schemas, presets, and CLI.
+DEL-05: [x] Mission lifecycle and exception tests.
+DELIVERABLE_CHECKLIST_END
+
+ACCEPTANCE_CHECKLIST_BEGIN
+AC-01: [x] Missions contain behavior while runner owns generic safety lifecycle.
+AC-02: [x] Mission dropdown data is generated from registry metadata.
+AC-03: [x] Invalid parameters fail before preflight or arm.
+AC-04: [x] Missing required capabilities prevent mission start.
+AC-05: [x] Cancellation and exceptions result in deterministic abort-and-land.
+AC-06: [x] Every run ends SUCCEEDED, ABORTED, or FAILED with structured reason.
+AC-07: [x] The same mission executes against any conforming Vehicle backend.
+ACCEPTANCE_CHECKLIST_END
+
+VERIFICATION_CHECKLIST_BEGIN
+VER-01: [x] Run every mission against SimulatedVehicle.
+VER-02: [x] Inject cancellation and exceptions at representative airborne phases.
+VER-03: [x] Contract-test presets, CLI overrides, and generated UI schemas.
+VER-04: [x] Verify concurrent ownership is rejected.
+VERIFICATION_CHECKLIST_END
+
+BLOCKERS_BEGIN
+- CLEARED: UI-WP-01, UI-WP-02, and UI-WP-03 are verified.
+BLOCKERS_END
+
+CODEX_HANDOFF_BEGIN
+Use registered mission classes and typed parameter schemas. Keep connection,
+arming, safety, evidence, cleanup, and final result logic in MissionRunner. Do
+not make each mission an independently launched script with duplicated setup.
+CODEX_HANDOFF_END
+
+COMPLETION_RECORD_BEGIN
+IMPLEMENTATION_COMPLETE: YES
+VERIFICATION_COMPLETE: YES
+COMPLETED_AT: 2026-08-05T17:42:31+02:00
+COMPLETED_BY: Codex
+CHANGED_FILES_BEGIN
+- src/crazyswarm_app/missions/{base,catalog,models,registry,runner}.py
+- src/crazyswarm_app/missions/__init__.py
+- src/crazyswarm_app/simulation/factory.py
+- src/crazyswarm_app/simulation/__init__.py
+- src/crazyswarm_app/safety/supervisor.py
+- src/crazyswarm_app/cli.py
+- tests/missions/test_registry.py
+- tests/missions/test_runner.py
+- tests/test_cli.py
+CHANGED_FILES_END
+COMMANDS_RUN_BEGIN
+- .venv/bin/pytest tests/missions tests/test_cli.py
+- .venv/bin/ruff check src tests/missions tests/test_cli.py
+- .venv/bin/mypy src tests/missions tests/test_cli.py
+- .venv/bin/python -m crazyswarm_app missions list
+- .venv/bin/python -m crazyswarm_app missions run hover --preset quick-check
+COMMANDS_RUN_END
+TEST_RESULTS_BEGIN
+- PASS: 13 focused mission and CLI tests.
+- PASS: Ruff checks for mission, CLI, and supervisor changes.
+- PASS: strict mypy checks for source and mission tests.
+- PASS: simulated hover CLI completed with structured run evidence.
+TEST_RESULTS_END
+ACCEPTANCE_EVIDENCE_BEGIN
+- Registry metadata supplies stable IDs, JSON schemas, named presets, and capabilities.
+- Invalid parameters and missing capabilities are rejected before arming.
+- All three catalog missions pass against SimulatedVehicle.
+- Cancellation and injected mission exceptions trigger abort-and-land cleanup.
+- Vehicle-level concurrent mission ownership is rejected deterministically.
+- Run results preserve mission version, configuration SHA-256, phases, and terminal reason.
+ACCEPTANCE_EVIDENCE_END
+REVIEW_DECISION: VERIFIED
+COMPLETION_RECORD_END
+END_WORK_PACKET UI-WP-04
+
+================================================================================================
+BEGIN_WORK_PACKET UI-WP-05
+ID: UI-WP-05
+TITLE: Implement telemetry bus, evidence recorder, queries, and safe replay
+STATUS: VERIFIED
+READY_TO_START: COMPLETE
+PRIORITY: P0_FOUNDATION
+IMPORTANCE: I0_CRITICAL
+CLASSIFICATION: OBSERVABILITY_AND_EVIDENCE
+DEPENDS_ON: UI-WP-01, UI-WP-02
+OWNER: Codex
+STARTED_AT: 2026-08-05T17:42:31+02:00
+LAST_UPDATED_AT: 2026-08-05T17:50:38+02:00
+
+PROBLEM_BEGIN
+The UI, digital twin, tests, and incident analysis need the same timestamped
+telemetry and event history. Ad hoc console logs cannot align simulated and
+real behavior, reconstruct command authority, or prove why a mission stopped.
+PROBLEM_END
+
+REQUIRED_OUTCOME_BEGIN
+A bounded telemetry bus distributes versioned live samples without becoming a
+safety dependency. Every mission records identity, configuration, commands,
+acknowledgements, state transitions, relevant telemetry, faults, operator
+actions, and the final result. A replay adapter can reconstruct a run but can
+never send commands.
+REQUIRED_OUTCOME_END
+
+IMPLEMENTATION_TASKS_BEGIN
+TASK-01: [x] Implement typed telemetry, command, state, fault, operator-action,
+             and mission-result event streams.
+TASK-02: [x] Preserve source timestamps, receive timestamps, sequence numbers,
+             vehicle IDs, run IDs, mode, units, and coordinate frames.
+TASK-03: [x] Implement bounded buffering, backpressure, sampling, and dropped-
+             event counters.
+TASK-04: [x] Store mission metadata/events transactionally and high-rate
+             telemetry in a queryable append-only format.
+TASK-05: [x] Record software/configuration/mission versions and hashes.
+TASK-06: [x] Implement queries for a run, time range, vehicle, sensor, and fault.
+TASK-07: [x] Implement replay clock, pause, seek, speed, and step.
+TASK-08: [x] Implement ReplayVehicle as a read-only adapter.
+TASK-09: [x] Add export of a complete diagnostic bundle.
+TASK-10: [x] Add retention and storage-corruption behavior.
+IMPLEMENTATION_TASKS_END
+
+OUT_OF_SCOPE_BEGIN
+- Treating UI display rate as telemetry acquisition rate.
+- Replaying commands to real hardware.
+- Cloud storage or remote fleet service.
+OUT_OF_SCOPE_END
+
+DELIVERABLE_CHECKLIST_BEGIN
+DEL-01: [x] Telemetry/event bus.
+DEL-02: [x] Mission recorder and storage schema.
+DEL-03: [x] Query service.
+DEL-04: [x] ReplayVehicle and replay clock.
+DEL-05: [x] Diagnostic export bundle.
+DELIVERABLE_CHECKLIST_END
+
+ACCEPTANCE_CHECKLIST_BEGIN
+AC-01: [x] Every stored sample has vehicle, run, source, timestamp, unit, and frame.
+AC-02: [x] UI subscribers cannot block the supervisor or adapter.
+AC-03: [x] Buffer overflow is visible and counted, not silently hidden.
+AC-04: [x] Replay reproduces ordering and timing under a controllable clock.
+AC-05: [x] Replay mode has no command-producing method or route.
+AC-06: [x] A mission report can explain every terminal result.
+AC-07: [x] Abrupt process termination leaves recoverable evidence up to the
+            documented durability boundary.
+ACCEPTANCE_CHECKLIST_END
+
+VERIFICATION_CHECKLIST_BEGIN
+VER-01: [x] Load-test telemetry fan-out and storage at expected multi-drone rates.
+VER-02: [x] Compare original and replayed event ordering and values.
+VER-03: [x] Interrupt writes and verify documented recovery behavior.
+VER-04: [x] Validate diagnostic exports against the test-record requirements.
+VERIFICATION_CHECKLIST_END
+
+BLOCKERS_BEGIN
+- CLEARED: UI-WP-01 and UI-WP-02 are verified.
+BLOCKERS_END
+
+CODEX_HANDOFF_BEGIN
+Build evidence as a first-class subsystem. Preserve clocks, sequence, identity,
+units, frames, source, mode, and configuration. Keep replay structurally unable
+to control hardware and keep UI consumption off the safety-critical path.
+CODEX_HANDOFF_END
+
+COMPLETION_RECORD_BEGIN
+IMPLEMENTATION_COMPLETE: YES
+VERIFICATION_COMPLETE: YES
+COMPLETED_AT: 2026-08-05T17:50:38+02:00
+COMPLETED_BY: Codex
+CHANGED_FILES_BEGIN
+- src/crazyswarm_app/observability/{events,bus,bridge,recorder,storage,replay}.py
+- src/crazyswarm_app/observability/__init__.py
+- src/crazyswarm_app/safety/audit.py
+- src/crazyswarm_app/safety/supervisor.py
+- src/crazyswarm_app/missions/runner.py
+- tests/observability/{test_bus,test_storage,test_replay}.py
+CHANGED_FILES_END
+COMMANDS_RUN_BEGIN
+- .venv/bin/pytest tests/observability
+- .venv/bin/ruff check src tests/observability
+- .venv/bin/mypy src tests/observability
+COMMANDS_RUN_END
+TEST_RESULTS_BEGIN
+- PASS: 10 focused telemetry, storage, retention, export, and replay tests.
+- PASS: 5,000-sample, three-vehicle fan-out test with zero recorder loss.
+- PASS: Ruff and strict mypy checks.
+TEST_RESULTS_END
+ACCEPTANCE_EVIDENCE_BEGIN
+- Bounded per-subscriber buffers expose drop counters and never await UI clients.
+- SQLite WAL with synchronous FULL defines the committed durability boundary.
+- SHA-256 verification surfaces stored-event corruption explicitly.
+- Run, time, vehicle, event-kind, fault, and sensor queries are implemented.
+- Diagnostic ZIP contains a manifest, run metadata/result, and ordered NDJSON events.
+- Replay preserves bus sequence, supports pause/seek/speed/step, and has no execute method.
+ACCEPTANCE_EVIDENCE_END
+REVIEW_DECISION: VERIFIED
+COMPLETION_RECORD_END
+END_WORK_PACKET UI-WP-05
+
+================================================================================================
+BEGIN_WORK_PACKET UI-WP-06
+ID: UI-WP-06
+TITLE: Build local control API and real-time client gateway
+STATUS: VERIFIED
+READY_TO_START: COMPLETE
+PRIORITY: P0_FOUNDATION
+IMPORTANCE: I0_CRITICAL
+CLASSIFICATION: BACKEND_API
+DEPENDS_ON: UI-WP-03, UI-WP-04, UI-WP-05
+OWNER: Codex
+STARTED_AT: 2026-08-05T17:50:38+02:00
+LAST_UPDATED_AT: 2026-08-05T18:01:25+02:00
+
+PROBLEM_BEGIN
+The operator UI requires a stable API but must not call cflib, simulator internals,
+or mission objects directly. Multiple UI sessions, refreshes, duplicate requests,
+and stale clients must not produce duplicated or unauthorized commands.
+PROBLEM_END
+
+REQUIRED_OUTCOME_BEGIN
+A local Python service exposes health, vehicles, modes, missions, preflight,
+commands, telemetry, parameters, logs, simulation controls, and replay through
+versioned HTTP and WebSocket contracts. All state-changing requests pass through
+the supervisor and are idempotent and attributable.
+REQUIRED_OUTCOME_END
+
+IMPLEMENTATION_TASKS_BEGIN
+TASK-01: [x] Implement versioned local API service and generated schema.
+TASK-02: [x] Add health, application state, and capability endpoints.
+TASK-03: [x] Add vehicle discovery, connection, selection, and inspection endpoints.
+TASK-04: [x] Add mission list, schema, preflight, start, cancel, and status endpoints.
+TASK-05: [x] Add supervised arm, disarm, takeoff, land, abort, and emergency routes.
+TASK-06: [x] Add simulation world, clock, reset, and failure-injection routes.
+TASK-07: [x] Add telemetry/event WebSocket with subscription and rate controls.
+TASK-08: [x] Add log/run queries, replay controls, and diagnostic export routes.
+TASK-09: [x] Add request IDs, idempotency, client identity, audit context, and
+             structured conflict/error responses.
+TASK-10: [x] Add origin, local-authentication, session, and transport safeguards.
+TASK-11: [x] Add API contract and concurrency tests.
+IMPLEMENTATION_TASKS_END
+
+OUT_OF_SCOPE_BEGIN
+- Exposing the service publicly on the internet.
+- Browser access to USB/Crazyradio.
+- Browser-owned safety or flight-control timing.
+- Cloud accounts and remote command authority.
+OUT_OF_SCOPE_END
+
+DELIVERABLE_CHECKLIST_BEGIN
+DEL-01: [x] Versioned HTTP API and schema.
+DEL-02: [x] WebSocket telemetry/event stream.
+DEL-03: [x] Idempotent supervised command endpoints.
+DEL-04: [x] Simulation, mission, log, and replay endpoints.
+DEL-05: [x] API and concurrency test suite.
+DELIVERABLE_CHECKLIST_END
+
+ACCEPTANCE_CHECKLIST_BEGIN
+AC-01: [x] Every flight-state mutation passes through backend supervisor authority.
+AC-02: [x] Duplicate requests cannot duplicate takeoff or mission execution.
+AC-03: [x] Stale clients cannot retain vehicle command ownership.
+AC-04: [x] WebSocket loss does not stop backend safety processing.
+AC-05: [x] Telemetry rate limits do not alter acquisition or storage rates.
+AC-06: [x] API errors contain stable reason codes and actionable context.
+AC-07: [x] The service binds locally by default and rejects untrusted origins.
+ACCEPTANCE_CHECKLIST_END
+
+VERIFICATION_CHECKLIST_BEGIN
+VER-01: [x] Run API schema, lifecycle, concurrency, and reconnect tests.
+VER-02: [x] Simulate duplicate, reordered, delayed, and abandoned client requests.
+VER-03: [x] Disconnect the UI during a mission and verify backend policy continues.
+VER-04: [x] Security-review all command-producing routes.
+VERIFICATION_CHECKLIST_END
+
+BLOCKERS_BEGIN
+- CLEARED: UI-WP-03, UI-WP-04, and UI-WP-05 are verified.
+BLOCKERS_END
+
+CODEX_HANDOFF_BEGIN
+Keep the API local and versioned. Route every state-changing operation through
+the supervisor. Add identity and idempotency before wiring UI controls. Never
+expose cflib or simulator objects directly to the browser.
+CODEX_HANDOFF_END
+
+COMPLETION_RECORD_BEGIN
+IMPLEMENTATION_COMPLETE: YES
+VERIFICATION_COMPLETE: YES
+COMPLETED_AT: 2026-08-05T18:01:25+02:00
+COMPLETED_BY: Codex
+CHANGED_FILES_BEGIN
+- src/crazyswarm_app/api/{app,models,runtime,security}.py
+- src/crazyswarm_app/api/__init__.py
+- src/crazyswarm_app/config.py
+- src/crazyswarm_app/cli.py
+- src/crazyswarm_app/simulation/faults.py
+- config/app.yaml
+- pyproject.toml and installed FastAPI/Uvicorn/httpx dependencies
+- README.md
+- tests/api/{conftest,test_contract,test_missions_and_replay,test_security,test_websocket}.py
+CHANGED_FILES_END
+COMMANDS_RUN_BEGIN
+- .venv/bin/python -m pip install -e '.[dev,hardware-tools]'
+- .venv/bin/pytest tests/api -q
+- .venv/bin/pytest
+- .venv/bin/ruff check .
+- .venv/bin/mypy
+- .venv/bin/python -m pip check
+- .venv/bin/python -m compileall -q src
+- .venv/bin/python -m crazyswarm_app health --config config/app.yaml
+- .venv/bin/python -m crazyswarm_app missions run square --preset small
+- CRAZYSWARM_LOCAL_TOKEN=(test token) .venv/bin/python -m crazyswarm_app serve --port 8765
+- curl with X-Local-Token to http://127.0.0.1:8765/api/v1/health
+COMMANDS_RUN_END
+TEST_RESULTS_BEGIN
+- PASS: 11 focused API, WebSocket, lifecycle, idempotency, and security tests.
+- PASS: 197 integrated tests (one upstream Starlette/httpx deprecation warning).
+- PASS: Ruff reported all checks passed.
+- PASS: strict mypy reported no issues in 64 source files.
+- PASS: dependency integrity, source compilation, health check, and square mission smoke test.
+- PASS: real Uvicorn loopback bind and authenticated health request on port 8765.
+TEST_RESULTS_END
+ACCEPTANCE_EVIDENCE_BEGIN
+- All command-producing routes call SafetySupervisor or MissionRunner; no browser control loop.
+- Client ID plus idempotency key prevents duplicate/reordered command and mission execution.
+- Expired control leases reject stale clients; WebSocket disconnect leaves backend missions running.
+- Local token authentication, loopback-only configuration, and trusted-origin checks pass.
+- WebSocket sampling uses an independent subscription and cannot alter recorder acquisition.
+- Stable error bodies contain code, message, request ID, and actionable details.
+- Replay exposes only open/pause/resume/seek/speed/step and no vehicle command route.
+ACCEPTANCE_EVIDENCE_END
+REVIEW_DECISION: VERIFIED
+COMPLETION_RECORD_END
+END_WORK_PACKET UI-WP-06
+
+================================================================================================
+BEGIN_WORK_PACKET UI-WP-07
+ID: UI-WP-07
+TITLE: Create truth-first monochrome mission control and responsive UI shell
+STATUS: VERIFIED
+READY_TO_START: YES
+PRIORITY: P1_OPERATOR_PRODUCT
+IMPORTANCE: I1_HIGH
+CLASSIFICATION: PRODUCT_DESIGN_AND_FRONTEND_FOUNDATION
+DEPENDS_ON: UI-WP-06 for integrated acceptance; UI-WP-01 contracts for final models
+OWNER: Codex
+STARTED_AT: 2026-08-05T18:01:25+02:00
+LAST_UPDATED_AT: 2026-08-06T00:30:00+02:00
+
+PROBLEM_BEGIN
+The product needs a modern, calm interface inspired by the references without
+copying them. The previous dense blue dashboard duplicated facts and filled the
+idle state with plausible fixture telemetry. That is visually impressive but
+epistemically unsafe: polish must never manufacture capability or observation.
+PROBLEM_END
+
+REQUIRED_OUTCOME_BEGIN
+An original, accessible black/off-white/gray design centers one obvious mission
+workflow and one large spatial workspace. The normal route renders only current
+backend, active simulation, plan, replay, or configured data. Before a mission or
+connection exists it is intentionally sparse. Developer fixtures remain isolated.
+REQUIRED_OUTCOME_END
+
+IMPLEMENTATION_TASKS_BEGIN
+TASK-01: [x] Establish frontend toolchain, generated API client, test setup, and
+             component-development environment.
+TASK-02: [x] Redefine typography, spacing, monochrome color, elevation, motion, icon, chart,
+             focus, and data-density tokens.
+TASK-03: [x] Define unmistakable SIMULATION and DIGITAL_TWIN treatments using
+             labels, icons, and structure rather than blue/neon decoration.
+TASK-04: [x] Simplify the persistent header to mode, current subject, run state,
+             command authority, and safety actions without duplicated metrics.
+TASK-05: [x] Reduce navigation to the minimum task-oriented destinations; hide
+             engineering and fleet surfaces until they contain available data.
+TASK-06: [x] Remove permanent inspector/timeline duplication and use contextual
+             drawers or panels opened only when relevant.
+TASK-07: [x] Build truthful loading, empty, disconnected, stale, degraded, fault, and
+             permission-denied states.
+TASK-08: [x] Revalidate desktop/tablet layouts, keyboard navigation, and focus after redesign.
+TASK-09: [x] Add component visual tests and accessibility checks.
+TASK-10: [x] Ensure safety states do not rely on color alone.
+TASK-11: [x] Make the default operator route data-empty: no fixture vehicle, flight
+             state, sensor, battery, link, localization, or mission timeline.
+TASK-12: [x] Implement the primary flow: choose execution path -> upload/select an
+             immutable Python mission -> Run, with no dashboard mission editor.
+TASK-13: [x] Give every screen exactly one dominant next action and use progressive
+             disclosure for telemetry, decks, diagnostics, and evidence.
+TASK-14: [x] Define null rendering: omit irrelevant unavailable metrics; use quiet
+             "Not available" only when absence affects the current decision.
+TASK-15: [x] Prohibit operational fallback to fixtures. Keep TEST FIXTURE states on
+             a development-only route excluded from normal navigation and builds.
+TASK-16: [x] Apply a strict content budget: concise labels, no explanatory filler,
+             no duplicated facts, and no decorative KPI cards.
+IMPLEMENTATION_TASKS_END
+
+OUT_OF_SCOPE_BEGIN
+- Copying logos, artwork, layout, or trade dress from reference products.
+- Flight logic in frontend components.
+- Firmware flashing UI.
+- Phone-sized manual flight control in the first release.
+- Blue/neon/glowing visual language or dense command-center ornamentation.
+- Default sample missions, vehicles, telemetry, or health values on the operator route.
+OUT_OF_SCOPE_END
+
+DELIVERABLE_CHECKLIST_BEGIN
+DEL-01: [x] Monochrome design tokens and minimal component library.
+DEL-02: [x] Responsive mission-first application shell.
+DEL-03: [x] Mode, absence, health, fault, and safety components.
+DEL-04: [x] Development-only fixture stories and regression tests.
+DEL-05: [x] Updated accessibility and content-density report.
+DEL-06: [x] Mission selection, review, preflight, and start flow.
+DELIVERABLE_CHECKLIST_END
+
+ACCEPTANCE_CHECKLIST_BEGIN
+AC-01: [x] Current mode and command authority are visible without duplicating other facts.
+AC-02: [x] LIVE cannot be visually confused with SIM or REPLAY.
+AC-03: [x] Abort and emergency stop are visually and behaviorally distinct.
+AC-04: [x] Stale values are labeled stale and not presented as current.
+AC-05: [x] Primary screens work at agreed desktop and tablet breakpoints.
+AC-06: [x] Keyboard, focus, contrast, and non-color safety cues pass redesigned checks.
+AC-07: [x] No frontend component directly imports vehicle-control libraries.
+AC-08: [x] Fresh startup with no run contains zero invented operational values.
+AC-09: [x] A mission can be selected, understood, reviewed, and started without
+            visiting another page or interpreting engineering terminology.
+AC-10: [x] No fact appears in more than one persistent location.
+AC-11: [x] The normal route cannot load deterministicDashboard or any fixture fallback.
+ACCEPTANCE_CHECKLIST_END
+
+VERIFICATION_CHECKLIST_BEGIN
+VER-01: [x] Review every primary state with isolated TEST FIXTURE stories.
+VER-02: [x] Run automated accessibility and rendered-HTML regression tests.
+VER-03: [x] Test accidental-action prevention for LIVE and emergency controls.
+VER-04: [x] Integrate with UI-WP-06 generated contracts.
+VERIFICATION_CHECKLIST_END
+
+BLOCKERS_BEGIN
+- NONE_RECORDED
+BLOCKERS_END
+
+CODEX_HANDOFF_BEGIN
+Create an original restrained monochrome interface with strong hierarchy and space.
+Start from nothing observed, not from a filled mock dashboard. Make mission selection
+and start self-evident, reveal detail only when real/model output exists, and keep
+test fixtures inaccessible from the operational route.
+CODEX_HANDOFF_END
+
+COMPLETION_RECORD_BEGIN
+IMPLEMENTATION_COMPLETE: YES
+VERIFICATION_COMPLETE: YES
+COMPLETED_AT: 2026-08-06T00:30:00+02:00
+COMPLETED_BY: Codex
+CHANGED_FILES_BEGIN
+- ui/app/components/ControlCenter.tsx
+- ui/app/components/FixtureGallery.tsx
+- ui/app/globals.css
+- ui/app/layout.tsx
+- ui/app/page.tsx
+- ui/app/fixtures/page.tsx
+- ui/app/lib/api.ts
+- ui/app/lib/api.generated.ts
+- ui/app/lib/fixtures.ts
+- ui/app/lib/models.ts
+- ui/ACCESSIBILITY.md
+- ui/README.md
+- ui/package.json
+- ui/package-lock.json
+- ui/vitest.config.ts
+- ui/tests/api-adapter.test.ts
+- ui/tests/components.test.tsx
+- ui/tests/rendered-html.test.mjs
+- scripts/export_openapi.py
+- config/app.yaml
+- src/crazyswarm_app/config.py
+CHANGED_FILES_END
+COMMANDS_RUN_BEGIN
+- npm run generate:api
+- npm run check
+- npm audit --offline --omit=dev
+- .venv/bin/pytest -q
+COMMANDS_RUN_END
+TEST_RESULTS_BEGIN
+- Frontend lint and TypeScript checks passed.
+- Vitest: 16 tests passed across API adaptation, mission start, components, accessibility,
+  safety controls, spatial transforms, and renderer command boundaries.
+- Production build succeeded; rendered HTML: 3 tests passed.
+- Python backend: 199 tests passed with one upstream Starlette deprecation warning.
+- Offline production-dependency audit reported 0 known cached vulnerabilities.
+TEST_RESULTS_END
+ACCEPTANCE_EVIDENCE_BEGIN
+- Default operator state is built from `createEmptyDashboard`; source-boundary tests
+  reject any fixture import in the control shell or API adapter.
+- Monochrome tokens replace the blue/neon design; the content budget is enforced
+  through short labels and one primary mission action.
+- Mission metadata, presets, parameter editing, review, start, polling, and
+  controlled cancellation use the authenticated local API.
+ACCEPTANCE_EVIDENCE_END
+REVIEW_DECISION: VERIFIED_TRUTH_FIRST_DESIGN
+COMPLETION_RECORD_END
+END_WORK_PACKET UI-WP-07
+
+================================================================================================
+BEGIN_WORK_PACKET UI-WP-08
+ID: UI-WP-08
+TITLE: Implement 3D indoor map, paths, sensor rays, decks, and vehicle inspector
+STATUS: VERIFIED
+READY_TO_START: YES
+PRIORITY: P1_OPERATOR_PRODUCT
+IMPORTANCE: I1_HIGH
+CLASSIFICATION: THREE_DIMENSIONAL_OBSERVER
+DEPENDS_ON: UI-WP-02, UI-WP-05, UI-WP-06, UI-WP-07
+OWNER: Codex
+STARTED_AT: 2026-08-05T18:20:00+02:00
+LAST_UPDATED_AT: 2026-08-06T16:21:32+02:00
+
+PROBLEM_BEGIN
+The central experience requires a spatial view, but indoor telemetry has multiple
+coordinate frames and uncertain position. A visually attractive map that mixes
+relative estimates, simulated truth, configured geometry, or stale sensor data
+without provenance would mislead the operator.
+PROBLEM_END
+
+REQUIRED_OUTCOME_BEGIN
+The UI may always render versioned configured room geometry because configuration
+is evidence. It renders vehicles, estimates, model truth, paths, uncertainty,
+sensors, battery, link, IMU, and decks only when the active backend source actually
+provides them. No mission/run means configured space plus a mission-start action,
+not a populated digital twin or permanent telemetry inspector.
+REQUIRED_OUTCOME_END
+
+IMPLEMENTATION_TASKS_BEGIN
+TASK-01: [x] Implement versioned room geometry and coordinate-frame configuration.
+TASK-02: [x] Render floor, walls, obstacles, home, landing zones, and geofence.
+TASK-03: [x] Render exactly the vehicles declared by the active API/scenario; never
+             invent additional fleet members or auto-load example worlds.
+TASK-04: [x] Render measured/estimated, simulated-model, planned, configured, and
+             replayed states only when present and with distinct monochrome treatments.
+TASK-05: [x] Render historical path, planned path, target, velocity, heading, and
+             optional uncertainty indicator.
+TASK-06: [x] Render Multi-ranger rays and hits only for received/model-produced
+             samples; never draw default rays or substitute maximum range.
+TASK-07: [x] Render Flow motion/height only after the source produces it and retain
+             relative/drift-prone qualification.
+TASK-08: [x] Build contextual IMU, estimator, battery, link, supervisor, and deck
+             details that appear only when the selected source supplies them.
+TASK-09: [x] Display source class, source/model identity, timestamp, age, unit,
+             frame, validity, and limitation for every dynamic quantity.
+TASK-10: [x] Add camera controls, reset view, top/side/perspective presets, and
+             performance controls.
+TASK-11: [x] Add a deterministic test scene and screenshot regression suite.
+TASK-12: [x] Replace operational deterministicDashboard fallback with a true empty
+             model; keep populated fixtures exclusively in test/development scope.
+TASK-13: [x] Treat never-received, unavailable, invalid, and stale as distinct;
+             never represent any of them as numeric zero or 100%.
+TASK-14: [x] Hide the sensor/vehicle inspector before a run and reveal the smallest
+             relevant detail panel progressively during execution.
+TASK-15: [x] Do not show physical radio-link quality in SIM unless an explicit RF
+             model exists; transport fault injection must use a different name.
+TASK-16: [x] Ensure stopped/completed missions freeze or replay recorded evidence
+             rather than continuing to synthesize live-looking values.
+IMPLEMENTATION_TASKS_END
+
+OUT_OF_SCOPE_BEGIN
+- Claiming Multi-ranger data is a complete map or object classifier.
+- Photorealistic reconstruction of the real room.
+- Vision/SLAM without a dedicated later packet.
+- Presenting Flow Deck position as drift-free ground truth.
+- Rendering a sensor, vehicle, health state, or path merely to make the screen look active.
+OUT_OF_SCOPE_END
+
+DELIVERABLE_CHECKLIST_BEGIN
+DEL-01: [x] 3D room renderer and camera controls.
+DEL-02: [x] Truth-gated vehicle, path, target, boundary, and optional uncertainty layers.
+DEL-03: [x] Source-gated sensor-ray and deck visualization.
+DEL-04: [x] Contextual vehicle/deck/sensor details.
+DEL-05: [x] Deterministic visual fixtures and regressions.
+DELIVERABLE_CHECKLIST_END
+
+ACCEPTANCE_CHECKLIST_BEGIN
+AC-01: [x] Every rendered dynamic value has known source, timestamp, unit, frame,
+            validity, and model/measurement classification.
+AC-02: [x] Estimated real and simulated states cannot be visually confused.
+AC-03: [x] Never-received, stale, invalid, absent, and unsupported are distinct.
+AC-04: [x] Configured walls and obstacles align with simulator range intersections.
+AC-05: [x] Rendering remains responsive at the target vehicle and telemetry count.
+AC-06: [x] Flow-only localization is labeled relative/drift-prone.
+AC-07: [x] The 3D renderer cannot send vehicle commands.
+AC-08: [x] With no mission and no connected vehicle, no vehicle or telemetry is rendered.
+AC-09: [x] SIM shows no physical radio-link metric without a versioned RF model.
+AC-10: [x] Selecting a one-vehicle scenario renders one vehicle, never three.
+ACCEPTANCE_CHECKLIST_END
+
+VERIFICATION_CHECKLIST_BEGIN
+VER-01: [x] Compare known simulation scenes to rendered positions and ranges.
+VER-02: [x] Test frame transforms and units with fixed golden fixtures.
+VER-03: [x] Load-test paths, sensor rays, and multiple simulated vehicles.
+VER-04: [x] Run visual regression across supported viewport sizes.
+VERIFICATION_CHECKLIST_END
+
+BLOCKERS_BEGIN
+- NONE_RECORDED
+BLOCKERS_END
+
+CODEX_HANDOFF_BEGIN
+Build a sparse truthful observer. Configuration may exist before a run; observation
+may not. Render nothing that the active source did not produce, never infer a fleet,
+and progressively reveal only mission-relevant measurements or model outputs.
+CODEX_HANDOFF_END
+
+COMPLETION_RECORD_BEGIN
+IMPLEMENTATION_COMPLETE: YES
+VERIFICATION_COMPLETE: YES
+COMPLETED_AT: 2026-08-06T17:23:16+02:00
+COMPLETED_BY: Codex
+CHANGED_FILES_BEGIN
+- ui/app/components/RoomScene.tsx
+- ui/app/components/ControlCenter.tsx
+- ui/app/globals.css
+- ui/app/lib/models.ts
+- ui/app/lib/fixtures.ts
+- ui/app/lib/spatial.ts
+- ui/tests/spatial.test.ts
+- ui/tests/renderer-boundary.test.ts
+- ui/tests/visual-baselines.test.ts
+- ui/tests/visual/baselines/manifest.json
+- ui/tests/visual/baselines/*.jpg
+- ui/ACCESSIBILITY.md
+CHANGED_FILES_END
+COMMANDS_RUN_BEGIN
+- npm run check
+- .venv/bin/pytest -q
+COMMANDS_RUN_END
+TEST_RESULTS_BEGIN
+- Fixed coordinate, range endpoint, and yaw transform tests passed.
+- Renderer source-boundary test proves it has no API, command, takeoff, land,
+  abort, or emergency path.
+- Empty, one-vehicle, range, IMU, Flow, plan, source, stopped-snapshot, and
+  transport-without-radio paths pass unit/type/build checks.
+- FAST-SIM-WP-01 verified the integrated local dashboard in the in-app browser
+  during climb, hover, landing, controlled abort, and emergency falling-body states.
+- Fourteen deterministic baseline images cover seven operator states at desktop and
+  narrow viewports; their SHA-256 manifest is enforced by the unit suite.
+- A boundary load test constructs 2,000 trace points, 800 planned points, six rays,
+  and three vehicles within the versioned 250 ms scene-build budget.
+- Integrated browser instrumentation observed 120.2 FPS, 39.4 MiB heap, 12 scene
+  objects, working WebGL, and no final console errors.
+TEST_RESULTS_END
+ACCEPTANCE_EVIDENCE_BEGIN
+- Raw Three.js renders configured room geometry before a run, then only source-backed
+  vehicle estimate, simulator truth, heading, velocity, plan, trace, target, and rays.
+- Contextual observation panels expose only present battery, IMU, Flow, ranges,
+  modeled transport, and configured sensor models; SIM never shows radio quality.
+- Camera presets, orbit/zoom, and data-dependent layer controls exist.
+ACCEPTANCE_EVIDENCE_END
+REVIEW_DECISION: VERIFIED
+COMPLETION_RECORD_END
+END_WORK_PACKET UI-WP-08
+
+================================================================================================
+BEGIN_WORK_PACKET UI-WP-09
+ID: UI-WP-09
+TITLE: Build Python mission ingestion and the two-path operator control surface
+STATUS: SOFTWARE_SCOPE_IMPLEMENTED_HARDWARE_VERIFICATION_PENDING
+READY_TO_START: YES
+PRIORITY: P1_OPERATOR_PRODUCT
+IMPORTANCE: I0_CRITICAL
+CLASSIFICATION: PYTHON_MISSION_EXECUTION_AND_OPERATOR_CONTROL
+DEPENDS_ON: UI-WP-03, UI-WP-06, UI-WP-07
+OWNER: Codex
+STARTED_AT: 2026-08-06T00:50:00+02:00
+LAST_UPDATED_AT: 2026-08-06T16:21:32+02:00
+
+PROBLEM_BEGIN
+Mission profiles, built-in choices, and dashboard parameter editors create a
+second flight definition that can diverge from the Python used during development.
+Uploaded Python is also unsafe if the API process executes arbitrary host code.
+The operator needs a short, clickable workflow without invented missions or data.
+PROBLEM_END
+
+REQUIRED_OUTCOME_BEGIN
+The operator uploads a .py file, assigns a display name, selects SIMULATION or
+DIGITAL_TWIN, selects the immutable file, and presses Run. The UI never edits the
+mission. Each accepted file has a SHA-256 identity and declares commands through
+one supported drone SDK. The same artifact identity is used in both execution
+paths. Unsupported Python is rejected before execution. The manual controls,
+preflight, motor stop, parameters, sensors, decks, IMU, tilt, battery, and motor
+observations remain available through a compact advanced view only when the
+selected adapter supplies measured values or a named model computes them.
+REQUIRED_OUTCOME_END
+
+IMPLEMENTATION_TASKS_BEGIN
+TASK-00: [x] Add one local dashboard launcher, same-origin API proxy, automatic
+             service attachment, and automatic reconnection. Remove endpoint and
+             token entry from the normal operator UI; reserve Connect for vehicles.
+TASK-01: [x] Add a persistent local mission-file library with upload, display name,
+             original filename, immutable source, and SHA-256 identity.
+TASK-02: [x] Validate a restricted async Python mission contract supporting
+             takeoff, hover, relative movement, and landing with bounded literals.
+TASK-03: [x] Reject imports, host access, arbitrary statements, unsupported calls,
+             missing takeoff/landing, duplicate flight phases, and oversized files.
+TASK-04: [x] Execute supported Python in a resource-limited worker process with no
+             filesystem, shell, network, environment, or API-process authority.
+TASK-05: [x] Convert the validated mission artifact to one canonical command stream
+             consumed by the existing supervisor and simulated Vehicle adapter.
+TASK-06: [x] Remove built-in missions, profiles, route editors, and mission parameter
+             fields from the normal dashboard route.
+TASK-07: [x] Build compact mission cards, .py file upload, naming, selection, and a
+             direct Run action; show an empty library when no files were uploaded.
+TASK-08: [x] Expose only SIMULATION and DIGITAL_TWIN as execution choices; keep
+             DIGITAL_TWIN disabled until real and simulated adapters are qualified.
+TASK-09: [x] Record the exact source hash, validator/runtime version, target adapter,
+             physics model version, start mode, and result in every run receipt.
+TASK-10: [x] Keep scan/connect/preflight/arm/manual movement/land/abort/emergency
+             stop and guarded parameter controls behind the clickable Controls view.
+TASK-11: [ ] Complete measured motor, sensor/deck, IMU/tilt, battery, localization,
+             current-command, and telemetry subscription views against real hardware.
+TASK-12: [x] Omit all absent values and suppress radio, motor, sensor, or battery data
+             that has neither a measurement nor a declared running model source.
+TASK-13: [x] Add mission-file delete/version/history controls without ever mutating
+             a source artifact that is referenced by a run.
+IMPLEMENTATION_TASKS_END
+
+OUT_OF_SCOPE_BEGIN
+- Firmware flashing in the first control-center release.
+- Unrestricted raw motor testing.
+- Arbitrary Python execution inside the API or browser process.
+- 6DOF motor physics, aerodynamic calibration, and sensor physics; see UI-WP-10.
+- Real vehicle execution and hardware qualification; see UI-WP-11 and UI-WP-12.
+OUT_OF_SCOPE_END
+
+DELIVERABLE_CHECKLIST_BEGIN
+DEL-00: [x] Single-URL local launch and automatic backend attachment.
+DEL-01: [x] Persistent validated Python mission library and API.
+DEL-02: [x] Minimal upload/select/mode/run interface with no mission editor.
+DEL-03: [x] Existing supervised manual and emergency control drawer.
+DEL-04: [x] Isolated Python mission worker and complete execution receipts.
+DEL-05: [ ] Hardware-backed engineering observations and telemetry tools.
+DELIVERABLE_CHECKLIST_END
+
+ACCEPTANCE_CHECKLIST_BEGIN
+AC-00: [x] A user starts the complete local application with one command, opens
+            one URL, and never enters an internal endpoint or token.
+AC-01: [x] With an empty mission library the dashboard shows no invented mission.
+AC-02: [x] Uploading a supported .py file creates one selectable hash-addressed card.
+AC-03: [x] The dashboard contains no mission command, path, profile, or parameter editor.
+AC-04: [x] Run Simulation sends only the selected artifact ID and target vehicle ID.
+AC-05: [x] DIGITAL_TWIN cannot start without a qualified real adapter.
+AC-06: [x] Uploaded imports and arbitrary code fail closed and never execute.
+AC-07: [x] The supported Python artifact runs in an isolated resource-limited process.
+AC-08: [x] No control bypasses supervisor validation, ownership, or audit.
+AC-09: [x] Emergency motor stop remains distinct from abort-and-land.
+AC-10: [x] Unsupported or never-observed engineering values never appear as data.
+AC-11: [x] Advanced controls do not compete with the normal upload-and-run workflow.
+AC-12: [x] Every run/export proves the exact source and model versions used.
+ACCEPTANCE_CHECKLIST_END
+
+VERIFICATION_CHECKLIST_BEGIN
+VER-01: [x] Parser tests cover accepted command sequences and unsafe-file rejection.
+VER-02: [x] API tests cover upload, library listing, source metadata, SIMULATION start,
+            DIGITAL_TWIN rejection, and a completed simulator run.
+VER-03: [x] Browser-test file selection, naming, card selection, Run, duplicate clicks,
+            reconnects, and stale state against the integrated local launcher.
+VER-04: [x] Penetration-test the isolated worker limits when TASK-04 is implemented.
+VER-05: [ ] Hardware engineering observations remain pending until UI-WP-11.
+VERIFICATION_CHECKLIST_END
+
+BLOCKERS_BEGIN
+- DIGITAL_TWIN execution and measured engineering data require UI-WP-11.
+- The supported Python surface remains an intentionally restricted mission DSL.
+- Motor-level mission commands are blocked until UI-WP-10 supplies motor physics
+  and the hardware safety layer is separately reviewed.
+BLOCKERS_END
+
+CODEX_HANDOFF_BEGIN
+Keep the Python file as the only flight definition. Expand the supported drone SDK
+and isolated execution environment rather than adding dashboard mission fields.
+Keep CFclient for firmware and deep engineering until equivalent functions are
+explicitly safety-reviewed.
+CODEX_HANDOFF_END
+
+COMPLETION_RECORD_BEGIN
+IMPLEMENTATION_COMPLETE: SOFTWARE_SCOPE
+VERIFICATION_COMPLETE: SOFTWARE_ONLY
+COMPLETED_AT: 2026-08-06T17:23:16+02:00
+COMPLETED_BY: Codex
+CHANGED_FILES_BEGIN
+- src/crazyswarm_app/missions/script.py
+- src/crazyswarm_app/missions/_mission_worker.py
+- src/crazyswarm_app/missions/base.py
+- src/crazyswarm_app/missions/registry.py
+- src/crazyswarm_app/missions/runner.py
+- src/crazyswarm_app/missions/models.py
+- src/crazyswarm_app/api/app.py
+- src/crazyswarm_app/api/runtime.py
+- src/crazyswarm_app/api/models.py
+- ui/app/components/ControlCenter.tsx
+- ui/app/globals.css
+- ui/app/lib/api.ts
+- ui/app/lib/models.ts
+- ui/app/lib/spatial.ts
+- missions/hover.py
+- tests/missions/test_script.py
+- tests/api/test_missions_and_replay.py
+CHANGED_FILES_END
+COMMANDS_RUN_BEGIN
+- .venv/bin/ruff check src tests
+- .venv/bin/mypy
+- .venv/bin/pytest -q
+- npm run generate:api
+- npm run check
+COMMANDS_RUN_END
+TEST_RESULTS_BEGIN
+- Python lint/type checks passed; 224 backend tests passed.
+- UI lint/type checks, 22 unit tests, production build, and 3 rendered-HTML tests passed.
+- The single localhost:3001 launcher returned 200 for the dashboard and proxied
+  mission-file library; the clean operator library returned an empty list.
+- FAST-SIM-WP-01 exercised mission selection and Run, Stop mission, manual supervised
+  takeoff, and confirmed emergency motor cutoff through the integrated dashboard.
+- The integrated browser verified upload, naming, selection, duplicate-click suppression,
+  idle and active-run reconnect, stale snapshot labels, abort, mission-owned emergency,
+  completed/history replay, and archive through the actual local launcher.
+- Worker penetration tests reject imports, host builtins, filesystem, socket, traversal,
+  source/metadata mismatch, symlinks, and non-terminating execution.
+TEST_RESULTS_END
+ACCEPTANCE_EVIDENCE_BEGIN
+- The normal route loads only uploaded Python missions and contains no built-in
+  mission selector, profile, route editor, or parameter form.
+- The backend stores original source plus SHA-256 metadata and rejects unsafe ASTs.
+- A separate isolated Python process hash-checks and evaluates the restricted artifact,
+  then its output must exactly match the validated command stream before dispatch.
+- Run receipts and exports include source/runtime/adapter, exact physics/scenario
+  configuration hashes, seed, fixed timestep, and initial-state identity.
+- Archive removes a mission from the active registry while preserving its immutable
+  source and history for existing run evidence.
+- Browser acceptance recorded normal run `run-e6cf7b5528ed4665ba561c4f545432d6`,
+  controlled-abort run `run-ce850487abd6470e88333c0f85732681`, and separate
+  emergency evidence `system-b72919f44ffb4e62b6e8fd4e6b45be32`.
+ACCEPTANCE_EVIDENCE_END
+REVIEW_DECISION: SOFTWARE_SCOPE_VERIFIED_HARDWARE_ONLY_REMAINS
+COMPLETION_RECORD_END
+END_WORK_PACKET UI-WP-09
+
+================================================================================================
+BEGIN_WORK_PACKET UI-WP-10
+ID: UI-WP-10
+TITLE: Build 6DOF motor physics and same-artifact digital-twin execution
+STATUS: PHYSICS_FOUNDATION_IMPLEMENTED_REAL_TWIN_QUALIFICATION_PENDING
+READY_TO_START: YES
+PRIORITY: P1_OPERATOR_PRODUCT
+IMPORTANCE: I1_HIGH
+CLASSIFICATION: PHYSICS_SIMULATION_AND_DIGITAL_TWIN
+DEPENDS_ON: UI-WP-02, UI-WP-05, UI-WP-06, UI-WP-08
+OWNER: Codex
+STARTED_AT: 2026-08-06T00:50:00+02:00
+LAST_UPDATED_AT: 2026-08-06T16:47:56+02:00
+
+PROBLEM_BEGIN
+The previous simulator interpolated mission-level position commands. It did not
+integrate individual motor thrust, torque, rigid-body attitude, gravity, energy,
+or sensor dynamics and therefore cannot truthfully predict raw motor-command
+Python. Running this preview beside a real vehicle would create a visually
+convincing but physically false digital twin.
+PROBLEM_END
+
+REQUIRED_OUTCOME_BEGIN
+A deterministic 6DOF simulator integrates each modeled motor's thrust and reaction
+torque, vehicle mass and inertia, gravity, drag, collisions, attitude, angular
+velocity, translation, and battery/actuator response. Declared sensor models derive
+IMU, range, Flow, and battery observations from that state. SIMULATION sends the
+uploaded Python artifact to this adapter only. DIGITAL_TWIN sends the exact same
+artifact hash and command stream to a qualified real adapter and parallel simulator,
+then shows measured reality and simulated prediction without substituting either
+for external ground truth. The center room renders the planned path, simulated
+vehicle, and, in twin mode, the measured vehicle and source-compatible deviation.
+REQUIRED_OUTCOME_END
+
+IMPLEMENTATION_TASKS_BEGIN
+TASK-01: [x] Define versioned Crazyflie geometry, mass, inertia tensor, motor layout,
+             thrust/torque curves, propeller direction, drag, and actuator dynamics.
+TASK-02: [x] Implement fixed-timestep 6DOF rigid-body integration with gravity,
+             quaternion attitude, angular velocity, translational velocity, and pose.
+TASK-03: [x] Convert per-motor commands to body forces/torques and expose modeled
+             motor values only while this model is actively running.
+TASK-04: [x] Add floor/room collision, geofence, contact, and numerical-instability
+             handling that terminates or faults a run deterministically.
+TASK-05: [x] Add versioned battery voltage/current/capacity and motor-response models;
+             never label theoretical charge or current as measured.
+TASK-06: [x] Add configurable IMU, tilt/attitude, range, optical-flow, and localization
+             sensor models with frames, sample rates, latency, noise, bias, and limits.
+TASK-07: [ ] Validate model parameters against manufacturer data and controlled bench
+             measurements; record uncertainty and refuse unsupported output fields.
+TASK-08: [x] Define world, home, body, propeller, and sensor frame transforms with
+             golden fixtures and explicit handedness/units.
+TASK-09: [x] Make execution deterministic from artifact hash, model version, initial
+             state, scenario version, seed, and fixed timestep.
+TASK-10: [x] Define twin session identity, lifecycle, separate acknowledgements,
+             source timestamps, provenance, missing-field suppression, and failure isolation.
+TASK-11: [ ] Initialize a twin only from measured or explicitly configured real state;
+             keep unavailable pose, velocity, heading, battery, and sensors absent.
+TASK-12: [ ] Route one uploaded mission artifact hash through real and simulated
+             adapters without recompiling or changing mission logic per target.
+TASK-13: [x] Align command and telemetry timelines without rewriting source clocks;
+             report transport latency separately from model residual.
+TASK-14: [ ] Compute position, altitude, attitude, angular-rate, velocity, motor,
+             battery, duration, overshoot, settling, and path residuals only for
+             compatible present fields.
+TASK-15: [x] Render planned, simulated, and measured paths/drone poses in the room;
+             show compact motor/sensor/battery panels only for available sources.
+TASK-16: [ ] Add immutable replay, comparison, and bounded calibration workflows.
+IMPLEMENTATION_TASKS_END
+
+OUT_OF_SCOPE_BEGIN
+- Calling Flow Deck estimates external ground truth.
+- Automatically changing live safety limits from calibration.
+- Sending correction commands merely to reduce visualization residuals.
+- Aerodynamic or RF claims not supported by a named validated model.
+- Real flight before UI-WP-11 and UI-WP-12 qualification.
+OUT_OF_SCOPE_END
+
+DELIVERABLE_CHECKLIST_BEGIN
+DEL-01: [x] Versioned deterministic 6DOF motor physics engine.
+DEL-02: [x] Battery, actuator, collision, and supported sensor models.
+DEL-03: [x] TwinCoordinator contract and source-aware session model scaffold.
+DEL-04: [ ] Same-artifact real/sim executor with frame/time alignment.
+DEL-05: [x] Planned/simulated/measured 3D visualization and available-field metrics.
+DEL-06: [ ] Versioned model calibration and replay workflow.
+DELIVERABLE_CHECKLIST_END
+
+ACCEPTANCE_CHECKLIST_BEGIN
+AC-01: [x] At zero motor thrust the vehicle accelerates downward at configured gravity.
+AC-02: [x] Symmetric hover thrust maintains altitude within a documented tolerance.
+AC-03: [x] Asymmetric motor inputs generate expected roll, pitch, and yaw direction.
+AC-04: [x] Position and attitude remain deterministic for identical run identities.
+AC-05: [x] Energy use derives from motor/load state and never appears before a run.
+AC-06: [x] IMU and deck samples derive from physics state and declared sensor models.
+AC-07: [x] Both twin sides receive the same source SHA-256 and preserve independent
+            acknowledgement and telemetry records.
+AC-08: [x] Missing measured or modeled inputs produce no residual, score, chart, or KPI.
+AC-09: [x] Digital-twin failure cannot change real-flight safety authority.
+AC-10: [x] Missing global ground truth is disclosed; onboard estimates are not truth.
+AC-11: [x] Test streams cannot be confused with hardware measurements on any route.
+AC-12: [x] The UI and run evidence name the exact physics/sensor model versions.
+ACCEPTANCE_CHECKLIST_END
+
+VERIFICATION_CHECKLIST_BEGIN
+VER-01: [x] Unit-test forces, torques, gravity, integration, collisions, energy, and sensors.
+VER-02: [x] Compare core maneuvers with independent analytic gravity and actuator
+            references plus separately derived hover/force/torque invariants.
+VER-03: [x] Validate frame transforms using golden coordinate fixtures.
+VER-04: [x] Run convergence tests across timestep sizes and long-duration stability tests.
+VER-05: [ ] Replay one artifact through multiple model versions and compare reports.
+VER-06: [x] Validate current residual/missing-data logic using labeled synthetic streams.
+VER-07: [x] Inject twin-executor failure and confirm observed-side independence.
+VER-08: [ ] Qualify real-versus-predicted results only after UI-WP-11 hardware evidence.
+VERIFICATION_CHECKLIST_END
+
+BLOCKERS_BEGIN
+- Physical parameters require authoritative specifications and controlled bench data.
+- Raw motor-level Python remains unsupported pending a separately reviewed safety API.
+- Real-versus-predicted execution requires the adapter and hardware from UI-WP-11.
+BLOCKERS_END
+
+CODEX_HANDOFF_BEGIN
+Replace the existing kinematic preview deliberately; never relabel it as 6DOF.
+Treat the twin as an observer, not a safety controller. Version every physical
+parameter and calibration, preserve source clocks, and omit unsupported fields.
+CODEX_HANDOFF_END
+
+COMPLETION_RECORD_BEGIN
+IMPLEMENTATION_COMPLETE: PHYSICS_AND_UI_FOUNDATION
+VERIFICATION_COMPLETE: NO
+COMPLETED_AT: NOT_COMPLETE
+COMPLETED_BY: Codex
+CHANGED_FILES_BEGIN
+- src/crazyswarm_app/twin/__init__.py
+- src/crazyswarm_app/twin/models.py
+- src/crazyswarm_app/twin/coordinator.py
+- src/crazyswarm_app/simulation/physics.py
+- src/crazyswarm_app/simulation/models.py
+- src/crazyswarm_app/simulation/vehicle.py
+- src/crazyswarm_app/domain/telemetry.py
+- src/crazyswarm_app/engineering.py
+- src/crazyswarm_app/api/runtime.py
+- src/crazyswarm_app/api/app.py
+- ui/app/lib/models.ts
+- ui/app/lib/api.ts
+- ui/app/components/ControlCenter.tsx
+- tests/twin/test_coordinator.py
+- tests/api/test_contract.py
+- ui/tests/api-adapter.test.ts
+CHANGED_FILES_END
+COMMANDS_RUN_BEGIN
+- .venv/bin/ruff check src tests
+- .venv/bin/mypy
+- .venv/bin/pytest -q
+- npm run check
+COMMANDS_RUN_END
+TEST_RESULTS_BEGIN
+- 250 backend tests pass, including gravity, force/torque direction, deterministic
+  rigid-body integration, battery/current, mission tracking, collision/ranges,
+  fault handling, same-artifact twin routing, and missing-data behavior.
+- Strict mypy and Ruff pass; UI lint, type checks, 23 unit tests, production build,
+  and 3 rendered-HTML tests pass.
+- FAST-SIM-WP-01 observed the model continuously for 34.180 source seconds in
+  34.183 wall seconds and separately verified zero-thrust emergency free fall.
+- FAST-SIM-WP-02/03 verified canonical WORLD/HOME/BODY/SENSOR frames, explicit
+  sensor contracts, 0.005/0.010/0.020 s convergence, a 120-second stability run,
+  analytic free-fall/actuator references, and 100 seeded repetitions per fault class.
+TEST_RESULTS_END
+ACCEPTANCE_EVIDENCE_BEGIN
+- Operator routes reject DIGITAL_TWIN without a qualified real adapter and never
+  expose synthetic TEST sessions as real observations.
+- The simulator now integrates four modeled actuators into 6DOF rigid-body state;
+  telemetry and the room use full attitude, current-based battery, motor thrust/current,
+  IMU, Flow, and attitude-transformed range rays under `crazyflie-6dof-v1`.
+- Run identity binds source, model/configuration, scenario, initial state, seed, and step.
+- Physical coefficients remain `CONFIGURED_UNQUALIFIED`; bench validation and real
+  parallel execution remain blocked on UI-WP-11 hardware evidence.
+- The integrated dashboard displayed source-backed four-motor, battery/current,
+  IMU, Flow, and six-range observations during climb, hover, landing, and emergency.
+- The versioned fidelity manifest now links each modeled output to its unit, frame,
+  model, qualification test, and limitations; physical coefficients remain
+  `CONFIGURED_UNQUALIFIED` pending controlled bench evidence.
+ACCEPTANCE_EVIDENCE_END
+REVIEW_DECISION: PHYSICS_FOUNDATION_VERIFIED_REAL_TWIN_AND_BENCH_QUALIFICATION_OPEN
+COMPLETION_RECORD_END
+END_WORK_PACKET UI-WP-10
+
+================================================================================================
+BEGIN_WORK_PACKET UI-WP-11
+ID: UI-WP-11
+TITLE: Implement Crazyflie adapter and qualify one-drone hardware integration
+STATUS: TODO
+READY_TO_START: SCAFFOLDING_ONLY
+PRIORITY: P2_HARDWARE
+IMPORTANCE: I0_CRITICAL
+CLASSIFICATION: REAL_HARDWARE_ADAPTER
+DEPENDS_ON: UI-WP-01, UI-WP-03, UI-WP-04, UI-WP-05; hardware for qualification
+OWNER:
+STARTED_AT:
+LAST_UPDATED_AT:
+
+PROBLEM_BEGIN
+The project needs a cflib adapter matching the simulated Vehicle contract, but
+radio behavior, firmware compatibility, deck discovery, logging variables,
+parameters, arming, acknowledgements, and failsafes cannot be honestly verified
+without the exact physical system.
+PROBLEM_END
+
+REQUIRED_OUTCOME_BEGIN
+A CrazyflieVehicle adapter supports safe connection, identity, capability/deck
+discovery, telemetry, parameters, supervised high-level commands, acknowledgements,
+abort, emergency stop, and cleanup. It passes contract tests against fakes first,
+then a staged, recorded one-drone qualification beginning with props-off checks
+where appropriate and ending with repeated low-altitude missions.
+REQUIRED_OUTCOME_END
+
+IMPLEMENTATION_TASKS_BEGIN
+TASK-01: [ ] Wrap cflib behind CrazyflieVehicle without leaking cflib types.
+TASK-02: [ ] Implement radio URI, immutable software ID, address, and physical-label
+             identity checks.
+TASK-03: [ ] Implement connection/reconnection, TOC caching, firmware info, and
+             compatibility reporting.
+TASK-04: [ ] Implement supervisor state, arming, disarming, abort, and emergency stop.
+TASK-05: [ ] Implement high-level/relative command translation and acknowledgements.
+TASK-06: [ ] Implement bounded log configurations for battery, state, pose, attitude,
+             velocity, link, localization, decks, and selected sensors.
+TASK-07: [ ] Implement parameter discovery/read/write/persistence metadata.
+TASK-08: [ ] Implement deck/capability detection and required-deck preflight.
+TASK-09: [ ] Implement link loss, stale telemetry, shutdown, and cleanup behavior.
+TASK-10: [ ] Build a fake-cflib test harness and adapter contract tests.
+TASK-11: [ ] Define staged hardware protocol: self-test, connect, inspect, parameter
+             read, logging, arm/disarm, emergency procedure, manual flight,
+             autonomous takeoff/hover/land.
+TASK-12: [ ] Complete ten recorded trials for the accepted one-drone mission gate.
+IMPLEMENTATION_TASKS_END
+
+OUT_OF_SCOPE_BEGIN
+- Automatic flight on discovery.
+- Multi-drone radio performance qualification.
+- Firmware modification or flashing from the custom UI.
+- Claiming Flow Deck data is global ground truth.
+OUT_OF_SCOPE_END
+
+DELIVERABLE_CHECKLIST_BEGIN
+DEL-01: [ ] CrazyflieVehicle adapter.
+DEL-02: [ ] Fake-cflib harness and contract tests.
+DEL-03: [ ] Compatibility/deck/parameter/telemetry reports.
+DEL-04: [ ] Hardware test procedure and records.
+DEL-05: [ ] Ten-trial acceptance summary.
+DELIVERABLE_CHECKLIST_END
+
+ACCEPTANCE_CHECKLIST_BEGIN
+AC-01: [ ] Adapter passes the same contract suite as SimulatedVehicle.
+AC-02: [ ] Connection never arms or starts a mission.
+AC-03: [ ] Commands cannot cross vehicle identities.
+AC-04: [ ] Deck and localization requirements fail closed.
+AC-05: [ ] Normal abort and emergency stop reach distinct cflib/supervisor paths.
+AC-06: [ ] Telemetry subscriptions fit measured link capacity and report staleness.
+AC-07: [ ] One drone repeatedly connects, inspects, arms, takes off, hovers,
+            lands, disarms, and records an unambiguous result.
+AC-08: [ ] Hardware qualification uses the exact tested firmware/configuration.
+ACCEPTANCE_CHECKLIST_END
+
+VERIFICATION_CHECKLIST_BEGIN
+VER-01: [ ] Pass fake-cflib unit and adapter contract tests.
+VER-02: [ ] Complete non-flight hardware inspection and telemetry checks.
+VER-03: [ ] Rehearse abort and emergency procedures in the documented safe setup.
+VER-04: [ ] Complete ten recorded controlled flight trials with no unexplained state.
+VER-05: [ ] Review logs, video, battery, link, and anomalies after each failure.
+VERIFICATION_CHECKLIST_END
+
+BLOCKERS_BEGIN
+- Exact Crazyflie, Crazyradio, decks, batteries, charger, and safe flight area
+  are not currently available.
+- UI-WP-01, UI-WP-03, UI-WP-04, and UI-WP-05 are incomplete.
+BLOCKERS_END
+
+CODEX_HANDOFF_BEGIN
+Scaffold and fake-test the adapter before hardware arrives, but do not mark the
+packet complete without physical evidence. Preserve identity, capability, link,
+staleness, abort, emergency, and cleanup gates. No automatic real flight.
+CODEX_HANDOFF_END
+
+COMPLETION_RECORD_BEGIN
+IMPLEMENTATION_COMPLETE: NO
+VERIFICATION_COMPLETE: NO
+COMPLETED_AT:
+COMPLETED_BY:
+CHANGED_FILES_BEGIN
+- NONE_RECORDED
+CHANGED_FILES_END
+COMMANDS_RUN_BEGIN
+- NONE_RECORDED
+COMMANDS_RUN_END
+TEST_RESULTS_BEGIN
+- NONE_RECORDED
+TEST_RESULTS_END
+ACCEPTANCE_EVIDENCE_BEGIN
+- NONE_RECORDED
+ACCEPTANCE_EVIDENCE_END
+REVIEW_DECISION: PENDING
+COMPLETION_RECORD_END
+END_WORK_PACKET UI-WP-11
+
+================================================================================================
+BEGIN_WORK_PACKET UI-WP-12
+ID: UI-WP-12
+TITLE: Qualify one-drone DIGITAL_TWIN execution with the identical Python artifact
+STATUS: TODO
+READY_TO_START: NO
+PRIORITY: P2_HARDWARE
+IMPORTANCE: I0_CRITICAL
+CLASSIFICATION: REAL_DIGITAL_TWIN_INTEGRATION
+DEPENDS_ON: UI-WP-09, UI-WP-10, UI-WP-11, physical hardware and safe test area
+OWNER:
+STARTED_AT:
+LAST_UPDATED_AT:
+
+PROBLEM_BEGIN
+The defining product behavior combines real control and a synchronized simulated
+twin. This introduces risks including accidental live authority, duplicated
+commands, time/frame misalignment, misleading residuals, radio overload, and
+twin failure affecting the real mission.
+PROBLEM_END
+
+REQUIRED_OUTCOME_BEGIN
+One real drone and an independent 6DOF simulator execute the exact same uploaded
+Python artifact and recorded SHA-256. The UI clearly displays measured/estimated
+real state and modeled prediction, command/telemetry latency, uncertainty, and
+compatible residuals. Twin or UI failure does not compromise the supervisor,
+landing, or evidence path.
+REQUIRED_OUTCOME_END
+
+IMPLEMENTATION_TASKS_BEGIN
+TASK-01: [ ] Implement explicit DIGITAL_TWIN entry ceremony and preflight record.
+TASK-02: [ ] Prove device discovery cannot switch mode, arm, or launch.
+TASK-03: [ ] Synchronize twin initial state from validated real/configured state.
+TASK-04: [ ] Route one immutable Python artifact/hash to both adapters without
+             alternate mission logic or duplicate real commands.
+TASK-05: [ ] Bound telemetry subscriptions and measure link/CPU/render load.
+TASK-06: [ ] Display actual estimate, simulated prediction, residual, latency,
+             validity, source, and uncertainty.
+TASK-07: [ ] Verify abort-and-land while twin and UI are healthy, delayed, and failed.
+TASK-08: [ ] Verify emergency stop remains independent and immediately available.
+TASK-09: [ ] Run staged hover, relative move, return-near-home, and landing trials.
+TASK-10: [ ] Produce real-versus-predicted reports and a calibrated model version.
+TASK-11: [ ] Complete ten unchanged-artifact/model DIGITAL_TWIN hover trials.
+IMPLEMENTATION_TASKS_END
+
+OUT_OF_SCOPE_BEGIN
+- Calling onboard Flow Deck estimates external ground truth.
+- Automatic correction based solely on twin residual.
+- Multi-drone shadow operation.
+- Outdoor operation.
+OUT_OF_SCOPE_END
+
+DELIVERABLE_CHECKLIST_BEGIN
+DEL-01: [ ] Qualified DIGITAL_TWIN mode transition.
+DEL-02: [ ] One-drone real/twin overlay and deviation report.
+DEL-03: [ ] Load, latency, fault, and independence evidence.
+DEL-04: [ ] Versioned calibrated simulator configuration.
+DEL-05: [ ] Ten-trial DIGITAL_TWIN qualification report.
+DELIVERABLE_CHECKLIST_END
+
+ACCEPTANCE_CHECKLIST_BEGIN
+AC-01: [ ] Real flight always requires explicit DIGITAL_TWIN selection and arm.
+AC-02: [ ] Exactly one real command is attributable to each canonical intent.
+AC-03: [ ] Twin failure cannot delay or block real abort-and-land.
+AC-04: [ ] UI loss follows backend policy and does not remove safety authority.
+AC-05: [ ] Residual displays cannot be mistaken for ground truth without a
+            validated global reference.
+AC-06: [ ] Shadow processing does not exceed accepted link/CPU/render budgets.
+AC-07: [ ] Ten controlled trials complete without unexplained command/state behavior.
+AC-08: [ ] Every run is reproducible from immutable configuration and evidence.
+ACCEPTANCE_CHECKLIST_END
+
+VERIFICATION_CHECKLIST_BEGIN
+VER-01: [ ] Rehearse all failure cases in SIM before real flight.
+VER-02: [ ] Disconnect/fail the twin during a controlled real mission.
+VER-03: [ ] Disconnect the UI while backend remains supervised.
+VER-04: [ ] Compare timestamps and command IDs end to end.
+VER-05: [ ] Review all ten trials and approve or return to remediation.
+VERIFICATION_CHECKLIST_END
+
+BLOCKERS_BEGIN
+- Hardware verification in UI-WP-09/UI-WP-10 and all UI-WP-11 qualification remain incomplete.
+- Physical hardware and safe controlled test environment are unavailable.
+BLOCKERS_END
+
+CODEX_HANDOFF_BEGIN
+Do not enter DIGITAL_TWIN automatically. Prove one uploaded artifact/hash produces
+one real command stream and one simulated stream, and prove twin/UI failures cannot
+interfere with supervisor or landing. Preserve uncertainty and ground-truth limits.
+CODEX_HANDOFF_END
+
+COMPLETION_RECORD_BEGIN
+IMPLEMENTATION_COMPLETE: NO
+VERIFICATION_COMPLETE: NO
+COMPLETED_AT:
+COMPLETED_BY:
+CHANGED_FILES_BEGIN
+- NONE_RECORDED
+CHANGED_FILES_END
+COMMANDS_RUN_BEGIN
+- NONE_RECORDED
+COMMANDS_RUN_END
+TEST_RESULTS_BEGIN
+- NONE_RECORDED
+TEST_RESULTS_END
+ACCEPTANCE_EVIDENCE_BEGIN
+- NONE_RECORDED
+ACCEPTANCE_EVIDENCE_END
+REVIEW_DECISION: PENDING
+COMPLETION_RECORD_END
+END_WORK_PACKET UI-WP-12
+
+================================================================================================
+BEGIN_WORK_PACKET UI-WP-13
+ID: UI-WP-13
+TITLE: Extend simulator, UI, missions, and twin model to a managed drone fleet
+STATUS: TODO
+READY_TO_START: NO
+PRIORITY: P3_FLEET_RELEASE
+IMPORTANCE: I1_HIGH
+CLASSIFICATION: MULTI_DRONE_FLEET
+DEPENDS_ON: UI-WP-04, UI-WP-08, UI-WP-10 for simulation; UI-WP-12 for real fleet
+OWNER:
+STARTED_AT:
+LAST_UPDATED_AT:
+
+PROBLEM_BEGIN
+The product objective is persistent multi-drone operation, not merely several
+manual controls. The system must maintain immutable identities, independent
+state, command routing, separation, task allocation, reserve selection,
+handover, docking readiness, and degraded behavior without visual or authority
+confusion.
+PROBLEM_END
+
+REQUIRED_OUTCOME_BEGIN
+The application simulates and displays at least three independently managed
+vehicles and twins, assigns missions and sectors, enforces minimum separation,
+handles one unavailable or low-battery drone, and records handover and coverage.
+Real multi-drone operation remains separately gated by global positioning,
+measured radio capacity, and staged hardware qualification.
+REQUIRED_OUTCOME_END
+
+IMPLEMENTATION_TASKS_BEGIN
+TASK-01: [ ] Extend world, clock, telemetry, storage, API, and UI for multiple vehicles.
+TASK-02: [ ] Enforce immutable IDs and command routing with anti-cross-command tests.
+TASK-03: [ ] Add fleet overview, selection, filtering, grouping, and simultaneous state.
+TASK-04: [ ] Add pairwise warning/critical separation and conflict visualization.
+TASK-05: [ ] Add task/sector allocation, reserve selection, and ownership leases.
+TASK-06: [ ] Add low-battery replacement and takeover-before-release policy.
+TASK-07: [ ] Add leader/follower loss and task reassignment scenarios.
+TASK-08: [ ] Add dock/charger state model, occupancy, queue, and readiness display.
+TASK-09: [ ] Load-test telemetry, rendering, storage, and scheduling for target fleet.
+TASK-10: [ ] Define staged real tests: independent hover, sequential missions,
+             one-drone abort, parallel motion, separation, then reassignment.
+TASK-11: [ ] Require validated global positioning before close formation or
+             precise inter-drone paths.
+IMPLEMENTATION_TASKS_END
+
+OUT_OF_SCOPE_BEGIN
+- Tight formation using Flow Deck-only relative positioning.
+- Unsupervised outdoor fleet operation.
+- Docking hardware implementation; this packet prepares interfaces and UI only.
+- Treating three unrelated manual controls as swarm coordination.
+OUT_OF_SCOPE_END
+
+DELIVERABLE_CHECKLIST_BEGIN
+DEL-01: [ ] Three-drone simulator and scenario suite.
+DEL-02: [ ] Fleet UI and per-drone twin views.
+DEL-03: [ ] Separation and allocation services.
+DEL-04: [ ] Reserve/handover mission and coverage report.
+DEL-05: [ ] Dock/charger domain and UI preparation.
+DEL-06: [ ] Real-fleet qualification protocol.
+DELIVERABLE_CHECKLIST_END
+
+ACCEPTANCE_CHECKLIST_BEGIN
+AC-01: [ ] No crossed identity or command routing occurs under stress tests.
+AC-02: [ ] One drone can abort or fail while others follow explicit safe policy.
+AC-03: [ ] Warning and critical separation are computed and recorded for every pair.
+AC-04: [ ] Handover confirms takeover before releasing the outgoing drone.
+AC-05: [ ] Duplicate task ownership and stale leases fail closed.
+AC-06: [ ] Three simulated drones continue coverage after one becomes unavailable.
+AC-07: [ ] Real close-spacing work remains disabled without validated global position.
+ACCEPTANCE_CHECKLIST_END
+
+VERIFICATION_CHECKLIST_BEGIN
+VER-01: [ ] Run nominal and failure-injected three-drone scenarios over many seeds.
+VER-02: [ ] Test identity, ownership, deadlock, collision, and low-battery cases.
+VER-03: [ ] Load-test UI/API/storage at target telemetry rates.
+VER-04: [ ] Real verification remains pending until hardware, positioning, radio,
+             and earlier one-drone gates pass.
+VERIFICATION_CHECKLIST_END
+
+BLOCKERS_BEGIN
+- Simulation path requires UI-WP-04, UI-WP-08, and UI-WP-10.
+- Real path requires UI-WP-12, additional drones, global positioning, batteries,
+  safe test space, and measured radio capacity.
+BLOCKERS_END
+
+CODEX_HANDOFF_BEGIN
+Prove fleet semantics in simulation first. Keep IDs immutable, commands routed,
+task ownership leased, separation enforced, and handover confirmed. Do not enable
+close real flight without shared global positioning and staged evidence.
+CODEX_HANDOFF_END
+
+COMPLETION_RECORD_BEGIN
+IMPLEMENTATION_COMPLETE: NO
+VERIFICATION_COMPLETE: NO
+COMPLETED_AT:
+COMPLETED_BY:
+CHANGED_FILES_BEGIN
+- NONE_RECORDED
+CHANGED_FILES_END
+COMMANDS_RUN_BEGIN
+- NONE_RECORDED
+COMMANDS_RUN_END
+TEST_RESULTS_BEGIN
+- NONE_RECORDED
+TEST_RESULTS_END
+ACCEPTANCE_EVIDENCE_BEGIN
+- NONE_RECORDED
+ACCEPTANCE_EVIDENCE_END
+REVIEW_DECISION: PENDING
+COMPLETION_RECORD_END
+END_WORK_PACKET UI-WP-13
+
+================================================================================================
+BEGIN_WORK_PACKET UI-WP-14
+ID: UI-WP-14
+TITLE: Harden, package, document, and qualify the scoped control-center release
+STATUS: TODO
+READY_TO_START: NO
+PRIORITY: P3_FLEET_RELEASE
+IMPORTANCE: I1_HIGH
+CLASSIFICATION: RELEASE_QUALIFICATION
+DEPENDS_ON: Explicit release scope and completion of all packets included in it
+OWNER:
+STARTED_AT:
+LAST_UPDATED_AT:
+
+PROBLEM_BEGIN
+A working development build is not an operable release. Installation, upgrades,
+configuration, backups, diagnostics, crash recovery, browser/backend lifecycle,
+security boundaries, performance, documentation, and operator procedures must
+be repeatable without relaxing safety or hiding unsupported capabilities.
+PROBLEM_END
+
+REQUIRED_OUTCOME_BEGIN
+The selected SIMULATION-only or SIMULATION/DIGITAL_TWIN release installs reproducibly on the
+target Mac, starts and stops cleanly, preserves evidence, handles crashes and
+upgrades, exposes accurate support status, and includes operator, developer,
+mission-author, safety, and troubleshooting documentation. Qualification scope
+is explicit; incomplete hardware or fleet branches stay disabled.
+REQUIRED_OUTCOME_END
+
+IMPLEMENTATION_TASKS_BEGIN
+TASK-01: [ ] Declare exact release scope, supported modes, hardware, decks,
+             firmware, operating system, browsers, and known limitations.
+TASK-02: [ ] Pin and lock backend/frontend dependencies and add reproducible setup.
+TASK-03: [ ] Add one-command development start and documented production start/stop.
+TASK-04: [ ] Add config validation, migrations, backup, restore, and rollback.
+TASK-05: [ ] Add process lifecycle, crash recovery, health, diagnostics, and logs.
+TASK-06: [ ] Add local authentication/origin review and protect command endpoints.
+TASK-07: [ ] Add performance budgets for startup, telemetry, rendering, storage,
+             API latency, and target vehicle count.
+TASK-08: [ ] Add end-to-end tests for every supported mode and terminal result.
+TASK-09: [ ] Add operator guide, preflight checklist, emergency procedure, mission
+             authoring guide, simulator guide, troubleshooting, and evidence guide.
+TASK-10: [ ] Add release manifest, changelog, known limitations, and compatibility table.
+TASK-11: [ ] Conduct clean-machine installation and recovery drill.
+TASK-12: [ ] Produce final qualification decision with explicit deferred packets.
+IMPLEMENTATION_TASKS_END
+
+OUT_OF_SCOPE_BEGIN
+- Enabling modes or hardware not included in the release manifest.
+- Public internet or remote unattended command service.
+- Automatic firmware updates or automatic real-flight activation.
+- Treating a SIM-only release as hardware-qualified.
+OUT_OF_SCOPE_END
+
+DELIVERABLE_CHECKLIST_BEGIN
+DEL-01: [ ] Reproducible installation and dependency lock.
+DEL-02: [ ] Runtime, recovery, backup, and diagnostic tooling.
+DEL-03: [ ] End-to-end and performance qualification evidence.
+DEL-04: [ ] Complete operator/developer/mission/safety documentation.
+DEL-05: [ ] Release manifest, compatibility matrix, limitations, and decision.
+DELIVERABLE_CHECKLIST_END
+
+ACCEPTANCE_CHECKLIST_BEGIN
+AC-01: [ ] A clean target Mac can install, start, exercise, stop, and restart release.
+AC-02: [ ] Unsupported modes and capabilities are disabled with explicit reasons.
+AC-03: [ ] Crash/restart preserves or clearly bounds evidence loss.
+AC-04: [ ] Config upgrade, backup, restore, and rollback are demonstrated.
+AC-05: [ ] All supported mode journeys pass end-to-end tests.
+AC-06: [ ] Performance remains within documented budgets.
+AC-07: [ ] Safety, emergency, and recovery procedures are rehearsed for included modes.
+AC-08: [ ] Final decision names all incomplete and deferred packets.
+ACCEPTANCE_CHECKLIST_END
+
+VERIFICATION_CHECKLIST_BEGIN
+VER-01: [ ] Perform clean-machine setup from documentation only.
+VER-02: [ ] Run automated unit, contract, integration, scenario, UI, accessibility,
+             performance, and end-to-end suites.
+VER-03: [ ] Perform process crash, storage interruption, UI loss, and recovery drills.
+VER-04: [ ] Review security and command-authority boundaries.
+VER-05: [ ] Sign off explicit SIM-only or hardware-qualified release scope.
+VERIFICATION_CHECKLIST_END
+
+BLOCKERS_BEGIN
+- Release scope is not yet selected.
+- All packets intended for the release remain incomplete.
+BLOCKERS_END
+
+CODEX_HANDOFF_BEGIN
+Qualify only the declared scope. Preserve explicit disabled states for unfinished
+hardware/fleet features. Make setup, recovery, safety, evidence, compatibility,
+and limitations reproducible and visible; do not infer hardware qualification
+from simulation success.
+CODEX_HANDOFF_END
+
+COMPLETION_RECORD_BEGIN
+IMPLEMENTATION_COMPLETE: NO
+VERIFICATION_COMPLETE: NO
+COMPLETED_AT:
+COMPLETED_BY:
+CHANGED_FILES_BEGIN
+- NONE_RECORDED
+CHANGED_FILES_END
+COMMANDS_RUN_BEGIN
+- NONE_RECORDED
+COMMANDS_RUN_END
+TEST_RESULTS_BEGIN
+- NONE_RECORDED
+TEST_RESULTS_END
+ACCEPTANCE_EVIDENCE_BEGIN
+- NONE_RECORDED
+ACCEPTANCE_EVIDENCE_END
+REVIEW_DECISION: PENDING
+COMPLETION_RECORD_END
+END_WORK_PACKET UI-WP-14
+
+FULL_PACKET_RECORDS_END
+
+BACKLOG_INTEGRITY_BEGIN
+EXPECTED_RECORD_COUNT: 14
+COMPLETED_RECORDS: RETAINED_IN_THIS_CANONICAL_FILE_WITH_VERIFIED_STATUS
+CURRENT_AUTOMATIC_ACTION_AUTHORIZED: NONE_BY_THIS_DOCUMENT
+SIMULATION_IMPLEMENTATION_ALLOWED_WHEN_REQUESTED: YES
+REAL_FLIGHT_AUTHORIZED: NO
+HARDWARE_QUALIFICATION_AVAILABLE: NO
+
+MAINTENANCE_RULES:
+- Keep this file canonical for all CrazySwarm UI/control-center packets.
+- Update packet status, blockers, tasks, evidence, and completion atomically.
+- Retain complete packets here with VERIFIED status and full evidence so this
+  remains the single program record requested for UI work.
+- Do not silently weaken safety, evidence, identity, mode, or qualification gates.
+- If scope changes, record the revision and update the dependency/index counts.
+BACKLOG_INTEGRITY_END

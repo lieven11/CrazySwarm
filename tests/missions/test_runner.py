@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 import asyncio
-from typing import ClassVar
+from dataclasses import dataclass, field
+from typing import Any, ClassVar
 
 import pytest
 
+from crazyswarm_app.domain.commands import (
+    CommandEnvelope,
+    DisarmCommand,
+    FleetCommandBinding,
+)
 from crazyswarm_app.domain.errors import CrazySwarmError
 from crazyswarm_app.domain.models import VehicleCapability, VehicleIdentity, VehicleState
+from crazyswarm_app.domain.simulation import FleetAuthorityTransition
 from crazyswarm_app.missions.base import Mission, MissionContext
 from crazyswarm_app.missions.catalog import HoverParameters
 from crazyswarm_app.missions.models import MissionPhase, MissionStatus
@@ -16,6 +23,18 @@ from crazyswarm_app.safety.supervisor import SafetySupervisor
 from crazyswarm_app.simulation.models import SimulationConfig
 from crazyswarm_app.simulation.vehicle import SimulatedVehicle
 from crazyswarm_app.simulation.world import IndoorWorld, WorldConfig
+
+
+@dataclass
+class CommandCapture:
+    commands: list[CommandEnvelope] = field(default_factory=list)
+
+    def command_sent(self, command: CommandEnvelope) -> None:
+        self.commands.append(command)
+
+    def __getattr__(self, name: str) -> Any:
+        del name
+        return lambda value: None
 
 
 def make_runtime(
@@ -127,6 +146,23 @@ class BlockingMission(Mission[HoverParameters]):
         await asyncio.sleep(30.0)
 
 
+class ArmedReadyMission(Mission[HoverParameters]):
+    mission_id = "armed-ready"
+    name = "Armed ready"
+    description = "Wait while armed so cleanup owns the disarm command"
+    parameters_type = HoverParameters
+    manages_flight_path = True
+
+    def __init__(self) -> None:
+        self.started = asyncio.Event()
+        self.release = asyncio.Event()
+
+    async def execute(self, context: MissionContext, parameters: HoverParameters) -> None:
+        del context, parameters
+        self.started.set()
+        await self.release.wait()
+
+
 async def wait_for_phase(runner: MissionRunner, run_id: str, phase: MissionPhase) -> None:
     for _ in range(200):
         try:
@@ -148,12 +184,70 @@ async def test_cancellation_aborts_lands_and_releases_ownership() -> None:
         runner.run("blocking", vehicle.identity.vehicle_id, preset="fast", mission_run_id=run_id)
     )
     await wait_for_phase(runner, run_id, MissionPhase.EXECUTING)
-    await runner.cancel(run_id)
+    first_cancel = await runner.cancel(run_id)
+    second_cancel = await runner.cancel(run_id)
     result = await task
+    assert first_cancel.cancellation_requested is True
+    assert second_cancel.cancellation_requested is True
     assert result.status is MissionStatus.ABORTED
     assert result.reason_code == "MISSION_CANCELLED"
     assert supervisor.session(vehicle.identity.vehicle_id).lease is None
     assert not (await vehicle.snapshot()).telemetry.flying
+
+
+@pytest.mark.asyncio
+async def test_cleanup_disarm_uses_the_serialized_transferred_binding() -> None:
+    mission = ArmedReadyMission()
+    registry = MissionRegistry()
+    registry.register(mission)
+    runner, supervisor, vehicle = make_runtime(registry=registry)
+    capture = CommandCapture()
+    supervisor.add_audit_sink(capture)
+    run_id = "run-cleanup-transition"
+    initial = FleetCommandBinding(
+        fleet_session_id="fleet-session-cleanup",
+        fleet_run_id="fleet-run-cleanup",
+        deployment_sha256="1" * 64,
+        task_id="active-task",
+        task_lease_generation=1,
+        backend_namespace="fast-sim/sim01",
+    )
+    task = asyncio.create_task(
+        runner.run(
+            mission.mission_id,
+            vehicle.identity.vehicle_id,
+            mission_run_id=run_id,
+            fleet_binding=initial,
+        )
+    )
+    await asyncio.wait_for(mission.started.wait(), timeout=1.0)
+    receipt = await runner.transition_fleet_authority(
+        run_id,
+        FleetAuthorityTransition(
+            transition_id="cleanup-transition",
+            sequence=1,
+            vehicle_id=vehicle.identity.vehicle_id,
+            mission_run_id=run_id,
+            fleet_session_id=initial.fleet_session_id,
+            fleet_run_id=initial.fleet_run_id,
+            deployment_sha256=initial.deployment_sha256,
+            expected_task_id=initial.task_id,
+            expected_task_lease_generation=initial.task_lease_generation,
+            next_task_id="return-task",
+            next_task_lease_generation=2,
+            reason_code="TEST_CLEANUP_AUTHORITY",
+            authorization_sha256="2" * 64,
+        ),
+    )
+    mission.release.set()
+    result = await task
+    assert result.status is MissionStatus.SUCCEEDED
+    assert result.fleet_authority_transitions == (receipt,)
+    cleanup = next(item for item in capture.commands if isinstance(item.payload, DisarmCommand))
+    assert cleanup.mission_run_id == run_id
+    assert cleanup.fleet is not None
+    assert cleanup.fleet.task_id == "return-task"
+    assert cleanup.fleet.task_lease_generation == 2
 
 
 @pytest.mark.asyncio

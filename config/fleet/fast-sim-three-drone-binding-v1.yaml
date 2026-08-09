@@ -1,0 +1,13 @@
+schema_version: 1
+binding_id: fast-sim-three-drone-v1
+backend: FAST_SIM
+vehicles:
+  - {vehicle_id: cf01, expected_vehicle_id: cf01, backend_identifier: fast-sim/cf01}
+  - {vehicle_id: cf02, expected_vehicle_id: cf02, backend_identifier: fast-sim/cf02}
+  - {vehicle_id: cf03, expected_vehicle_id: cf03, backend_identifier: fast-sim/cf03}
+backend_options:
+  world_width_m: 8.0
+  world_depth_m: 6.0
+  world_height_m: 3.0
+  seed: 311
+  fixed_step_s: 0.01

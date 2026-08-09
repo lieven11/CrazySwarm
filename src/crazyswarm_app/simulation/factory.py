@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import hashlib
-import json
 from pathlib import Path
 
 from crazyswarm_app.domain.models import VehicleIdentity
+from crazyswarm_app.domain.simulation import canonical_sha256
 from crazyswarm_app.simulation.faults import FaultInjector
 from crazyswarm_app.simulation.vehicle import SimulatedVehicle
 from crazyswarm_app.simulation.world import IndoorWorld, ScenarioConfig, load_scenario
@@ -15,13 +14,7 @@ def vehicles_from_scenario(
 ) -> tuple[SimulatedVehicle, ...]:
     selected = load_scenario(scenario) if isinstance(scenario, Path) else scenario
     world = IndoorWorld(selected.world)
-    scenario_configuration_sha256 = hashlib.sha256(
-        json.dumps(
-            selected.model_dump(mode="json"),
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode()
-    ).hexdigest()
+    scenario_configuration_sha256 = canonical_sha256(selected)
     return tuple(
         SimulatedVehicle(
             VehicleIdentity(

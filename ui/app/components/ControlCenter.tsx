@@ -6,20 +6,15 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
-  BatteryMedium,
+  BatteryCharging,
   Check,
   ChevronDown,
   ChevronUp,
   CircleDot,
-  Clock3,
   Command,
   FileCode2,
-  Gauge,
   Hexagon,
   LoaderCircle,
-  Map,
-  PanelRightOpen,
-  Pause,
   Play,
   Radio,
   RotateCcw,
@@ -35,6 +30,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -42,27 +38,124 @@ import { ControlApi } from "../lib/api";
 import { createEmptyDashboard } from "../lib/empty";
 import type {
   DashboardModel,
+  FleetSessionView,
   Health,
+  MissionOption,
+  MissionPreview,
+  MissionRunView,
   OperatingMode,
   ParameterView,
   PreflightReportView,
   ReplayView,
+  RunFileMissionView,
   RunHistoryView,
   Vec3,
   VehicleView,
 } from "../lib/models";
-import { missionPlan } from "../lib/spatial";
-import { RoomScene } from "./RoomScene";
-import { TelemetryDock, type TelemetrySample } from "./TelemetryDock";
+import { missionPlan, missionPreviewPaths } from "../lib/spatial";
+import { RoomScene, type HomeBaseView } from "./RoomScene";
+import { FlightReadout, RunFilesControl, type TelemetrySample } from "./TelemetryDock";
+import { CampaignLab } from "./CampaignLab";
 
 type ServiceState = "ATTACHING" | "ONLINE" | "OFFLINE";
 type SafetyAction = "abort" | "emergency" | null;
 type ExecutionMode = "SIMULATION" | "TWIN";
+type MaintenanceVehicle = Pick<
+  VehicleView,
+  "id" | "name" | "backendRole" | "state" | "armed" | "flying"
+>;
 
 const LOCAL_API = { endpoint: "/control-api", clientId: "control-center-ui" };
+const LIVE_UPDATE_PERIOD_MS = 100;
+const BATTERY_LEVEL_PRESETS = [5, 10, 20, 50, 75, 100] as const;
+export const TOAST_DURATION_MS = 4_500;
+export const TOAST_FAILURE_DURATION_MS = 7_000;
+
+export interface SimulationBatteryStartRisk {
+  batteryPercent: number;
+  minimumPercent: number;
+  minimumKind: "mission" | "takeoff";
+  vehicleId?: string;
+  affectedVehicleCount: number;
+}
+
+type SimulationBatteryStartCandidate = Omit<SimulationBatteryStartRisk, "affectedVehicleCount"> & {
+  vehicleId: string;
+};
+
+export function simulationBatteryStartRisk(
+  preview: MissionPreview | undefined,
+  vehicles: VehicleView[],
+  fallbackVehicle: VehicleView | undefined,
+  takeoffMinimumPercent: number | undefined,
+): SimulationBatteryStartRisk | undefined {
+  if (takeoffMinimumPercent === undefined) return undefined;
+  const candidates = preview
+    ? preview.vehicles
+        .filter((vehicle) => vehicle.initialRole === "ACTIVE")
+        .flatMap((vehicle): SimulationBatteryStartCandidate[] => {
+          const liveBattery = vehicles.find((item) => item.id === vehicle.vehicleId)?.telemetry?.batteryPercent;
+          const batteryPercent = liveBattery ?? vehicle.batteryPercent;
+          const missionMinimum = vehicle.minimumBatteryPercent;
+          const minimumPercent = Math.max(takeoffMinimumPercent, missionMinimum ?? 0);
+          return batteryPercent === undefined || batteryPercent >= minimumPercent
+            ? []
+            : [{
+                batteryPercent,
+                minimumPercent,
+                minimumKind: missionMinimum !== undefined && missionMinimum > takeoffMinimumPercent
+                  ? "mission" as const
+                  : "takeoff" as const,
+                vehicleId: vehicle.vehicleId,
+              }];
+        })
+    : fallbackVehicle?.telemetry?.batteryPercent !== undefined
+      && fallbackVehicle.telemetry.batteryPercent < takeoffMinimumPercent
+      ? [{
+          batteryPercent: fallbackVehicle.telemetry.batteryPercent,
+          minimumPercent: takeoffMinimumPercent,
+          minimumKind: "takeoff" as const,
+          vehicleId: fallbackVehicle.id,
+        }]
+      : [];
+  if (!candidates.length) return undefined;
+  const mostConstrained = candidates.reduce((current, candidate) =>
+    candidate.batteryPercent - candidate.minimumPercent
+      < current.batteryPercent - current.minimumPercent
+      ? candidate
+      : current,
+  );
+  return { ...mostConstrained, affectedVehicleCount: candidates.length };
+}
+
+export function missionPreviewHomeBases(preview: MissionPreview): HomeBaseView[] {
+  const singleVehicle = preview.vehicles.length === 1;
+  return preview.vehicles.map((vehicle, index) => ({
+    vehicleId: vehicle.vehicleId,
+    number: index + 1,
+    position: singleVehicle ? vehicle.start : vehicle.home,
+  }));
+}
+
+export function missionIdForRunningReference(
+  runningRunId: string | undefined,
+  fleet: FleetSessionView | undefined,
+  executionActive: boolean,
+  latestRun: MissionRunView | undefined,
+  missionStart: { missionId: string; runId?: string } | undefined,
+): string | undefined {
+  if (!runningRunId) return undefined;
+  return (fleet && (executionActive || fleet.runId === runningRunId) ? fleet.missionId : undefined)
+    ?? (latestRun?.status === "RUNNING" && latestRun.id === runningRunId
+      ? latestRun.missionId
+      : undefined)
+    ?? (missionStart?.runId === runningRunId ? missionStart.missionId : undefined);
+}
 
 export function ControlCenter() {
-  const [model, setModel] = useState<DashboardModel>(() => createEmptyDashboard());
+  const initialModel = useMemo(() => createEmptyDashboard(), []);
+  const [model, setModel] = useState<DashboardModel>(initialModel);
+  const modelRef = useRef(initialModel);
   const [serviceState, setServiceState] = useState<ServiceState>("ATTACHING");
   const [selectedMissionId, setSelectedMissionId] = useState("");
   const [executionMode, setExecutionMode] = useState<ExecutionMode>("SIMULATION");
@@ -71,11 +164,16 @@ export function ControlCenter() {
   const [uploading, setUploading] = useState(false);
   const [starting, setStarting] = useState(false);
   const [activeRunId, setActiveRunId] = useState<string>();
-  const [history, setHistory] = useState<{ runId?: string; points: Vec3[] }>({ points: [] });
-  const [telemetryHistory, setTelemetryHistory] = useState<{ key?: string; points: TelemetrySample[] }>({ points: [] });
+  const [activeExecutionId, setActiveExecutionId] = useState<string>();
+  const [observedVehicleId, setObservedVehicleId] = useState<string>();
+  const [targetVehicleIds, setTargetVehicleIds] = useState<string[]>([]);
+  const targetSelectionInitializedRef = useRef(false);
+  const [historyByVehicle, setHistoryByVehicle] = useState<Record<string, { runId?: string; points: Vec3[] }>>({});
+  const [telemetryHistoryByVehicle, setTelemetryHistoryByVehicle] = useState<Record<string, { key?: string; points: TelemetrySample[] }>>({});
   const [missionOpen, setMissionOpen] = useState(false);
-  const [telemetryOpen, setTelemetryOpen] = useState(true);
+  const [telemetryOpen, setTelemetryOpen] = useState(false);
   const [notice, setNotice] = useState<string>();
+  const dismissNotice = useCallback(() => setNotice(undefined), []);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [busyAction, setBusyAction] = useState<string>();
   const [preflight, setPreflight] = useState<PreflightReportView>();
@@ -85,62 +183,250 @@ export function ControlCenter() {
   const [parameterSnapshotId, setParameterSnapshotId] = useState<string>();
   const [parameterDiffCount, setParameterDiffCount] = useState<number>();
   const [runHistory, setRunHistory] = useState<RunHistoryView[]>([]);
+  const [runHistoryLoading, setRunHistoryLoading] = useState(false);
+  const [runFileMissions, setRunFileMissions] = useState<RunFileMissionView[]>([]);
+  const [runFilesLoaded, setRunFilesLoaded] = useState(false);
+  const [runFilesLoading, setRunFilesLoading] = useState(false);
+  const [runFilesError, setRunFilesError] = useState<string>();
   const [replay, setReplay] = useState<ReplayView>();
+  const [batteryMenuOpen, setBatteryMenuOpen] = useState(false);
+  const [customBatteryPercent, setCustomBatteryPercent] = useState("50");
+  const [lowBatteryConfirmation, setLowBatteryConfirmation] = useState<SimulationBatteryStartRisk>();
+  const [missionPreview, setMissionPreview] = useState<MissionPreview>();
+  const [planOverview, setPlanOverview] = useState<MissionPreview>();
+  const [missionStart, setMissionStart] = useState<{ missionId: string; runId?: string; homeBases: HomeBaseView[] }>();
+  const [previewingMissionId, setPreviewingMissionId] = useState<string>();
+  const previewRequestRef = useRef(0);
+  const autoPreviewMissionIdRef = useRef<string | undefined>(undefined);
+  const batteryControlRef = useRef<HTMLDivElement>(null);
 
   const api = useMemo(() => new ControlApi(LOCAL_API), []);
-  const effectiveMissionId = selectedMissionId || model.missions[0]?.id || "";
-  const selectedVehicle = model.vehicles.find((vehicle) => vehicle.id === model.selectedVehicleId);
-  const selectedMission = model.missions.find((mission) => mission.id === effectiveMissionId);
+  const observationVehicleId = observedVehicleId && model.vehicles.some((vehicle) => vehicle.id === observedVehicleId)
+    ? observedVehicleId
+    : model.selectedVehicleId;
+  const selectedVehicle = model.vehicles.find((vehicle) => vehicle.id === observationVehicleId);
+  const fleet = latestMissionDeployment(model.fleetSessions);
+  const executionActive = fleet && activeExecutionId === fleet.id
+    && ["SCHEDULED", "PREPARING", "READY", "RUNNING"].includes(fleet.runStatus);
   const runningRunId = activeRunId
+    ?? (executionActive ? fleet.runId : undefined)
     ?? (model.latestRun?.status === "RUNNING" ? model.latestRun.id : undefined);
-  const plannedPath = useMemo(
-    () => missionPlan(selectedMission, model.room),
-    [selectedMission, model.room],
+  const activeMissionId = missionIdForRunningReference(
+    runningRunId,
+    fleet,
+    Boolean(executionActive),
+    model.latestRun,
+    missionStart,
   );
-  const rendererModel = replay ? { ...model, mode: "REPLAY" as const } : model;
-  const twinAvailable = model.vehicles.some((vehicle) => vehicle.adapter === "cflib")
-    && model.vehicles.some((vehicle) => vehicle.adapter === "sim");
+  const effectiveMissionId = activeMissionId || selectedMissionId || model.missions[0]?.id || "";
+  const selectedMission = model.missions.find((mission) => mission.id === effectiveMissionId);
+  const activeMissionPreview = !runningRunId && missionPreview?.missionId === effectiveMissionId
+    ? missionPreview
+    : undefined;
+  const previewControlVehicles: MaintenanceVehicle[] | undefined = activeMissionPreview?.vehicles.flatMap((vehicle) =>
+    vehicle.existingVehicle && vehicle.backendRole && vehicle.vehicleState
+      ? [{
+          id: vehicle.vehicleId,
+          name: vehicle.displayName,
+          backendRole: vehicle.backendRole,
+          state: vehicle.vehicleState,
+          armed: undefined,
+          flying: undefined,
+        }]
+      : [],
+  );
+  const controlScopeVehicles: MaintenanceVehicle[] = activeMissionPreview
+    ? previewControlVehicles ?? []
+    : model.vehicles;
+  const controlScopeVehicleIds = new Set(controlScopeVehicles.map((vehicle) => vehicle.id));
+  const effectiveTargetVehicleIds = targetVehicleIds.filter((vehicleId) =>
+    controlScopeVehicleIds.has(vehicleId),
+  );
+  const commandTargetVehicles = vehiclesForTargetSelection(
+    controlScopeVehicles,
+    effectiveTargetVehicleIds,
+  );
+  const simulationTargetVehicles = commandTargetVehicles.filter(
+    (vehicle) => vehicle.backendRole === "FAST_SIM",
+  );
+  const allCommandTargetsAreFastSim = commandTargetVehicles.length > 0
+    && simulationTargetVehicles.length === commandTargetVehicles.length;
+  const singleTargetVehicle = effectiveTargetVehicleIds.length === 1
+    ? model.vehicles.find((vehicle) => vehicle.id === effectiveTargetVehicleIds[0])
+    : undefined;
+  const singleTargetName = effectiveTargetVehicleIds.length === 1
+    ? singleTargetVehicle?.name
+      ?? activeMissionPreview?.vehicles.find(
+        (vehicle) => vehicle.vehicleId === effectiveTargetVehicleIds[0],
+      )?.displayName
+    : undefined;
+  const sceneVehicleCount = activeMissionPreview?.vehicles.length ?? model.vehicles.length;
+  const selectedPlanOverview = planOverview?.missionId === effectiveMissionId
+    ? planOverview
+    : undefined;
+  const referencePlanOverview = runningRunId
+    ? activeMissionId && planOverview?.missionId === activeMissionId ? planOverview : undefined
+    : selectedPlanOverview;
+  const selectedMissionPlanId = runningRunId && !activeMissionId ? undefined : selectedMission?.id;
+  const selectedPlanOverviewMissionId = selectedPlanOverview?.missionId;
+  const retainedMissionStart = missionStart?.missionId === effectiveMissionId
+    ? missionStart.homeBases
+    : undefined;
+  const detectedLowBatteryRisk = simulationBatteryStartRisk(
+    activeMissionPreview,
+    model.vehicles,
+    selectedVehicle,
+    model.safetyPolicy?.minimumTakeoffBatteryPercent,
+  );
+  const homeBases = activeMissionPreview
+    ? missionPreviewHomeBases(activeMissionPreview)
+    : retainedMissionStart && (runningRunId || fleet?.missionDerived)
+      ? retainedMissionStart
+      : fleet?.missionDerived
+        ? fleet.vehicles.flatMap((vehicle, index) => vehicle.home
+          ? [{ vehicleId: vehicle.id, number: index + 1, position: vehicle.home }]
+          : [])
+        : undefined;
+  const plannedPath = referencePlanOverview
+    ? missionPreviewPaths(referencePlanOverview)
+    : runningRunId
+      ? {}
+      : missionPlan(selectedMission, model.room);
+  const historicalPath = useMemo(
+    () => activeMissionPreview
+      ? {}
+      : Object.fromEntries(
+          Object.entries(historyByVehicle).map(([vehicleId, value]) => [vehicleId, value.points]),
+        ),
+    [activeMissionPreview, historyByVehicle],
+  );
+  const observationModel = withObservationFocus(model, observationVehicleId);
+  const targetSelectionModel = withVehicleTargetSelection(
+    observationModel,
+    effectiveTargetVehicleIds,
+  );
+  const rendererModel = replay
+    ? { ...targetSelectionModel, mode: "REPLAY" as const }
+    : targetSelectionModel;
+  const twinAvailable = model.vehicles.some((vehicle) => vehicle.authorityClass === "PHYSICAL")
+    && model.vehicles.some((vehicle) => vehicle.authorityClass === "SIMULATION");
+  const selectedVehicleException = singleTargetVehicle ? vehicleException(singleTargetVehicle) : undefined;
+  const simulationQuickActionsDisabled = !allCommandTargetsAreFastSim
+    || simulationTargetVehicles.some((vehicle) => vehicle.state !== "DISCONNECTED")
+    || Boolean(runningRunId)
+    || Boolean(busyAction);
+  const simulationBatteryDisabled = !allCommandTargetsAreFastSim
+    || simulationTargetVehicles.some((vehicle) => !simulationBatteryControlEnabled(
+      vehicle,
+      Boolean(runningRunId),
+      Boolean(busyAction),
+    ));
+  const simulationQuickActionHint = runningRunId
+    ? "Stop the mission first"
+    : simulationTargetVehicles.some((vehicle) => vehicle.state !== "DISCONNECTED")
+      ? "Land, disarm, and disconnect every targeted simulator first"
+      : undefined;
+  const simulationBatteryHint = runningRunId
+    ? "Stop the mission first"
+    : simulationBatteryDisabled
+      ? "Recharge is available once the simulated drone is disarmed and no longer flying"
+      : undefined;
+
+  useEffect(() => {
+    if (!batteryMenuOpen) return;
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (!batteryControlRef.current?.contains(event.target as Node)) setBatteryMenuOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setBatteryMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePointer);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [batteryMenuOpen]);
 
   const applyDashboard = useCallback((dashboard: DashboardModel) => {
+    modelRef.current = dashboard;
     setModel(dashboard);
-    const observed = dashboard.vehicles.find((vehicle) => vehicle.id === dashboard.selectedVehicleId);
-    const sample = telemetrySample(observed);
-    if (observed && sample) {
-      const key = observed.observationRunId
-        ?? `${observed.id}:${observed.telemetry?.provenance.sourceClockEpoch ?? 0}`;
-      setTelemetryHistory((current) => {
-        if (current.key !== key) return { key, points: [sample] };
-        const previous = current.points.at(-1);
-        if (previous?.t === sample.t) return current;
-        return {
+    const availableVehicleIds = new Set(dashboard.vehicles.map((vehicle) => vehicle.id));
+    if (!targetSelectionInitializedRef.current) {
+      targetSelectionInitializedRef.current = true;
+      setTargetVehicleIds(
+        dashboard.selectedVehicleId && availableVehicleIds.has(dashboard.selectedVehicleId)
+          ? [dashboard.selectedVehicleId]
+          : [],
+      );
+    } else {
+      setTargetVehicleIds((current) => {
+        const next = current.filter((vehicleId) => availableVehicleIds.has(vehicleId));
+        return next.length === current.length ? current : next;
+      });
+    }
+    setTelemetryHistoryByVehicle((current) => {
+      let changed = false;
+      const next = { ...current };
+      for (const vehicle of dashboard.vehicles) {
+        const sample = telemetrySample(vehicle);
+        if (!sample) continue;
+        const key = vehicle.observationRunId
+          ?? `${vehicle.id}:${vehicle.telemetry?.provenance.sourceClockEpoch ?? 0}`;
+        const existing = current[vehicle.id];
+        if (existing?.key !== key) {
+          next[vehicle.id] = { key, points: [sample] };
+          changed = true;
+          continue;
+        }
+        const previous = existing.points.at(-1);
+        if (previous?.t === sample.t) continue;
+        next[vehicle.id] = {
           key,
-          points: [...current.points, sample]
+          points: [...existing.points, sample]
             .filter((point) => sample.t - point.t <= 65)
             .slice(-600),
         };
-      });
-    }
-    const runId = observed?.observationRunId;
-    const point = observed?.telemetry?.estimate;
-    if (!runId || !point) return;
-    setHistory((current) => {
-      if (current.runId !== runId) return { runId, points: [point] };
-      const previous = current.points.at(-1);
-      if (previous && previous.x === point.x && previous.y === point.y && previous.z === point.z) return current;
-      return { runId, points: [...current.points, point].slice(-500) };
+        changed = true;
+      }
+      return changed ? next : current;
+    });
+    setHistoryByVehicle((current) => {
+      let changed = false;
+      const next = { ...current };
+      for (const vehicle of dashboard.vehicles) {
+        const runId = vehicle.observationRunId;
+        const point = vehicle.telemetry?.estimate;
+        if (!runId || !point) continue;
+        const existing = current[vehicle.id];
+        if (existing?.runId !== runId) {
+          next[vehicle.id] = { runId, points: [point] };
+          changed = true;
+          continue;
+        }
+        const previous = existing.points.at(-1);
+        if (previous && previous.x === point.x && previous.y === point.y && previous.z === point.z) continue;
+        next[vehicle.id] = { runId, points: [...existing.points, point].slice(-500) };
+        changed = true;
+      }
+      return changed ? next : current;
     });
   }, []);
-
-  useEffect(() => {
-    if (model.apiConnected && model.missions.length === 0) setMissionOpen(true);
-  }, [model.apiConnected, model.missions.length]);
 
   const attachLocalService = useCallback(async () => {
     setServiceState("ATTACHING");
     const dashboard = await api.loadDashboard();
     applyDashboard(dashboard);
+    const activeDeployment = latestMissionDeployment(
+      dashboard.fleetSessions.filter(
+        (session) => ["SCHEDULED", "PREPARING", "READY", "RUNNING"].includes(session.runStatus),
+      ),
+    );
+    setActiveExecutionId(activeDeployment?.id);
     setActiveRunId(
-      dashboard.latestRun?.status === "RUNNING" ? dashboard.latestRun.id : undefined,
+      !activeDeployment && dashboard.latestRun?.status === "RUNNING"
+        ? dashboard.latestRun.id
+        : undefined,
     );
     setServiceState("ONLINE");
   }, [api, applyDashboard]);
@@ -171,17 +457,24 @@ export function ControlCenter() {
     let cancelled = false;
     let timer: number | undefined;
     const poll = async () => {
+      const startedAtMs = performance.now();
       try {
-        const [run, dashboard] = await Promise.all([
-          api.missionRun(activeRunId),
-          api.loadDashboard(),
-        ]);
+        const snapshot = await api.loadLiveDashboard(modelRef.current, activeRunId);
         if (cancelled) return;
+        const { dashboard, activeRun } = snapshot;
         applyDashboard(dashboard);
-        if (run.result) {
+        if (!activeRun) {
           setActiveRunId(undefined);
-          const result = run.result as Record<string, unknown>;
-          setNotice(`Mission ${typeof result.status === "string" ? result.status.toLowerCase() : "complete"}`);
+          setNotice("Mission is no longer active · controls unlocked");
+          return;
+        }
+        if (activeRun.status !== "RUNNING") {
+          setActiveRunId(undefined);
+          setNotice(missionCompletionNotice(
+            activeRun.status,
+            activeRun.resultMessage,
+            activeRun.resultReasonCode,
+          ));
           return;
         }
       } catch (error) {
@@ -193,7 +486,8 @@ export function ControlCenter() {
         return;
       }
       setServiceState("ONLINE");
-      timer = window.setTimeout(poll, 160);
+      const elapsedMs = performance.now() - startedAtMs;
+      timer = window.setTimeout(poll, Math.max(0, LIVE_UPDATE_PERIOD_MS - elapsedMs));
     };
     void poll();
     return () => {
@@ -201,6 +495,51 @@ export function ControlCenter() {
       if (timer !== undefined) window.clearTimeout(timer);
     };
   }, [api, activeRunId, applyDashboard]);
+
+  useEffect(() => {
+    if (!activeExecutionId) return;
+    let cancelled = false;
+    let timer: number | undefined;
+    const poll = async () => {
+      const startedAtMs = performance.now();
+      try {
+        const { dashboard } = await api.loadLiveDashboard(modelRef.current);
+        if (cancelled) return;
+        applyDashboard(dashboard);
+        const execution = dashboard.fleetSessions.find((session) => session.id === activeExecutionId);
+        if (!execution) {
+          setActiveExecutionId(undefined);
+          setNotice("Deployment session is no longer available");
+          return;
+        }
+        if (!["SCHEDULED", "PREPARING", "READY", "RUNNING"].includes(execution.runStatus)) {
+          setActiveExecutionId(undefined);
+          setActiveRunId(undefined);
+          setRunFilesLoaded(false);
+          void api.runFiles().then((missions) => {
+            setRunFileMissions(missions);
+            setRunFilesLoaded(true);
+            setRunFilesError(undefined);
+          }).catch(() => undefined);
+          setNotice(missionCompletionNotice(
+            execution.runStatus,
+            execution.resultMessage,
+            execution.resultReasonCode,
+          ));
+          return;
+        }
+      } catch (error) {
+        if (!cancelled) setNotice(error instanceof Error ? error.message : "Mission polling failed");
+      }
+      const elapsedMs = performance.now() - startedAtMs;
+      timer = window.setTimeout(poll, Math.max(0, LIVE_UPDATE_PERIOD_MS - elapsedMs));
+    };
+    void poll();
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [activeExecutionId, api, applyDashboard]);
 
   useEffect(() => {
     if (
@@ -216,21 +555,87 @@ export function ControlCenter() {
     return () => window.clearInterval(timer);
   }, [api, activeRunId, selectedVehicle?.commandAuthority, selectedVehicle?.id, selectedVehicle?.state]);
 
-  const startMission = async () => {
-    if (!api || !selectedMission || !selectedVehicle) return;
+  const executeMissionStart = async (
+    preview: MissionPreview,
+    confirmLowBatteryRisk = false,
+  ) => {
+    if (!api || !selectedMission) return;
     setStarting(true);
     try {
-      const result = await api.startMissionFile(selectedMission.id, selectedVehicle.id, executionMode);
-      setHistory({ runId: result.mission_run_id, points: [] });
-      setTelemetryHistory({ key: result.mission_run_id, points: [] });
-      setActiveRunId(result.mission_run_id);
+      const acknowledgedFindingCodes = confirmLowBatteryRisk
+        ? preview.plan.findings
+            .filter((finding) => finding.requiresConfirmation)
+            .map((finding) => finding.code)
+        : [];
+      const approval = await api.approveMissionPlan(
+        selectedMission.id,
+        preview.plan.sha256,
+        acknowledgedFindingCodes,
+      );
+      const result = await api.startMissionFile(
+        selectedMission.id,
+        executionMode,
+        confirmLowBatteryRisk,
+        approval,
+      );
+      setHistoryByVehicle({});
+      setTelemetryHistoryByVehicle({});
+      setObservedVehicleId(undefined);
+      setActiveExecutionId(result.execution_session_id);
+      setMissionStart({
+        missionId: preview.missionId,
+        runId: result.mission_run_id,
+        homeBases: missionPreviewHomeBases(preview),
+      });
+      setMissionPreview(undefined);
       setMissionOpen(false);
-      setNotice("Mission started");
+      setNotice(`Preparing ${result.member_count} mission ${result.member_count === 1 ? "vehicle" : "vehicles"}`);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Mission could not start");
     } finally {
       setStarting(false);
     }
+  };
+
+  const startMission = async () => {
+    let preview = activeMissionPreview;
+    if (executionMode === "SIMULATION" && selectedMission && !preview) {
+      setStarting(true);
+      try {
+        preview = await api.previewMission(selectedMission.id);
+        setMissionPreview(preview);
+        setPlanOverview(preview);
+      } catch (error) {
+        setNotice(error instanceof Error ? error.message : "Mission preview unavailable");
+        setStarting(false);
+        return;
+      }
+      setStarting(false);
+    }
+    if (preview) {
+      setMissionStart({
+        missionId: preview.missionId,
+        homeBases: missionPreviewHomeBases(preview),
+      });
+    }
+    const risk = preview === activeMissionPreview
+      ? detectedLowBatteryRisk
+      : simulationBatteryStartRisk(
+          preview,
+          modelRef.current.vehicles,
+          selectedVehicle,
+          modelRef.current.safetyPolicy?.minimumTakeoffBatteryPercent,
+        );
+    if (executionMode === "SIMULATION" && risk) {
+      setNotice(undefined);
+      setLowBatteryConfirmation(risk);
+      return;
+    }
+    if (!preview) {
+      setNotice("Mission plan preview is required before approval");
+      return;
+    }
+    void executeMissionStart(preview);
   };
 
   const cancelMission = async () => {
@@ -240,13 +645,74 @@ export function ControlCenter() {
       await api.cancelMission(runId);
       setNotice("Controlled abort and landing requested");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Cancel request failed");
+      const message = error instanceof Error ? error.message : "Cancel request failed";
+      if (message.startsWith("unknown mission run:")) {
+        setActiveRunId(undefined);
+        try {
+          applyDashboard(await api.loadDashboard());
+        } catch {
+          // The stale local run is still cleared even if the follow-up refresh fails.
+        }
+        setNotice("Mission is no longer active · controls unlocked");
+        return;
+      }
+      setNotice(message);
     }
   };
 
   const refreshDashboard = useCallback(async () => {
     applyDashboard(await api.loadDashboard());
   }, [api, applyDashboard]);
+
+  const stageMissionPreview = async (mission: MissionOption) => {
+    if (runningRunId) return;
+    const requestId = previewRequestRef.current + 1;
+    previewRequestRef.current = requestId;
+    autoPreviewMissionIdRef.current = mission.id;
+    setObservedVehicleId(undefined);
+    setTargetVehicleIds([]);
+    setSelectedMissionId(mission.id);
+    setMissionPreview(undefined);
+    setPlanOverview(undefined);
+    setPreviewingMissionId(mission.id);
+    try {
+      const preview = await api.previewMission(mission.id);
+      if (previewRequestRef.current !== requestId) return;
+      setMissionPreview(preview);
+      setPlanOverview(preview);
+      const activeCount = preview.vehicles.filter(
+        (vehicle) => vehicle.initialRole === "ACTIVE",
+      ).length;
+      setNotice(`Previewing ${mission.name} · ${activeCount} ${activeCount === 1 ? "drone" : "drones"}`);
+    } catch (error) {
+      if (previewRequestRef.current !== requestId) return;
+      setNotice(error instanceof Error ? error.message : "Mission preview unavailable");
+    } finally {
+      if (previewRequestRef.current === requestId) setPreviewingMissionId(undefined);
+    }
+  };
+
+  useEffect(() => {
+    if (
+      !model.apiConnected
+      || !selectedMissionPlanId
+      || selectedPlanOverviewMissionId
+      || autoPreviewMissionIdRef.current === selectedMissionPlanId
+    ) return;
+    const missionId = selectedMissionPlanId;
+    autoPreviewMissionIdRef.current = missionId;
+    let cancelled = false;
+    void api.previewMission(missionId).then((preview) => {
+      if (cancelled) return;
+      setPlanOverview(preview);
+      if (!runningRunId) setMissionPreview(preview);
+    }).catch((error) => {
+      if (!cancelled) setNotice(error instanceof Error ? error.message : "Mission plan unavailable");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [api, model.apiConnected, runningRunId, selectedMissionPlanId, selectedPlanOverviewMissionId]);
 
   const saveMissionFile = async () => {
     if (!uploadFile) return;
@@ -255,7 +721,7 @@ export function ControlCenter() {
       const name = uploadName.trim() || uploadFile.name.replace(/\.py$/i, "");
       const mission = await api.uploadMission(name, uploadFile.name, await uploadFile.text());
       await refreshDashboard();
-      setSelectedMissionId(mission.id);
+      await stageMissionPreview(mission);
       setUploadFile(undefined);
       setUploadName("");
       setNotice("Mission added");
@@ -271,7 +737,13 @@ export function ControlCenter() {
     setBusyAction("Archive mission");
     try {
       await api.archiveMission(missionId);
-      if (selectedMissionId === missionId) setSelectedMissionId("");
+      if (selectedMissionId === missionId) {
+        previewRequestRef.current += 1;
+        autoPreviewMissionIdRef.current = undefined;
+        setSelectedMissionId("");
+        setMissionPreview(undefined);
+        setPlanOverview(undefined);
+      }
       await refreshDashboard();
       setNotice("Mission archived");
     } catch (error) {
@@ -294,28 +766,90 @@ export function ControlCenter() {
     }
   };
 
-  const resetSimulation = async () => {
+  const resetSimulationPose = async () => {
     if (
-      !selectedVehicle
-      || selectedVehicle.adapter !== "sim"
-      || selectedVehicle.state !== "DISCONNECTED"
+      !allCommandTargetsAreFastSim
+      || simulationTargetVehicles.some((vehicle) => vehicle.state !== "DISCONNECTED")
       || runningRunId
     ) return;
-    setBusyAction("Reset simulation");
+    const targets = simulationTargetVehicles;
+    setBusyAction("Reposition to home");
     try {
-      const batteryPercent = await api.resetSimulation(selectedVehicle.id);
+      const results = await Promise.allSettled(
+        targets.map((vehicle) => api.resetSimulationPose(vehicle.id)),
+      );
       setPreflight(undefined);
-      setHistory({ points: [] });
-      setTelemetryHistory({ points: [] });
+      setHistoryByVehicle({});
+      setTelemetryHistoryByVehicle({});
+      setMissionStart(undefined);
       await refreshDashboard();
-      setNotice(batteryPercent === undefined
-        ? "Simulator reset · battery restored to configured start level"
-        : `Simulator reset · battery ${batteryPercent.toFixed(1)}%`);
+      if (selectedPlanOverview) {
+        const refreshedPreview = await api.previewMission(selectedPlanOverview.missionId);
+        setPlanOverview(refreshedPreview);
+        if (activeMissionPreview) setMissionPreview(refreshedPreview);
+      }
+      const failedCount = results.filter((result) => result.status === "rejected").length;
+      if (failedCount) {
+        throw new Error(`Reset failed for ${failedCount} of ${targets.length} targeted drones`);
+      }
+      setNotice(targets.length === 1
+        ? "Drone repositioned to configured home"
+        : `${targets.length} drones repositioned to configured home`);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Simulation reset failed");
+      setNotice(error instanceof Error ? error.message : "Drone reset failed");
     } finally {
       setBusyAction(undefined);
     }
+  };
+
+  const setSimulationBattery = async (requestedPercent: number) => {
+    if (
+      !allCommandTargetsAreFastSim
+      || simulationTargetVehicles.some((vehicle) => !simulationBatteryControlEnabled(
+        vehicle,
+        Boolean(runningRunId),
+        Boolean(busyAction),
+      ))
+    ) return;
+    const targets = simulationTargetVehicles;
+    const batteryPercent = Math.max(0, Math.min(100, requestedPercent));
+    const actionName = batteryPercent === 100 ? "Recharge battery" : `Set battery to ${batteryPercent}%`;
+    setBusyAction(actionName);
+    try {
+      const results = await Promise.allSettled(
+        targets.map((vehicle) => api.setSimulationBattery(vehicle.id, batteryPercent)),
+      );
+      await refreshDashboard();
+      if (selectedPlanOverview) {
+        const refreshedPreview = await api.previewMission(selectedPlanOverview.missionId);
+        setPlanOverview(refreshedPreview);
+        if (activeMissionPreview) setMissionPreview(refreshedPreview);
+      }
+      setBatteryMenuOpen(false);
+      const failedCount = results.filter((result) => result.status === "rejected").length;
+      if (failedCount) {
+        throw new Error(`Battery update failed for ${failedCount} of ${targets.length} targeted drones`);
+      }
+      const appliedPercent = results[0]?.status === "fulfilled" ? results[0].value : undefined;
+      setNotice(targets.length === 1
+        ? appliedPercent === undefined
+          ? `Battery set to ${batteryPercent}%`
+          : `Battery set to ${appliedPercent.toFixed(1)}%`
+        : `${targets.length} drone batteries set to ${batteryPercent.toFixed(1)}%`);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Battery update failed");
+    } finally {
+      setBusyAction(undefined);
+    }
+  };
+
+  const applyCustomBatteryPercent = () => {
+    const value = Number(customBatteryPercent);
+    if (!customBatteryPercent.trim() || !Number.isFinite(value) || value < 0 || value > 100) {
+      setNotice("Battery percentage must be between 0 and 100");
+      return;
+    }
+    void setSimulationBattery(value);
   };
 
   const connectVehicle = async () => {
@@ -325,15 +859,23 @@ export function ControlCenter() {
     });
   };
 
-  const selectVehicle = async (vehicleId: string) => {
-    await runOperatorAction("Target selected", async () => {
-      await api.selectVehicle(vehicleId);
-      setPreflight(undefined);
-      setEngineeringParameters([]);
-      setParametersOpen(false);
-      setParameterSnapshotId(undefined);
-      setParameterDiffCount(undefined);
-    });
+  const changeVehicleTargetSelection = (vehicleId?: string) => {
+    if (!vehicleId) {
+      setTargetVehicleIds([]);
+      setBatteryMenuOpen(false);
+      return;
+    }
+    const selectable = activeMissionPreview
+      ? activeMissionPreview.vehicles.some(
+        (vehicle) => vehicle.vehicleId === vehicleId && vehicle.existingVehicle,
+      )
+      : modelRef.current.vehicles.some((vehicle) => vehicle.id === vehicleId);
+    if (!selectable) return;
+    const next = toggleVehicleSelection(effectiveTargetVehicleIds, vehicleId);
+    setTargetVehicleIds(next);
+    if (next.includes(vehicleId)) setObservedVehicleId(vehicleId);
+    else if (observedVehicleId === vehicleId) setObservedVehicleId(next.at(-1));
+    setBatteryMenuOpen(false);
   };
 
   const claimVehicle = async () => {
@@ -422,13 +964,31 @@ export function ControlCenter() {
   };
 
   const loadRunHistory = async () => {
-    setBusyAction("Load run history");
+    if (runHistoryLoading) return;
+    setRunHistoryLoading(true);
     try {
       setRunHistory(await api.runHistory());
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Run history unavailable");
+      const message = error instanceof Error ? error.message : "Run history unavailable";
+      setNotice(message);
     } finally {
-      setBusyAction(undefined);
+      setRunHistoryLoading(false);
+    }
+  };
+
+  const loadRunFiles = async () => {
+    if (runFilesLoading) return;
+    setRunFilesLoading(true);
+    setRunFilesError(undefined);
+    try {
+      setRunFileMissions(await api.runFiles());
+      setRunFilesLoaded(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Run files unavailable";
+      setRunFilesError(message);
+      setNotice(message);
+    } finally {
+      setRunFilesLoading(false);
     }
   };
 
@@ -456,54 +1016,84 @@ export function ControlCenter() {
     }
   };
 
-  return (
-    <main className="control-center">
-      <a className="skip-link" href="#mission-workspace">Skip to mission workspace</a>
-      <header className="topbar">
-        <div className="brand" aria-label="Aerium Control">
-          <span className="brand-mark"><Hexagon size={20} strokeWidth={1.8} /></span>
-          <span><strong>AERIUM</strong><small>CONTROL</small></span>
-        </div>
-        <div className="topbar-rule" />
-        {model.mode ? <ModeBadge mode={model.mode} label={model.mode === "SIM" ? "SIMULATION" : model.mode} /> : <span className="offline-label">{serviceState === "ATTACHING" ? "STARTING" : "SIM OFFLINE"}</span>}
-        <div className="topbar-mission" aria-label="Mission context">
-          <small>{runningRunId ? sentenceCase(model.latestRun?.phase ?? "Running") : selectedMission ? "READY TO RUN" : "NO MISSION"}</small>
-          <strong>{selectedMission?.name ?? "Select a mission"}</strong>
-        </div>
-        {selectedVehicle?.telemetry ? (
-          <div className="clock-chip"><Clock3 size={14} /><span>{compactClock(selectedVehicle)}</span></div>
-        ) : null}
-        <div className="topbar-actions">
-          {runningRunId ? (
-            <button className="stop-button" type="button" onClick={cancelMission}>
-              <Square size={13} fill="currentColor" /> Abort and land
-            </button>
-          ) : null}
-          {model.apiConnected ? <button className="connection-button" type="button" onClick={() => setAdvancedOpen((open) => !open)}><Settings size={15} />Engineering</button> : null}
-        </div>
-      </header>
+  const toggleMission = () => {
+    const next = !missionOpen;
+    setMissionOpen(next);
+    if (next) setTelemetryOpen(false);
+  };
 
-      <div className={`app-shell ${telemetryOpen ? "has-telemetry" : "telemetry-collapsed"}`}>
+  return (
+    <main className={`control-center ${telemetryOpen && selectedVehicle?.telemetry ? "flight-expanded" : ""}`}>
+      <a className="skip-link" href="#room-scene">Skip to simulation</a>
+      <div className="identity-capsule" aria-label="Aerium Control">
+        <div className="brand">
+          <span className="brand-mark"><Hexagon size={20} strokeWidth={1.8} /></span>
+          <strong>AERIUM</strong>
+        </div>
+        {model.mode ? <ModeBadge mode={model.mode} label={model.mode === "SIM" ? "SIM" : model.mode} /> : null}
+      </div>
+
+      <div className="vehicle-controls">
+        {sceneVehicleCount ? (
+          <div className="vehicle-capsule" aria-label="Command targets">
+            <span className={`vehicle-state-dot ${singleTargetVehicle ? vehicleTone(singleTargetVehicle) : ""}`} />
+            <strong>{effectiveTargetVehicleIds.length === 0
+              ? "All drones"
+              : effectiveTargetVehicleIds.length === 1
+                ? singleTargetName ?? "1 drone selected"
+                : `${effectiveTargetVehicleIds.length} drones selected`}</strong>
+            {effectiveTargetVehicleIds.length === 0 ? (
+              <small className="target-scope">{sceneVehicleCount} in scene</small>
+            ) : effectiveTargetVehicleIds.length > 1 ? (
+              <small className="target-scope">Selection</small>
+            ) : selectedVehicleException ? <small>{selectedVehicleException}</small> : null}
+          </div>
+        ) : serviceState === "OFFLINE" ? <span className="service-exception">Offline</span> : null}
+        {model.apiConnected ? (
+          <button className="engineering-fab" type="button" aria-label="Engineering" aria-expanded={advancedOpen} onClick={() => setAdvancedOpen((open) => !open)}>
+            <Settings size={17} />
+          </button>
+        ) : null}
+      </div>
+
+      <div className="app-shell">
         <section className="workspace" id="mission-workspace" tabIndex={-1}>
-          <RoomScene model={rendererModel} plannedPath={plannedPath} historicalPath={history.points} />
+          <RoomScene
+            model={rendererModel}
+            plannedPath={plannedPath}
+            homeBases={homeBases}
+            missionPreview={activeMissionPreview}
+            historicalPath={historicalPath}
+            selectedVehicleIds={effectiveTargetVehicleIds}
+            onVehicleSelectionChange={changeVehicleTargetSelection}
+            onDisplayTiming={(event) => {
+              void api.recordBrowserTiming(event).catch(() => undefined);
+            }}
+          />
         </section>
 
-        <nav className="nav-rail" aria-label="Workspace sections">
-          <button type="button" className={missionOpen ? "is-active" : ""} aria-label="Mission" aria-pressed={missionOpen} onClick={() => setMissionOpen((open) => !open)}><Command size={19} /></button>
-          <button type="button" aria-label="Room" onClick={() => document.getElementById("room-scene")?.focus()}><Map size={19} /></button>
-          <button type="button" aria-label="Controls" disabled={!model.apiConnected} onClick={() => setAdvancedOpen(true)}><Gauge size={19} /></button>
-        </nav>
+        {referencePlanOverview || (fleet?.missionDerived && fleet.vehicles.length > 0) ? (
+          <DeploymentSummary
+            key={referencePlanOverview?.missionId ?? fleet?.id}
+            fleet={fleet?.missionDerived ? fleet : undefined}
+            preview={referencePlanOverview}
+            vehicles={model.vehicles}
+            selectedVehicleIds={effectiveTargetVehicleIds}
+            onSelect={changeVehicleTargetSelection}
+          />
+        ) : null}
 
         {missionOpen ? (
           <aside className="mission-panel" aria-label="Mission setup">
             <div className="panel-heading">
-              <span><small>MISSION SETUP</small><h1 id="mission-title" tabIndex={-1}>Mission</h1></span>
+              <h1 id="mission-title" tabIndex={-1}>Mission</h1>
               <button className="panel-close" type="button" aria-label="Close mission setup" onClick={() => setMissionOpen(false)}><ChevronDown size={17} /></button>
             </div>
             {!model.apiConnected ? (
               <EmptyMission state={serviceState} onRetry={() => void attachLocalService()} />
             ) : (
               <>
+                <CampaignLab api={api} onNotice={setNotice} />
                 <div className="execution-switch" role="group" aria-label="Execution mode">
                   <button type="button" className={executionMode === "SIMULATION" ? "is-selected" : ""} onClick={() => setExecutionMode("SIMULATION")}>Simulation</button>
                   <button type="button" className={executionMode === "TWIN" ? "is-selected" : ""} disabled={!twinAvailable} title={!twinAvailable ? "Real vehicle adapter required" : undefined} onClick={() => setExecutionMode("TWIN")}>Digital twin</button>
@@ -537,9 +1127,10 @@ export function ControlCenter() {
                       <button
                         type="button"
                         className={mission.id === effectiveMissionId ? "mission-card is-selected" : "mission-card"}
-                        onClick={() => setSelectedMissionId(mission.id)}
+                        disabled={Boolean(runningRunId)}
+                        onClick={() => void stageMissionPreview(mission)}
                       >
-                        <FileCode2 size={15} />
+                        {previewingMissionId === mission.id ? <LoaderCircle className="spin" size={15} /> : <FileCode2 size={15} />}
                         <span><strong>{mission.name}</strong><small>{mission.sourceFilename}</small></span>
                         {mission.id === effectiveMissionId ? <Check size={13} /> : null}
                       </button>
@@ -549,75 +1140,140 @@ export function ControlCenter() {
                   {!model.missions.length ? <span className="mission-empty">NO MISSIONS YET</span> : null}
                 </div>
 
-                {model.vehicles.length > 1 ? (
-                  <>
-                    <label className="field-label" htmlFor="vehicle-select">Vehicle</label>
-                    <select id="vehicle-select" value={selectedVehicle?.id ?? ""} disabled={Boolean(runningRunId || busyAction)} onChange={(event) => void selectVehicle(event.target.value)}>
-                      {model.vehicles.map((vehicle) => <option key={vehicle.id} value={vehicle.id}>{vehicle.name} · {vehicle.id}</option>)}
-                    </select>
-                  </>
-                ) : null}
-
-                <div className="configured-target">
-                  <span>Target</span>
-                  <strong>{selectedVehicle?.name ?? "No vehicle"}</strong>
-                  <small>{selectedVehicle?.id ?? "—"} · {selectedVehicle?.state ?? "unavailable"}</small>
-                </div>
-
-                {selectedVehicle?.adapter === "sim" ? (
-                  <div className="sim-maintenance">
-                    <button
-                      type="button"
-                      disabled={selectedVehicle.state !== "DISCONNECTED" || Boolean(runningRunId || busyAction)}
-                      title={selectedVehicle.state !== "DISCONNECTED" ? "Land, disarm, and disconnect the simulator first" : undefined}
-                      onClick={() => void resetSimulation()}
-                    >
-                      <BatteryMedium size={15} />Recharge simulation
-                    </button>
-                    <small>Disconnected only · resets battery, pose, clock, and model state</small>
-                  </div>
-                ) : null}
-
-                {model.latestRun ? <RunSummary run={model.latestRun} /> : null}
               </>
             )}
           </aside>
         ) : null}
 
         <section className="mission-dock" aria-label="Mission controls">
-          <button className="mission-dock-summary" type="button" aria-expanded={missionOpen} onClick={() => setMissionOpen((open) => !open)}>
-            <span className="dock-mission-icon"><FileCode2 size={17} /></span>
-            <span><small>{runningRunId ? sentenceCase(model.latestRun?.phase ?? "Running") : "MISSION"}</small><strong>{selectedMission?.name ?? "Choose a mission"}</strong></span>
+          <button className="mission-dock-summary" type="button" aria-expanded={missionOpen} onClick={toggleMission}>
+            <Command size={17} />
+            <span>
+              <strong>{selectedMission?.name ?? "Mission"}</strong>
+              {runningRunId ? <small>{sentenceCase(model.latestRun?.phase ?? "Running")}</small> : null}
+            </span>
             {missionOpen ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
           </button>
-          <span className={`execution-chip execution-${executionMode.toLowerCase()}`}>{executionMode === "SIMULATION" ? "SIM" : "TWIN"}</span>
-          <span className="mission-target"><small>VEHICLE</small><strong>{selectedVehicle?.name ?? "Unavailable"}</strong></span>
           {runningRunId ? (
-            <span className="mission-running"><LoaderCircle className="spin" size={15} /><strong>Running</strong><small>{compactClock(selectedVehicle)}</small></span>
+            <button className="dock-abort-button" type="button" onClick={cancelMission}><Square size={13} fill="currentColor" />Abort and land</button>
           ) : (
             <button
               className="dock-run-button"
               type="button"
-              disabled={!selectedMission || !selectedVehicle || starting || (executionMode === "TWIN" && !twinAvailable)}
+              aria-label={executionMode === "TWIN" ? "Run digital twin" : "Run simulation"}
+              disabled={
+                !selectedMission
+                || starting
+                || Boolean(runningRunId)
+                || activeMissionPreview?.plan.status === "BLOCKED"
+                || (executionMode === "TWIN" && !twinAvailable)
+              }
               onClick={() => void startMission()}
             >
               {starting ? <LoaderCircle className="spin" size={16} /> : <Play size={15} fill="currentColor" />}
-              {executionMode === "TWIN" ? "Run twin" : "Run simulation"}
             </button>
           )}
         </section>
 
-        {telemetryOpen ? (
-          <TelemetryDock
-            model={model}
-            vehicle={selectedVehicle}
-            twin={model.twins.find((item) => item.observedVehicleId === selectedVehicle?.id)}
-            samples={telemetryHistory.points}
-            onCollapse={() => setTelemetryOpen(false)}
-          />
-        ) : (
-          <button className="telemetry-reopen" type="button" onClick={() => setTelemetryOpen(true)}><PanelRightOpen size={17} /><span>Telemetry</span></button>
-        )}
+        <RunFilesControl
+          missions={runFileMissions}
+          loaded={runFilesLoaded}
+          loading={runFilesLoading}
+          error={runFilesError}
+          onLoad={() => void loadRunFiles()}
+        />
+
+        {allCommandTargetsAreFastSim ? (
+          <div className="flight-quick-actions" aria-label="Simulation quick actions">
+            <div className="mission-quick-pill home-quick-pill">
+              <button
+                type="button"
+                aria-label={effectiveTargetVehicleIds.length === 0
+                  ? `Reposition all ${simulationTargetVehicles.length} ${simulationTargetVehicles.length === 1 ? "drone" : "drones"} to home`
+                  : simulationTargetVehicles.length === 1
+                    ? "Reposition drone to home"
+                    : `Reposition ${simulationTargetVehicles.length} selected drones to home`}
+                disabled={simulationQuickActionsDisabled}
+                title={simulationQuickActionHint}
+                onClick={() => void resetSimulationPose()}
+              >
+                {busyAction === "Reposition to home" ? <LoaderCircle className="spin" size={17} /> : <RotateCcw size={17} />}
+              </button>
+            </div>
+            <div className="battery-quick-control" ref={batteryControlRef}>
+              <div className="mission-quick-pill battery-quick-pill">
+                <button
+                  className="battery-recharge-button"
+                  type="button"
+                  aria-label={effectiveTargetVehicleIds.length === 0
+                    ? `Recharge all ${simulationTargetVehicles.length} ${simulationTargetVehicles.length === 1 ? "drone" : "drones"} to 100%`
+                    : simulationTargetVehicles.length === 1
+                      ? "Recharge battery to 100%"
+                      : `Recharge ${simulationTargetVehicles.length} selected drones to 100%`}
+                  disabled={simulationBatteryDisabled}
+                  title={simulationBatteryHint}
+                  onClick={() => void setSimulationBattery(100)}
+                >
+                  {busyAction === "Recharge battery" ? <LoaderCircle className="spin" size={17} /> : <BatteryCharging size={17} />}
+                </button>
+                <button
+                  className="battery-menu-toggle"
+                  type="button"
+                  aria-label="Choose battery level"
+                  aria-expanded={batteryMenuOpen}
+                  disabled={simulationBatteryDisabled}
+                  title={simulationBatteryHint}
+                  onClick={() => setBatteryMenuOpen((open) => !open)}
+                >
+                  <ChevronUp size={14} />
+                </button>
+              </div>
+              {batteryMenuOpen ? (
+                <div className="battery-level-popover" role="dialog" aria-label="Battery level">
+                  <span>BATTERY LEVEL</span>
+                  <div className="battery-level-presets">
+                    {BATTERY_LEVEL_PRESETS.map((percent) => (
+                      <button
+                        key={percent}
+                        type="button"
+                        disabled={Boolean(busyAction)}
+                        onClick={() => void setSimulationBattery(percent)}
+                      >
+                        {percent}%
+                      </button>
+                    ))}
+                  </div>
+                  <form onSubmit={(event) => { event.preventDefault(); applyCustomBatteryPercent(); }}>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      inputMode="decimal"
+                      aria-label="Custom battery percentage"
+                      value={customBatteryPercent}
+                      onChange={(event) => setCustomBatteryPercent(event.target.value)}
+                    />
+                    <button type="submit" disabled={Boolean(busyAction)}>Set</button>
+                  </form>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        <FlightReadout
+          model={model}
+          vehicle={selectedVehicle}
+          twin={model.twins.find((item) => item.observedVehicleId === selectedVehicle?.id)}
+          samples={selectedVehicle ? telemetryHistoryByVehicle[selectedVehicle.id]?.points ?? [] : []}
+          expanded={telemetryOpen}
+          onToggle={() => {
+            const next = !telemetryOpen;
+            setTelemetryOpen(next);
+            if (next) setMissionOpen(false);
+          }}
+        />
       </div>
 
       <EngineeringDrawer
@@ -655,10 +1311,357 @@ export function ControlCenter() {
         onStepReplay={stepReplay}
         onCloseReplay={() => setReplay(undefined)}
       />
+      {lowBatteryConfirmation ? (
+        <LowBatterySimulationDialog
+          batteryPercent={lowBatteryConfirmation.batteryPercent}
+          minimumPercent={lowBatteryConfirmation.minimumPercent}
+          minimumKind={lowBatteryConfirmation.minimumKind}
+          vehicleId={lowBatteryConfirmation.vehicleId}
+          affectedVehicleCount={lowBatteryConfirmation.affectedVehicleCount}
+          criticalPercent={model.safetyPolicy?.criticalBatteryPercent ?? 10}
+          starting={starting}
+          onClose={() => setLowBatteryConfirmation(undefined)}
+          onConfirm={() => {
+            setLowBatteryConfirmation(undefined);
+            if (activeMissionPreview) void executeMissionStart(activeMissionPreview, true);
+          }}
+        />
+      ) : null}
       <SafetyDialog kind={safetyAction} vehicle={selectedVehicle} onClose={() => setSafetyAction(null)} onConfirm={confirmSafetyAction} />
-      {notice ? <Toast message={notice} onClose={() => setNotice(undefined)} /> : null}
+      {notice ? <Toast message={notice} onClose={dismissNotice} /> : null}
     </main>
   );
+}
+
+export function MissionPlanReview({
+  preview,
+  vehicles = [],
+}: {
+  preview: MissionPreview;
+  vehicles?: VehicleView[];
+}) {
+  const activeVehicles = preview.vehicles.filter((vehicle) => vehicle.initialRole === "ACTIVE");
+  const totalDistanceM = preview.plan.routes.reduce((total, route) => total + route.lengthM, 0);
+  const totalEnergyPercent = preview.plan.routes.reduce((total, route) => total + route.energyPercent, 0);
+  const totalDurationS = preview.plan.routes.reduce((duration, route) => Math.max(duration, route.durationS), 0);
+  const blocking = preview.plan.findings.filter((finding) => finding.severity === "BLOCKER");
+  const confirmable = preview.plan.findings.filter(
+    (finding) => finding.requiresConfirmation && finding.severity !== "BLOCKER",
+  );
+  const informational = preview.plan.findings.filter(
+    (finding) => finding.severity !== "BLOCKER" && !finding.requiresConfirmation,
+  );
+  return (
+    <section className={`mission-plan-review is-${preview.plan.status.toLowerCase()}`} aria-label="Operational mission plan" aria-live="polite">
+      <div className="plan-overview-totals" aria-label="Plan totals">
+        <PlanMetric label="Drones" value={String(activeVehicles.length)} />
+        <PlanMetric label="Distance" value={`${totalDistanceM.toFixed(2)} m`} />
+        <PlanMetric label="Duration" value={`${totalDurationS.toFixed(1)} s`} />
+        <PlanMetric label="Fleet energy" value={`${totalEnergyPercent.toFixed(1)}%`} tone="energy" />
+      </div>
+      <div className="plan-routes" aria-label="Planned drone routes">
+        {preview.vehicles.map((plannedVehicle) => {
+          const route = preview.plan.routes.find((item) => item.roleId === plannedVehicle.roleId);
+          const liveVehicle = vehicles.find((item) => item.id === plannedVehicle.vehicleId);
+          const batteryPercent = liveVehicle?.telemetry?.batteryPercent ?? plannedVehicle.batteryPercent;
+          const energyPercent = route?.energyPercent ?? 0;
+          const projectedBattery = batteryPercent === undefined
+            ? undefined
+            : Math.max(0, batteryPercent - energyPercent);
+          return (
+            <article className="plan-route" key={plannedVehicle.roleId}>
+              <div className="plan-route-heading">
+                <strong>{plannedVehicle.displayName}</strong>
+                <b>{route ? sentenceCase(route.status) : sentenceCase(plannedVehicle.initialRole)}</b>
+              </div>
+              <div className="plan-route-stats">
+                <span><small>Distance</small><strong>{route ? `${route.lengthM.toFixed(2)} m` : "—"}</strong></span>
+                <span><small>Duration</small><strong>{route ? `${route.durationS.toFixed(1)} s` : "—"}</strong></span>
+                <span><small>Waypoints</small><strong>{route?.waypointCount ?? "—"}</strong></span>
+              </div>
+              <div className="plan-energy">
+                <span>
+                  <small>Planned energy</small>
+                  <strong>{route ? `${energyPercent.toFixed(1)}%` : "Not estimated"}</strong>
+                </span>
+                <i className="plan-energy-track" role="img" aria-label={route ? `${energyPercent.toFixed(1)} percent planned energy` : "Planned energy unavailable"}>
+                  <b style={{ width: `${Math.max(0, Math.min(100, energyPercent))}%` }} />
+                </i>
+                {projectedBattery !== undefined ? (
+                  <em>Projected battery · {projectedBattery.toFixed(0)}%</em>
+                ) : null}
+              </div>
+              <div className="plan-positions">
+                <PlanPosition label="Start" position={plannedVehicle.start} />
+                <PlanPosition label="Home" position={plannedVehicle.home} />
+              </div>
+            </article>
+          );
+        })}
+      </div>
+      <PlanFindingGroup title="Blockers" findings={blocking} />
+      <PlanFindingGroup title="Confirm before Play" findings={confirmable} />
+      <PlanFindingGroup title="Information and limitations" findings={informational} />
+    </section>
+  );
+}
+
+function PlanMetric({ label, value, tone }: { label: string; value: string; tone?: "energy" }) {
+  return (
+    <span className={tone ? `plan-metric is-${tone}` : "plan-metric"}>
+      <small>{label}</small>
+      <strong>{value}</strong>
+    </span>
+  );
+}
+
+function PlanPosition({ label, position }: { label: string; position: Vec3 }) {
+  return (
+    <span className="plan-position">
+      <small><span>{label}</span><em>m</em></small>
+      <span className="plan-position-values">
+        <span><i className="axis-x">X</i><b>{position.x.toFixed(2)}</b></span>
+        <span><i className="axis-y">Y</i><b>{position.y.toFixed(2)}</b></span>
+        <span><i className="axis-z">Z</i><b>{position.z.toFixed(2)}</b></span>
+      </span>
+    </span>
+  );
+}
+
+function PlanFindingGroup({
+  title,
+  findings,
+}: {
+  title: string;
+  findings: MissionPreview["plan"]["findings"];
+}) {
+  if (!findings.length) return null;
+  return (
+    <div className="mission-plan-findings">
+      <strong>{title}</strong>
+      <ul>
+        {findings.map((finding) => (
+          <li key={`${title}-${finding.code}-${finding.roleId ?? "mission"}`}>
+            <span>{finding.code}{finding.roleId ? ` · ${finding.roleId}` : ""}</span>
+            <p>{finding.message}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export function DeploymentSummary({
+  fleet,
+  preview,
+  vehicles,
+  selectedVehicleIds,
+  onSelect,
+}: {
+  fleet?: FleetSessionView;
+  preview?: MissionPreview;
+  vehicles: VehicleView[];
+  selectedVehicleIds: string[];
+  onSelect: (vehicleId: string) => void;
+}) {
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const memberRows = preview?.vehicles.length
+    ? preview.vehicles.map((plannedVehicle) => ({
+        id: plannedVehicle.vehicleId,
+        displayName: plannedVehicle.displayName,
+        roleId: plannedVehicle.roleId,
+        initialRole: plannedVehicle.initialRole,
+        plannedBatteryPercent: plannedVehicle.batteryPercent,
+        existingVehicle: plannedVehicle.existingVehicle,
+        fleetMember: fleet?.vehicles.find((member) => member.id === plannedVehicle.vehicleId),
+      }))
+    : (fleet?.vehicles ?? []).map((fleetMember) => ({
+        id: fleetMember.id,
+        displayName: fleetMember.id,
+        roleId: fleetMember.missionRole,
+        initialRole: fleetMember.missionRole,
+        plannedBatteryPercent: undefined,
+        existingVehicle: true,
+        fleetMember,
+      }));
+  const status = fleet?.runStatus ?? preview?.plan.status ?? "PLANNED";
+  return (
+    <section className="fleet-panel deployment-summary" aria-label="Mission deployment status">
+      <header className="deployment-heading">
+        <button
+          type="button"
+          aria-expanded={detailsOpen}
+          aria-label={detailsOpen ? "Collapse mission deployment details" : "Expand mission deployment details"}
+          onClick={() => setDetailsOpen((open) => !open)}
+        >
+          <span>
+            <strong>Mission deployment</strong>
+          </span>
+          <span className={`deployment-run-state state-${status.toLowerCase()}`}>
+            {sentenceCase(status)}
+          </span>
+          <ChevronDown className={detailsOpen ? "is-open" : ""} size={15} />
+        </button>
+      </header>
+      {detailsOpen && fleet?.minimumSeparationM !== undefined ? (
+        <DeploymentSeparation fleet={fleet} />
+      ) : null}
+      <div className="fleet-vehicles">
+        {memberRows.map((member) => {
+          const vehicle = vehicles.find((item) => item.id === member.id);
+          const ready = member.fleetMember
+            ? member.fleetMember.preflightApproved || member.fleetMember.readinessReason === "TERMINAL_SNAPSHOT"
+            : true;
+          const selected = selectedVehicleIds.includes(member.id);
+          const batteryPercent = vehicle?.telemetry?.batteryPercent ?? member.plannedBatteryPercent;
+          const battery = batteryPercent === undefined
+            ? "—"
+            : `${batteryPercent.toFixed(0)}%`;
+          const coordinationState = fleet?.vehicleStates[member.id]
+            ?? member.fleetMember?.missionRole
+            ?? member.initialRole;
+          const selectable = Boolean(vehicle || member.existingVehicle);
+          return (
+            <button
+              className={`deployment-member ${selected ? "is-selected" : ""}`}
+              type="button"
+              key={member.id}
+              aria-pressed={selected}
+              aria-label={`Toggle ${member.id} command selection · battery ${battery}`}
+              disabled={!selectable}
+              title={!selectable ? "This planned drone is not yet provisioned in the scene" : undefined}
+              onClick={() => onSelect(member.id)}
+            >
+              <span className={`vehicle-state-dot ${member.fleetMember?.faultReason ? "is-critical" : ready ? "is-normal" : "is-warning"}`} />
+              <span className="deployment-member-copy">
+                <strong>{member.displayName}</strong>
+                <small>{member.roleId} · {sentenceCase(coordinationState)}</small>
+              </span>
+              <b>{battery}</b>
+            </button>
+          );
+        })}
+      </div>
+      {detailsOpen ? (
+        <div className="deployment-expanded">
+          {preview ? <MissionPlanReview preview={preview} vehicles={vehicles} /> : null}
+          {fleet ? <DeploymentCoordination fleet={fleet} /> : null}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function DeploymentCoordination({ fleet }: { fleet: FleetSessionView }) {
+  const reservations = fleet.docks.flatMap((dock) => dock.reservations.map((reservation) => ({
+    dockId: dock.id,
+    reservation,
+  })));
+  if (!fleet.handovers.length && !reservations.length) return null;
+  return (
+    <div className="deployment-coordination" aria-label="Fleet coordination evidence">
+      {fleet.handovers.map((handover) => (
+        <div className="deployment-handover" key={handover.id}>
+          <span>Handover · {sentenceCase(handover.phase)}</span>
+          <strong>
+            {handover.outgoingVehicleId} → {handover.incomingVehicleId ?? "no reserve"}
+          </strong>
+          <small>
+            {handover.taskId}
+            {handover.incomingLeaseGeneration !== undefined
+              ? ` · generation ${handover.incomingLeaseGeneration}`
+              : ""}
+            {handover.takeoverConfirmed ? " · takeover confirmed" : ""}
+          </small>
+        </div>
+      ))}
+      {reservations.map(({ dockId, reservation }) => (
+        <div className="deployment-evidence-row" key={`${dockId}-${reservation.vehicleId}`}>
+          <span>{dockId} · {reservation.vehicleId}</span>
+          <strong>{sentenceCase(reservation.state)}</strong>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DeploymentSeparation({ fleet }: { fleet: FleetSessionView }) {
+  const minimumSeparationM = fleet.minimumSeparationM;
+  if (minimumSeparationM === undefined) return null;
+  const separationMaximum = Math.max(fleet.warningSeparationM * 1.5, minimumSeparationM, 0.01);
+  const separationPercent = Math.max(0, Math.min(100, minimumSeparationM / separationMaximum * 100));
+  const separationTone = minimumSeparationM <= fleet.criticalSeparationM
+    ? "critical"
+    : minimumSeparationM <= fleet.warningSeparationM
+      ? "warning"
+      : "normal";
+  return (
+    <div className={`deployment-separation is-${separationTone}`}>
+      <span>
+        <small>Minimum separation</small>
+        <strong>{minimumSeparationM.toFixed(2)} m</strong>
+      </span>
+      <i role="img" aria-label={`${minimumSeparationM.toFixed(2)} meters minimum separation`}>
+        <b style={{ width: `${separationPercent}%` }} />
+      </i>
+      <em>Critical {fleet.criticalSeparationM.toFixed(2)} m · warning {fleet.warningSeparationM.toFixed(2)} m</em>
+    </div>
+  );
+}
+
+export function withObservationFocus(model: DashboardModel, vehicleId?: string): DashboardModel {
+  if (!vehicleId || !model.vehicles.some((vehicle) => vehicle.id === vehicleId)) return model;
+  return {
+    ...model,
+    selectedVehicleId: vehicleId,
+    vehicles: model.vehicles.map((vehicle) => ({
+      ...vehicle,
+      selected: vehicle.id === vehicleId,
+    })),
+  };
+}
+
+export function toggleVehicleSelection(selectedVehicleIds: string[], vehicleId: string): string[] {
+  return selectedVehicleIds.includes(vehicleId)
+    ? selectedVehicleIds.filter((selectedId) => selectedId !== vehicleId)
+    : [...selectedVehicleIds, vehicleId];
+}
+
+export function vehiclesForTargetSelection<T extends { id: string }>(
+  vehicles: T[],
+  selectedVehicleIds: string[],
+): T[] {
+  if (!selectedVehicleIds.length) return vehicles;
+  const selectedIds = new Set(selectedVehicleIds);
+  return vehicles.filter((vehicle) => selectedIds.has(vehicle.id));
+}
+
+export function withVehicleTargetSelection(
+  model: DashboardModel,
+  selectedVehicleIds: string[],
+): DashboardModel {
+  const availableIds = new Set(model.vehicles.map((vehicle) => vehicle.id));
+  const selectedIds = new Set(selectedVehicleIds.filter((vehicleId) => availableIds.has(vehicleId)));
+  const soleSelectedVehicleId = selectedIds.size === 1 ? [...selectedIds][0] : undefined;
+  return {
+    ...model,
+    selectedVehicleId: soleSelectedVehicleId,
+    vehicles: model.vehicles.map((vehicle) => ({
+      ...vehicle,
+      selected: selectedIds.has(vehicle.id),
+    })),
+  };
+}
+
+function latestMissionDeployment(sessions: FleetSessionView[]) {
+  return sessions
+    .filter((session) => session.missionDerived)
+    .reduce<FleetSessionView | undefined>(
+      (latest, session) => !latest || session.createdAtMonotonicS > latest.createdAtMonotonicS
+        ? session
+        : latest,
+      undefined,
+    );
 }
 
 function EmptyMission({ state, onRetry }: { state: ServiceState; onRetry: () => void }) {
@@ -669,126 +1672,8 @@ function EmptyMission({ state, onRetry }: { state: ServiceState; onRetry: () => 
   );
 }
 
-function RunSummary({ run }: { run: NonNullable<DashboardModel["latestRun"]> }) {
-  return (
-    <div className="run-summary">
-      <span className={`run-symbol status-${run.status.toLowerCase()}`}>{run.status === "RUNNING" ? <LoaderCircle size={15} /> : run.status === "SUCCEEDED" ? <Check size={15} /> : <X size={15} />}</span>
-      <div><small>LATEST RUN</small><strong>{run.status}</strong><p>{sentenceCase(run.phase)}</p></div>
-    </div>
-  );
-}
-
-function ObservationPanel({ room, vehicle, twin }: { room: DashboardModel["room"]; vehicle: VehicleView; twin?: TwinSessionView }) {
-  const data = vehicle.telemetry;
-  if (!data) return null;
-  return (
-    <aside className="observation-panel" aria-label="Mission observation">
-      <div className="observation-heading">
-        <div><span className="eyebrow">OBSERVATION</span><h2>{vehicle.name}</h2></div>
-        <span className="source-chip">{vehicle.observationClass}</span>
-      </div>
-      {room ? (
-        <section className="observation-card">
-          <h3>Room / world frame</h3>
-          <Fact label="Room" value={room.id} />
-          <Fact label="Volume" value={`${room.widthM} × ${room.depthM} × ${room.heightM} m`} />
-          <small className="card-source">CONFIGURED</small>
-        </section>
-      ) : null}
-      <section className="observation-card">
-        <h3>Observation</h3>
-        {data.estimate ? <VectorFact label="Position" vector={data.estimate} unit={`m · ${data.provenance.frame}`} /> : null}
-        <Fact label="Status" value={sentenceCase(vehicle.observationStatus)} />
-        <Fact label="Freshness" value={sentenceCase(data.provenance.freshness)} />
-        <Fact label="Clock" value={formatClockContext(data.provenance)} />
-        {vehicle.observationRunId ? <Fact label="Run" value={vehicle.observationRunId} /> : null}
-        <small className="card-source">{vehicle.observationClass} · {data.provenance.frame.toUpperCase()}</small>
-      </section>
-      <section className="observation-card">
-        <h3>Vehicle</h3>
-        <Fact label="State" value={vehicle.state} />
-        {data.batteryPercent !== undefined ? <Fact label="Battery model" value={`${data.batteryPercent.toFixed(1)}%`} icon={<BatteryMedium size={14} />} /> : null}
-        {data.batteryCurrent !== undefined ? <Fact label="Current" value={`${data.batteryCurrent.toFixed(2)} A`} /> : null}
-        {data.attitude ? <Fact label="Attitude" value={`${toDegrees(data.attitude.rollRad)}° · ${toDegrees(data.attitude.pitchRad)}° · ${toDegrees(data.attitude.yawRad)}°`} /> : null}
-        {data.localizationPercent !== undefined ? <Fact label="Localization model" value={`${data.localizationPercent.toFixed(0)}%`} /> : null}
-      </section>
-      {data.motors ? (
-        <section className="observation-card">
-          <h3>Motors</h3>
-          {data.motors.readings.map((motor) => <Fact key={motor.id} label={motor.id} value={`${motor.commandPercent.toFixed(0)}% · ${motor.thrustN.toFixed(3)} N · ${motor.currentA.toFixed(2)} A`} />)}
-          <small className="card-source">{data.motors.modelId} · {data.motors.modelVersion}</small>
-        </section>
-      ) : null}
-      {data.imu ? (
-        <section className="observation-card">
-          <h3>Modeled IMU</h3>
-          <VectorFact label="Acceleration" vector={data.imu.acceleration} unit="m/s²" />
-          <VectorFact label="Angular velocity" vector={data.imu.angularVelocity} unit="rad/s" />
-          <small className="card-source">SIMULATED_MODEL · BODY</small>
-        </section>
-      ) : null}
-      {data.flow ? (
-        <section className="observation-card">
-          <h3>Modeled flow</h3>
-          {data.flow.groundDistanceM !== undefined ? <Fact label="Height" value={`${data.flow.groundDistanceM.toFixed(2)} m`} /> : null}
-          {data.flow.qualityPercent !== undefined ? <Fact label="Quality" value={`${data.flow.qualityPercent.toFixed(0)}%`} /> : null}
-          <VectorFact label="Velocity" vector={data.flow.velocity} unit="m/s" />
-          <small className="card-source">SIMULATED_MODEL · RELATIVE / DRIFT-PRONE</small>
-        </section>
-      ) : null}
-      {data.ranges.length ? (
-        <section className="observation-card">
-          <h3>Modeled ranges</h3>
-          <div className="range-list">
-            {data.ranges.map((ray) => <Fact key={ray.direction} label={ray.direction} value={ray.distanceM === null ? "—" : `${ray.distanceM.toFixed(2)} m`} />)}
-          </div>
-          <small className="card-source">SIMULATED_MODEL · SENSOR FRAME</small>
-        </section>
-      ) : null}
-      {data.transport ? (
-        <section className="observation-card muted-card">
-          <h3>Modeled transport</h3>
-          {data.transport.latencyMs !== undefined ? <Fact label="Configured latency" value={`${data.transport.latencyMs.toFixed(0)} ms`} /> : null}
-          <small className="card-source">NOT PHYSICAL RADIO DATA</small>
-        </section>
-      ) : null}
-      {data.radio ? (
-        <section className="observation-card">
-          <h3>Radio</h3>
-          {data.radio.qualityPercent !== undefined ? <Fact label="Quality" value={`${data.radio.qualityPercent.toFixed(0)}%`} /> : null}
-          {data.radio.latencyMs !== undefined ? <Fact label="Latency" value={`${data.radio.latencyMs.toFixed(0)} ms`} /> : null}
-          <small className="card-source">{data.radio.evidenceClass}</small>
-        </section>
-      ) : null}
-      {vehicle.decks.length ? (
-        <section className="observation-card">
-          <h3>{vehicle.adapter === "sim" ? "Sensor models" : "Decks"}</h3>
-          {vehicle.decks.map((deck) => <Fact key={deck.id} label={deck.type} value={vehicle.adapter === "sim" ? "MODELED" : deck.health} />)}
-          <small className="card-source">{vehicle.adapter === "sim" ? "CONFIGURED" : "MEASURED_REAL"}</small>
-        </section>
-      ) : null}
-      {twin?.latestDeviation ? (
-        <section className="observation-card">
-          <h3>Digital twin</h3>
-          {twin.latestDeviation.positionM !== undefined ? <Fact label="Position delta" value={`${twin.latestDeviation.positionM.toFixed(3)} m`} /> : null}
-          {twin.latestDeviation.altitudeM !== undefined ? <Fact label="Altitude delta" value={`${twin.latestDeviation.altitudeM.toFixed(3)} m`} /> : null}
-          {twin.latestDeviation.batteryPercent !== undefined ? <Fact label="Battery delta" value={`${twin.latestDeviation.batteryPercent.toFixed(2)}%`} /> : null}
-          <Fact label="Observed latency" value={`${twin.latestDeviation.observedLatencyMs.toFixed(1)} ms`} />
-          <Fact label="Twin latency" value={`${twin.latestDeviation.simulatedLatencyMs.toFixed(1)} ms`} />
-          <Fact label="Clock alignment" value={`${twin.latestDeviation.alignmentDeltaMs.toFixed(1)} ms`} />
-          <small className="card-source">{twin.groundTruthAvailable ? "EXTERNAL GROUND TRUTH" : "NO EXTERNAL GROUND TRUTH"}</small>
-        </section>
-      ) : null}
-    </aside>
-  );
-}
-
 function Fact({ label, value, icon }: { label: string; value: string; icon?: ReactNode }) {
   return <div className="fact"><span>{icon}{label}</span><strong>{value}</strong></div>;
-}
-
-function VectorFact({ label, vector, unit }: { label: string; vector: Vec3; unit: string }) {
-  return <div className="vector-fact"><span>{label}</span><code>{vector.x.toFixed(2)} / {vector.y.toFixed(2)} / {vector.z.toFixed(2)} {unit}</code></div>;
 }
 
 function EngineeringDrawer({
@@ -975,17 +1860,67 @@ function EngineeringParameter({ parameter, disabled, onWrite }: { parameter: Par
   );
 }
 
-function Toast({ message, onClose }: { message: string; onClose: () => void }) {
-  return <div className="toast" role="status"><span>{message}</span><button type="button" aria-label="Dismiss" onClick={onClose}><X size={14} /></button></div>;
+export function Toast({ message, onClose }: { message: string; onClose: () => void }) {
+  const [title, ...detailLines] = message.split("\n");
+  const detail = detailLines.join(" ").trim();
+  const failure = title.trim().toLowerCase() === "mission failed";
+  useEffect(() => {
+    const timeout = window.setTimeout(
+      onClose,
+      failure ? TOAST_FAILURE_DURATION_MS : TOAST_DURATION_MS,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [failure, message, onClose]);
+
+  return (
+    <div className={`toast ${failure ? "is-failure" : ""} ${detail ? "has-detail" : ""}`} role={failure ? "alert" : "status"} aria-atomic="true">
+      <span><strong>{title}</strong>{detail ? <small>{detail}</small> : null}</span>
+      <button type="button" aria-label="Dismiss" onClick={onClose}><X size={16} /></button>
+    </div>
+  );
 }
 
 export function ModeBadge({ mode, label }: { mode: OperatingMode; label?: string }) {
-  const icon = mode === "SIM" ? <Command size={13} /> : mode === "LIVE" ? <Radio size={13} /> : mode === "SHADOW" ? <Pause size={13} /> : <RotateCcw size={13} />;
-  return <span className={`mode-badge mode-${mode.toLowerCase()}`} aria-label={`Mode: ${label ?? mode}`}>{icon}{label ?? mode}</span>;
+  return <span className={`mode-badge mode-${mode.toLowerCase()}`} aria-label={`Mode: ${label ?? mode}`}>{label ?? mode}</span>;
 }
 
 export function controlActionsEnabled(model: DashboardModel, vehicle?: VehicleView) {
   return Boolean(model.apiConnected && vehicle?.commandAuthority && (vehicle.armed ?? vehicle.telemetry?.armed));
+}
+
+export function simulationBatteryControlEnabled(
+  vehicle?: Pick<VehicleView, "backendRole" | "state" | "armed" | "flying">,
+  missionRunning = false,
+  busy = false,
+) {
+  if (!vehicle || vehicle.backendRole !== "FAST_SIM" || missionRunning || busy) return false;
+  if (vehicle.state === "DISCONNECTED") return true;
+  return ["READY", "LANDING", "ABORTING", "FAULT", "EMERGENCY"].includes(vehicle.state)
+    && vehicle.armed === false
+    && vehicle.flying === false;
+}
+
+export function missionCompletionNotice(
+  status: string,
+  resultMessage?: string,
+  resultReasonCode?: string,
+) {
+  const normalizedStatus = status.trim().toUpperCase();
+  const title = `Mission ${normalizedStatus.toLowerCase()}`;
+  const reasonCode = resultReasonCode?.trim()
+    ? sentenceCase(resultReasonCode.trim().toLowerCase())
+    : undefined;
+  const message = resultMessage?.trim() ? sentenceCase(resultMessage.trim()) : undefined;
+  if (normalizedStatus !== "FAILED") {
+    const noticeTitle = reasonCode ?? title;
+    return message && message.toLowerCase() !== noticeTitle.toLowerCase()
+      ? `${noticeTitle}\n${message}`
+      : noticeTitle;
+  }
+  const reason = reasonCode && message && reasonCode.toLowerCase() !== message.toLowerCase()
+    ? `${reasonCode} — ${message}`
+    : reasonCode ?? message ?? "No failure reason was reported";
+  return `${title}\nReason: ${reason}`;
 }
 
 export function armActionEnabled(
@@ -1009,10 +1944,93 @@ export function SafetyDialog({ kind, vehicle, onClose, onConfirm }: { kind: "abo
   );
 }
 
+export function LowBatterySimulationDialog({
+  batteryPercent,
+  minimumPercent,
+  minimumKind = "takeoff",
+  vehicleId,
+  affectedVehicleCount = 1,
+  criticalPercent,
+  starting,
+  onClose,
+  onConfirm,
+}: {
+  batteryPercent: number;
+  minimumPercent: number;
+  minimumKind?: "mission" | "takeoff";
+  vehicleId?: string;
+  affectedVehicleCount?: number;
+  criticalPercent: number;
+  starting: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const isCritical = batteryPercent <= criticalPercent;
+  return (
+    <section
+      className="low-battery-warning"
+      role="alertdialog"
+      aria-labelledby="low-battery-title"
+      aria-describedby="low-battery-description"
+    >
+      <AlertOctagon size={19} />
+      <span className="low-battery-warning-copy">
+        <strong id="low-battery-title">{batteryPercent.toFixed(0)}% battery · run anyway?</strong>
+        <small id="low-battery-description">
+          {vehicleId ? `${vehicleId} is below` : "Below"} the {minimumPercent.toFixed(0)}% {minimumKind === "mission" ? "mission start" : "takeoff"} minimum{isCritical ? ` and ${criticalPercent.toFixed(0)}% critical threshold` : ""}.
+          {affectedVehicleCount > 1 ? ` ${affectedVehicleCount} mission vehicles are below their required start level.` : ""}
+          Mission may stop immediately; modeled battery limits and all other safety checks stay active.
+        </small>
+      </span>
+      <span className="low-battery-warning-actions">
+        <button type="button" aria-label="Cancel low-battery run" disabled={starting} onClick={onClose}><X size={15} /></button>
+        <button type="button" className="low-battery-run-button" disabled={starting} onClick={onConfirm}>
+          {starting ? <LoaderCircle className="spin" size={14} /> : <Play size={14} />}
+          Run anyway
+        </button>
+      </span>
+    </section>
+  );
+}
+
 function sentenceCase(value: string) {
   return value.replaceAll("_", " ").replaceAll("-", " ").replace(/^./, (letter) => letter.toUpperCase());
 }
 
-function toDegrees(value: number) {
-  return (value * 180 / Math.PI).toFixed(1);
+function telemetrySample(vehicle?: VehicleView): TelemetrySample | undefined {
+  const data = vehicle?.telemetry;
+  if (!data) return undefined;
+  const time = data.provenance.replayTimeS
+    ?? data.provenance.simulationTimeS
+    ?? data.provenance.sourceTimeS
+    ?? data.provenance.receiveTimeS
+    ?? Date.now() / 1_000;
+  return {
+    t: time,
+    altitude: data.estimate?.z,
+    speed: data.velocity ? Math.hypot(data.velocity.x, data.velocity.y, data.velocity.z) : undefined,
+    battery: data.batteryPercent,
+    current: data.batteryCurrent,
+    localization: data.localizationPercent,
+  };
+}
+
+function vehicleException(vehicle: VehicleView) {
+  if (vehicle.state === "DISCONNECTED") return "Offline";
+  if (vehicle.state === "EMERGENCY") return "Emergency";
+  if (vehicle.state === "FAULT") return "Fault";
+  if (vehicle.telemetry?.provenance.freshness === "invalid") return "Invalid data";
+  if (vehicle.telemetry?.provenance.freshness === "stale") {
+    const age = vehicle.telemetry.provenance.ageMs;
+    return age === undefined ? "Stale" : `Stale ${(age / 1_000).toFixed(1)}s`;
+  }
+  if (vehicle.observationStatus === "COMPLETED_SNAPSHOT") return "Snapshot";
+  return undefined;
+}
+
+function vehicleTone(vehicle: VehicleView) {
+  if (vehicle.state === "DISCONNECTED") return "is-offline";
+  if (vehicle.state === "EMERGENCY" || vehicle.state === "FAULT" || vehicle.telemetry?.provenance.freshness === "invalid") return "is-critical";
+  if (vehicle.telemetry?.provenance.freshness === "stale" || vehicle.observationStatus === "COMPLETED_SNAPSHOT") return "is-warning";
+  return "is-normal";
 }

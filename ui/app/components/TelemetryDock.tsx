@@ -1,27 +1,8 @@
 "use client";
 
-import {
-  Activity,
-  BatteryCharging,
-  ChevronRight,
-  CircleGauge,
-  Cpu,
-  Crosshair,
-  Gauge,
-  RadioTower,
-  Radar,
-  Route,
-  Satellite,
-} from "lucide-react";
-import { useMemo, useState, type ReactNode } from "react";
-import type {
-  DashboardModel,
-  EvidenceClass,
-  RangeRay,
-  TwinSessionView,
-  Vec3,
-  VehicleView,
-} from "../lib/models";
+import { ChevronDown, ChevronUp, Download, FileSpreadsheet, LoaderCircle, RefreshCw } from "lucide-react";
+import { useMemo, useState } from "react";
+import type { DashboardModel, RangeRay, RunFileMissionView, TwinSessionView, Vec3, VehicleView } from "../lib/models";
 import { formatClockContext } from "./RoomScene";
 
 export type TelemetrySample = {
@@ -33,202 +14,397 @@ export type TelemetrySample = {
   localization?: number;
 };
 
-type TelemetryTab = "overview" | "systems" | "evidence";
 type TrendMetric = "altitude" | "speed" | "battery" | "current";
 
-export function TelemetryDock({
+export function RunFilesControl({
+  missions = [],
+  loaded = false,
+  loading = false,
+  error,
+  onLoad = () => undefined,
+}: {
+  missions?: RunFileMissionView[];
+  loaded?: boolean;
+  loading?: boolean;
+  error?: string;
+  onLoad?: () => void;
+}) {
+  return (
+    <details
+      className="run-files-control"
+      onToggle={(event) => {
+        if (event.currentTarget.open && !loaded && !loading) {
+          onLoad();
+        }
+      }}
+    >
+      <summary className="run-files-toggle">
+        <FileSpreadsheet size={17} />
+        <span>Run files{loaded ? <small>{missions.length}</small> : null}</span>
+        <ChevronUp className="run-files-chevron" size={14} />
+      </summary>
+      <section className="run-files-popover" aria-label="Previous run files">
+        <header>
+          <span><strong>Run files</strong><small>Telemetry CSV exports</small></span>
+          {loaded ? <small>{missions.length} missions</small> : null}
+        </header>
+        <div className="run-files-body">
+          {loading ? (
+            <p className="run-files-state" role="status"><LoaderCircle className="spin" size={14} />Loading previous runs</p>
+          ) : null}
+          {error ? (
+            <div className="run-files-error" role="alert">
+              <span>{error}</span>
+              <button type="button" onClick={onLoad}><RefreshCw size={13} />Retry</button>
+            </div>
+          ) : null}
+          {loaded && !missions.length ? (
+            <p className="run-files-state">No previous runs</p>
+          ) : null}
+          {missions.length ? (
+            <div className="run-files-list" role="list" aria-label="Previous run CSV files">
+              {missions.map((mission) => (
+                <RunFileMission key={mission.missionExecutionId} mission={mission} />
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </section>
+    </details>
+  );
+}
+
+export function FlightReadout({
   model,
   vehicle,
   twin,
   samples,
-  onCollapse,
+  expanded,
+  onToggle,
 }: {
   model: DashboardModel;
   vehicle?: VehicleView;
   twin?: TwinSessionView;
   samples: TelemetrySample[];
-  onCollapse: () => void;
+  expanded: boolean;
+  onToggle: () => void;
 }) {
-  const [tab, setTab] = useState<TelemetryTab>("overview");
+  const [trendMetric, setTrendMetric] = useState<TrendMetric>("altitude");
+  const [systemsOpen, setSystemsOpen] = useState(true);
   const data = vehicle?.telemetry;
-  const freshness = data?.provenance.freshness ?? "absent";
+  if (!vehicle || !data) return null;
+
+  const speed = data.velocity ? vectorMagnitude(data.velocity) : undefined;
+  const nearestRange = data.ranges
+    .filter((range) => range.distanceM !== null)
+    .sort((left, right) => left.distanceM! - right.distanceM!)[0];
+  const nearest = nearestRange?.distanceM ?? undefined;
+  const batteryTone = data.batteryPercent !== undefined && data.batteryPercent <= 15
+    ? "critical"
+    : data.batteryPercent !== undefined && data.batteryPercent <= 30
+      ? "warning"
+      : "normal";
+  const rangeTone = nearest !== undefined && nearest < .2 ? "critical" : nearest !== undefined && nearest < .45 ? "warning" : "normal";
 
   return (
-    <aside className="telemetry-dock" aria-label="Telemetry and evidence">
-      <header className="telemetry-header">
-        <div className="telemetry-identity">
-          <span className={`status-orb status-${statusTone(vehicle?.state, freshness)}`} aria-hidden="true" />
-          <span>
-            <small>ACTIVE VEHICLE</small>
-            <strong>{vehicle?.name ?? "No vehicle"}</strong>
-          </span>
-        </div>
-        <button className="dock-collapse" type="button" onClick={onCollapse} aria-label="Collapse telemetry">
-          <ChevronRight size={17} />
-        </button>
-        <div className="telemetry-context">
-          <span>{vehicle?.state ? sentenceCase(vehicle.state) : "Unavailable"}</span>
-          <SourceChip source={vehicle?.observationClass ?? "UNAVAILABLE"} />
-          {data ? <span className={freshness === "current" ? "freshness-current" : "freshness-stale"}>{sentenceCase(freshness)}{data.provenance.ageMs !== undefined ? ` · ${Math.round(data.provenance.ageMs)} ms` : ""}</span> : null}
-        </div>
-      </header>
+    <aside className={`flight-readout ${expanded ? "is-expanded" : ""}`} aria-label="Flight telemetry">
+      <button className="flight-readout-summary" type="button" aria-expanded={expanded} onClick={onToggle}>
+        <ReadoutValue label="Battery" value={formatValue(data.batteryPercent, 0)} unit="%" tone={batteryTone} />
+        <ReadoutValue label="World Z" value={formatValue(data.estimate?.z, 2)} unit="m" />
+        <ReadoutValue label="Speed" value={formatValue(speed, 2)} unit="m/s" />
+        <ReadoutValue label="Nearest" value={formatValue(nearest, 2)} unit="m" tone={rangeTone} />
+        <span className="readout-chevron" aria-hidden="true">{expanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}</span>
+      </button>
 
-      <div className="telemetry-tabs" role="tablist" aria-label="Telemetry views">
-        {(["overview", "systems", "evidence"] as const).map((item) => (
-          <button
-            key={item}
-            type="button"
-            role="tab"
-            aria-selected={tab === item}
-            className={tab === item ? "is-active" : ""}
-            onClick={() => setTab(item)}
-          >
-            {sentenceCase(item)}
-          </button>
-        ))}
-      </div>
+      {expanded ? (
+        <div className="flight-readout-detail">
+          <InstrumentCluster
+            battery={data.batteryPercent}
+            altitude={data.estimate?.z}
+            speed={speed}
+            nearest={nearest}
+            nearestMaximum={nearestRange?.maximumM}
+            roomHeight={model.room?.heightM}
+            batteryTone={batteryTone}
+            rangeTone={rangeTone}
+          />
+          <div className="trend-switch" role="group" aria-label="Trend metric">
+            {(["altitude", "speed", "battery", "current"] as const).map((metric) => (
+              <button key={metric} type="button" className={metric === trendMetric ? "is-active" : ""} onClick={() => setTrendMetric(metric)}>
+                {metric === "altitude" ? "Z" : sentenceCase(metric)}
+              </button>
+            ))}
+          </div>
+          <TrendChart samples={samples} metric={trendMetric} source={vehicle.observationClass} />
 
-      <div className="telemetry-scroll">
-        {tab === "overview" ? <OverviewView vehicle={vehicle} samples={samples} /> : null}
-        {tab === "systems" ? <SystemsView vehicle={vehicle} /> : null}
-        {tab === "evidence" ? <EvidenceView model={model} vehicle={vehicle} twin={twin} /> : null}
-      </div>
+          {hasSystemDetail(vehicle) ? (
+            <details
+              className="detail-disclosure"
+              open={systemsOpen}
+              onToggle={(event) => setSystemsOpen(event.currentTarget.open)}
+            >
+              <summary>Systems <ChevronDown size={15} /></summary>
+              <div className="disclosure-body">
+                {data.motors ? (
+                  <section className="detail-group">
+                    <h3>Motors</h3>
+                    <div className="motor-lines">
+                      {data.motors.readings.map((motor) => (
+                        <div key={motor.id}>
+                          <span>{motor.id}</span>
+                          <i aria-hidden="true"><b style={{ width: `${clamp(motor.commandPercent, 0, 100)}%` }} /></i>
+                          <strong>{motor.commandPercent.toFixed(0)}%</strong>
+                        </div>
+                      ))}
+                    </div>
+                    <small>{data.motors.modelId} · {data.motors.modelVersion}</small>
+                  </section>
+                ) : null}
+
+                {data.imu || data.attitude ? (
+                  <section className="detail-group">
+                    <h3>Attitude &amp; IMU</h3>
+                    {data.attitude ? <AttitudeAxes attitude={data.attitude} /> : null}
+                    {data.imu ? (
+                      <div className="imu-vectors">
+                        <VectorBars label="Acceleration" vector={data.imu.acceleration} unit="m/s²" displayRange={10} />
+                        <VectorBars label="Angular velocity" vector={data.imu.angularVelocity} unit="rad/s" displayRange={5} />
+                      </div>
+                    ) : null}
+                  </section>
+                ) : null}
+
+                {data.flow ? (
+                  <section className="detail-group">
+                    <h3>Flow</h3>
+                    {data.flow.groundDistanceM !== undefined ? <DataRow label="Ground distance" value={`${data.flow.groundDistanceM.toFixed(2)} m`} /> : null}
+                    {data.flow.qualityPercent !== undefined ? <PercentageBar label="Quality" value={data.flow.qualityPercent} /> : null}
+                    <VectorBars label="Velocity" vector={data.flow.velocity} unit="m/s" displayRange={1} />
+                    <small>Relative · drift-prone</small>
+                  </section>
+                ) : null}
+
+                {data.ranges.length ? (
+                  <section className="detail-group">
+                    <h3>Ranges</h3>
+                    <RangeBars ranges={data.ranges} />
+                  </section>
+                ) : null}
+
+                {data.radio || data.transport ? (
+                  <section className="detail-group">
+                    <h3>{data.radio ? "Radio" : "Modeled transport"}</h3>
+                    {(data.radio?.qualityPercent ?? data.transport?.deliveryQualityPercent) !== undefined ? <PercentageBar label="Quality" value={(data.radio?.qualityPercent ?? data.transport?.deliveryQualityPercent)!} /> : null}
+                    {(data.radio?.latencyMs ?? data.transport?.latencyMs) !== undefined ? <DataRow label="Latency" value={`${(data.radio?.latencyMs ?? data.transport?.latencyMs)!.toFixed(0)} ms`} /> : null}
+                    {!data.radio ? <small>Not physical radio data</small> : null}
+                  </section>
+                ) : null}
+              </div>
+            </details>
+          ) : null}
+
+          <details className="detail-disclosure">
+            <summary>Evidence <ChevronDown size={15} /></summary>
+            <div className="disclosure-body">
+              <section className="detail-group">
+                <DataRow label="Source" value={sourceLabel(vehicle.observationClass)} />
+                <DataRow label="Status" value={sentenceCase(vehicle.observationStatus)} />
+                <DataRow label="Freshness" value={sentenceCase(data.provenance.freshness)} />
+                <DataRow label="Clock" value={formatClockContext(data.provenance)} />
+                {vehicle.observationRunId ? <DataRow label="Run" value={vehicle.observationRunId} mono /> : null}
+              </section>
+              {model.room ? (
+                <section className="detail-group">
+                  <h3>{model.room.id}</h3>
+                  <DataRow label="World volume" value={`${model.room.widthM} × ${model.room.depthM} × ${model.room.heightM} m`} />
+                  <DataRow label="Version" value={String(model.room.version)} />
+                </section>
+              ) : null}
+              {model.fidelity ? (
+                <section className="detail-group">
+                  <h3>Fidelity</h3>
+                  <DataRow label="Model" value={model.fidelity.model} />
+                  <small>{model.fidelity.limitations.join(" · ")}</small>
+                </section>
+              ) : null}
+              {twin?.latestDeviation ? (
+                <section className="detail-group">
+                  <h3>Twin residual</h3>
+                  {twin.latestDeviation.positionM !== undefined ? <DataRow label="Position" value={`${twin.latestDeviation.positionM.toFixed(3)} m`} /> : null}
+                  <DataRow label="Clock alignment" value={`${twin.latestDeviation.alignmentDeltaMs.toFixed(1)} ms`} />
+                  <small>{twin.groundTruthAvailable ? "External ground truth" : "No external ground truth"}</small>
+                </section>
+              ) : null}
+            </div>
+          </details>
+        </div>
+      ) : null}
     </aside>
   );
 }
 
-function OverviewView({ vehicle, samples }: { vehicle?: VehicleView; samples: TelemetrySample[] }) {
-  const [trendMetric, setTrendMetric] = useState<TrendMetric>("altitude");
-  const data = vehicle?.telemetry;
-  const source = vehicle?.observationClass ?? "UNAVAILABLE";
-  const speed = data?.velocity ? vectorMagnitude(data.velocity) : undefined;
-  const altitude = data?.estimate?.z;
-  const batteryTone = data?.batteryPercent !== undefined && data.batteryPercent <= 15
-    ? "critical"
-    : data?.batteryPercent !== undefined && data.batteryPercent <= 30
-      ? "warning"
-      : sourceTone(source);
-  const localizationTone = data?.localizationPercent !== undefined && data.localizationPercent < 50
-    ? "critical"
-    : data?.localizationPercent !== undefined && data.localizationPercent < 75
-      ? "warning"
-      : sourceTone(source);
-
-  if (!data) {
-    return (
-      <div className="telemetry-empty">
-        <Radar size={24} />
-        <strong>No observation</strong>
-        <p>The configured room remains available. Live values will appear when a truthful observation is received.</p>
-      </div>
-    );
-  }
-
+function RunFileMission({ mission }: { mission: RunFileMissionView }) {
+  const sampleCount = `${mission.telemetryRowCount} ${mission.telemetryRowCount === 1 ? "sample" : "samples"}`;
   return (
-    <div className="overview-grid">
-      <MetricTile
-        title={vehicle?.adapter === "sim" ? "Battery model" : "Battery"}
-        icon={<BatteryCharging size={15} />}
-        value={formatValue(data.batteryPercent, 0)}
-        unit="%"
-        detail={batteryDetail(data.batteryVoltage, data.batteryCurrent)}
-        tone={batteryTone}
-        progress={data.batteryPercent}
-        series={samples.map((point) => point.battery)}
-      />
-      <MetricTile
-        title="World Z"
-        icon={<Route size={15} />}
-        value={formatValue(altitude, 2)}
-        unit="m"
-        detail={data.estimate ? `X ${signed(data.estimate.x)} · Y ${signed(data.estimate.y)}` : "Position unavailable"}
-        tone={sourceTone(source)}
-        series={samples.map((point) => point.altitude)}
-      />
-      <MetricTile
-        title="Speed"
-        icon={<Gauge size={15} />}
-        value={formatValue(speed, 2)}
-        unit="m/s"
-        detail={data.velocity ? vectorText(data.velocity, 2) : "Velocity unavailable"}
-        tone={sourceTone(source)}
-        series={samples.map((point) => point.speed)}
-      />
-      <MetricTile
-        title="Localization"
-        icon={<Crosshair size={15} />}
-        value={formatValue(data.localizationPercent, 0)}
-        unit="%"
-        detail={data.localizationLabel ?? (data.localizationPercent === undefined ? "Unavailable" : "Quality")}
-        tone={localizationTone}
-        progress={data.localizationPercent}
-        series={samples.map((point) => point.localization)}
-      />
-
-      <section className="telemetry-tile trend-tile">
-        <header className="tile-heading">
-          <span><Activity size={15} />Flight trend</span>
-          <span className="window-chip">60 s</span>
-        </header>
-        <div className="trend-switch" role="group" aria-label="Trend metric">
-          {(["altitude", "speed", "battery", "current"] as const).map((metric) => (
-            <button key={metric} type="button" className={metric === trendMetric ? "is-active" : ""} onClick={() => setTrendMetric(metric)}>
-              {metric === "altitude" ? "Z" : sentenceCase(metric)}
-            </button>
-          ))}
-        </div>
-        <TrendChart samples={samples} metric={trendMetric} tone={sourceTone(source)} />
-      </section>
-
-      <ProximityTile ranges={data.ranges} source={source} />
-    </div>
-  );
-}
-
-function MetricTile({
-  title,
-  icon,
-  value,
-  unit,
-  detail,
-  tone,
-  progress,
-  series,
-}: {
-  title: string;
-  icon: ReactNode;
-  value: string;
-  unit: string;
-  detail: string;
-  tone: string;
-  progress?: number;
-  series: Array<number | undefined>;
-}) {
-  return (
-    <article className={`telemetry-tile metric-tile tone-${tone}`}>
-      <header className="tile-heading"><span>{icon}{title}</span></header>
-      <div className="metric-value"><strong>{value}</strong><span>{unit}</span></div>
-      <p>{detail}</p>
-      {progress !== undefined ? (
-        <div className="metric-progress" role="progressbar" aria-label={title} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)}>
-          <span style={{ width: `${clamp(progress, 0, 100)}%` }} />
-        </div>
-      ) : <Sparkline values={series} />}
+    <article
+      className="run-file-mission"
+      role="listitem"
+      title={`${formatRunStart(mission.startedAtUtc)} · ${mission.filename ?? "Recording"}`}
+    >
+      <span className={`run-file-status status-${mission.status.toLowerCase()}`}>{mission.status === "INCOMPLETE" ? "RECORDING" : mission.status}</span>
+      <strong className="run-file-mission-name">{mission.missionName}</strong>
+      {mission.available && mission.downloadUrl && mission.filename ? (
+        <a
+          className="run-file-download"
+          href={mission.downloadUrl}
+          download={mission.filename}
+          aria-label={`Download ${mission.filename}`}
+          title={`Download ${mission.filename}`}
+        >
+          <Download size={14} />
+        </a>
+      ) : (
+        <span className="run-file-download is-disabled" aria-hidden="true"><Download size={14} /></span>
+      )}
+      <span className="run-file-count">{mission.status === "INCOMPLETE" ? "Recording" : sampleCount}</span>
     </article>
   );
 }
 
-function Sparkline({ values }: { values: Array<number | undefined> }) {
-  const points = chartPoints(values.filter((value): value is number => value !== undefined), 112, 22);
-  if (!points) return <span className="sparkline-empty">COLLECTING</span>;
+function formatRunStart(value: string): string {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "UTC unavailable" : date.toISOString().replace(".000Z", "Z");
+}
+
+function ReadoutValue({ label, value, unit, tone = "normal" }: { label: string; value: string; unit: string; tone?: string }) {
   return (
-    <svg className="sparkline" viewBox="0 0 112 22" role="img" aria-label="Recent trend">
-      <polyline points={points} fill="none" vectorEffect="non-scaling-stroke" />
-    </svg>
+    <span className={`readout-value value-${tone}`}>
+      <small>{label}</small>
+      <span><strong>{value}</strong><i>{unit}</i></span>
+    </span>
   );
 }
 
-function TrendChart({ samples, metric, tone }: { samples: TelemetrySample[]; metric: TrendMetric; tone: string }) {
+function InstrumentCluster({
+  battery,
+  altitude,
+  speed,
+  nearest,
+  nearestMaximum,
+  roomHeight,
+  batteryTone,
+  rangeTone,
+}: {
+  battery?: number;
+  altitude?: number;
+  speed?: number;
+  nearest?: number;
+  nearestMaximum?: number;
+  roomHeight?: number;
+  batteryTone: string;
+  rangeTone: string;
+}) {
+  return (
+    <section className="instrument-cluster" aria-label="Visual flight instruments">
+      <div className="arc-gauges">
+        <ArcGauge label="Battery" value={battery} maximum={100} decimals={0} unit="%" tone={batteryTone} />
+        <ArcGauge label="Clearance" value={nearest} maximum={nearestMaximum} decimals={2} unit="m" tone={rangeTone} />
+      </div>
+      <div className="instrument-bars">
+        <LinearInstrument label="World Z" value={altitude} maximum={roomHeight} unit="m" decimals={2} />
+        <LinearInstrument label="Speed" value={speed} maximum={1.5} unit="m/s" decimals={2} />
+      </div>
+    </section>
+  );
+}
+
+function ArcGauge({ label, value, maximum, decimals, unit, tone }: { label: string; value?: number; maximum?: number; decimals: number; unit: string; tone: string }) {
+  const percent = value === undefined || maximum === undefined || maximum <= 0 ? 0 : clamp(value / maximum * 100, 0, 100);
+  const readableValue = value === undefined ? "—" : value.toFixed(decimals);
+  return (
+    <div className={`arc-gauge gauge-${label.toLowerCase()} gauge-${tone}`} role="img" aria-label={`${label} ${readableValue} ${unit}${maximum ? ` of ${maximum.toFixed(decimals)} ${unit}` : ""}`}>
+      <svg viewBox="0 0 112 66" aria-hidden="true">
+        <path className="arc-track" pathLength="100" d="M 12 57 A 44 44 0 0 1 100 57" />
+        <path className="arc-value" pathLength="100" d="M 12 57 A 44 44 0 0 1 100 57" style={{ strokeDasharray: `${percent} 100` }} />
+      </svg>
+      <span><strong>{readableValue}</strong><i>{unit}</i><small>{label}</small></span>
+    </div>
+  );
+}
+
+function LinearInstrument({ label, value, maximum, unit, decimals }: { label: string; value?: number; maximum?: number; unit: string; decimals: number }) {
+  const validMaximum = maximum !== undefined && maximum > 0 ? maximum : undefined;
+  const percent = value === undefined || !validMaximum ? 0 : clamp(value / validMaximum * 100, 0, 100);
+  return (
+    <div className="linear-instrument">
+      <span><small>{label}</small><strong>{value === undefined ? "—" : value.toFixed(decimals)} <i>{unit}</i></strong></span>
+      <b aria-hidden="true"><i style={{ width: `${percent}%` }} /></b>
+      <em>0 — {validMaximum?.toFixed(decimals) ?? "—"} {unit}</em>
+    </div>
+  );
+}
+
+function AttitudeAxes({ attitude }: { attitude: { rollRad: number; pitchRad: number; yawRad: number } }) {
+  return (
+    <div className="attitude-axes" role="group" aria-label="Attitude around all axes">
+      <AxisMeter label="Roll" axis="x" value={toDegrees(attitude.rollRad)} displayRange={45} unit="°" decimals={1} />
+      <AxisMeter label="Pitch" axis="y" value={toDegrees(attitude.pitchRad)} displayRange={45} unit="°" decimals={1} />
+      <AxisMeter label="Yaw" axis="z" value={toDegrees(attitude.yawRad)} displayRange={180} unit="°" decimals={1} />
+    </div>
+  );
+}
+
+function VectorBars({ label, vector, unit, displayRange }: { label: string; vector: Vec3; unit: string; displayRange: number }) {
+  return (
+    <div className="vector-bars" role="group" aria-label={`${label} on X Y and Z axes`}>
+      <h4>{label}</h4>
+      <AxisMeter label="X" axis="x" value={vector.x} displayRange={displayRange} unit={unit} decimals={2} />
+      <AxisMeter label="Y" axis="y" value={vector.y} displayRange={displayRange} unit={unit} decimals={2} />
+      <AxisMeter label="Z" axis="z" value={vector.z} displayRange={displayRange} unit={unit} decimals={2} />
+    </div>
+  );
+}
+
+function AxisMeter({ label, axis, value, displayRange, unit, decimals }: { label: string; axis: "x" | "y" | "z"; value: number; displayRange: number; unit: string; decimals: number }) {
+  const position = 50 + clamp(value / displayRange, -1, 1) * 48;
+  const start = Math.min(50, position);
+  const width = Math.abs(position - 50);
+  return (
+    <div className={`axis-meter axis-${axis}`}>
+      <span>{label}</span>
+      <i aria-hidden="true"><b style={{ left: `${start}%`, width: `${width}%` }} /><em style={{ left: `${position}%` }} /></i>
+      <strong>{signedFixed(value, decimals)} {unit}</strong>
+    </div>
+  );
+}
+
+function PercentageBar({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="percentage-bar">
+      <span><small>{label}</small><strong>{value.toFixed(0)}%</strong></span>
+      <i aria-hidden="true"><b style={{ width: `${clamp(value, 0, 100)}%` }} /></i>
+    </div>
+  );
+}
+
+function RangeBars({ ranges }: { ranges: RangeRay[] }) {
+  return (
+    <div className="range-bars">
+      {ranges.map((range) => {
+        const percent = range.distanceM === null ? 0 : clamp(range.distanceM / range.maximumM * 100, 0, 100);
+        const tone = range.distanceM === null ? "unavailable" : range.distanceM < .2 ? "critical" : range.distanceM < .45 ? "warning" : "normal";
+        return (
+          <div className={`range-bar range-${tone}`} key={range.direction}>
+            <span><small>{sentenceCase(range.direction)}</small><strong>{range.distanceM === null ? "—" : `${range.distanceM.toFixed(2)} m`}</strong></span>
+            <i aria-hidden="true"><b style={{ width: `${percent}%` }} /></i>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function TrendChart({ samples, metric, source }: { samples: TelemetrySample[]; metric: TrendMetric; source: VehicleView["observationClass"] }) {
   const definition = TREND_DEFINITIONS[metric];
   const values = useMemo(() => {
     const latestTime = samples.at(-1)?.t;
@@ -240,12 +416,7 @@ function TrendChart({ samples, metric, tone }: { samples: TelemetrySample[]; met
   const latest = values.at(-1)?.value;
 
   if (values.length < 2) {
-    return (
-      <div className="trend-empty">
-        <span>Trend collecting</span>
-        <strong>{latest === undefined ? "—" : latest.toFixed(definition.decimals)} {definition.unit}</strong>
-      </div>
-    );
+    return <div className="trend-empty"><strong>{latest === undefined ? "—" : latest.toFixed(definition.decimals)}</strong><span>{definition.unit} · collecting</span></div>;
   }
 
   const min = Math.min(...values.map((point) => point.value));
@@ -254,22 +425,18 @@ function TrendChart({ samples, metric, tone }: { samples: TelemetrySample[]; met
   const start = values[0].t;
   const duration = values.at(-1)!.t - start || 1;
   const points = values.map((point) => {
-    const x = 8 + ((point.t - start) / duration) * 304;
-    const y = 94 - ((point.value - min) / range) * 76;
+    const x = 3 + ((point.t - start) / duration) * 314;
+    const y = 88 - ((point.value - min) / range) * 72;
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(" ");
-  const description = `${definition.label} ranges from ${min.toFixed(definition.decimals)} to ${max.toFixed(definition.decimals)} ${definition.unit} over the latest ${Math.min(60, Math.round(duration))} seconds.`;
 
   return (
-    <div className={`trend-chart tone-${tone}`}>
+    <div className={`trend-chart source-${source.toLowerCase()}`}>
       <div className="trend-current"><strong>{latest?.toFixed(definition.decimals) ?? "—"}</strong><span>{definition.unit} · {definition.label}</span></div>
-      <svg viewBox="0 0 320 102" role="img" aria-label={description}>
-        <line x1="8" x2="312" y1="18" y2="18" />
-        <line x1="8" x2="312" y1="56" y2="56" />
-        <line x1="8" x2="312" y1="94" y2="94" />
+      <svg viewBox="0 0 320 94" role="img" aria-label={`${definition.label} from ${min.toFixed(definition.decimals)} to ${max.toFixed(definition.decimals)} ${definition.unit} over ${Math.min(60, Math.round(duration))} seconds`}>
         <polyline className="trend-line" points={points} fill="none" vectorEffect="non-scaling-stroke" />
       </svg>
-      <div className="trend-range"><span>{min.toFixed(definition.decimals)} min</span><span>{max.toFixed(definition.decimals)} max</span></div>
+      <div className="trend-range"><span>{min.toFixed(definition.decimals)}</span><span>{max.toFixed(definition.decimals)}</span></div>
     </div>
   );
 }
@@ -281,169 +448,19 @@ const TREND_DEFINITIONS: Record<TrendMetric, { label: string; unit: string; deci
   current: { label: "Current", unit: "A", decimals: 2 },
 };
 
-function ProximityTile({ ranges, source }: { ranges: RangeRay[]; source: EvidenceClass }) {
-  const available = ranges.filter((range) => range.distanceM !== null);
-  const nearest = available.length ? Math.min(...available.map((range) => range.distanceM as number)) : undefined;
-  return (
-    <section className="telemetry-tile proximity-tile">
-      <header className="tile-heading">
-        <span><Radar size={15} />Proximity</span>
-        <SourceChip source={source} />
-      </header>
-      <div className="proximity-summary"><strong>{nearest === undefined ? "—" : nearest.toFixed(2)}</strong><span>m nearest</span></div>
-      {ranges.length ? (
-        <div className="range-grid">
-          {ranges.map((ray) => {
-            const percent = ray.distanceM === null ? 0 : clamp(ray.distanceM / ray.maximumM * 100, 0, 100);
-            const tone = ray.distanceM === null ? "absent" : percent < 18 ? "critical" : percent < 35 ? "warning" : "normal";
-            return (
-              <div className={`range-meter range-${tone}`} key={ray.direction}>
-                <span><small>{ray.direction}</small><strong>{ray.distanceM === null ? "—" : `${ray.distanceM.toFixed(2)} m`}</strong></span>
-                <i aria-hidden="true"><b style={{ width: `${percent}%` }} /></i>
-              </div>
-            );
-          })}
-        </div>
-      ) : <div className="tile-empty">Range data unavailable</div>}
-    </section>
-  );
-}
-
-function SystemsView({ vehicle }: { vehicle?: VehicleView }) {
-  const data = vehicle?.telemetry;
-  if (!data) return <DockEmpty title="Systems unavailable" body="No telemetry has been received for this vehicle." />;
-  return (
-    <div className="systems-stack">
-      {data.motors ? (
-        <section className="telemetry-tile systems-card">
-          <header className="tile-heading"><span><Cpu size={15} />Motor balance</span><span className="window-chip">{data.motors.modelVersion}</span></header>
-          <div className="motor-bars">
-            {data.motors.readings.map((motor) => (
-              <div className="motor-column" key={motor.id}>
-                <div className="motor-track"><span style={{ height: `${clamp(motor.commandPercent, 0, 100)}%` }} /></div>
-                <strong>{motor.id}</strong>
-                <small>{motor.commandPercent.toFixed(0)}%</small>
-                <small>{motor.currentA.toFixed(2)} A</small>
-              </div>
-            ))}
-          </div>
-          <p className="system-source">{data.motors.modelId} · simulated motor model</p>
-        </section>
-      ) : null}
-
-      {data.imu ? (
-        <section className="telemetry-tile systems-card">
-          <header className="tile-heading"><span><Activity size={15} />Modeled IMU</span><SourceChip source={data.imu.provenance.evidenceClass} /></header>
-          <VectorBlock label="Acceleration" vector={data.imu.acceleration} unit="m/s²" />
-          <VectorBlock label="Angular velocity" vector={data.imu.angularVelocity} unit="rad/s" />
-        </section>
-      ) : null}
-
-      {data.flow ? (
-        <section className="telemetry-tile systems-card">
-          <header className="tile-heading"><span><CircleGauge size={15} />Modeled Flow</span><SourceChip source={data.flow.provenance.evidenceClass} /></header>
-          {data.flow.groundDistanceM !== undefined ? <DataRow label="Ground distance" value={`${data.flow.groundDistanceM.toFixed(2)} m`} /> : null}
-          {data.flow.qualityPercent !== undefined ? <DataRow label="Quality" value={`${data.flow.qualityPercent.toFixed(0)}%`} /> : null}
-          <VectorBlock label="Velocity" vector={data.flow.velocity} unit="m/s" />
-          <p className="system-source">Relative · drift-prone</p>
-        </section>
-      ) : null}
-
-      {data.radio || data.transport ? (
-        <section className="telemetry-tile systems-card">
-          <header className="tile-heading"><span><RadioTower size={15} />{data.radio ? "Physical radio" : "Modeled transport"}</span><SourceChip source={(data.radio ?? data.transport)!.evidenceClass} /></header>
-          {(data.radio?.qualityPercent ?? data.transport?.deliveryQualityPercent) !== undefined ? <DataRow label="Quality" value={`${(data.radio?.qualityPercent ?? data.transport?.deliveryQualityPercent)!.toFixed(0)}%`} /> : null}
-          {(data.radio?.latencyMs ?? data.transport?.latencyMs) !== undefined ? <DataRow label="Latency" value={`${(data.radio?.latencyMs ?? data.transport?.latencyMs)!.toFixed(0)} ms`} /> : null}
-          {(data.radio?.packetLossPercent ?? data.transport?.packetLossPercent) !== undefined ? <DataRow label="Packet loss" value={`${(data.radio?.packetLossPercent ?? data.transport?.packetLossPercent)!.toFixed(1)}%`} /> : null}
-          {!data.radio ? <p className="system-source">Not physical radio data</p> : null}
-        </section>
-      ) : null}
-
-      {vehicle?.decks.length ? (
-        <section className="telemetry-tile systems-card">
-          <header className="tile-heading"><span><Satellite size={15} />{vehicle.adapter === "sim" ? "Sensor models" : "Decks"}</span></header>
-          {vehicle.decks.map((deck) => <DataRow key={deck.id} label={deck.name} value={vehicle.adapter === "sim" ? "Modeled" : sentenceCase(deck.health)} />)}
-        </section>
-      ) : null}
-
-      {!data.motors && !data.imu && !data.flow && !data.radio && !data.transport && !vehicle?.decks.length ? <DockEmpty title="No system detail" body="This adapter has not supplied detailed system telemetry." /> : null}
-    </div>
-  );
-}
-
-function EvidenceView({ model, vehicle, twin }: { model: DashboardModel; vehicle?: VehicleView; twin?: TwinSessionView }) {
-  const data = vehicle?.telemetry;
-  return (
-    <div className="systems-stack evidence-stack">
-      <section className="telemetry-tile systems-card">
-        <header className="tile-heading"><span><Crosshair size={15} />Observation</span><SourceChip source={vehicle?.observationClass ?? "UNAVAILABLE"} /></header>
-        <DataRow label="Status" value={vehicle?.observationStatus ? sentenceCase(vehicle.observationStatus) : "Unavailable"} />
-        {data?.estimate ? <VectorBlock label="Position" vector={data.estimate} unit={`m · ${data.provenance.frame}`} /> : null}
-        {data ? <DataRow label="Freshness" value={sentenceCase(data.provenance.freshness)} /> : null}
-        {data ? <DataRow label="Clock" value={formatClockContext(data.provenance)} /> : null}
-        {data?.provenance.sourceClockId ? <DataRow label="Source clock" value={data.provenance.sourceClockId} mono /> : null}
-        {vehicle?.observationRunId ? <DataRow label="Run" value={vehicle.observationRunId} mono /> : null}
-      </section>
-
-      {model.room ? (
-        <section className="telemetry-tile systems-card">
-          <header className="tile-heading"><span><Route size={15} />Room / world frame</span><SourceChip source="CONFIGURED" /></header>
-          <DataRow label="Room" value={model.room.id} />
-          <DataRow label="Volume" value={`${model.room.widthM} × ${model.room.depthM} × ${model.room.heightM} m`} />
-          <DataRow label="Version" value={String(model.room.version)} />
-        </section>
-      ) : null}
-
-      {model.fidelity ? (
-        <section className="telemetry-tile systems-card">
-          <header className="tile-heading"><span><Cpu size={15} />Simulation fidelity</span><SourceChip source={model.fidelity.sourceClass} /></header>
-          <DataRow label="Manifest" value={model.fidelity.id} mono />
-          <DataRow label="Model" value={model.fidelity.model} />
-          <p className="evidence-copy">{model.fidelity.limitations.join(" · ")}</p>
-        </section>
-      ) : null}
-
-      {twin?.latestDeviation ? (
-        <section className="telemetry-tile systems-card">
-          <header className="tile-heading"><span><Activity size={15} />Digital twin residual</span><SourceChip source="DERIVED" /></header>
-          {twin.latestDeviation.positionM !== undefined ? <DataRow label="Position delta" value={`${twin.latestDeviation.positionM.toFixed(3)} m`} /> : null}
-          {twin.latestDeviation.altitudeM !== undefined ? <DataRow label="Altitude delta" value={`${twin.latestDeviation.altitudeM.toFixed(3)} m`} /> : null}
-          <DataRow label="Observed latency" value={`${twin.latestDeviation.observedLatencyMs.toFixed(1)} ms`} />
-          <DataRow label="Twin latency" value={`${twin.latestDeviation.simulatedLatencyMs.toFixed(1)} ms`} />
-          <DataRow label="Clock alignment" value={`${twin.latestDeviation.alignmentDeltaMs.toFixed(1)} ms`} />
-          <p className="system-source">{twin.groundTruthAvailable ? "External ground truth" : "No external ground truth"}</p>
-        </section>
-      ) : null}
-    </div>
-  );
-}
-
-function VectorBlock({ label, vector, unit }: { label: string; vector: Vec3; unit: string }) {
-  return (
-    <div className="vector-block">
-      <span>{label}</span>
-      <div><strong>X {signed(vector.x)}</strong><strong>Y {signed(vector.y)}</strong><strong>Z {signed(vector.z)}</strong></div>
-      <small>{unit}</small>
-    </div>
-  );
+function hasSystemDetail(vehicle: VehicleView) {
+  const data = vehicle.telemetry;
+  return Boolean(data?.motors || data?.attitude || data?.imu || data?.flow || data?.ranges.length || data?.radio || data?.transport);
 }
 
 function DataRow({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return <div className="data-row"><span>{label}</span><strong className={mono ? "is-mono" : ""}>{value}</strong></div>;
 }
 
-function DockEmpty({ title, body }: { title: string; body: string }) {
-  return <div className="telemetry-empty"><Radar size={24} /><strong>{title}</strong><p>{body}</p></div>;
-}
-
-export function SourceChip({ source }: { source: EvidenceClass }) {
-  return <span className={`source-chip source-${source.toLowerCase()}`}>{sourceLabel(source)}</span>;
-}
-
-function sourceLabel(source: EvidenceClass) {
-  const labels: Record<EvidenceClass, string> = {
-    MEASURED_REAL: "Measured",
-    SIMULATED_MODEL: "Modeled",
+function sourceLabel(source: VehicleView["observationClass"]) {
+  const labels: Record<VehicleView["observationClass"], string> = {
+    MEASURED_REAL: "Measured real",
+    SIMULATED_MODEL: "Simulated model",
     DERIVED: "Derived",
     PLANNED: "Planned",
     CONFIGURED: "Configured",
@@ -453,54 +470,20 @@ function sourceLabel(source: EvidenceClass) {
   return labels[source];
 }
 
-function sourceTone(source: EvidenceClass) {
-  if (source === "SIMULATED_MODEL") return "modeled";
-  if (source === "REPLAYED") return "replay";
-  if (source === "UNAVAILABLE") return "muted";
-  return "observed";
-}
-
-function statusTone(state?: string, freshness?: string) {
-  if (state === "EMERGENCY" || state === "FAULT") return "critical";
-  if (freshness === "stale" || state === "DEGRADED") return "warning";
-  if (!state || state === "DISCONNECTED" || freshness === "absent" || freshness === "invalid") return "muted";
-  return "healthy";
-}
-
-function chartPoints(values: number[], width: number, height: number) {
-  if (values.length < 2) return undefined;
-  const visible = values.slice(-40);
-  const min = Math.min(...visible);
-  const max = Math.max(...visible);
-  const range = max - min || 1;
-  return visible.map((value, index) => {
-    const x = index / (visible.length - 1) * width;
-    const y = height - 2 - (value - min) / range * (height - 4);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(" ");
-}
-
-function batteryDetail(voltage?: number, current?: number) {
-  const parts = [];
-  if (voltage !== undefined) parts.push(`${voltage.toFixed(2)} V`);
-  if (current !== undefined) parts.push(`${current.toFixed(2)} A`);
-  return parts.length ? parts.join(" · ") : "Electrical detail unavailable";
-}
-
 function vectorMagnitude(vector: Vec3) {
   return Math.hypot(vector.x, vector.y, vector.z);
-}
-
-function vectorText(vector: Vec3, decimals: number) {
-  return `${signed(vector.x, decimals)} / ${signed(vector.y, decimals)} / ${signed(vector.z, decimals)}`;
 }
 
 function formatValue(value: number | undefined, decimals: number) {
   return value === undefined ? "—" : value.toFixed(decimals);
 }
 
-function signed(value: number, decimals = 2) {
+function signedFixed(value: number, decimals: number) {
   return `${value >= 0 ? "+" : ""}${value.toFixed(decimals)}`;
+}
+
+function toDegrees(value: number) {
+  return value * 180 / Math.PI;
 }
 
 function clamp(value: number, minimum: number, maximum: number) {

@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "scene_id": "isaac-minimal-room-v1",
+  "scene_version": "1.0.0",
+  "qualification": "CONFIGURED_UNQUALIFIED",
+  "physical_model_authorized": false,
+  "digital_twin_enabled": false,
+  "source_class": "SIMULATED_MODEL",
+  "runtime": {
+    "profile_id": "HEADLESS_ONE_VEHICLE_CONFIGURED_UNQUALIFIED",
+    "headless": true,
+    "renderer_enabled": false,
+    "cameras_enabled": false,
+    "rtx_lidar_enabled": false,
+    "ros_bridge_enabled": true,
+    "fixed_step_s": 0.01,
+    "maximum_vehicles": 1,
+    "telemetry_queue_bound": 100
+  },
+  "world": {
+    "world_frame": "world",
+    "dimensions_m": {"x": 4.0, "y": 4.0, "z": 2.5},
+    "floor_thickness": {
+      "value": 0.05,
+      "unit": "m",
+      "qualification": "CONFIGURED_UNQUALIFIED",
+      "provenance": "architecture/mock primitive scene choice; not a room measurement"
+    },
+    "gravity_m_s2": {
+      "value": -9.80665,
+      "unit": "m/s2",
+      "qualification": "CONFIGURED_UNQUALIFIED",
+      "provenance": "configured conventional standard-gravity value; host runtime must report its applied value"
+    },
+    "home_position_m": {"x": 0.0, "y": 0.0, "z": 0.0},
+    "geofence_margin_m": {
+      "value": 0.25,
+      "unit": "m",
+      "qualification": "CONFIGURED_UNQUALIFIED",
+      "provenance": "software safety configuration; not a surveyed physical margin"
+    },
+    "primitive_obstacles": []
+  },
+  "vehicles": [
+    {
+      "vehicle_id": "cf01",
+      "ros_namespace": "cf01",
+      "usd_prim_path": "/World/Crazyflies/cf01",
+      "model_id": "crazyflie-6dof",
+      "model_version": "1.0.0",
+      "parameter_set_id": "crazyflie-6dof-1.0.0",
+      "parameter_configuration_sha256": "753ac988ff2e52951651f8052ba4a2fb9ca9193a205b801d8e1ce54df50329a5",
+      "parameter_source": "CONFIGURED_UNQUALIFIED",
+      "initial_position_m": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "initial_yaw_rad": 0.0,
+      "body_geometry": {
+        "shape": "BOX",
+        "dimensions_m": {"x": 0.092, "y": 0.092, "z": 0.029},
+        "qualification": "CONFIGURED_UNQUALIFIED",
+        "purpose": "VISUAL_AND_COLLISION"
+      },
+      "rotor_geometry": {
+        "shape": "CYLINDER",
+        "dimensions_m": {"x": 0.046, "y": 0.046, "z": 0.002},
+        "qualification": "CONFIGURED_UNQUALIFIED",
+        "purpose": "VISUAL"
+      },
+      "controller_profile": "ESTIMATOR_IN_LOOP_REFERENCE"
+    }
+  ]
+}

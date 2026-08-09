@@ -1,0 +1,20 @@
+schema_version: 1
+scenario_id: two-zone-obstacle-v1
+world:
+  world_id: two-zone-obstacle-room
+  width_m: 8.0
+  depth_m: 6.0
+  height_m: 3.0
+  obstacles:
+    - obstacle_id: center-divider
+      minimum_m: {x: -0.2, y: -0.2, z: 0.0}
+      maximum_m: {x: 0.2, y: 1.5, z: 1.0}
+simulation:
+  seed: 419
+  fixed_step_s: 0.01
+  clock_mode: accelerated
+vehicles:
+  - vehicle_id: cf01
+    display_name: Zone Inspector
+    position_m: {x: -1.2, y: 0.0, z: 0.0}
+faults: []

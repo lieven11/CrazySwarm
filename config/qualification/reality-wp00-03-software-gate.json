@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "classification": "SOFTWARE_VERIFIED",
+  "executed_at_local_date": "2026-08-06",
+  "baseline_commit": "4bd185d967eefcccbfc9a41324b1ef685f976e41",
+  "qualification_head_commit": "4bd185d967eefcccbfc9a41324b1ef685f976e41",
+  "qualification_repository_dirty": true,
+  "mission_runtime_id": "restricted-python-online",
+  "mission_runtime_version": "2.0.0",
+  "mission_language_version": "bounded-python-1",
+  "qf01_source_sha256": "fd00838a0fe5beb13e6fc52c39555b9e284b4da5951207f510844dca904c36dc",
+  "positive_mission_artifacts": 11,
+  "negative_mission_artifacts": 7,
+  "software_test_result": {
+    "passed": 337,
+    "failed": 0,
+    "warnings": 1,
+    "warning": "Upstream Starlette TestClient deprecation warning for httpx integration"
+  },
+  "ui_test_result": {
+    "unit_passed": 46,
+    "rendered_html_passed": 3,
+    "lint_passed": true,
+    "typecheck_passed": true,
+    "production_build_passed": true
+  },
+  "accelerated_load": {
+    "runs": 1500,
+    "mission_level_runs_per_fault_class": 100,
+    "modeled_fault_classes": 11,
+    "nominal_runs": 400,
+    "elapsed_wall_s": 32.502676,
+    "runs_per_wall_s": 46.15,
+    "leaked_async_tasks": 0,
+    "leaked_worker_directories": 0
+  },
+  "canonical_clean_process_repetitions": 2,
+  "hardware_evidence": false,
+  "isaac_runtime_used": false,
+  "physical_fidelity_claim": false,
+  "digital_twin_claim": false
+}

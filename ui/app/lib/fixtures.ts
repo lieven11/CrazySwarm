@@ -47,6 +47,8 @@ export const testFixtureDashboard: DashboardModel = {
     id: "fixture-sim01",
     name: "Visual test vehicle",
     adapter: "sim",
+    backendRole: "FAST_SIM",
+    authorityClass: "SIMULATION",
     selected: true,
     state: "FLYING",
     commandAuthority: false,
@@ -61,6 +63,7 @@ export const testFixtureDashboard: DashboardModel = {
   }],
   missions: [],
   twins: [],
+  fleetSessions: [],
 };
 
 export function fixtureForState(state: string): DashboardModel {

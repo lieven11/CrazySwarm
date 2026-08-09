@@ -27,6 +27,33 @@ class OperatingMode(StrEnum):
     REPLAY = "REPLAY"
 
 
+class BackendRole(StrEnum):
+    """The backend's system role; never infer this from an adapter name."""
+
+    FAST_SIM = "FAST_SIM"
+    ISAAC_SIM = "ISAAC_SIM"
+    REAL_CRAZYFLIE = "REAL_CRAZYFLIE"
+    REPLAY = "REPLAY"
+    TWIN_OBSERVER = "TWIN_OBSERVER"
+
+
+class AuthorityClass(StrEnum):
+    SIMULATION = "SIMULATION"
+    PHYSICAL = "PHYSICAL"
+    OBSERVATION_ONLY = "OBSERVATION_ONLY"
+
+
+class SourceClockPolicy(StrEnum):
+    ACCELERATED_OR_REALTIME = "ACCELERATED_OR_REALTIME"
+    REALTIME_MONOTONIC = "REALTIME_MONOTONIC"
+    REPLAY_CONTROLLED = "REPLAY_CONTROLLED"
+
+
+class CommandCompletionMode(StrEnum):
+    BLOCKING_COMPLETION = "BLOCKING_COMPLETION"
+    ASYNC_ACCEPTANCE = "ASYNC_ACCEPTANCE"
+
+
 class CoordinateFrame(StrEnum):
     WORLD = "world"
     HOME = "home"
@@ -64,6 +91,7 @@ class VehicleCapability(StrEnum):
     RANGE_SENSING = "range_sensing"
     PARAMETER_ACCESS = "parameter_access"
     EMERGENCY_STOP = "emergency_stop"
+    TIME_PARAMETERIZED_TRAJECTORY = "time_parameterized_trajectory"
 
 
 class DeckType(StrEnum):
@@ -100,6 +128,27 @@ class VehicleIdentity(ContractModel):
     adapter: Identifier
     radio_uri: str | None = None
     firmware_version: str | None = None
+
+
+class VehicleBackendProfile(ContractModel):
+    """Backend-neutral authority, timing, and completion declarations."""
+
+    role: BackendRole
+    authority: AuthorityClass
+    clock_policy: SourceClockPolicy
+    command_completion: CommandCompletionMode
+    supports_duration_aware_timeout: bool = True
+    supports_source_clock_reset: bool = False
+    supports_parameters: bool = False
+    recommended_watchdog_period_s: float = Field(default=0.02, ge=0.0, le=1.0)
+
+    @property
+    def is_simulation(self) -> bool:
+        return self.authority is AuthorityClass.SIMULATION
+
+    @property
+    def is_physical(self) -> bool:
+        return self.authority is AuthorityClass.PHYSICAL
 
 
 class DeckStatus(ContractModel):

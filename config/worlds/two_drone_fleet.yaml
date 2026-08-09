@@ -1,0 +1,22 @@
+schema_version: 1
+scenario_id: two-drone-fleet-room
+world:
+  world_id: two-drone-operator-room
+  width_m: 8.0
+  depth_m: 6.0
+  height_m: 3.0
+  obstacles: []
+simulation:
+  seed: 109
+  fixed_step_s: 0.01
+  clock_mode: realtime
+vehicles:
+  - vehicle_id: cf01
+    display_name: Coverage One
+    position_m: {x: -1.0, y: 0.0, z: 0.0}
+    yaw_rad: 0.0
+  - vehicle_id: cf02
+    display_name: Coverage Two
+    position_m: {x: 1.0, y: 0.0, z: 0.0}
+    yaw_rad: 0.0
+faults: []

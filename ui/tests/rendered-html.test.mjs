@@ -21,9 +21,10 @@ test("server-renders the finished control center", async () => {
   const html = await response.text();
   assert.match(html, /<title>Aerium Control — CrazySwarm<\/title>/i);
   assert.match(html, /AERIUM/);
-  assert.match(html, /STARTING/);
+  assert.match(html, /aria-label="Mission controls"/);
   assert.match(html, />Mission</);
   assert.match(html, /No room/);
+  assert.doesNotMatch(html, /READY TO RUN|Telemetry and evidence|Choose a mission|STARTING/);
   assert.doesNotMatch(html, /fixture-sim01|99\.4%|physical radio/i);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/i);
 });

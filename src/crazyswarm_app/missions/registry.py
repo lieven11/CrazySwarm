@@ -34,7 +34,11 @@ class MissionRegistry:
         return mission
 
     def list_metadata(self) -> tuple[MissionMetadata, ...]:
-        return tuple(self.metadata(item) for item in sorted(self._missions))
+        return tuple(
+            self.metadata(item)
+            for item in sorted(self._missions)
+            if self._missions[item].operator_visible
+        )
 
     def metadata(self, mission_id: str) -> MissionMetadata:
         mission = self.get(mission_id)
@@ -50,6 +54,8 @@ class MissionRegistry:
             source_filename=mission.source_filename,
             source_sha256=mission.source_sha256,
             planned_commands=mission.planned_commands,
+            package_schema_version=mission.package_schema_version,
+            logical_roles=mission.logical_roles,
         )
 
     def validate_parameters(
@@ -86,10 +92,16 @@ class MissionRegistry:
 
 
 def default_registry() -> MissionRegistry:
-    from crazyswarm_app.missions.catalog import HoverMission, RelativeMoveMission, SquareMission
+    from crazyswarm_app.missions.catalog import (
+        HoverMission,
+        RelativeMoveMission,
+        ReserveTakeoverMission,
+        SquareMission,
+    )
 
     registry = MissionRegistry()
     registry.register(HoverMission())
     registry.register(RelativeMoveMission())
+    registry.register(ReserveTakeoverMission())
     registry.register(SquareMission())
     return registry

@@ -14,6 +14,7 @@ from crazyswarm_app.domain.models import (
     NonNegativeSeconds,
     OperatingMode,
 )
+from crazyswarm_app.domain.trajectory import SHA256_PATTERN, TimeParameterizedTrajectory
 
 
 class CommandKind(StrEnum):
@@ -24,6 +25,7 @@ class CommandKind(StrEnum):
     TAKEOFF = "takeoff"
     HOVER = "hover"
     MOVE_RELATIVE = "move_relative"
+    EXECUTE_TRAJECTORY = "execute_trajectory"
     STOP_AND_HOLD = "stop_and_hold"
     LAND = "land"
     ABORT = "abort"
@@ -76,6 +78,24 @@ class MoveRelativeCommand(ContractModel):
         return self
 
 
+class ExecuteTrajectoryCommand(ContractModel):
+    kind: Literal[CommandKind.EXECUTE_TRAJECTORY] = CommandKind.EXECUTE_TRAJECTORY
+    accepted_plan_id: Identifier
+    accepted_plan_sha256: Annotated[str, Field(pattern=SHA256_PATTERN)]
+    execution_program_sha256: Annotated[str, Field(pattern=SHA256_PATTERN)]
+    trajectory_sha256: Annotated[str, Field(pattern=SHA256_PATTERN)]
+    route_sha256: Annotated[str, Field(pattern=SHA256_PATTERN)]
+    trajectory: TimeParameterizedTrajectory
+
+    @model_validator(mode="after")
+    def identities_match_payload(self) -> ExecuteTrajectoryCommand:
+        if self.trajectory_sha256 != self.trajectory.sha256:
+            raise ValueError("trajectory command hash does not match its payload")
+        if self.route_sha256 != self.trajectory.route_sha256:
+            raise ValueError("trajectory command route hash does not match its payload")
+        return self
+
+
 class StopAndHoldCommand(ContractModel):
     kind: Literal[CommandKind.STOP_AND_HOLD] = CommandKind.STOP_AND_HOLD
 
@@ -104,6 +124,7 @@ CommandPayload: TypeAlias = Annotated[
     | TakeoffCommand
     | HoverCommand
     | MoveRelativeCommand
+    | ExecuteTrajectoryCommand
     | StopAndHoldCommand
     | LandCommand
     | AbortCommand
@@ -112,11 +133,25 @@ CommandPayload: TypeAlias = Annotated[
 ]
 
 
+class FleetCommandBinding(ContractModel):
+    """Immutable fleet/task ownership attached to every coordinated command."""
+
+    schema_version: Literal[1] = 1
+    fleet_session_id: Identifier
+    fleet_run_id: Identifier
+    deployment_sha256: Annotated[str, Field(pattern=r"^[a-f0-9]{64}$")]
+    task_id: Identifier
+    task_lease_generation: int = Field(ge=1)
+    backend_namespace: str = Field(min_length=1, max_length=500)
+    preparation_state: Literal["READY"] = "READY"
+
+
 class CommandEnvelope(ContractModel):
     schema_version: Literal[1] = 1
     vehicle_id: Identifier
     command_id: Identifier
     mission_run_id: Identifier | None = None
+    fleet: FleetCommandBinding | None = None
     issued_at_monotonic_s: NonNegativeSeconds
     issued_at_utc: datetime = Field(default_factory=lambda: datetime.now(UTC))
     source: CommandSource
@@ -135,6 +170,7 @@ class AcknowledgementStatus(StrEnum):
     COMPLETED = "COMPLETED"
     REJECTED = "REJECTED"
     TIMED_OUT = "TIMED_OUT"
+    UNKNOWN_OUTCOME = "UNKNOWN_OUTCOME"
 
 
 class CommandAcknowledgement(ContractModel):
@@ -157,7 +193,12 @@ class CommandAcknowledgement(ContractModel):
         ):
             raise ValueError("command completion cannot precede receipt")
         if (
-            self.status in {AcknowledgementStatus.REJECTED, AcknowledgementStatus.TIMED_OUT}
+            self.status
+            in {
+                AcknowledgementStatus.REJECTED,
+                AcknowledgementStatus.TIMED_OUT,
+                AcknowledgementStatus.UNKNOWN_OUTCOME,
+            }
             and not self.reason_code
         ):
             raise ValueError("rejected and timed-out acknowledgements require a reason code")

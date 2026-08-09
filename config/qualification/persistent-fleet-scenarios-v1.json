@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "qualification_id": "persistent-fleet-software-v1",
+  "deployment": "config/fleet/three-drone-persistent-coverage-v1.yaml",
+  "bindings": {
+    "FAST_SIM": "config/fleet/fast-sim-three-drone-binding-v1.yaml",
+    "MOCK_ISAAC": "config/fleet/mock-isaac-three-drone-binding-v1.yaml"
+  },
+  "seeds": [311, 907, 1601],
+  "thresholds": {
+    "minimum_availability_percent": 99.0,
+    "maximum_coverage_gap_percent": 1.0,
+    "minimum_separation_m": 0.75,
+    "maximum_handover_s": 5.0,
+    "maximum_dropped_events": 0
+  },
+  "scenarios": [
+    {"id": "nominal-low-battery", "expected": "SUCCEEDED"},
+    {"id": "low-battery-requested", "expected": "SUCCEEDED"},
+    {"id": "low-battery-preparing", "expected": "SUCCEEDED"},
+    {"id": "low-battery-takeover-pending", "expected": "SUCCEEDED"},
+    {"id": "active-vehicle-loss", "expected": "SUCCEEDED"},
+    {"id": "reserve-loss", "expected": "DEGRADED"},
+    {"id": "leader-loss", "expected": "SUCCEEDED"},
+    {"id": "stale-fleet-state", "expected": "FAILED"},
+    {"id": "task-lease-expiry", "expected": "FAILED"},
+    {"id": "duplicate-assignment", "expected": "FAILED"},
+    {"id": "delayed-reordered-ownership", "expected": "SUCCEEDED"},
+    {"id": "warning-separation", "expected": "DEGRADED"},
+    {"id": "critical-separation", "expected": "FAILED"},
+    {"id": "geofence-interaction", "expected": "FAILED"},
+    {"id": "command-drop", "expected": "DEGRADED"},
+    {"id": "acknowledgement-loss", "expected": "DEGRADED"},
+    {"id": "disconnect", "expected": "SUCCEEDED"},
+    {"id": "gateway-crash-fast-sim-fallback", "expected": "DEGRADED"},
+    {"id": "gateway-restart", "expected": "SUCCEEDED"},
+    {"id": "localization-failure", "expected": "DEGRADED"},
+    {"id": "range-failure", "expected": "DEGRADED"},
+    {"id": "dock-occupied", "expected": "DEGRADED"},
+    {"id": "docking-failure", "expected": "DEGRADED"},
+    {"id": "charging-confirmation-failure", "expected": "DEGRADED"},
+    {"id": "dock-queue-overflow", "expected": "FAILED"},
+    {"id": "dock-unavailable", "expected": "DEGRADED"},
+    {"id": "long-duration-rotation", "expected": "SUCCEEDED"}
+  ]
+}

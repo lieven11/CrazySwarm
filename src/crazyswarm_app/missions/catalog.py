@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import math
+from pathlib import Path
 from typing import ClassVar
 
 from pydantic import Field, model_validator
@@ -8,6 +10,8 @@ from pydantic import Field, model_validator
 from crazyswarm_app.domain.commands import MoveRelativeCommand
 from crazyswarm_app.domain.models import CoordinateFrame, VehicleCapability
 from crazyswarm_app.missions.base import Mission, MissionContext, MissionParameters
+
+_BUILTIN_SOURCE_SHA256 = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
 
 class FlightParameters(MissionParameters):
@@ -25,6 +29,7 @@ class HoverMission(Mission[HoverParameters]):
     mission_version = "1.0.0"
     name = "Take off, hover, and land"
     description = "Take off vertically, hold position, and land at the launch point."
+    source_sha256 = _BUILTIN_SOURCE_SHA256
     required_capabilities = frozenset(
         {
             VehicleCapability.ARMING,
@@ -65,6 +70,7 @@ class RelativeMoveMission(Mission[RelativeMoveParameters]):
     mission_version = "1.0.0"
     name = "Relative move and return"
     description = "Move by a relative offset, pause, then reverse the offset to return near home."
+    source_sha256 = _BUILTIN_SOURCE_SHA256
     required_capabilities = frozenset(
         {
             VehicleCapability.ARMING,
@@ -121,6 +127,7 @@ class SquareMission(Mission[SquareParameters]):
     mission_version = "1.0.0"
     name = "Square waypoint sequence"
     description = "Fly a four-leg square in the home frame and return to the first corner."
+    source_sha256 = _BUILTIN_SOURCE_SHA256
     required_capabilities = frozenset(
         {
             VehicleCapability.ARMING,
@@ -156,3 +163,90 @@ class SquareMission(Mission[SquareParameters]):
 
     def execution_timeout_s(self, parameters: SquareParameters) -> float:
         return parameters.loops * 4 * (parameters.leg_duration_s + parameters.dwell_s) + 10.0
+
+
+class ReserveTakeoverParameters(FlightParameters):
+    staging_x_m: float = Field(ge=-3.0, le=3.0)
+    staging_y_m: float = Field(ge=-3.0, le=3.0)
+    staging_move_duration_s: float = Field(default=6.0, gt=0.0, le=30.0)
+    staging_hold_s: float = Field(default=30.0, gt=0.0, le=60.0)
+    takeover_x_m: float = Field(ge=-3.0, le=3.0)
+    takeover_y_m: float = Field(ge=-3.0, le=3.0)
+    takeover_move_duration_s: float = Field(default=3.0, gt=0.0, le=30.0)
+    coverage_hold_s: float = Field(default=2.0, gt=0.0, le=30.0)
+    return_x_m: float = Field(ge=-3.0, le=3.0)
+    return_y_m: float = Field(ge=-3.0, le=3.0)
+    return_move_duration_s: float = Field(default=6.0, gt=0.0, le=30.0)
+
+
+class ReserveTakeoverMission(Mission[ReserveTakeoverParameters]):
+    """Coordinator-owned staging, bounded takeover coverage, and return maneuver."""
+
+    mission_id = "fleet-reserve-takeover"
+    mission_version = "1.0.0"
+    name = "Fleet reserve takeover maneuver"
+    description = "Stage safely, enter a transferred coverage task, return, and land."
+    source_sha256 = _BUILTIN_SOURCE_SHA256
+    required_capabilities = frozenset(
+        {
+            VehicleCapability.ARMING,
+            VehicleCapability.RELATIVE_POSITIONING,
+            VehicleCapability.HIGH_LEVEL_COMMANDS,
+        }
+    )
+    parameters_type = ReserveTakeoverParameters
+    manages_flight_path = True
+    operator_visible = False
+
+    async def execute(
+        self,
+        context: MissionContext,
+        parameters: ReserveTakeoverParameters,
+    ) -> None:
+        await context.takeoff(
+            height_m=parameters.height_m,
+            duration_s=parameters.takeoff_duration_s,
+        )
+        await context.move_relative(
+            MoveRelativeCommand(
+                x_m=parameters.staging_x_m,
+                y_m=parameters.staging_y_m,
+                duration_s=parameters.staging_move_duration_s,
+                frame=CoordinateFrame.HOME,
+            )
+        )
+        await context.wait_for_fleet_authority(
+            task_id=context.role_id,
+            minimum_lease_generation=2,
+            timeout_s=parameters.staging_hold_s,
+        )
+        await context.move_relative(
+            MoveRelativeCommand(
+                x_m=parameters.takeover_x_m,
+                y_m=parameters.takeover_y_m,
+                duration_s=parameters.takeover_move_duration_s,
+                frame=CoordinateFrame.HOME,
+            )
+        )
+        await context.hover(parameters.coverage_hold_s)
+        await context.move_relative(
+            MoveRelativeCommand(
+                x_m=parameters.return_x_m,
+                y_m=parameters.return_y_m,
+                duration_s=parameters.return_move_duration_s,
+                frame=CoordinateFrame.HOME,
+            )
+        )
+        await context.land(duration_s=parameters.landing_duration_s)
+
+    def execution_timeout_s(self, parameters: ReserveTakeoverParameters) -> float:
+        return (
+            parameters.takeoff_duration_s
+            + parameters.staging_move_duration_s
+            + parameters.staging_hold_s
+            + parameters.takeover_move_duration_s
+            + parameters.coverage_hold_s
+            + parameters.return_move_duration_s
+            + parameters.landing_duration_s
+            + 10.0
+        )

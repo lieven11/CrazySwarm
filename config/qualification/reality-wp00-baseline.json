@@ -1,0 +1,21 @@
+{
+  "classification": "SOFTWARE_VERIFIED",
+  "repository_commit": "4bd185d967eefcccbfc9a41324b1ef685f976e41",
+  "mission_source": "missions/hover30s.py",
+  "mission_source_sha256": "fd00838a0fe5beb13e6fc52c39555b9e284b4da5951207f510844dca904c36dc",
+  "adapter_role": "FAST_SIM",
+  "controller_profile_at_baseline": "IDEAL_TRUTH_BASELINE_BEFORE_REALITY_WP_03",
+  "requested_hover_height_m": 0.3,
+  "source_duration_s": 34.18,
+  "wall_duration_s": 34.183,
+  "samples": 3423,
+  "flying_samples": 3007,
+  "hover_truth_mean_z_m": 0.288581,
+  "hover_truth_min_z_m": 0.286411,
+  "hover_truth_max_z_m": 0.288678,
+  "hover_truth_start_end_displacement_m": 0.0001176,
+  "estimate_truth_mean_error_m": 0.001598,
+  "estimate_truth_max_error_m": 0.003921,
+  "physical_truth_claim": false,
+  "digital_twin_claim": false
+}

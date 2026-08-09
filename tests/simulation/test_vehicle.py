@@ -91,6 +91,18 @@ async def test_nominal_hover_move_and_land() -> None:
 
 
 @pytest.mark.asyncio
+async def test_battery_setup_confirmation_bypasses_modeled_transport_loss() -> None:
+    vehicle = make_vehicle(config=SimulationConfig(packet_loss_probability=1.0))
+
+    await vehicle.set_battery_level(5.0)
+
+    snapshot = await vehicle.snapshot()
+    assert snapshot.sequence == 1
+    assert snapshot.telemetry.battery_percent == 5.0
+    assert snapshot.telemetry.faults == ("CRITICAL_BATTERY",)
+
+
+@pytest.mark.asyncio
 async def test_lateral_motion_is_produced_by_motor_torque_and_full_attitude() -> None:
     vehicle = make_vehicle()
     await vehicle.connect()
@@ -187,7 +199,6 @@ async def test_link_loss_and_low_battery_are_reproducible() -> None:
     low_battery = make_vehicle(
         config=SimulationConfig(
             battery_start_percent=10.1,
-            battery_flight_drain_percent_s=0.1,
             critical_battery_percent=10.0,
         )
     )

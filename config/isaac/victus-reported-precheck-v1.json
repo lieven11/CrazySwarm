@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "inventory_id": "victus-reported-candidate-20260807",
+  "captured_at_utc": "2026-08-07T00:00:00Z",
+  "measurement_class": "REPORTED_NOT_MEASURED",
+  "host_name": "HP Victus candidate (not connected)",
+  "manufacturer": "HP",
+  "model": "Victus Gaming Laptop 15.6-inch FHD 144 Hz",
+  "sku": null,
+  "operating_system": "Windows 11 Home",
+  "os_build": null,
+  "cpu": "Intel Core i5-13500H",
+  "physical_cpu_cores": null,
+  "logical_cpu_cores": null,
+  "system_ram_bytes": 17179869184,
+  "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU",
+  "vram_bytes": 6442450944,
+  "driver_version": null,
+  "gpu_tgp_w": null,
+  "free_storage_bytes": null,
+  "power_mode": null,
+  "gpu_temperature_c": null,
+  "network_summary": null,
+  "official_checker": {
+    "status": "NOT_RUN",
+    "package_version": null,
+    "command": null,
+    "exit_code": null,
+    "report_path": null,
+    "findings": []
+  }
+}

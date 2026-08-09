@@ -53,19 +53,23 @@ const worker = {
   },
 };
 
-async function proxyControlApi(request: Request, env: Env): Promise<Response> {
-  if (!env.CRAZYSWARM_LOCAL_TOKEN || !env.CRAZYSWARM_API_URL) {
+async function proxyControlApi(request: Request, env: Env | undefined): Promise<Response> {
+  // The Cloudflare development runtime supplies bindings through `env`; vinext's
+  // local production server executes the same worker directly under Node.
+  const localToken = env?.CRAZYSWARM_LOCAL_TOKEN ?? process.env.CRAZYSWARM_LOCAL_TOKEN;
+  const apiUrl = env?.CRAZYSWARM_API_URL ?? process.env.CRAZYSWARM_API_URL;
+  if (!localToken || !apiUrl) {
     return Response.json(
       { error: { code: "LOCAL_SERVICE_OFFLINE", message: "SIM OFFLINE" } },
       { status: 503 },
     );
   }
   const incoming = new URL(request.url);
-  const target = new URL(env.CRAZYSWARM_API_URL);
+  const target = new URL(apiUrl);
   target.pathname = incoming.pathname.slice("/control-api".length);
   target.search = incoming.search;
   const headers = new Headers();
-  headers.set("X-Local-Token", env.CRAZYSWARM_LOCAL_TOKEN);
+  headers.set("X-Local-Token", localToken);
   headers.set("X-Client-ID", request.headers.get("X-Client-ID") ?? "control-center-ui");
   const idempotencyKey = request.headers.get("Idempotency-Key");
   if (idempotencyKey) headers.set("Idempotency-Key", idempotencyKey);
@@ -81,10 +85,17 @@ async function proxyControlApi(request: Request, env: Env): Promise<Response> {
       signal: AbortSignal.timeout(5_000),
     });
     const responseHeaders = new Headers();
-    const responseType = upstream.headers.get("Content-Type");
-    if (responseType) responseHeaders.set("Content-Type", responseType);
-    const disposition = upstream.headers.get("Content-Disposition");
-    if (disposition) responseHeaders.set("Content-Disposition", disposition);
+    for (const header of [
+      "Content-Type",
+      "Content-Disposition",
+      "ETag",
+      "X-CrazySwarm-CSV-Schema",
+      "X-CrazySwarm-Row-Count",
+      "X-CrazySwarm-Content-SHA256",
+    ]) {
+      const value = upstream.headers.get(header);
+      if (value) responseHeaders.set(header, value);
+    }
     return new Response(upstream.body, {
       status: upstream.status,
       headers: responseHeaders,

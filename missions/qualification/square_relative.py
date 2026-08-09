@@ -1,0 +1,11 @@
+async def mission(drone):
+    await drone.takeoff(height_m=0.3, duration_s=2.0)
+    await drone.move_relative(x_m=0.25, duration_s=2.0, frame="home")
+    await drone.hover(duration_s=0.5)
+    await drone.move_relative(y_m=0.25, duration_s=2.0, frame="home")
+    await drone.hover(duration_s=0.5)
+    await drone.move_relative(x_m=-0.25, duration_s=2.0, frame="home")
+    await drone.hover(duration_s=0.5)
+    await drone.move_relative(y_m=-0.25, duration_s=2.0, frame="home")
+    await drone.hover(duration_s=0.5)
+    await drone.land(duration_s=2.0)

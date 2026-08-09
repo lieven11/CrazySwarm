@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import json
 import math
 import time
@@ -30,6 +31,7 @@ from crazyswarm_app.simulation.clock import ClockMode
 from crazyswarm_app.simulation.factory import vehicles_from_scenario
 from crazyswarm_app.simulation.faults import FaultInjector, FaultType, FaultWindow
 from crazyswarm_app.simulation.models import DEFAULT_FIDELITY_MANIFEST, SimulationConfig
+from crazyswarm_app.simulation.physical_qualification import _normalized_report_sha256
 from crazyswarm_app.simulation.physics import PhysicsModelConfig, Quaternion, SixDofPhysics
 from crazyswarm_app.simulation.vehicle import SimulatedVehicle
 from crazyswarm_app.simulation.world import (
@@ -163,7 +165,8 @@ async def test_long_duration_hover_move_idle_land_and_energy_invariants() -> Non
 
 
 def test_analytic_physics_invariants() -> None:
-    config = PhysicsModelConfig()
+    # The exact closed-form hover reference belongs to the preserved uncoupled v1 plant.
+    config = PhysicsModelConfig.legacy_v1()
     hover_command = config.total_mass_kg * config.gravity_m_s2 / (4.0 * config.max_motor_thrust_n)
     physics = SixDofPhysics(config, position_m=Vector3(z=1.0))
     for motor in physics.state.motors:
@@ -199,7 +202,7 @@ def test_independent_free_fall_reference() -> None:
 
 
 def test_independent_actuator_reference() -> None:
-    config = PhysicsModelConfig()
+    config = PhysicsModelConfig.legacy_v1()
     physics = SixDofPhysics(config, position_m=Vector3(z=2.0))
     dt = 0.001
     steps = 100
@@ -319,10 +322,63 @@ async def test_modeled_battery_cutoff_zeros_motors_and_faults() -> None:
     )
 
 
+@pytest.mark.asyncio
+async def test_airborne_battery_cutoff_falls_to_ground_before_terminal_sample() -> None:
+    vehicle = make_vehicle()
+    await vehicle.connect()
+    await vehicle.execute(command(vehicle, "arm", ArmCommand()))
+    await vehicle.execute(
+        command(
+            vehicle,
+            "takeoff-before-cutoff",
+            TakeoffCommand(height_m=0.3, duration_s=2.0),
+        )
+    )
+    airborne_height = vehicle.true_position_m.z
+    assert airborne_height > 0.2
+
+    await vehicle.set_battery_level(0.0)
+    with pytest.raises(CrazySwarmError) as cutoff:
+        await vehicle.execute(
+            command(vehicle, "hover-through-cutoff", HoverCommand(duration_s=1.0))
+        )
+
+    assert cutoff.value.code is ErrorCode.CRITICAL_BATTERY
+    assert vehicle.state is VehicleState.FAULT
+    assert vehicle.true_position_m.z == pytest.approx(0.0, abs=1e-9)
+    terminal = await vehicle.snapshot()
+    assert terminal.telemetry.state is VehicleState.FAULT
+    assert terminal.telemetry.armed is False
+    assert terminal.telemetry.flying is False
+    assert terminal.telemetry.battery_cutoff_active is True
+    assert terminal.telemetry.ground_truth_position_m is not None
+    assert terminal.telemetry.ground_truth_position_m.z == pytest.approx(0.0, abs=1e-9)
+    assert terminal.telemetry.position_m is not None
+    assert terminal.telemetry.position_m.z == pytest.approx(0.0, abs=0.01)
+    descending_heights = [
+        sample.telemetry.ground_truth_position_m.z
+        for sample in vehicle.telemetry_history
+        if sample.telemetry.ground_truth_position_m is not None
+        and 0.0 < sample.telemetry.ground_truth_position_m.z < airborne_height
+    ]
+    assert descending_heights
+
+
 async def failure_outcome(fault: FaultType, seed: int) -> tuple[object, ...]:
+    if fault is FaultType.ACTUATOR_DEGRADATION:
+        window = FaultWindow(
+            fault=fault,
+            start_s=0.0,
+            motor_index=0,
+            actuator_health_scale=0.5,
+        )
+    elif fault is FaultType.ACTUATOR_LOSS:
+        window = FaultWindow(fault=fault, start_s=0.0, motor_index=0)
+    else:
+        window = FaultWindow(fault=fault, start_s=0.0)
     vehicle = make_vehicle(
         config=SimulationConfig(seed=seed),
-        faults=FaultInjector((FaultWindow(fault=fault, start_s=0.0),)),
+        faults=FaultInjector((window,)),
     )
     code: str | None = None
     try:
@@ -331,7 +387,11 @@ async def failure_outcome(fault: FaultType, seed: int) -> tuple[object, ...]:
             await vehicle.execute(command(vehicle, "arm", ArmCommand()))
     except CrazySwarmError as error:
         code = error.code.value
-    sample = await vehicle.snapshot()
+    try:
+        sample = await vehicle.snapshot()
+    except CrazySwarmError as error:
+        code = code or error.code.value
+        sample = vehicle._last_published
     return (
         code,
         vehicle.state.value,
@@ -349,6 +409,7 @@ async def test_failure_classes_reproduce_for_100_seeded_repetitions() -> None:
     expected_codes = {
         FaultType.COMMAND_DROP: ErrorCode.COMMAND_DROPPED.value,
         FaultType.DISCONNECT: ErrorCode.LINK_LOST.value,
+        FaultType.STALE_TELEMETRY: ErrorCode.TELEMETRY_STALE.value,
         FaultType.GEOFENCE_BREACH: ErrorCode.GEOFENCE_BREACH.value,
         FaultType.COLLISION: ErrorCode.GEOFENCE_BREACH.value,
         FaultType.NUMERICAL_FAILURE: ErrorCode.INTERNAL_ERROR.value,
@@ -532,6 +593,21 @@ def test_qualification_scenarios_and_fidelity_manifest_are_complete() -> None:
     report = json.loads(Path(DEFAULT_FIDELITY_MANIFEST.qualification_report).read_text())
     assert report["failure_repetitions_per_class"] == 100
     assert report["hardware_qualified"] is False
+    assert report["decision"] == "SOFTWARE_QUALIFIED_CONFIGURED_UNQUALIFIED"
+    assert len(report["powertrain_matrix"]) == 168
+    assert len(report["mechanical_and_actuator_matrix"]) == 6
+    assert len(report["sensor_matrix"]) == 15
+    assert all(report["verified_invariants"].values())
+    assert set(report["external_evidence"].values()) == {"NOT_RUN"}
+    assert report["normalized_report_exclusions"] == [
+        "performance_and_long_duration.performance_wall_s",
+        "performance_and_long_duration.represented_vehicle_seconds_per_wall_second",
+    ]
+    assert report["normalized_report_sha256"] == _normalized_report_sha256(report)
+    slower = copy.deepcopy(report)
+    slower["performance_and_long_duration"]["performance_wall_s"] *= 2.0
+    slower["performance_and_long_duration"]["represented_vehicle_seconds_per_wall_second"] /= 2.0
+    assert _normalized_report_sha256(slower) == report["normalized_report_sha256"]
     assert {item.output for item in DEFAULT_FIDELITY_MANIFEST.output_evidence} == set(
         DEFAULT_FIDELITY_MANIFEST.modeled_outputs
     )

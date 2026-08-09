@@ -4,6 +4,7 @@ import asyncio
 import time
 from itertools import pairwise
 from pathlib import Path
+from typing import cast
 
 import pytest
 from fastapi.testclient import TestClient
@@ -16,6 +17,7 @@ from crazyswarm_app.domain.models import CommandSource, OperatingMode, VehicleSt
 from crazyswarm_app.domain.telemetry import TelemetryEnvelope
 from crazyswarm_app.missions.models import MissionStatus
 from crazyswarm_app.simulation.clock import ClockMode
+from crazyswarm_app.simulation.vehicle import SimulatedVehicle
 from crazyswarm_app.simulation.world import load_scenario
 
 TOKEN = "realtime-test-local-token"
@@ -147,7 +149,7 @@ async def test_runtime_throttles_continuous_telemetry_and_accepts_clock_reset(
         previous_source_s = before_reset_s.source_timestamp_s
 
         received_source_times.clear()
-        vehicle.reset()
+        cast(SimulatedVehicle, vehicle).reset()
         await vehicle.connect()
         for _ in range(20):
             telemetry = runtime.supervisor.session("sim01").telemetry

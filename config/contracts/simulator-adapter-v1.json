@@ -19,6 +19,7 @@
     "disarm",
     "takeoff",
     "move_relative",
+    "execute_trajectory",
     "hover",
     "stop_and_hold",
     "land",
@@ -55,7 +56,8 @@
       "high_level_commands",
       "parameter_access",
       "range_sensing",
-      "relative_positioning"
+      "relative_positioning",
+      "time_parameterized_trajectory"
     ],
     "supported_signals": [
       "attitude",

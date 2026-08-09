@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "record_id": "reality-wp04-06-readiness-2026-08-06",
+  "created_local_date": "2026-08-06",
+  "operation": "SOFTWARE_PREPARATION_ONLY_NO_RADIO_NO_MOTORS_NO_FLIGHT",
+  "physical_drone_availability": {
+    "available": false,
+    "user_confirmed_local_date": "2026-08-07",
+    "wp04_wp05_wp06_physical_closure": "WAITING_FOR_PHYSICAL_DRONE_AND_ONSITE_CONFIRMATION",
+    "rule": "No physical result may be simulated, inferred, or self-certified"
+  },
+  "software_verification": {
+    "python_tests": 354,
+    "hardware_fake_link_and_gate_tests": 17,
+    "ruff_src_tests_scripts": "PASSED",
+    "strict_mypy_source_files": 105,
+    "canonical_scenarios_clean_process_repetitions": 2,
+    "canonical_scenarios": 4,
+    "ui_unit_tests": 46,
+    "ui_rendered_html_tests": 3,
+    "ui_lint_typecheck_build": "PASSED"
+  },
+  "wp04": {
+    "status": "SOFTWARE_READY_WAITING_FOR_PHYSICAL_DRONE_AND_ONSITE_CONFIRMATION",
+    "adapter": "crazyflie-cflib-1.0.0-preflight",
+    "command_mapping": "cf21-flow-hlc-relative-v1-provisional",
+    "cflib_pin": "0.1.32",
+    "host_compatibility": "config/qualification/reality-hardware-host-compatibility-v1.json",
+    "firmware_pin": "CONFIGURED_UNQUALIFIED_AWAITING_EXACT_AIRCRAFT",
+    "deck_presence": "NOT_RUN",
+    "connect_cycles": "NOT_RUN",
+    "static_sensor_matrix": "NOT_RUN",
+    "props_off_commands": "NOT_RUN"
+  },
+  "wp05": {
+    "status": "SOFTWARE_READY_WAITING_FOR_PHYSICAL_DRONE_WP04_AND_CONTAINED_FLIGHT",
+    "plan": "config/qualification/reality-physical-plan-v1.json",
+    "operator_present": false,
+    "observer_present": false,
+    "containment_approved": false,
+    "external_reference_qualified": false,
+    "physical_trials_recorded": 0
+  },
+  "wp06": {
+    "status": "PROVISIONAL_SOFTWARE_READY_WAITING_FOR_WP04_WP05_PHYSICAL_EVIDENCE",
+    "current_nvidia_entry_decision": "GO_ARCHITECTURE_AND_MOCK",
+    "physical_model_authorized": false,
+    "digital_twin_enabled": false,
+    "reason": "WP-00 through WP-03 passed; WP-04 bench and WP-05 contained-flight evidence do not yet exist"
+  }
+}

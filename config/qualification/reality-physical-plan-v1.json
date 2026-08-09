@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "plan_id": "reality-physical-plan-v1",
+  "command_mapping_id": "cf21-flow-hlc-relative-v1-provisional",
+  "required_cflib_version": "0.1.32",
+  "minimum_protocol_version": 12,
+  "required_deck_parameters": {
+    "deck.bcFlow2": 1,
+    "deck.bcMultiranger": 1
+  },
+  "connect_cycle_count": 100,
+  "static_samples_per_point": 30,
+  "required_battery_count": 2,
+  "shakedown_trials": 3,
+  "missions": [
+    {
+      "qf_id": "QF-01",
+      "source_path": "missions/qualification/hover_30s.py",
+      "source_sha256": "fd00838a0fe5beb13e6fc52c39555b9e284b4da5951207f510844dca904c36dc",
+      "minimum_trials": 10,
+      "minimum_batteries": 2,
+      "external_reference_required": false,
+      "notes": ["Run only after three successful short-hover shakedowns", "Containment radius 0.50 m"]
+    },
+    {
+      "qf_id": "QF-02",
+      "source_path": "missions/qualification/move_return.py",
+      "source_sha256": "64d9644f336b0bd3a2f195eb438e4b96edb2da791fba681a7ba6903bf317fa19",
+      "minimum_trials": 10,
+      "minimum_batteries": 2,
+      "external_reference_required": false,
+      "notes": ["Accuracy fields remain UNAVAILABLE without external reference"]
+    },
+    {
+      "qf_id": "QF-03",
+      "source_path": "missions/qualification/square_relative.py",
+      "source_sha256": "a43a9dcb30231cdd1961ce68ea4c3672b50e981f41a8be542e51eef2c5079afe",
+      "minimum_trials": 10,
+      "minimum_batteries": 2,
+      "external_reference_required": false,
+      "notes": ["Accuracy fields remain UNAVAILABLE without external reference"]
+    },
+    {
+      "qf_id": "QF-04",
+      "source_path": "missions/qualification/body_yaw.py",
+      "source_sha256": "daa5ecd7098ee773671a901c33779c7b5dddd459ae0a609be4e2ab6ff539e0cc",
+      "minimum_trials": 10,
+      "minimum_batteries": 2,
+      "external_reference_required": false,
+      "notes": ["Use conservative yaw rate", "Record Flow/yaw coupling"]
+    },
+    {
+      "qf_id": "QF-05",
+      "source_path": "missions/qualification/range_approach_stop.py",
+      "source_sha256": "f0239c0803a232a095e6ca0c4e53ab2340d25d0fb9cd95bc78f18311e0a53310",
+      "minimum_trials": 10,
+      "minimum_batteries": 2,
+      "maximum_speed_m_s": 0.1,
+      "external_reference_required": true,
+      "notes": ["Large surveyed flat obstacle", "Minimum external measured clearance 0.40 m"]
+    },
+    {
+      "qf_id": "QF-06",
+      "source_path": "missions/qualification/range_direction_escape.py",
+      "source_sha256": "ce6a915998cf7b2f095419ad0ab0e21b1208d498b35da1c88978f1e8760d82e2",
+      "minimum_trials": 10,
+      "minimum_batteries": 2,
+      "external_reference_required": true,
+      "notes": ["Surveyed single-obstacle starting placements only"]
+    },
+    {
+      "qf_id": "QF-07",
+      "source_path": "missions/qualification/flow_out_back.py",
+      "source_sha256": "0aeecef744f8c1df1accf8a01a5d2819883619eee1bce702b0c4d9b26a17c019",
+      "minimum_trials": 10,
+      "minimum_batteries": 2,
+      "external_reference_required": true,
+      "notes": ["Compare onboard estimate and independently qualified external trajectory"]
+    },
+    {
+      "qf_id": "QF-09",
+      "source_path": "missions/qualification/hover_cancel.py",
+      "source_sha256": "fd00838a0fe5beb13e6fc52c39555b9e284b4da5951207f510844dca904c36dc",
+      "minimum_trials": 1,
+      "minimum_batteries": 1,
+      "external_reference_required": false,
+      "notes": ["Controlled cancel at five seconds", "Must abort-and-land, never emergency stop"]
+    },
+    {
+      "qf_id": "QF-11",
+      "source_path": "missions/qualification/floor_height_transition.py",
+      "source_sha256": "6c1cd4c24a9216b1b28b60e3eef69572bc9dd2d148676f026fe43d9dfbb0337d",
+      "minimum_trials": 0,
+      "minimum_batteries": 1,
+      "external_reference_required": true,
+      "physical_execution_required": false,
+      "notes": ["Physical crossing optional and requires a separate approved procedure"]
+    }
+  ],
+  "unsupported_claims": [
+    "precise global return",
+    "tight formation",
+    "docking",
+    "map quality",
+    "object recognition",
+    "real RF propagation",
+    "digital twin equivalence without synchronized independent external reference"
+  ]
+}

@@ -91,9 +91,7 @@ class ReplayVehicle:
         )
         first_payload = telemetry_events[0].payload
         assert isinstance(first_payload, TelemetryPayload)
-        self._capabilities = (
-            first_payload.telemetry.telemetry.capabilities or VehicleCapabilities()
-        )
+        self._capabilities = first_payload.telemetry.telemetry.capabilities or VehicleCapabilities()
         self.clock = ReplayClock(telemetry_events)
         self._connected = False
         self._latest = first_payload.telemetry

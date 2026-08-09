@@ -6,6 +6,8 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from crazyswarm_app.domain.models import Identifier, OperatingMode
+from crazyswarm_app.domain.simulation import SHA256
+from crazyswarm_app.fleet.artifacts import BackendBindingProfile, DeploymentManifest
 from crazyswarm_app.simulation.faults import FaultType
 
 
@@ -48,6 +50,10 @@ class ReasonRequest(ApiModel):
     reason: str = Field(min_length=1, max_length=500)
 
 
+class ExecutionAnnotationRequest(ApiModel):
+    note: str = Field(min_length=1, max_length=2_000)
+
+
 class ParameterWriteRequest(ApiModel):
     name: str = Field(min_length=1, max_length=160)
     value: bool | int | float | str
@@ -67,6 +73,18 @@ class MissionStartRequest(MissionValidationRequest):
     vehicle_id: Identifier
 
 
+class FleetSessionCreateRequest(ApiModel):
+    execution_session_id: Identifier
+    fleet_run_id: Identifier
+    mission_id: Identifier
+    deployment: DeploymentManifest
+    binding: BackendBindingProfile
+
+
+class FleetStartRequest(ApiModel):
+    assignments: dict[Identifier, Identifier]
+
+
 class MissionFileUploadRequest(ApiModel):
     name: str = Field(min_length=1, max_length=120)
     filename: str = Field(min_length=1, max_length=255)
@@ -79,8 +97,19 @@ class MissionExecutionMode(StrEnum):
 
 
 class MissionFileStartRequest(ApiModel):
-    vehicle_id: Identifier
-    execution_mode: MissionExecutionMode
+    # Accepted for v1 client compatibility only; logical roles never come from the UI.
+    vehicle_id: Identifier | None = None
+    execution_mode: MissionExecutionMode = MissionExecutionMode.SIMULATION
+    confirm_low_battery_risk: bool = False
+    expected_plan_sha256: SHA256 | None = None
+    approval_id: Identifier | None = None
+
+
+class MissionPlanApprovalRequest(ApiModel):
+    # Accepted for explicit legacy vehicle selection; planning still derives logical roles.
+    vehicle_id: Identifier | None = None
+    expected_plan_sha256: SHA256
+    acknowledged_finding_codes: frozenset[Identifier] = frozenset()
 
 
 class SimulationClockAction(StrEnum):
@@ -88,10 +117,13 @@ class SimulationClockAction(StrEnum):
     RESUME = "resume"
     STEP = "step"
     RESET = "reset"
+    RESET_POSE = "reset_pose"
+    RECHARGE = "recharge"
 
 
 class SimulationClockRequest(ApiModel):
     action: SimulationClockAction
+    battery_percent: float | None = Field(default=None, ge=0.0, le=100.0)
 
 
 class FaultInjectionRequest(ApiModel):

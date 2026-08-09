@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -9,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from crazyswarm_app import cli
+from crazyswarm_app import dashboard
 from crazyswarm_app.cli import main
 
 
@@ -51,9 +50,9 @@ def test_dashboard_is_one_url_and_keeps_internal_credentials_hidden(
     def interrupt(_seconds: float) -> None:
         raise KeyboardInterrupt
 
-    monkeypatch.setattr(cli, "_port_available", lambda _host, _port: True)
-    monkeypatch.setattr(shutil, "which", lambda _name: "/usr/local/bin/npm")
-    monkeypatch.setattr(cli, "generate_local_token", lambda: "server-only-token")
+    monkeypatch.setattr(dashboard, "port_available", lambda _host, _port: True)
+    monkeypatch.setattr("crazyswarm_app.dashboard.shutil.which", lambda _name: "/usr/local/bin/npm")
+    monkeypatch.setattr(dashboard, "generate_local_token", lambda: "server-only-token")
     monkeypatch.setattr(subprocess, "Popen", fake_popen)
     monkeypatch.setattr(time, "sleep", interrupt)
 
@@ -63,10 +62,16 @@ def test_dashboard_is_one_url_and_keeps_internal_credentials_hidden(
         "status": "starting",
         "url": "http://localhost:3001",
         "mode": "SIM",
+        "runtime": "development",
+        "supervised": True,
     }
     assert len(processes) == 2
     assert processes[0].environment["CRAZYSWARM_LOCAL_TOKEN"] == "server-only-token"
-    assert processes[1].environment["CRAZYSWARM_API_URL"] == "http://127.0.0.1:8001"
+    assert processes[0].command[-1] == "--reload"
+    assert processes[1].environment["CRAZYSWARM_API_URL"] == "http://127.0.0.1:8011"
+    assert processes[1].environment["CRAZYSWARM_DEV_WATCH"] == "1"
+    assert processes[1].working_directory.name == "ui"
+    assert processes[1].command[2] == "dev"
     assert all(process.stopped for process in processes)
 
 
@@ -79,6 +84,7 @@ class FakeProcess:
     def __init__(self, command: list[str], kwargs: dict[str, Any]) -> None:
         self.command = command
         self.environment = kwargs["env"]
+        self.working_directory = kwargs["cwd"]
         self.returncode: int | None = None
         self.stopped = False
 

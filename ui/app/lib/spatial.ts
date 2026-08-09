@@ -1,4 +1,4 @@
-import type { MissionOption, RangeRay, RoomView, Vec3 } from "./models";
+import type { MissionOption, MissionPreview, RangeRay, RoomView, Vec3 } from "./models";
 
 export type ScenePoint = readonly [number, number, number];
 
@@ -45,10 +45,28 @@ export function missionPlan(
   room: RoomView | undefined,
 ): Vec3[] {
   if (!mission || !room?.home) return [];
-  const home = room.home;
+  return plannedPathFromCommands(room.home, mission.plannedCommands);
+}
+
+export function missionPreviewPaths(preview: MissionPreview | undefined): Record<string, Vec3[]> {
+  if (!preview) return {};
+  return Object.fromEntries(
+    preview.vehicles.map((vehicle) => [
+      vehicle.vehicleId,
+      vehicle.initialRole === "ACTIVE"
+        ? plannedPathFromCommands(vehicle.start, vehicle.plannedCommands)
+        : [vehicle.start],
+    ]),
+  );
+}
+
+export function plannedPathFromCommands(
+  home: Vec3,
+  commands: MissionOption["plannedCommands"],
+): Vec3[] {
   const path: Vec3[] = [home];
   let current = home;
-  for (const command of mission.plannedCommands) {
+  for (const command of commands) {
     if (command.action === "takeoff") {
       const height = finiteArgument(command.arguments.height_m);
       if (height === undefined) continue;

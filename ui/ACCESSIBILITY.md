@@ -15,15 +15,15 @@ tablet sizes. Phone-sized manual control remains explicitly out of scope.
 - ESLint includes React hooks and JSX accessibility rules.
 
 `axe-core` color contrast is disabled under jsdom because jsdom does not provide
-the canvas color parser it requires. The redesigned interface uses the following
-monochrome tokens on `#090909`:
+the canvas color parser it requires. The simulation-first interface uses the
+following primary text tokens on `#07090b`:
 
 | Token | Ratio |
 | --- | ---: |
-| Primary text `#f4f4f1` | 17.9:1 |
-| Secondary text `#b9b9b2` | 9.8:1 |
-| Muted text `#777772` | 4.3:1 |
-| Emergency text `#ff4d4d` | 5.7:1 |
+| Primary text `#f4f6f8` | 18.4:1 |
+| Secondary text `#a9b0b8` | 9.1:1 |
+| Muted text `#747d87` | 4.8:1 |
+| Emergency text `#ff5d68` | 6.7:1 |
 
 ## Interaction and non-color cues
 
@@ -40,8 +40,9 @@ monochrome tokens on `#090909`:
 
 - Desktop target: 1440 × 1000.
 - Tablet target: 1024 × 768, with the contextual inspector hidden when space is tight.
-- Below 800 px the setup and room stack vertically; phone-sized manual control
-  remains out of scope.
+- Below 900 px telemetry and mission setup use mutually exclusive bottom
+  sheets over the full-bleed room; phone-sized manual control remains out of
+  scope.
 
 The final browser screenshot pass could not be automated in this run because
 local-page inspection was denied by the browser security reviewer. The source,

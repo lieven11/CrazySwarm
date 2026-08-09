@@ -38,6 +38,9 @@ where = ["src"]
 addopts = "-ra --strict-markers"
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+  "live_isaac: requires an explicitly configured compatible local or cloud Isaac gateway",
+]
 
 [tool.ruff]
 line-length = 100
@@ -48,6 +51,11 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/crazyswarm_app/api/*.py" = ["B008"]
+# Uploaded mission fixtures intentionally retain observation values, bounded loop
+# variables, long literal predicates, and rejected imports so parser/evidence hashes test
+# the exact operator artifact rather than a lint-rewritten surrogate.
+"missions/qualification/*.py" = ["B007", "E501", "F841"]
+"missions/qualification/negative/*.py" = ["B007", "E501", "F401", "F841"]
 
 [tool.mypy]
 python_version = "3.13"

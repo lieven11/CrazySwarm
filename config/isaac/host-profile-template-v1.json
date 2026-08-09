@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "profile_id": "replace-with-qualified-host-profile-id",
+  "classification": "TEMPLATE_NOT_EVIDENCE",
+  "decision": "WAITING_FOR_COMPATIBLE_HOST",
+  "compatible": false,
+  "headless_gateway_authorized": false,
+  "host_kind": "LOCAL_OR_CLOUD_UNSELECTED",
+  "operating_system": "NOT_MEASURED",
+  "cpu": "NOT_MEASURED",
+  "system_ram_bytes": "NOT_MEASURED",
+  "gpu": "NOT_MEASURED",
+  "vram_bytes": "NOT_MEASURED",
+  "driver_version": "NOT_MEASURED",
+  "free_storage_bytes": "NOT_MEASURED",
+  "isaac_runtime_version": "NOT_PINNED",
+  "ros_distribution": "NOT_PINNED",
+  "network_path": "NOT_MEASURED",
+  "resource_and_thermal_results": "NOT_RUN",
+  "paid_cloud_approved": false
+}

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -9,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from crazyswarm_app.domain.models import Identifier, Vector3
 from crazyswarm_app.simulation.faults import FaultWindow
 from crazyswarm_app.simulation.models import SimulationConfig
+from crazyswarm_app.simulation.physics import PhysicsModelConfig
 
 
 class ObstacleConfig(BaseModel):
@@ -58,12 +60,68 @@ class ScenarioConfig(BaseModel):
     vehicles: tuple[VehicleSpawn, ...]
     faults: tuple[FaultWindow, ...] = ()
 
+    def canonical_payload(self) -> dict[str, Any]:
+        payload = self.model_dump(mode="python", exclude_none=False)
+        if self.simulation.physics.model_version != "1.0.0":
+            return payload
+        simulation = payload["simulation"]
+        simulation.pop("imu")
+        simulation.pop("flow")
+        simulation.pop("range_sensor")
+        for fault in payload["faults"]:
+            fault.pop("motor_index")
+            fault.pop("actuator_health_scale")
+        physics = simulation["physics"]
+        for field_name in (
+            "powertrain_model",
+            "actuator_command_semantics",
+            "rotor_layout",
+            "parameter_provenance",
+            "payload_position_body_m",
+            "payload_inertia_x_kg_m2",
+            "payload_inertia_y_kg_m2",
+            "payload_inertia_z_kg_m2",
+            "rotor_positions_body_m",
+            "rotor_thrust_axes_body",
+            "rotor_reaction_torque_signs",
+            "minimum_motor_thrust_n",
+            "motor_voltage_thrust_curve",
+            "motor_time_constant_scales",
+            "motor_thrust_scales",
+            "motor_current_scales",
+            "linear_drag_body_scale",
+            "quadratic_drag_body_n_s2_m2",
+            "ground_effect_strength",
+            "ground_effect_range_m",
+            "ground_effect_maximum_multiplier",
+            "battery_capacity_scale",
+            "battery_temperature_capacity_scale",
+            "battery_age_capacity_scale",
+            "battery_ocv_curve",
+            "battery_cutoff_persistence_s",
+            "battery_cutoff_recovery_hysteresis_v",
+            "battery_resistance_scale",
+            "battery_max_current_a",
+            "battery_compensation_enabled",
+            "battery_compensation_filter_time_constant_s",
+            "battery_compensation_minimum_voltage_v",
+        ):
+            physics.pop(field_name)
+        return payload
+
 
 def load_scenario(path: Path) -> ScenarioConfig:
     with path.open(encoding="utf-8") as scenario_file:
         raw = yaml.safe_load(scenario_file) or {}
     if not isinstance(raw, dict):
         raise ValueError("scenario configuration must be a mapping")
+    simulation = raw.get("simulation")
+    if simulation is None:
+        raw["simulation"] = {"physics": PhysicsModelConfig.legacy_v1().model_dump(mode="json")}
+    elif isinstance(simulation, dict) and "physics" not in simulation:
+        # Existing schema-v1 scenarios predate an explicit model discriminator. Preserve
+        # their v1 meaning instead of silently replaying them through the new v2 plant.
+        simulation["physics"] = PhysicsModelConfig.legacy_v1().model_dump(mode="json")
     return ScenarioConfig.model_validate(raw)
 
 

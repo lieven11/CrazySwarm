@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "budget_id": "three-vehicle-local-load-v1",
+  "iterations": 100,
+  "state_api_p95_ms": 100.0,
+  "replay_api_p95_ms": 100.0,
+  "storage_query_p95_ms": 50.0,
+  "maximum_state_payload_bytes": 500000,
+  "maximum_replay_payload_bytes": 5000000,
+  "maximum_remaining_tasks": 0,
+  "maximum_total_runtime_s": 30.0
+}

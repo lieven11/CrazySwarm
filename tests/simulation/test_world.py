@@ -34,6 +34,7 @@ def test_example_worlds_load() -> None:
     one = load_scenario(Path("config/worlds/one_drone.yaml"))
     three = load_scenario(Path("config/worlds/three_drone.yaml"))
     assert len(one.vehicles) == 1
+    assert one.world.obstacles == ()
     assert len(three.vehicles) == 3
 
 

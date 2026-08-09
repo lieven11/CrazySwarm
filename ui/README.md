@@ -5,26 +5,34 @@ It combines a safety-focused application shell with a truthful Three.js indoor
 observer. The browser is an operator client; flight policy and command validation
 remain in the Python backend.
 
-## Start the UI
+## Start the complete local application
+
+The normal operator setup is the persistent macOS user service, installed from
+the repository root:
 
 ```bash
-cd ui
-npm install
-npm run dev
+.venv/bin/crazyswarm-control dashboard-service install
 ```
 
-The development server normally uses `http://localhost:3000`; it selects the next
-available local port when 3000 is occupied.
+Open `http://localhost:3001`. This runs a production build with API/UI health
+supervision and persistent logs. For live-reloading foreground development use:
 
-Start the backend from the repository root in another terminal:
+```bash
+.venv/bin/crazyswarm-control dashboard --dev
+```
+
+Service builds are created outside the live asset tree and published as an
+immutable release. The running UI remains pinned to that release until the
+service restarts, so an overlapping test or production build cannot remove the
+hashed JavaScript and CSS files required by browser reloads. A failed build
+leaves the previously published release active.
+
+The API and its local credential are wired automatically. The API can still be
+started separately when developing only that layer:
 
 ```bash
 .venv/bin/crazyswarm-control serve
 ```
-
-Press **Connect** and enter the token printed by the backend. Credentials remain
-in browser session storage. Mission review, start, status polling, and controlled
-cancel are wired to the local API.
 
 ## Development routes
 

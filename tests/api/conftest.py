@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 from fastapi.testclient import TestClient
@@ -43,3 +44,42 @@ def auth_headers(
     if request_id is not None:
         headers.update({"X-Client-ID": client_id, "Idempotency-Key": request_id})
     return headers
+
+
+def approve_mission_plan(
+    client: TestClient,
+    mission_id: str,
+    request_id: str,
+    *,
+    vehicle_id: str | None = None,
+    client_id: str = "client-1",
+) -> dict[str, str]:
+    preview = client.get(
+        f"/api/v1/mission-files/{mission_id}/preview",
+        headers=auth_headers(client_id=client_id),
+    )
+    preview.raise_for_status()
+    preview_body = cast(dict[str, Any], preview.json())
+    plan = cast(dict[str, Any], preview_body["plan"])
+    acknowledgements = [
+        str(finding["code"])
+        for finding in cast(list[dict[str, Any]], plan["findings"])
+        if finding.get("requires_confirmation") is True
+    ]
+    body: dict[str, Any] = {
+        "expected_plan_sha256": preview_body["plan_sha256"],
+        "acknowledged_finding_codes": acknowledgements,
+    }
+    if vehicle_id is not None:
+        body["vehicle_id"] = vehicle_id
+    approved = client.post(
+        f"/api/v1/mission-files/{mission_id}/approve",
+        headers=auth_headers(request_id, client_id=client_id),
+        json=body,
+    )
+    approved.raise_for_status()
+    approval = cast(dict[str, str], approved.json())
+    return {
+        "approval_id": approval["approval_id"],
+        "expected_plan_sha256": approval["plan_sha256"],
+    }

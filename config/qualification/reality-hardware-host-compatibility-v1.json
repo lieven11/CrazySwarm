@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "record_id": "reality-hardware-host-compatibility-v1-2026-08-06",
+  "classification": "HOST_SOFTWARE_OBSERVED_HARDWARE_FIRMWARE_UNQUALIFIED",
+  "radio_or_hardware_accessed": false,
+  "host": {
+    "operating_system": "macOS 26.4.1 build 25E253",
+    "kernel": "Darwin 25.4.0 arm64",
+    "python": "CPython 3.13.2"
+  },
+  "packages": {
+    "cflib": {
+      "expected_version": "0.1.32",
+      "observed_version": "0.1.32",
+      "installed_record_sha256": "1ad2a4702d34e701ae062cbfa2d603e1ccb2012ce11464cd13620841108b64b0",
+      "status": "SOFTWARE_PIN_MATCH"
+    },
+    "cfclient": {
+      "expected_version": "2026.4",
+      "observed_version": "2026.4",
+      "status": "SOFTWARE_PIN_MATCH_NOT_EXECUTED"
+    },
+    "numpy": "2.5.1",
+    "libusb-package": "1.0.30.0",
+    "pyusb": "1.3.1"
+  },
+  "adapter_artifacts": {
+    "src/crazyswarm_app/vehicles/crazyflie.py": "d3e8684a137a4dfcdee3c9e07f55fa06d5e3227083c758edd0c6aedbac3beeba",
+    "src/crazyswarm_app/vehicles/_cflib_link.py": "76c733729a37857aa131a27e2b7552ddd69bc9b7024e1687027aceba40ba4efc",
+    "config/qualification/reality-physical-plan-v1.json": "04e950f5d2dea29a909bdc6639290b42caa6f95f1a9311737415bf7c742d12b1"
+  },
+  "exact_aircraft": {
+    "crazyflie_2_1_plus_identity": "CONFIGURED_UNQUALIFIED",
+    "stm32_firmware_version_and_sha256": "CONFIGURED_UNQUALIFIED",
+    "nrf_firmware_version_and_sha256": "CONFIGURED_UNQUALIFIED",
+    "controller_and_parameters": "CONFIGURED_UNQUALIFIED",
+    "estimator_and_parameters": "CONFIGURED_UNQUALIFIED",
+    "crazyradio_identity_and_firmware": "CONFIGURED_UNQUALIFIED",
+    "flow2_revision_and_self_test": "CONFIGURED_UNQUALIFIED",
+    "multiranger_revision_and_self_test": "CONFIGURED_UNQUALIFIED"
+  },
+  "compatibility_decision": "HOST_SOFTWARE_READY_FOR_ONSITE_WP04_BENCH_OBSERVATION_ONLY"
+}

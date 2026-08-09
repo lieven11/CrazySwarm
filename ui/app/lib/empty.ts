@@ -7,5 +7,6 @@ export function createEmptyDashboard(): DashboardModel {
     vehicles: [],
     missions: [],
     twins: [],
+    fleetSessions: [],
   };
 }

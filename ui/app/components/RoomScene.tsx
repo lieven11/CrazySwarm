@@ -2,6 +2,7 @@
 
 import {
   AmbientLight,
+  Box3,
   BoxGeometry,
   BufferGeometry,
   CircleGeometry,
@@ -9,6 +10,7 @@ import {
   CylinderGeometry,
   DirectionalLight,
   DoubleSide,
+  DynamicDrawUsage,
   EdgesGeometry,
   Euler,
   GridHelper,
@@ -17,6 +19,7 @@ import {
   LineBasicMaterial,
   LineDashedMaterial,
   LineSegments,
+  Float32BufferAttribute,
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
@@ -32,9 +35,9 @@ import {
   WebGLRenderer,
 } from "three";
 import { useEffect, useRef, useState } from "react";
-import { Crosshair, Eye, Layers3, ScanLine, ZoomIn, ZoomOut } from "lucide-react";
+import { Camera, Crosshair, Eye, Layers3, LoaderCircle, ScanLine, ZoomIn, ZoomOut } from "lucide-react";
 import type { DashboardModel, MissionPreview, Provenance, RoomView, Vec3, VehicleView } from "../lib/models";
-import { SourceTimePlaybackBuffer } from "../lib/playback";
+import { SourceTimePlaybackBuffer, type RenderedDisplayState } from "../lib/playback";
 import { rangeEndpoint, worldToScene } from "../lib/spatial";
 
 type CameraPreset = "perspective" | "top" | "side";
@@ -43,6 +46,10 @@ type SceneMotion = {
   targetPosition: Vector3;
   orientation: Quaternion;
   targetOrientation: Quaternion;
+  object: Group;
+  followers: Object3D[];
+  vehicleId?: string;
+  visualRole?: string;
 };
 
 const VISUAL_SMOOTHING_TIME_MS = 60;
@@ -53,6 +60,10 @@ const ZOOM_RATE = 0.002;
 const TARGET_DOME_RADIUS_M = 0.045;
 const HOME_PAD_SURFACE_M = 0.018;
 const LANDED_DRONE_VISUAL_HEIGHT_M = 0.07;
+const ROOM_BOUNDARY_COLOR = 0x89cff0;
+const SNAPSHOT_MAX_WIDTH_PX = 1_920;
+const SNAPSHOT_MAX_HEIGHT_PX = 1_080;
+const SNAPSHOT_TARGET_BYTES = 950_000;
 
 export interface HomeBaseView {
   vehicleId: string;
@@ -74,6 +85,90 @@ export interface BrowserDisplayTiming {
   coalescedSamples: number;
 }
 
+export interface SceneSnapshotCapture {
+  blob: Blob;
+  widthPx: number;
+  heightPx: number;
+  reviewFrame?: SceneReviewFrame;
+}
+
+export interface SceneReviewFrame {
+  sourceTimestampS: number;
+  sourceClockId: string;
+  sourceClockEpoch: number;
+  sourceSequence: number;
+  correlationId: string;
+  estimateSourceTimestampS: number;
+  truthSourceTimestampS?: number;
+  desiredSourceTimestampS?: number;
+  playbackBufferAgeS: number;
+  interpolationState: "EXACT" | "INTERPOLATED" | "FROZEN" | "UNAVAILABLE";
+  sourceRows: Array<{
+    correlationId: string;
+    sequence: number;
+    sourceTimestampS: number;
+    sourceClockId: string;
+    sourceClockEpoch: number;
+  }>;
+  sameTimeTruthEstimateErrorM?: number;
+  bufferInducedEstimateDisplacementM: number;
+}
+
+export function snapshotCaptureDimensions(
+  sourceWidth: number,
+  sourceHeight: number,
+  maximumWidth = SNAPSHOT_MAX_WIDTH_PX,
+  maximumHeight = SNAPSHOT_MAX_HEIGHT_PX,
+): { width: number; height: number } {
+  if (sourceWidth <= 0 || sourceHeight <= 0) return { width: 0, height: 0 };
+  const scale = Math.min(1, maximumWidth / sourceWidth, maximumHeight / sourceHeight);
+  return {
+    width: Math.max(1, Math.round(sourceWidth * scale)),
+    height: Math.max(1, Math.round(sourceHeight * scale)),
+  };
+}
+
+async function encodeSceneSnapshot(canvas: HTMLCanvasElement): Promise<SceneSnapshotCapture> {
+  const dimensions = snapshotCaptureDimensions(canvas.width, canvas.height);
+  if (!dimensions.width || !dimensions.height) throw new Error("The scene is not ready to capture");
+  const output = canvas.ownerDocument.createElement("canvas");
+  output.width = dimensions.width;
+  output.height = dimensions.height;
+  const context = output.getContext("2d", { alpha: false });
+  if (!context) throw new Error("Scene snapshot encoding is unavailable");
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+  context.drawImage(canvas, 0, 0, dimensions.width, dimensions.height);
+  const encode = (type: "image/webp" | "image/jpeg", quality: number) => new Promise<Blob | null>(
+    (resolve) => output.toBlob(resolve, type, quality),
+  );
+  const blob = await encodeSceneSnapshotBlob(encode);
+  return { blob, widthPx: dimensions.width, heightPx: dimensions.height };
+}
+
+export async function encodeSceneSnapshotBlob(
+  encode: (type: "image/webp" | "image/jpeg", quality: number) => Promise<Blob | null>,
+): Promise<Blob> {
+  for (const quality of [0.92, 0.86, 0.8]) {
+    const webp = await encode("image/webp", quality);
+    // Browsers that do not implement WebP canvas encoding are allowed to return
+    // a PNG Blob instead of null. Move directly to the universally supported
+    // JPEG path rather than storing an unexpectedly large PNG.
+    if (normalizedImageType(webp) !== "image/webp") break;
+    if (webp!.size <= SNAPSHOT_TARGET_BYTES) return webp!;
+  }
+  for (const quality of [0.94, 0.88, 0.82]) {
+    const jpeg = await encode("image/jpeg", quality);
+    if (normalizedImageType(jpeg) !== "image/jpeg") break;
+    if (jpeg!.size <= SNAPSHOT_TARGET_BYTES) return jpeg!;
+  }
+  throw new Error("This browser could not encode the scene as WebP or JPEG");
+}
+
+function normalizedImageType(blob: Blob | null): string | undefined {
+  return blob?.type.split(";", 1)[0]?.trim().toLowerCase();
+}
+
 export function RoomScene({
   model,
   plannedPath,
@@ -83,6 +178,8 @@ export function RoomScene({
   selectedVehicleIds,
   onVehicleSelectionChange,
   onDisplayTiming,
+  onSceneCapture,
+  onSceneCaptureError,
 }: {
   model: DashboardModel;
   plannedPath: ScenePathSet;
@@ -92,6 +189,8 @@ export function RoomScene({
   selectedVehicleIds?: string[];
   onVehicleSelectionChange?: (vehicleId?: string) => void;
   onDisplayTiming?: (event: BrowserDisplayTiming) => void;
+  onSceneCapture?: (capture: SceneSnapshotCapture) => Promise<void>;
+  onSceneCaptureError?: (message: string) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cameraRef = useRef<PerspectiveCamera | null>(null);
@@ -109,10 +208,13 @@ export function RoomScene({
   const onDisplayTimingRef = useRef(onDisplayTiming);
   const motionRef = useRef(new Map<string, SceneMotion>());
   const playbackRef = useRef(new Map<string, SourceTimePlaybackBuffer>());
+  const reviewFrameRef = useRef<SceneReviewFrame | undefined>(undefined);
+  const lastTimingReportMsRef = useRef(-Infinity);
   const displayHealthRef = useRef<HTMLDivElement>(null);
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("perspective");
   const [layers, setLayers] = useState({ sensors: true, trace: true, plan: true, truth: true });
   const [layersOpen, setLayersOpen] = useState(false);
+  const [captureBusy, setCaptureBusy] = useState(false);
   onVehicleSelectionChangeRef.current = onVehicleSelectionChange;
   onDisplayTimingRef.current = onDisplayTiming;
   const selectedVehicles = model.vehicles.filter((vehicle) => vehicle.selected);
@@ -215,14 +317,20 @@ export function RoomScene({
     };
     window.addEventListener("resize", resize);
     let frameCount = 0;
+    let longFrameCount = 0;
+    let maximumFrameMs = 0;
     let frameWindowStartedMs: number | undefined;
     let previousFrameTimestampMs: number | undefined;
     let frame = requestAnimationFrame(function render(timestampMs) {
       if (sceneRef.current) {
-        const deltaMs = previousFrameTimestampMs === undefined
+        const rawDeltaMs = previousFrameTimestampMs === undefined
           ? 0
-          : Math.min(timestampMs - previousFrameTimestampMs, MAX_FRAME_DELTA_MS);
-        animateSceneMotion(sceneRef.current, motions, deltaMs);
+          : timestampMs - previousFrameTimestampMs;
+        const deltaMs = Math.min(rawDeltaMs, MAX_FRAME_DELTA_MS);
+        maximumFrameMs = Math.max(maximumFrameMs, rawDeltaMs);
+        if (rawDeltaMs > MAX_FRAME_DELTA_MS) longFrameCount += 1;
+        updateBufferedMotionTargets(motions, playbackRef.current, timestampMs / 1_000);
+        animateSceneMotion(motions, deltaMs);
         const selectedMotionKey = selectedMotionKeyRef.current;
         const selectedMotion = selectedMotionKey ? motions.get(selectedMotionKey) : undefined;
         if (selectedMotion && cameraPresetRef.current === "perspective") {
@@ -237,9 +345,15 @@ export function RoomScene({
       const elapsedMs = timestampMs - frameWindowStartedMs;
       if (elapsedMs >= 1_000) {
         canvas.dataset.renderFps = (frameCount * 1_000 / elapsedMs).toFixed(1);
+        canvas.dataset.maximumFrameMs = maximumFrameMs.toFixed(1);
+        canvas.dataset.longFrames = String(longFrameCount);
+        canvas.dataset.drawCalls = String(renderer.info.render.calls);
+        canvas.dataset.geometries = String(renderer.info.memory.geometries);
         const memory = (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory;
         if (memory) canvas.dataset.heapMib = (memory.usedJSHeapSize / 1_048_576).toFixed(1);
         frameCount = 0;
+        longFrameCount = 0;
+        maximumFrameMs = 0;
         frameWindowStartedMs = timestampMs;
       }
       frame = requestAnimationFrame(render);
@@ -288,7 +402,48 @@ export function RoomScene({
     const scene = sceneRef.current;
     if (!canvas || !scene) return;
     const display = sourceBufferedVehicles(model.vehicles, playbackRef.current);
-    for (const timing of display.timings) {
+    const preferredTiming = display.timings.find((item) => item.vehicleId === selected?.id)
+      ?? display.timings[0];
+    reviewFrameRef.current = preferredTiming
+      ? {
+          sourceTimestampS: preferredTiming.rendered?.sourceTimestampS
+            ?? preferredTiming.sample.sourceTimestampS,
+          sourceClockId: preferredTiming.sample.sourceClockId,
+          sourceClockEpoch: preferredTiming.sample.sourceClockEpoch,
+          sourceSequence: preferredTiming.rendered?.sourceRows[0]?.sequence
+            ?? preferredTiming.sample.sequence,
+          correlationId: preferredTiming.rendered?.sourceRows[0]?.correlationId
+            ?? preferredTiming.sample.correlationId,
+          estimateSourceTimestampS: preferredTiming.rendered?.sourceTimestampS
+            ?? preferredTiming.sample.sourceTimestampS,
+          truthSourceTimestampS: preferredTiming.rendered?.truthPosition
+            ? preferredTiming.rendered.sourceTimestampS
+            : undefined,
+          playbackBufferAgeS: preferredTiming.diagnostics.playbackBufferAgeS,
+          interpolationState: preferredTiming.rendered?.interpolationState ?? "UNAVAILABLE",
+          sourceRows: preferredTiming.rendered?.sourceRows ?? [{
+            correlationId: preferredTiming.sample.correlationId,
+            sequence: preferredTiming.sample.sequence,
+            sourceTimestampS: preferredTiming.sample.sourceTimestampS,
+            sourceClockId: preferredTiming.sample.sourceClockId,
+            sourceClockEpoch: preferredTiming.sample.sourceClockEpoch,
+          }],
+          sameTimeTruthEstimateErrorM: preferredTiming.rendered?.truthPosition
+            ? Math.hypot(
+                preferredTiming.rendered.position.x - preferredTiming.rendered.truthPosition.x,
+                preferredTiming.rendered.position.y - preferredTiming.rendered.truthPosition.y,
+                preferredTiming.rendered.position.z - preferredTiming.rendered.truthPosition.z,
+              )
+            : undefined,
+          bufferInducedEstimateDisplacementM:
+            preferredTiming.rendered?.bufferInducedEstimateDisplacementM ?? 0,
+        }
+      : undefined;
+    const timingNowMs = performance.now();
+    const reportTimings = Boolean(onDisplayTimingRef.current)
+      && timingNowMs - lastTimingReportMsRef.current >= 1_000;
+    if (reportTimings) lastTimingReportMsRef.current = timingNowMs;
+    for (const timing of reportTimings ? display.timings : []) {
       const common = {
         correlationId: timing.sample.correlationId,
         sourceTimestampS: timing.sample.sourceTimestampS,
@@ -356,7 +511,7 @@ export function RoomScene({
     if (renderer && camera) {
       applyPreset(camera, cameraPresetRef.current, orbitRef.current, orbitTargetRef.current);
       renderer.render(scene, camera);
-      for (const timing of display.timings) {
+      for (const timing of reportTimings ? display.timings : []) {
         onDisplayTimingRef.current?.({
           correlationId: timing.sample.correlationId,
           stage: "RENDER_FRAME",
@@ -370,7 +525,7 @@ export function RoomScene({
         });
       }
     }
-  }, [model.mode, model.selectedVehicleId, model.vehicles, historicalPath, sensorsVisible, traceVisible, truthVisible, missionPreview, selectedVehicleIds, staticSceneSignature]);
+  }, [model.mode, model.selectedVehicleId, model.vehicles, historicalPath, sensorsVisible, traceVisible, truthVisible, missionPreview, selected?.id, selectedVehicleIds, staticSceneSignature]);
 
   if (!model.room) {
     return <div className="room-empty"><Layers3 size={24} /><strong>No room</strong></div>;
@@ -390,6 +545,63 @@ export function RoomScene({
     cameraPresetRef.current = "perspective";
     setCameraPreset("perspective");
     if (cameraRef.current) applyOrbit(cameraRef.current, orbitRef.current, orbitTargetRef.current);
+  };
+  const captureScene = async () => {
+    const canvas = canvasRef.current;
+    const renderer = rendererRef.current;
+    const scene = sceneRef.current;
+    const camera = cameraRef.current;
+    if (!canvas || !renderer || !scene || !camera || !onSceneCapture || captureBusy) return;
+    setCaptureBusy(true);
+    const captureStartedMs = performance.now();
+    try {
+      // Capture from a stable evidence camera rather than the operator's current
+      // orbit. Plan, trace, and truth stay mounted between live updates, so capture
+      // only changes their visibility for one render instead of rebuilding the scene.
+      const dimensions = snapshotCaptureDimensions(canvas.width, canvas.height);
+      const snapshotCamera = neutralSnapshotCamera(
+        model.room!,
+        dimensions.width / dimensions.height,
+        [
+          ...scenePathPoints(plannedPath),
+          ...scenePathPoints(historicalPath),
+          ...model.vehicles.flatMap((vehicle) => [
+            vehicle.telemetry?.estimate,
+            vehicle.telemetry?.simulatedTruth,
+          ].filter((point): point is Vec3 => Boolean(point))),
+          ...(homeBases?.map((base) => base.position) ?? []),
+          ...(missionPreview?.vehicles.map((vehicle) => vehicle.start) ?? []),
+        ],
+      );
+      const priorVisibility: [Object3D, boolean][] = [];
+      scene.traverse((object) => {
+        const layer = object.userData.sceneLayer;
+        const role = object.userData.visualRole;
+        if (layer !== "plan" && layer !== "trace"
+          && role !== "simulator-truth" && role !== "modeled-range") return;
+        priorVisibility.push([object, object.visible]);
+        object.visible = role !== "modeled-range";
+      });
+      let encoded: Promise<SceneSnapshotCapture>;
+      try {
+        renderer.render(scene, snapshotCamera);
+        // The canvas copy inside encodeSceneSnapshot happens synchronously before
+        // image compression yields, so the live view can be restored immediately.
+        encoded = encodeSceneSnapshot(canvas);
+      } finally {
+        for (const [object, visible] of priorVisibility) object.visible = visible;
+        renderer.render(scene, camera);
+        canvas.dataset.lastSnapshotBlockingMs = (performance.now() - captureStartedMs).toFixed(1);
+      }
+      const capture = await encoded;
+      canvas.dataset.lastSnapshotEncodeMs = (performance.now() - captureStartedMs).toFixed(1);
+      await onSceneCapture({ ...capture, reviewFrame: reviewFrameRef.current });
+      canvas.dataset.lastSnapshotTotalMs = (performance.now() - captureStartedMs).toFixed(1);
+    } catch (error) {
+      onSceneCaptureError?.(error instanceof Error ? error.message : "Scene snapshot failed");
+    } finally {
+      setCaptureBusy(false);
+    }
   };
 
   return (
@@ -422,6 +634,15 @@ export function RoomScene({
           <div className="room-no-observation"><CircleDotIcon /><strong>NO DATA</strong></div>
         ) : null}
         <div ref={displayHealthRef} className="room-display-health" hidden aria-live="polite" />
+        {onSceneCapture ? (
+          <button
+            className="scene-snapshot-button"
+            type="button"
+            aria-label={captureBusy ? "Capturing campaign snapshot" : "Capture campaign snapshot"}
+            disabled={captureBusy}
+            onClick={() => void captureScene()}
+          >{captureBusy ? <LoaderCircle className="spin" size={18} /> : <Camera size={18} />}</button>
+        ) : null}
       </div>
       <div className="scene-controls" aria-label="3D room controls">
         <div className="segmented">
@@ -447,20 +668,24 @@ export function RoomScene({
   );
 }
 
-function sourceBufferedVehicles(
+export function sourceBufferedVehicles(
   vehicles: VehicleView[],
   buffers: Map<string, SourceTimePlaybackBuffer>,
 ): {
   vehicles: VehicleView[];
   health: "BUFFERING" | "CURRENT" | "DISPLAY_DELAYED";
   timings: {
+    vehicleId: string;
     sample: Parameters<SourceTimePlaybackBuffer["push"]>[0];
+    rendered?: RenderedDisplayState;
     diagnostics: ReturnType<SourceTimePlaybackBuffer["diagnostics"]>;
   }[];
 } {
   const health: ("BUFFERING" | "CURRENT" | "DISPLAY_DELAYED")[] = [];
   const timings: {
+    vehicleId: string;
     sample: Parameters<SourceTimePlaybackBuffer["push"]>[0];
+    rendered?: RenderedDisplayState;
     diagnostics: ReturnType<SourceTimePlaybackBuffer["diagnostics"]>;
   }[] = [];
   const displayVehicles = vehicles.map((vehicle) => {
@@ -469,6 +694,15 @@ function sourceBufferedVehicles(
     const provenance = telemetry?.provenance;
     const sourceTimestampS = provenance?.simulationTimeS ?? provenance?.sourceTimeS;
     if (!telemetry || !position || !provenance || sourceTimestampS === undefined) return vehicle;
+    // A disconnected simulator is stationary and may publish a reset pose at the
+    // same source-clock timestamp as its final run sample. Rendering that through
+    // the interpolation buffer would keep the old estimate frozen while the raw
+    // truth pose moved home, producing two drones. Show the authoritative reset
+    // sample immediately and start with a fresh buffer on the next active run.
+    if (vehicle.state === "DISCONNECTED") {
+      buffers.delete(vehicle.id);
+      return vehicle;
+    }
     const buffer = buffers.get(vehicle.id) ?? new SourceTimePlaybackBuffer();
     buffers.set(vehicle.id, buffer);
     const attitude = telemetry.attitude ?? { rollRad: 0, pitchRad: 0, yawRad: telemetry.yawRad ?? 0 };
@@ -484,12 +718,13 @@ function sourceBufferedVehicles(
       sourceClockEpoch: provenance.sourceClockEpoch ?? 0,
       receivedMonotonicS: performance.now() / 1_000,
       position,
+      truthPosition: telemetry.simulatedTruth,
       orientation: { w: orientation.w, x: orientation.x, y: orientation.y, z: orientation.z },
     };
     buffer.push(sample);
     const rendered = buffer.render();
     const diagnostics = buffer.diagnostics();
-    timings.push({ sample, diagnostics });
+    timings.push({ vehicleId: vehicle.id, sample, rendered, diagnostics });
     health.push(diagnostics.health);
     if (!rendered) return { ...vehicle, telemetry: { ...telemetry, estimate: undefined } };
     const renderedEuler = new Euler().setFromQuaternion(
@@ -506,6 +741,7 @@ function sourceBufferedVehicles(
       telemetry: {
         ...telemetry,
         estimate: rendered.position,
+        simulatedTruth: rendered.truthPosition,
         attitude: {
           rollRad: renderedEuler.x,
           pitchRad: renderedEuler.y,
@@ -573,16 +809,17 @@ export function buildStaticScene(
   grid.position.y = 0.006;
   scene.add(grid);
   const bounds = new BoxGeometry(room.widthM, room.heightM, room.depthM);
-  const edges = new LineSegments(new EdgesGeometry(bounds), new LineBasicMaterial({ color: 0x444444, transparent: true, opacity: 0.66 }));
+  const edges = new LineSegments(new EdgesGeometry(bounds), new LineBasicMaterial({ color: ROOM_BOUNDARY_COLOR, transparent: true, opacity: 0.5 }));
   edges.position.y = room.heightM / 2;
+  edges.userData.visualRole = "room-boundary";
   scene.add(edges);
   if (room.geofence) {
     const minimum = room.geofence.minimum;
     const maximum = room.geofence.maximum;
     const geometry = new BoxGeometry(maximum.x - minimum.x, maximum.z - minimum.z, maximum.y - minimum.y);
-    const fence = new LineSegments(new EdgesGeometry(geometry), new LineDashedMaterial({ color: 0xe9ecf0, dashSize: 0.07, gapSize: 0.06, transparent: true, opacity: 0.42 }));
+    const fence = new LineSegments(new EdgesGeometry(geometry), new LineBasicMaterial({ color: ROOM_BOUNDARY_COLOR, transparent: true, opacity: 0.82 }));
     fence.position.set((minimum.x + maximum.x) / 2, (minimum.z + maximum.z) / 2, (minimum.y + maximum.y) / 2);
-    fence.computeLineDistances();
+    fence.userData.visualRole = "flight-boundary";
     scene.add(fence);
   }
   const bases = homeBases?.length
@@ -596,12 +833,18 @@ export function buildStaticScene(
   const plans = legacyPlan
     ? [["selected", plannedPath] as const]
     : Object.entries(plannedPath);
-  if (planVisible) {
-    plans.forEach(([vehicleId, points]) => {
-      addPath(scene, points, 0xe9ecf0, true, legacyPlan ? "planned" : `planned-${vehicleId}`);
-      if (points.length) addTarget(scene, points.at(-1)!);
-    });
-  }
+  plans.forEach(([vehicleId, points]) => {
+    const path = addPath(scene, points, 0xe9ecf0, true, legacyPlan ? "planned" : `planned-${vehicleId}`);
+    if (path) {
+      path.userData.sceneLayer = "plan";
+      path.visible = planVisible;
+    }
+    if (points.length) {
+      const target = addTarget(scene, points.at(-1)!);
+      target.userData.sceneLayer = "plan";
+      target.visible = planVisible;
+    }
+  });
   return scene;
 }
 
@@ -614,62 +857,108 @@ export function syncDynamicScene(
   missionPreview?: MissionPreview,
   selectedVehicleIds?: string[],
 ) {
-  clearSceneLayers(scene, "dynamic", "trace");
+  const activeSyncKeys = new Set<string>();
   const selectedIds = new Set(
     selectedVehicleIds
       ?? vehicles.filter((vehicle) => vehicle.selected).map((vehicle) => vehicle.id),
   );
-  if (layers.trace) {
-    const legacyHistory = Array.isArray(historicalPath);
-    const histories = legacyHistory
-      ? [["selected", historicalPath] as const]
-      : Object.entries(historicalPath);
-    const colors = [0x4cc9e8, 0xa78bfa, 0xf2c45e, 0x7ddf8a];
-    histories.forEach(([vehicleId, points], index) => {
-      const path = addPath(
-        scene,
-        points,
-        replay ? 0xa78bfa : colors[index % colors.length]!,
-        replay,
-        replay
-          ? legacyHistory ? "replay" : `replay-${vehicleId}`
-          : legacyHistory ? "received-estimate" : `received-estimate-${vehicleId}`,
-      );
-      if (path) path.userData.sceneLayer = "trace";
-    });
-  }
+  const legacyHistory = Array.isArray(historicalPath);
+  const histories = legacyHistory
+    ? [["selected", historicalPath] as const]
+    : Object.entries(historicalPath);
+  const colors = [0x4cc9e8, 0xa78bfa, 0xf2c45e, 0x7ddf8a];
+  histories.forEach(([vehicleId, points], index) => {
+    const syncKey = `trace:${replay ? "replay" : "live"}:${vehicleId}`;
+    const path = upsertPath(
+      scene,
+      syncKey,
+      points,
+      replay ? 0xa78bfa : colors[index % colors.length]!,
+      replay,
+      replay
+        ? legacyHistory ? "replay" : `replay-${vehicleId}`
+        : legacyHistory ? "received-estimate" : `received-estimate-${vehicleId}`,
+    );
+    if (!path) return;
+    activeSyncKeys.add(syncKey);
+    path.userData.sceneLayer = "trace";
+    path.visible = layers.trace;
+  });
   if (missionPreview) {
     missionPreview.vehicles.forEach((vehicle) => {
-      addVehicle(
+      const motionKey = previewMotionKey(missionPreview.missionId, vehicle.vehicleId);
+      const syncKey = `vehicle:${motionKey}`;
+      upsertVehicle(
         scene,
+        syncKey,
         vehicle.vehicleId,
-        previewMotionKey(missionPreview.missionId, vehicle.vehicleId),
+        motionKey,
         vehicle.start,
         undefined,
         selectedIds.has(vehicle.vehicleId),
         false,
       );
+      activeSyncKeys.add(syncKey);
     });
+    removeStaleSyncedObjects(scene, activeSyncKeys);
     return;
   }
   for (const vehicle of vehicles) {
     const data = vehicle.telemetry;
     if (!data?.estimate) continue;
     const observedMotionKey = vehicleMotionKey(vehicle, false);
-    addVehicle(scene, vehicle.id, observedMotionKey, data.estimate, data.attitude, vehicle.selected, false);
+    const observedSyncKey = `vehicle:${observedMotionKey}`;
+    upsertVehicle(
+      scene,
+      observedSyncKey,
+      vehicle.id,
+      observedMotionKey,
+      data.estimate,
+      data.attitude,
+      vehicle.selected,
+      false,
+    );
+    activeSyncKeys.add(observedSyncKey);
+    const yawRad = data.attitude?.yawRad ?? data.yawRad ?? 0;
+    const headingSyncKey = `heading:${observedMotionKey}`;
+    if (upsertPath(scene, headingSyncKey, [
+      data.estimate,
+      {
+        x: data.estimate.x + Math.cos(yawRad) * 0.25,
+        y: data.estimate.y + Math.sin(yawRad) * 0.25,
+        z: data.estimate.z,
+      },
+    ], 0x4cc9e8, false, "received-heading", observedMotionKey)) {
+      activeSyncKeys.add(headingSyncKey);
+    }
     if (data.velocity && Math.hypot(data.velocity.x, data.velocity.y, data.velocity.z) > 0.005) {
-      const velocityPath = addPath(scene, [data.estimate, {
+      const velocitySyncKey = `velocity:${observedMotionKey}`;
+      const velocityPath = upsertPath(scene, velocitySyncKey, [data.estimate, {
         x: data.estimate.x + data.velocity.x,
         y: data.estimate.y + data.velocity.y,
         z: data.estimate.z + data.velocity.z,
       }], 0x4cc9e8, false, "received-velocity", observedMotionKey);
-      if (velocityPath) velocityPath.userData.sceneLayer = "dynamic";
+      if (velocityPath) activeSyncKeys.add(velocitySyncKey);
     }
-    if (layers.truth && data.simulatedTruth) {
-      addVehicle(scene, vehicle.id, vehicleMotionKey(vehicle, true), data.simulatedTruth, data.attitude, false, true);
+    if (data.simulatedTruth) {
+      const truthMotionKey = vehicleMotionKey(vehicle, true);
+      const truthSyncKey = `vehicle:${truthMotionKey}`;
+      const truth = upsertVehicle(
+        scene,
+        truthSyncKey,
+        vehicle.id,
+        truthMotionKey,
+        data.simulatedTruth,
+        data.attitude,
+        false,
+        true,
+      );
+      truth.visible = layers.truth;
+      activeSyncKeys.add(truthSyncKey);
     }
-    if (layers.sensors && vehicle.selected) addRanges(scene, vehicle, observedMotionKey);
+    if (vehicle.selected) addRanges(scene, vehicle, observedMotionKey, layers.sensors, activeSyncKeys);
   }
+  removeStaleSyncedObjects(scene, activeSyncKeys);
 }
 
 function pathPointCount(value: ScenePathSet) {
@@ -750,8 +1039,9 @@ function addObstacle(scene: Scene, minimum: Vec3, maximum: Vec3) {
   scene.add(edges);
 }
 
-function addVehicle(
+function createVehicle(
   scene: Scene,
+  syncKey: string,
   vehicleId: string,
   motionKey: string,
   position: Vec3,
@@ -761,9 +1051,12 @@ function addVehicle(
 ) {
   const group = new Group();
   group.userData.sceneLayer = "dynamic";
+  group.userData.syncKey = syncKey;
   group.userData.visualRole = truth ? "simulator-truth" : "received-estimate";
   group.userData.vehicleId = vehicleId;
   group.userData.motionKey = motionKey;
+  group.userData.selected = selected;
+  group.userData.truth = truth;
   const color = truth ? 0xff7a45 : selected ? 0x4cc9e8 : 0xa3adb5;
   const material = new MeshStandardMaterial({ color, roughness: 0.32, metalness: 0.5, transparent: truth, opacity: truth ? 0.45 : 1, wireframe: truth });
   group.add(new Mesh(new SphereGeometry(0.07, 16, 10), material));
@@ -780,53 +1073,88 @@ function addVehicle(
     rotor.position.set(x, 0.035, z);
     group.add(rotor);
   }
+  setVehicleTransform(group, position, attitude);
+  scene.add(group);
+  return group;
+}
+
+function upsertVehicle(
+  scene: Scene,
+  syncKey: string,
+  vehicleId: string,
+  motionKey: string,
+  position: Vec3,
+  attitude: { rollRad: number; pitchRad: number; yawRad: number } | undefined,
+  selected: boolean,
+  truth: boolean,
+) {
+  const existing = syncedObject(scene, syncKey);
+  if (existing instanceof Group
+    && existing.userData.selected === selected
+    && existing.userData.truth === truth) {
+    existing.userData.motionKey = motionKey;
+    setVehicleTransform(existing, position, attitude);
+    return existing;
+  }
+  if (existing) removeAndDispose(scene, existing);
+  return createVehicle(scene, syncKey, vehicleId, motionKey, position, attitude, selected, truth);
+}
+
+function setVehicleTransform(
+  group: Group,
+  position: Vec3,
+  attitude: { rollRad: number; pitchRad: number; yawRad: number } | undefined,
+) {
   group.position.copy(toThree({
     ...position,
     z: Math.max(position.z, LANDED_DRONE_VISUAL_HEIGHT_M),
   }));
-  const rollRad = attitude?.rollRad ?? 0;
-  const pitchRad = attitude?.pitchRad ?? 0;
-  const yawRad = attitude?.yawRad ?? 0;
-  group.rotation.order = "YXZ";
-  group.rotation.set(-rollRad, -yawRad, pitchRad);
-  scene.add(group);
-  if (!truth) {
-    const headingPath = addPath(scene, [
-      position,
-      {
-        x: position.x + Math.cos(yawRad) * 0.25,
-        y: position.y + Math.sin(yawRad) * 0.25,
-        z: position.z,
-      },
-    ], 0x4cc9e8, false, "received-heading", motionKey);
-    if (headingPath) headingPath.userData.sceneLayer = "dynamic";
-  }
+  group.quaternion.copy(sceneOrientation(attitude));
 }
 
-function addRanges(scene: Scene, vehicle: VehicleView, motionKey: string) {
+function sceneOrientation(attitude: { rollRad: number; pitchRad: number; yawRad: number } | undefined) {
+  return new Quaternion().setFromEuler(new Euler(
+    -(attitude?.rollRad ?? 0),
+    -(attitude?.yawRad ?? 0),
+    attitude?.pitchRad ?? 0,
+    "YXZ",
+  ));
+}
+
+function addRanges(
+  scene: Scene,
+  vehicle: VehicleView,
+  motionKey: string,
+  visible: boolean,
+  activeSyncKeys: Set<string>,
+) {
   const data = vehicle.telemetry;
   if (!data?.estimate) return;
-  const origin = toThree(data.estimate);
-  for (const ray of data.ranges) {
+  const estimate = data.estimate;
+  data.ranges.forEach((ray, index) => {
     const endpoint = rangeEndpoint(
-      data.estimate,
+      estimate,
       ray,
       data.yawRad ?? 0,
       data.attitude?.rollRad ?? 0,
       data.attitude?.pitchRad ?? 0,
     );
-    if (!endpoint) continue;
-    const geometry = new BufferGeometry().setFromPoints([origin, toThree(endpoint)]);
-    const material = ray.freshness === "current"
-      ? new LineBasicMaterial({ color: 0x4cc9e8, transparent: true, opacity: 0.62 })
-      : new LineDashedMaterial({ color: 0xf2c45e, dashSize: 0.05, gapSize: 0.05, transparent: true, opacity: 0.5 });
-    const line = new Line(geometry, material);
-    line.userData.sceneLayer = "dynamic";
-    line.userData.visualRole = "modeled-range";
-    line.userData.followMotionKey = motionKey;
-    if (material instanceof LineDashedMaterial) line.computeLineDistances();
-    scene.add(line);
-  }
+    if (!endpoint) return;
+    const syncKey = `range:${motionKey}:${ray.direction}:${index}:${ray.freshness}`;
+    const line = upsertPath(
+      scene,
+      syncKey,
+      [estimate, endpoint],
+      ray.freshness === "current" ? 0x4cc9e8 : 0xf2c45e,
+      ray.freshness !== "current",
+      "modeled-range",
+      motionKey,
+      ray.freshness === "current" ? 0.62 : 0.5,
+    );
+    if (!line) return;
+    line.visible = visible;
+    activeSyncKeys.add(syncKey);
+  });
 }
 
 function addPath(scene: Scene, points: Vec3[], color: number, dashed: boolean, role: string, followMotionKey?: string) {
@@ -839,6 +1167,85 @@ function addPath(scene: Scene, points: Vec3[], color: number, dashed: boolean, r
   if (dashed) line.computeLineDistances();
   scene.add(line);
   return line;
+}
+
+function upsertPath(
+  scene: Scene,
+  syncKey: string,
+  points: Vec3[],
+  color: number,
+  dashed: boolean,
+  role: string,
+  followMotionKey?: string,
+  opacity = dashed ? 0.7 : 0.9,
+) {
+  const existing = syncedObject(scene, syncKey);
+  if (points.length < 2) {
+    if (existing) removeAndDispose(scene, existing);
+    return undefined;
+  }
+  let line: Line;
+  if (existing instanceof Line && existing.userData.dashed === dashed) {
+    line = existing;
+  } else {
+    if (existing) removeAndDispose(scene, existing);
+    const material = dashed
+      ? new LineDashedMaterial({ color, dashSize: 0.08, gapSize: 0.07, transparent: true, opacity })
+      : new LineBasicMaterial({ color, transparent: true, opacity });
+    line = new Line(new BufferGeometry(), material);
+    line.userData.syncKey = syncKey;
+    line.userData.dashed = dashed;
+    line.userData.sceneLayer = "dynamic";
+    scene.add(line);
+  }
+  updateLineGeometry(line, points);
+  line.userData.visualRole = role;
+  line.userData.followMotionKey = followMotionKey;
+  const materials = Array.isArray(line.material) ? line.material : [line.material];
+  for (const material of materials) {
+    if (material instanceof LineBasicMaterial || material instanceof LineDashedMaterial) {
+      material.color.setHex(color);
+      material.opacity = opacity;
+    }
+  }
+  if (dashed) line.computeLineDistances();
+  return line;
+}
+
+function updateLineGeometry(line: Line, points: Vec3[]) {
+  const geometry = line.geometry;
+  let position = geometry.getAttribute("position");
+  if (!(position instanceof Float32BufferAttribute) || position.count < points.length) {
+    let capacity = 2;
+    while (capacity < points.length) capacity *= 2;
+    position = new Float32BufferAttribute(new Float32Array(capacity * 3), 3);
+    position.setUsage(DynamicDrawUsage);
+    geometry.setAttribute("position", position);
+  }
+  points.forEach((point, index) => {
+    const [x, y, z] = worldToScene(point);
+    position.setXYZ(index, x, y, z);
+  });
+  position.needsUpdate = true;
+  geometry.setDrawRange(0, points.length);
+  geometry.computeBoundingSphere();
+}
+
+function syncedObject(scene: Scene, syncKey: string) {
+  return scene.children.find((child) => child.userData.syncKey === syncKey);
+}
+
+function removeStaleSyncedObjects(scene: Scene, activeSyncKeys: Set<string>) {
+  for (const child of [...scene.children]) {
+    const syncKey = child.userData.syncKey;
+    if (typeof syncKey !== "string" || activeSyncKeys.has(syncKey)) continue;
+    removeAndDispose(scene, child);
+  }
+}
+
+function removeAndDispose(scene: Scene, object: Object3D) {
+  scene.remove(object);
+  disposeObjectTree(object);
 }
 
 function addTarget(scene: Scene, target: Vec3) {
@@ -860,6 +1267,7 @@ function addTarget(scene: Scene, target: Vec3) {
     z: target.z <= HOME_PAD_SURFACE_M ? HOME_PAD_SURFACE_M : target.z,
   }));
   scene.add(marker);
+  return marker;
 }
 
 function toThree(point: Vec3) { return new Vector3(...worldToScene(point)); }
@@ -887,12 +1295,22 @@ function bindSceneMotion(scene: Scene, motions: Map<string, SceneMotion>) {
     const targetPosition = object.position.clone();
     const targetOrientation = object.quaternion.clone();
     const existing = motions.get(motionKey);
-    const motion = existing ?? {
+    const motion: SceneMotion = existing ?? {
       position: targetPosition.clone(),
       targetPosition: targetPosition.clone(),
       orientation: targetOrientation.clone(),
       targetOrientation: targetOrientation.clone(),
+      object,
+      followers: [],
     };
+    motion.object = object;
+    motion.followers = [];
+    motion.vehicleId = typeof object.userData.vehicleId === "string"
+      ? object.userData.vehicleId
+      : undefined;
+    motion.visualRole = typeof object.userData.visualRole === "string"
+      ? object.userData.visualRole
+      : undefined;
     motion.targetPosition.copy(targetPosition);
     motion.targetOrientation.copy(targetOrientation);
     object.position.copy(motion.position);
@@ -902,35 +1320,61 @@ function bindSceneMotion(scene: Scene, motions: Map<string, SceneMotion>) {
   for (const key of motions.keys()) {
     if (!activeKeys.has(key)) motions.delete(key);
   }
-  positionMotionFollowers(scene, motions);
+  scene.traverse((object) => {
+    const motionKey = object.userData.followMotionKey;
+    if (typeof motionKey !== "string") return;
+    motions.get(motionKey)?.followers.push(object);
+  });
+  positionMotionFollowers(motions);
 }
 
-function animateSceneMotion(scene: Scene, motions: Map<string, SceneMotion>, deltaMs: number) {
+function updateBufferedMotionTargets(
+  motions: Map<string, SceneMotion>,
+  buffers: Map<string, SourceTimePlaybackBuffer>,
+  observedMonotonicS: number,
+) {
+  for (const motion of motions.values()) {
+    if (motion.visualRole !== "received-estimate" || !motion.vehicleId) continue;
+    const rendered = buffers.get(motion.vehicleId)?.render(observedMonotonicS);
+    if (!rendered) continue;
+    motion.targetPosition.copy(toThree({
+      ...rendered.position,
+      z: Math.max(rendered.position.z, LANDED_DRONE_VISUAL_HEIGHT_M),
+    }));
+    const attitude = new Euler().setFromQuaternion(new Quaternion(
+      rendered.orientation.x,
+      rendered.orientation.y,
+      rendered.orientation.z,
+      rendered.orientation.w,
+    ), "XYZ");
+    motion.targetOrientation.copy(sceneOrientation({
+      rollRad: attitude.x,
+      pitchRad: attitude.y,
+      yawRad: attitude.z,
+    }));
+  }
+}
+
+function animateSceneMotion(motions: Map<string, SceneMotion>, deltaMs: number) {
   const alpha = frameSmoothingAlpha(deltaMs);
   if (alpha <= 0) return;
-  scene.traverse((object) => {
-    const motionKey = object.userData.motionKey;
-    if (!(object instanceof Group) || typeof motionKey !== "string") return;
-    const motion = motions.get(motionKey);
-    if (!motion) return;
+  for (const motion of motions.values()) {
     motion.position.x += (motion.targetPosition.x - motion.position.x) * alpha;
     motion.position.y += (motion.targetPosition.y - motion.position.y) * alpha;
     motion.position.z += (motion.targetPosition.z - motion.position.z) * alpha;
     motion.orientation.slerp(motion.targetOrientation, alpha);
-    object.position.copy(motion.position);
-    object.quaternion.copy(motion.orientation);
-  });
-  positionMotionFollowers(scene, motions);
+    motion.object.position.copy(motion.position);
+    motion.object.quaternion.copy(motion.orientation);
+  }
+  positionMotionFollowers(motions);
 }
 
-function positionMotionFollowers(scene: Scene, motions: Map<string, SceneMotion>) {
-  scene.traverse((object) => {
-    const motionKey = object.userData.followMotionKey;
-    if (typeof motionKey !== "string") return;
-    const motion = motions.get(motionKey);
-    if (!motion) return;
-    object.position.copy(motion.position).sub(motion.targetPosition);
-  });
+function positionMotionFollowers(motions: Map<string, SceneMotion>) {
+  for (const motion of motions.values()) {
+    for (const follower of motion.followers) {
+      follower.position.copy(motion.position).sub(motion.targetPosition);
+    }
+  }
 }
 
 export function vehicleAtPointer(
@@ -984,6 +1428,90 @@ function applyOrbit(camera: PerspectiveCamera, orbit: { theta: number; phi: numb
   camera.lookAt(target);
 }
 
+export function neutralSnapshotCamera(
+  room: RoomView,
+  aspect: number,
+  focusPoints: Vec3[] = [],
+): PerspectiveCamera {
+  const safeAspect = Number.isFinite(aspect) && aspect > 0 ? aspect : 16 / 9;
+  const verticalFovDegrees = 42;
+  const verticalHalfFov = verticalFovDegrees * Math.PI / 360;
+  const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * safeAspect);
+  const points = focusPoints.length
+    ? focusPoints.map(toThree)
+    : roomSceneCorners(room);
+  const bounds = new Box3().setFromPoints(points);
+  const size = bounds.getSize(new Vector3());
+  const margin = Math.max(0.15, size.length() * 0.03);
+  bounds.expandByScalar(margin);
+  expandBoundsToMinimumSize(bounds, new Vector3(
+    Math.min(room.widthM, 0.6),
+    Math.min(room.heightM, 0.5),
+    Math.min(room.depthM, 0.6),
+  ));
+  const target = bounds.getCenter(new Vector3());
+  const corners = boxCorners(bounds);
+  const cornerDirection = new Vector3(1, 1, 1).normalize();
+  const forward = cornerDirection.clone().negate();
+  const right = new Vector3().crossVectors(forward, new Vector3(0, 1, 0)).normalize();
+  const cameraUp = new Vector3().crossVectors(right, forward).normalize();
+  const distance = corners.reduce((required, corner) => {
+    const offset = corner.clone().sub(target);
+    const towardCamera = offset.dot(cornerDirection);
+    return Math.max(
+      required,
+      towardCamera + Math.abs(offset.dot(right)) / Math.tan(horizontalHalfFov),
+      towardCamera + Math.abs(offset.dot(cameraUp)) / Math.tan(verticalHalfFov),
+    );
+  }, 0) * 1.02 + 0.03;
+  const captureRadius = corners.reduce(
+    (radius, corner) => Math.max(radius, corner.distanceTo(target)),
+    0.5,
+  );
+  const camera = new PerspectiveCamera(
+    verticalFovDegrees,
+    safeAspect,
+    0.05,
+    Math.max(100, distance + captureRadius * 4),
+  );
+  camera.position.copy(target).add(cornerDirection.multiplyScalar(distance));
+  camera.lookAt(target);
+  camera.updateProjectionMatrix();
+  camera.updateMatrixWorld(true);
+  return camera;
+}
+
+function scenePathPoints(paths: ScenePathSet): Vec3[] {
+  return Array.isArray(paths) ? paths : Object.values(paths).flat();
+}
+
+function roomSceneCorners(room: RoomView): Vector3[] {
+  return [-1, 1].flatMap((xSign) => [-1, 1].flatMap((depthSign) => [0, 1].map(
+    (heightSign) => new Vector3(
+      xSign * room.widthM / 2,
+      heightSign * room.heightM,
+      depthSign * room.depthM / 2,
+    ),
+  )));
+}
+
+function boxCorners(box: Box3): Vector3[] {
+  return [box.min.x, box.max.x].flatMap((x) => [box.min.y, box.max.y].flatMap((y) => (
+    [box.min.z, box.max.z].map((z) => new Vector3(x, y, z))
+  )));
+}
+
+function expandBoundsToMinimumSize(bounds: Box3, minimum: Vector3): void {
+  const center = bounds.getCenter(new Vector3());
+  const size = bounds.getSize(new Vector3());
+  const half = new Vector3(
+    Math.max(size.x, minimum.x) / 2,
+    Math.max(size.y, minimum.y) / 2,
+    Math.max(size.z, minimum.z) / 2,
+  );
+  bounds.set(center.clone().sub(half), center.clone().add(half));
+}
+
 export function zoomOrbitRadius(radius: number, wheelDelta: number) {
   const nextRadius = radius * Math.exp(wheelDelta * ZOOM_RATE);
   return Math.max(MIN_ORBIT_RADIUS_M, Math.min(MAX_ORBIT_RADIUS_M, nextRadius));
@@ -997,15 +1525,6 @@ function normalizedWheelDelta(event: WheelEvent, pageHeight: number) {
 
 export function disposeScene(scene: Scene) {
   disposeObjectTree(scene);
-}
-
-function clearSceneLayers(scene: Scene, ...layers: string[]) {
-  const layerSet = new Set(layers);
-  for (const child of [...scene.children]) {
-    if (!layerSet.has(String(child.userData.sceneLayer ?? ""))) continue;
-    scene.remove(child);
-    disposeObjectTree(child);
-  }
 }
 
 function disposeObjectTree(root: Object3D) {

@@ -77,6 +77,13 @@ class ObjectiveMetric(StrEnum):
     JERK_M_S3 = "JERK_M_S3"
     SEPARATION_ROBUSTNESS_M = "SEPARATION_ROBUSTNESS_M"
     BOUNDARY_ROBUSTNESS_M = "BOUNDARY_ROBUSTNESS_M"
+    PATH_FIDELITY_M = "PATH_FIDELITY_M"
+    REGION_CAPTURE_ERROR_M = "REGION_CAPTURE_ERROR_M"
+    INTEGRATED_SQUARED_ACCELERATION_M2_S3 = "INTEGRATED_SQUARED_ACCELERATION_M2_S3"
+    INTEGRATED_SQUARED_JERK_M2_S5 = "INTEGRATED_SQUARED_JERK_M2_S5"
+    ENERGY_RESERVE_PERCENT = "ENERGY_RESERVE_PERCENT"
+    AFFECTED_ROLE_COUNT = "AFFECTED_ROLE_COUNT"
+    CUTOVER_LATENCY_S = "CUTOVER_LATENCY_S"
 
 
 class MetricComparator(StrEnum):
@@ -94,6 +101,75 @@ class ReplanningAuthority(StrEnum):
     OPERATOR_APPROVAL_REQUIRED = "OPERATOR_APPROVAL_REQUIRED"
     AUTO_WITHIN_FROZEN_LIMITS = "AUTO_WITHIN_FROZEN_LIMITS"
     ABORT_ONLY = "ABORT_ONLY"
+
+
+class RouteNodeMode(StrEnum):
+    """The behavior required at an authored route node."""
+
+    FLY_THROUGH = "FLY_THROUGH"
+    CAPTURE = "CAPTURE"
+    CAPTURE_AND_HOLD = "CAPTURE_AND_HOLD"
+    REVERSAL = "REVERSAL"
+
+
+class ScenarioEventKind(StrEnum):
+    GOAL_UPDATE = "GOAL_UPDATE"
+    OBSTACLE_ADDED = "OBSTACLE_ADDED"
+    OBSTACLE_MOVED = "OBSTACLE_MOVED"
+    OBSTACLE_REMOVED = "OBSTACLE_REMOVED"
+    PASSAGE_CLOSED = "PASSAGE_CLOSED"
+    PASSAGE_OPENED = "PASSAGE_OPENED"
+    PEER_TRAJECTORY_UPDATED = "PEER_TRAJECTORY_UPDATED"
+    VEHICLE_DEGRADED = "VEHICLE_DEGRADED"
+    BATTERY_DROP = "BATTERY_DROP"
+    TELEMETRY_LOSS = "TELEMETRY_LOSS"
+    VEHICLE_LOSS = "VEHICLE_LOSS"
+    ASSIGNMENT_CONFLICT = "ASSIGNMENT_CONFLICT"
+    ACKNOWLEDGEMENT_LOSS = "ACKNOWLEDGEMENT_LOSS"
+    ABORT_REQUEST = "ABORT_REQUEST"
+
+
+class ScenarioExpectedDisposition(StrEnum):
+    ACCEPTED_UPDATE = "ACCEPTED_UPDATE"
+    REJECTED_DUPLICATE = "REJECTED_DUPLICATE"
+    REJECTED_STALE = "REJECTED_STALE"
+    REJECTED_AUTHORITY = "REJECTED_AUTHORITY"
+    BLOCKED_BUDGET = "BLOCKED_BUDGET"
+    BLOCKED_INFEASIBLE = "BLOCKED_INFEASIBLE"
+    SAFE_ROLE_RECOVERY = "SAFE_ROLE_RECOVERY"
+    REJECTED_ASSIGNMENT_CONFLICT = "REJECTED_ASSIGNMENT_CONFLICT"
+    ZERO_PARTIAL_COMMIT = "ZERO_PARTIAL_COMMIT"
+    RESERVE_HANDOVER = "RESERVE_HANDOVER"
+    COORDINATED_ABORT = "COORDINATED_ABORT"
+
+
+class BehaviorOracleKind(StrEnum):
+    ROUTE_NODES_CAPTURED = "ROUTE_NODES_CAPTURED"
+    HOLD_DURATION = "HOLD_DURATION"
+    NO_UNDECLARED_STOP = "NO_UNDECLARED_STOP"
+    ALTITUDE_TRANSITION = "ALTITUDE_TRANSITION"
+    CURVED_PATH = "CURVED_PATH"
+    CLOSED_SHAPE = "CLOSED_SHAPE"
+    DISTINCT_START_AND_LANDING = "DISTINCT_START_AND_LANDING"
+    SYNCHRONIZED_ROUTE_START = "SYNCHRONIZED_ROUTE_START"
+    MINIMUM_FLIGHT_OVERLAP = "MINIMUM_FLIGHT_OVERLAP"
+    FORMATION_ERROR = "FORMATION_ERROR"
+    CONFLICT_RESOLVED = "CONFLICT_RESOLVED"
+    BOUNDARY_MARGIN = "BOUNDARY_MARGIN"
+    KEEP_OUT_AVOIDED = "KEEP_OUT_AVOIDED"
+    NO_AIRBORNE_HOLD = "NO_AIRBORNE_HOLD"
+    PRIORITY_PRECEDENCE = "PRIORITY_PRECEDENCE"
+    CONSTRAINT_ENFORCED = "CONSTRAINT_ENFORCED"
+    UNAFFECTED_ROLE_NONINTERFERENCE = "UNAFFECTED_ROLE_NONINTERFERENCE"
+    EVENT_HANDLED = "EVENT_HANDLED"
+    ACCEPTED_EVENT_GOALS_CAPTURED = "ACCEPTED_EVENT_GOALS_CAPTURED"
+
+
+class OracleEvidenceSource(StrEnum):
+    AUTHORED_ROUTE = "AUTHORED_ROUTE"
+    PLANNER_PREDICTION = "PLANNER_PREDICTION"
+    EXECUTION_TELEMETRY = "EXECUTION_TELEMETRY"
+    EVENT_TRACE = "EVENT_TRACE"
 
 
 class SpatialPoint(ContractModel):
@@ -131,6 +207,135 @@ class Region3D(ContractModel):
             and self.minimum_m.y + margin_m <= point.y <= self.maximum_m.y - margin_m
             and self.minimum_m.z + margin_m <= point.z <= self.maximum_m.z - margin_m
         )
+
+
+class RouteNodeIntent(ContractModel):
+    region_id: Identifier
+    mode: RouteNodeMode
+    dwell_s: float = Field(default=0.0, ge=0.0, le=60.0)
+    capture_tolerance_m: float = Field(default=0.08, gt=0.0, le=0.50)
+
+    @model_validator(mode="after")
+    def hold_contract(self) -> RouteNodeIntent:
+        if self.mode is RouteNodeMode.CAPTURE_AND_HOLD and self.dwell_s <= 0.0:
+            raise ValueError("CAPTURE_AND_HOLD route nodes require positive dwell_s")
+        if self.mode is not RouteNodeMode.CAPTURE_AND_HOLD and self.dwell_s != 0.0:
+            raise ValueError("dwell_s is only valid for CAPTURE_AND_HOLD route nodes")
+        return self
+
+
+class EnvironmentConstraints(ContractModel):
+    keep_out_regions: tuple[Region3D, ...] = ()
+    required_corridors: tuple[Region3D, ...] = ()
+
+
+class CoordinationConstraints(ContractModel):
+    synchronized_route_start_required: bool = False
+    maximum_route_start_skew_s: float = Field(default=0.20, ge=0.0, le=10.0)
+    minimum_simultaneous_flight_s: float = Field(default=0.0, ge=0.0, le=120.0)
+    maximum_formation_error_m: float | None = Field(default=None, gt=0.0, le=2.0)
+    formation_offsets_m: dict[Identifier, Vector3] = Field(default_factory=dict)
+    formation_offsets_by_node_m: dict[Identifier, tuple[Vector3, ...]] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def formation_contract(self) -> CoordinationConstraints:
+        if self.maximum_formation_error_m is None and (
+            self.formation_offsets_m or self.formation_offsets_by_node_m
+        ):
+            raise ValueError("formation offsets require maximum_formation_error_m")
+        if self.formation_offsets_m and self.formation_offsets_by_node_m:
+            raise ValueError("use either fixed or per-node formation offsets, not both")
+        active_offsets = self.formation_offsets_m or self.formation_offsets_by_node_m
+        if self.maximum_formation_error_m is not None and len(active_offsets) < 2:
+            raise ValueError("formation error requires offsets for at least two roles")
+        node_lengths = {len(values) for values in self.formation_offsets_by_node_m.values()}
+        if len(node_lengths) > 1 or 0 in node_lengths:
+            raise ValueError("per-node formation offsets must have one shared positive length")
+        return self
+
+
+class ScenarioEvent(ContractModel):
+    event_id: Identifier
+    kind: ScenarioEventKind
+    trigger_time_s: float = Field(gt=0.0, le=120.0)
+    role_id: Identifier | None = None
+    replacement_goal: Region3D | None = None
+    battery_percent: float | None = Field(default=None, ge=0.0, le=100.0)
+    duration_s: float | None = Field(default=None, gt=0.0, le=60.0)
+    source_id: Identifier = "campaign-scenario"
+    sequence: int = Field(default=1, ge=1)
+    generation: int = Field(default=1, ge=1)
+    authenticated: bool = True
+    acknowledgement_required: bool = False
+    acknowledgement_received: bool = True
+    update_identity: Identifier | None = None
+    expected_disposition: ScenarioExpectedDisposition
+
+    @model_validator(mode="after")
+    def event_payload(self) -> ScenarioEvent:
+        region_kinds = {
+            ScenarioEventKind.GOAL_UPDATE,
+            ScenarioEventKind.OBSTACLE_ADDED,
+            ScenarioEventKind.OBSTACLE_MOVED,
+            ScenarioEventKind.PASSAGE_CLOSED,
+            ScenarioEventKind.PASSAGE_OPENED,
+        }
+        if self.kind in region_kinds and self.replacement_goal is None:
+            raise ValueError(f"{self.kind.value} requires a region payload")
+        if self.kind not in region_kinds and self.replacement_goal is not None:
+            raise ValueError("replacement_goal/region is not valid for this event kind")
+        if self.kind is ScenarioEventKind.OBSTACLE_REMOVED and self.update_identity is None:
+            raise ValueError("OBSTACLE_REMOVED requires update_identity as the solid ID")
+        environment_change_kinds = {
+            ScenarioEventKind.OBSTACLE_ADDED,
+            ScenarioEventKind.OBSTACLE_MOVED,
+            ScenarioEventKind.OBSTACLE_REMOVED,
+            ScenarioEventKind.PASSAGE_CLOSED,
+            ScenarioEventKind.PASSAGE_OPENED,
+        }
+        if self.kind in environment_change_kinds and self.duration_s is None:
+            raise ValueError(f"{self.kind.value} requires duration_s as source-time lead to effect")
+        if self.kind is ScenarioEventKind.BATTERY_DROP and self.battery_percent is None:
+            raise ValueError("BATTERY_DROP requires battery_percent")
+        return self
+
+    @property
+    def environment_region(self) -> Region3D | None:
+        """Typed alias for the v1 wire field retained for hash compatibility."""
+
+        return self.replacement_goal
+
+
+class BehaviorOracle(ContractModel):
+    oracle_id: Identifier
+    kind: BehaviorOracleKind
+    evidence_source: OracleEvidenceSource
+    role_ids: tuple[Identifier, ...] = ()
+    threshold: float | None = None
+    unit: str | None = Field(default=None, min_length=1, max_length=40)
+    required: bool = True
+
+    @model_validator(mode="after")
+    def threshold_unit_pair(self) -> BehaviorOracle:
+        if (self.threshold is None) != (self.unit is None):
+            raise ValueError("oracle threshold and unit must be provided together")
+        return self
+
+
+class CaseSemantics(ContractModel):
+    """Executable mission meaning, independent of display labels and prose."""
+
+    contract_version: Literal[1] = 1
+    curriculum_level: int = Field(ge=1, le=5)
+    learning_objective: str = Field(min_length=1, max_length=1000)
+    difficulty_rationale: str = Field(min_length=1, max_length=1000)
+    route_intent_by_role: dict[Identifier, tuple[RouteNodeIntent, ...]]
+    environment_constraints: EnvironmentConstraints = EnvironmentConstraints()
+    coordination_constraints: CoordinationConstraints = CoordinationConstraints()
+    scenario_events: tuple[ScenarioEvent, ...] = ()
+    behavior_oracles: tuple[BehaviorOracle, ...] = Field(min_length=1)
+    semantic_baseline_case_id: Identifier | None = None
+    intended_delta: str | None = Field(default=None, min_length=1, max_length=1000)
 
 
 class MetricGate(ContractModel):
@@ -284,6 +489,7 @@ class CampaignCase(ContractModel):
     search: SearchSettings = SearchSettings()
     execution: ExecutionSettings = ExecutionSettings()
     replanning_authority: ReplanningAuthority = ReplanningAuthority.ABORT_ONLY
+    semantics: CaseSemantics | None = None
     field_classification: dict[str, FieldClass] = Field(
         default_factory=lambda: {
             "hard_constraints": FieldClass.HARD_CONSTRAINT,
@@ -308,9 +514,14 @@ class CampaignCase(ContractModel):
             or PlannerStrategy.COMBINED_TIMING_GEOMETRY in self.allowed_strategies
         ) and not self.hard_constraints.vertical_layers_allowed:
             raise ValueError("vertical strategy is unsupported when vertical layers are forbidden")
+        if (
+            self.implementation_status is ImplementationStatus.PLANNED_NOT_EXECUTABLE
+            and self.execution_eligibility is not ExecutionEligibility.STATIC_VALIDATE_ONLY
+        ):
+            raise ValueError("planned campaign cases are static-validation only")
         if self.environment is EnvironmentKind.REAL:
             if self.authorization is not AuthorizationStatus.NOT_AUTHORIZED:
-                raise ValueError("WP26-34 Real mirrors must remain NOT_AUTHORIZED")
+                raise ValueError("Real campaign mirrors must remain NOT_AUTHORIZED")
             if self.execution_eligibility is not ExecutionEligibility.STATIC_VALIDATE_ONLY:
                 raise ValueError("unauthorized Real mirrors are static-validation only")
         required_classes = {
@@ -333,11 +544,124 @@ class CampaignCase(ContractModel):
             )
             if any(not self.hard_constraints.flight_volume.contains(point) for point in points):
                 raise ValueError(f"role {drone.role_id} geometry leaves the flight volume")
+        if self.semantics is not None:
+            semantic_roles = set(self.semantics.route_intent_by_role)
+            if semantic_roles != set(role_ids):
+                raise ValueError("route intent must cover every drone role exactly once")
+            drone_by_role = {drone.role_id: drone for drone in self.drones}
+            for role_id, nodes in self.semantics.route_intent_by_role.items():
+                expected_regions = tuple(
+                    region.region_id for region in drone_by_role[role_id].goal_sequence
+                )
+                actual_regions = tuple(node.region_id for node in nodes)
+                if actual_regions != expected_regions:
+                    raise ValueError(
+                        f"route intent for {role_id} must match its ordered goal_sequence"
+                    )
+            referenced_roles = {
+                role_id
+                for event in self.semantics.scenario_events
+                for role_id in (() if event.role_id is None else (event.role_id,))
+            }
+            referenced_roles.update(self.semantics.coordination_constraints.formation_offsets_m)
+            referenced_roles.update(
+                self.semantics.coordination_constraints.formation_offsets_by_node_m
+            )
+            referenced_roles.update(
+                role_id for oracle in self.semantics.behavior_oracles for role_id in oracle.role_ids
+            )
+            unknown_roles = referenced_roles.difference(role_ids)
+            if unknown_roles:
+                raise ValueError(
+                    f"semantic contract references unknown roles: {sorted(unknown_roles)}"
+                )
+            coordination = self.semantics.coordination_constraints
+            formation_roles = set(
+                coordination.formation_offsets_m or coordination.formation_offsets_by_node_m
+            )
+            if coordination.maximum_formation_error_m is not None and formation_roles != set(
+                role_ids
+            ):
+                raise ValueError("formation offsets must cover every drone role exactly once")
+            events = self.semantics.scenario_events
+            if len({event.event_id for event in events}) != len(events):
+                raise ValueError("scenario event IDs must be unique")
+            if tuple(event.trigger_time_s for event in events) != tuple(
+                sorted(event.trigger_time_s for event in events)
+            ):
+                raise ValueError("scenario events must be ordered by trigger_time_s")
+            semantic_regions = (
+                *self.semantics.environment_constraints.keep_out_regions,
+                *self.semantics.environment_constraints.required_corridors,
+                *(
+                    event.replacement_goal
+                    for event in self.semantics.scenario_events
+                    if event.replacement_goal is not None
+                ),
+            )
+            for region in semantic_regions:
+                if not (
+                    self.hard_constraints.flight_volume.contains(region.minimum_m)
+                    and self.hard_constraints.flight_volume.contains(region.maximum_m)
+                ):
+                    raise ValueError(f"semantic region {region.region_id} leaves the flight volume")
+            environment_change_kinds = {
+                ScenarioEventKind.OBSTACLE_ADDED,
+                ScenarioEventKind.OBSTACLE_MOVED,
+                ScenarioEventKind.OBSTACLE_REMOVED,
+                ScenarioEventKind.PASSAGE_CLOSED,
+                ScenarioEventKind.PASSAGE_OPENED,
+            }
+            for event in events:
+                if (
+                    event.kind in environment_change_kinds
+                    and event.expected_disposition is ScenarioExpectedDisposition.ACCEPTED_UPDATE
+                    and (
+                        event.duration_s is None
+                        or event.duration_s < self.hard_constraints.planning_budget_s + 0.10
+                    )
+                ):
+                    raise ValueError("accepted environment change lacks planning plus cutover lead")
         return self
 
     @property
     def case_sha256(self) -> str:
+        if self.semantics is None:
+            # Preserve the identity of schema-v2 evidence produced before the semantic
+            # contract was introduced. New cases include semantics in their identity.
+            return canonical_sha256(self.model_dump(mode="python", exclude={"semantics"}))
         return canonical_sha256(self)
+
+    @property
+    def execution_semantics_sha256(self) -> str:
+        """Hash only fields that can change the authored mission behavior."""
+
+        return canonical_sha256(
+            {
+                "drone_count": self.drone_count,
+                "drones": self.drones,
+                "environment": self.environment,
+                "authorization": self.authorization,
+                "execution_eligibility": self.execution_eligibility,
+                "hard_constraints": self.hard_constraints,
+                "allowed_strategies": self.allowed_strategies,
+                "search": self.search,
+                "execution": self.execution,
+                "replanning_authority": self.replanning_authority,
+                "semantics": self.semantics,
+            }
+        )
+
+    def route_nodes_for(self, role_id: str) -> tuple[RouteNodeIntent, ...]:
+        drone = next((item for item in self.drones if item.role_id == role_id), None)
+        if drone is None:
+            raise KeyError(f"unknown campaign role: {role_id}")
+        if self.semantics is not None:
+            return self.semantics.route_intent_by_role[role_id]
+        return tuple(
+            RouteNodeIntent(region_id=region.region_id, mode=RouteNodeMode.CAPTURE)
+            for region in drone.goal_sequence
+        )
 
 
 class LockedDevelopmentInputs(ContractModel):
@@ -350,9 +674,36 @@ class LockedDevelopmentInputs(ContractModel):
     planner_implementation_version: str
     planner_settings_sha256: SHA256
     comparison_baseline_sha256: SHA256 | None = None
+    submission_id: Identifier | None = None
+    submission_sha256: SHA256 | None = None
+    planning_submission_id: Identifier | None = None
+    planning_submission_sha256: SHA256 | None = None
+    resolved_planning_package_sha256: SHA256 | None = None
+
+    @model_validator(mode="after")
+    def submission_hash_pairs(self) -> LockedDevelopmentInputs:
+        if (self.submission_id is None) != (self.submission_sha256 is None):
+            raise ValueError("execution submission ID/hash must be locked together")
+        if (self.planning_submission_id is None) != (self.planning_submission_sha256 is None):
+            raise ValueError("planning submission ID/hash must be locked together")
+        if (
+            self.resolved_planning_package_sha256 is not None
+            and self.planning_submission_sha256 is None
+        ):
+            raise ValueError("resolved planning package requires a planning submission lock")
+        return self
 
     @classmethod
-    def from_case(cls, case: CampaignCase) -> LockedDevelopmentInputs:
+    def from_case(
+        cls,
+        case: CampaignCase,
+        *,
+        submission_id: str | None = None,
+        submission_sha256: str | None = None,
+        planning_submission_id: str | None = None,
+        planning_submission_sha256: str | None = None,
+        resolved_planning_package_sha256: str | None = None,
+    ) -> LockedDevelopmentInputs:
         return cls(
             case_id=case.case_id,
             case_sha256=case.case_sha256,
@@ -363,6 +714,11 @@ class LockedDevelopmentInputs(ContractModel):
             planner_implementation_version=case.search.implementation_version,
             planner_settings_sha256=canonical_sha256(case.search),
             comparison_baseline_sha256=case.baseline_sha256,
+            submission_id=submission_id,
+            submission_sha256=submission_sha256,
+            planning_submission_id=planning_submission_id,
+            planning_submission_sha256=planning_submission_sha256,
+            resolved_planning_package_sha256=resolved_planning_package_sha256,
         )
 
     @property
@@ -388,20 +744,8 @@ class LifecycleTransition(ContractModel):
 
 
 _ALLOWED_TRANSITIONS: dict[LifecycleState, frozenset[LifecycleState]] = {
-    LifecycleState.DEFINED_NOT_RUN: frozenset(
-        {LifecycleState.READY, LifecycleState.ACTIVE_DEVELOPMENT, LifecycleState.BLOCKED}
-    ),
-    LifecycleState.READY: frozenset({LifecycleState.ACTIVE_DEVELOPMENT, LifecycleState.BLOCKED}),
-    LifecycleState.ACTIVE_DEVELOPMENT: frozenset(
-        {LifecycleState.READY, LifecycleState.BASELINED, LifecycleState.BLOCKED}
-    ),
-    LifecycleState.BASELINED: frozenset(
-        {LifecycleState.ACTIVE_DEVELOPMENT, LifecycleState.PROMOTED, LifecycleState.BLOCKED}
-    ),
-    LifecycleState.PROMOTED: frozenset({LifecycleState.ACTIVE_DEVELOPMENT}),
-    LifecycleState.BLOCKED: frozenset(
-        {LifecycleState.DEFINED_NOT_RUN, LifecycleState.READY, LifecycleState.ACTIVE_DEVELOPMENT}
-    ),
+    current: frozenset(candidate for candidate in LifecycleState if candidate is not current)
+    for current in LifecycleState
 }
 
 
@@ -422,15 +766,16 @@ class LifecycleRecord(ContractModel):
         evidence_sha256: str | None = None,
         review_sha256: str | None = None,
         occurred_at_utc: datetime | None = None,
+        require_qualification_evidence: bool = True,
     ) -> LifecycleRecord:
         if new_state not in _ALLOWED_TRANSITIONS[self.state]:
             raise ValueError(f"invalid lifecycle transition {self.state} -> {new_state}")
-        if new_state in {LifecycleState.BASELINED, LifecycleState.PROMOTED} and (
-            evidence_sha256 is None or review_sha256 is None
+        if (
+            require_qualification_evidence
+            and new_state in {LifecycleState.BASELINED, LifecycleState.PROMOTED}
+            and (evidence_sha256 is None or review_sha256 is None)
         ):
             raise ValueError("baseline/promotion requires evidence and review hashes")
-        if new_state is LifecycleState.PROMOTED and self.baseline_sha256 is None:
-            raise ValueError("promotion requires a bound baseline")
         timestamp = occurred_at_utc or datetime.now(UTC)
         payload = [
             self.case_id,
@@ -459,7 +804,8 @@ class LifecycleRecord(ContractModel):
                 "transitions": (*self.transitions, transition),
                 "baseline_sha256": (
                     evidence_sha256
-                    if new_state is LifecycleState.BASELINED
+                    if new_state in {LifecycleState.BASELINED, LifecycleState.PROMOTED}
+                    and evidence_sha256 is not None
                     else self.baseline_sha256
                 ),
             }

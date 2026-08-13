@@ -1,15 +1,26 @@
 "use client";
 
-import { Beaker, Check, ChevronDown, CircleAlert, Clock3, FastForward, LoaderCircle, Maximize2, X } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { Beaker, Check, ChevronDown, CircleAlert, Clock3, Copy, Download, FastForward, ImageIcon, ImageOff, LoaderCircle, Maximize2, Trash2, X } from "lucide-react";
+import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import type { ControlApi } from "../lib/api";
+import type {
+  CampaignAxis,
+  CampaignMotorId,
+  CampaignTelemetryChartSample,
+  CampaignTelemetryChartView,
+} from "../lib/campaign-telemetry";
 import type {
   CampaignCaseView,
   CampaignCatalogView,
+  CampaignLifecycle,
+  CampaignPlanningSubmissionView,
   CampaignRunMode,
   CampaignRunSummary,
+  CampaignSnapshotView,
+  CampaignSubmissionView,
   CampaignWorkspaceView,
 } from "../lib/models";
 
@@ -18,12 +29,24 @@ type FleetSizeFilter = typeof FLEET_SIZES[number];
 type ClusterFilter = "all" | CampaignCaseView["cluster"];
 type EnvironmentFilter = CampaignCaseView["environment"];
 type CampaignWorkspaceTab = "catalog" | "run" | "review";
+type SnapshotAssessmentDisposition = NonNullable<CampaignSnapshotView["assessment_disposition"]>;
+type CampaignTelemetryLoadState =
+  | { status: "ready"; value: CampaignTelemetryChartView }
+  | { status: "error"; message: string };
 
 const CAMPAIGN_WORKSPACE_PREFERENCES_KEY = "crazyswarm.campaign-workspace.v1";
 const CAMPAIGN_WORKSPACE_TABS: ReadonlyArray<{ id: CampaignWorkspaceTab; label: string }> = [
   { id: "catalog", label: "Catalog" },
   { id: "run", label: "Active run" },
   { id: "review", label: "Review" },
+];
+const CAMPAIGN_LIFECYCLE_STATES: readonly CampaignLifecycle[] = [
+  "DEFINED_NOT_RUN",
+  "READY",
+  "ACTIVE_DEVELOPMENT",
+  "BASELINED",
+  "PROMOTED",
+  "BLOCKED",
 ];
 
 export const MISSION_CLUSTERS: ReadonlyArray<{
@@ -58,6 +81,7 @@ type CampaignDropdownOption = {
   meta?: string;
   badge?: string;
   badgeClassName?: string;
+  disabled?: boolean;
 };
 
 export function humanizeCampaignValue(value: string): string {
@@ -68,13 +92,30 @@ export function humanizeCampaignValue(value: string): string {
 function lifecycleLabel(value: string): string {
   const labels: Record<string, string> = {
     ACTIVE_DEVELOPMENT: "In progress",
-    BASELINED: "Reviewed",
+    BASELINED: "In review",
     BLOCKED: "Blocked",
     DEFINED_NOT_RUN: "Not started",
     PROMOTED: "Completed",
     READY: "Ready",
   };
   return labels[value] ?? humanizeCampaignValue(value);
+}
+
+export function campaignWorkspaceHeaderSummary({
+  selectedCase,
+  runMode,
+  reviewStatus,
+}: {
+  selectedCase?: CampaignCaseView;
+  runMode: CampaignRunMode;
+  reviewStatus?: string;
+}): string {
+  const missionName = selectedCase
+    ? humanizeCampaignValue(selectedCase.family)
+    : "No mission selected";
+  const executionMode = runMode === "AUTOMATED_ACCELERATED" ? "Accelerated" : "Realtime";
+  const status = reviewStatus ? humanizeCampaignValue(reviewStatus) : "No review";
+  return `${missionName} · ${executionMode} · ${status}`;
 }
 
 export function CampaignDropdown({
@@ -135,6 +176,7 @@ export function CampaignDropdown({
   };
 
   const select = (option: CampaignDropdownOption) => {
+    if (option.disabled) return;
     onChange(option.value);
     close();
   };
@@ -160,7 +202,7 @@ export function CampaignDropdown({
       listRef.current?.focus();
       return;
     }
-    if (event.key === "Enter" && visibleOptions[highlighted]) {
+    if (event.key === "Enter" && visibleOptions[highlighted] && !visibleOptions[highlighted].disabled) {
       event.preventDefault();
       select(visibleOptions[highlighted]);
     }
@@ -229,6 +271,8 @@ export function CampaignDropdown({
                 type="button"
                 role="option"
                 aria-selected={option.value === value}
+                aria-disabled={option.disabled}
+                disabled={option.disabled}
                 className={`${index === highlighted ? "is-highlighted" : ""} ${option.value === value ? "is-selected" : ""}`}
                 onMouseEnter={() => setHighlighted(index)}
                 onClick={() => select(option)}
@@ -271,25 +315,376 @@ export function filterCampaignCases(
       || left.variation_name.localeCompare(right.variation_name));
 }
 
+function SubmissionSummary({ submission }: { submission: CampaignSubmissionView }) {
+  const target = typeof submission.parameters.target_path_speed_m_s === "number"
+    ? `${submission.parameters.target_path_speed_m_s.toFixed(2)} m/s path speed${typeof submission.parameters.lookahead_time_s === "number" ? ` · ${submission.parameters.lookahead_time_s.toFixed(2)} s lookahead` : ""}`
+    : typeof submission.parameters.target_vertical_rate_m_s === "number"
+      ? `${submission.parameters.target_vertical_rate_m_s.toFixed(2)} m/s vertical rate`
+      : typeof submission.parameters.duration_scale === "number"
+        ? `${submission.parameters.duration_scale.toFixed(2)}× baseline duration`
+      : submission.parameters.segment_target_speeds_m_s.length
+        ? `${submission.parameters.segment_target_speeds_m_s.map((value) => value.toFixed(2)).join(" / ")} m/s by segment`
+        : "Planner-owned time law";
+  return (
+    <article className="campaign-submission-summary">
+      <header><strong>{target}</strong><span>{humanizeCampaignValue(submission.owner)}</span></header>
+      <p>{submission.rationale}</p>
+      {submission.missing_prerequisites.length ? (
+        <p>Requires successful evidence for: {submission.missing_prerequisites.join(", ")}.</p>
+      ) : null}
+      <dl>
+        {submission.feasibility ? (
+          <div><dt>Feasible interval</dt><dd>{submission.feasibility.minimum_path_speed_m_s.toFixed(2)}–{submission.feasibility.maximum_path_speed_m_s.toFixed(2)} m/s before bounded allocation</dd></div>
+        ) : null}
+        <div><dt>Causal question</dt><dd>{submission.admission.causal_question}</dd></div>
+        <div><dt>Evidence gate</dt><dd>{submission.admission.distinguishing_oracle}</dd></div>
+        {submission.comparison_case_ids.length > 1 && submission.comparison_case_ids.length <= 5 ? (
+          <div><dt>Cross-case comparison</dt><dd>{submission.comparison_case_ids.join(" ↔ ")}</dd></div>
+        ) : null}
+        <div><dt>Learning value</dt><dd>{submission.admission.learning_value}</dd></div>
+      </dl>
+    </article>
+  );
+}
+
+function PlanningSubmissionSummary({ submission }: { submission: CampaignPlanningSubmissionView }) {
+  return (
+    <article className="campaign-submission-summary">
+      <header>
+        <strong>{submission.display_name}</strong>
+        <span>{humanizeCampaignValue(submission.status)} · {humanizeCampaignValue(submission.path_adherence.mode)}</span>
+      </header>
+      <p>{submission.rationale}</p>
+      <dl>
+        <div><dt>Experiment</dt><dd>{humanizeCampaignValue(submission.experiment_axis)} · {humanizeCampaignValue(submission.axis_value)}</dd></div>
+        <div><dt>Support</dt><dd>{submission.support_reason}</dd></div>
+        <div><dt>Authorized strategies</dt><dd>{submission.strategy_authority.map(humanizeCampaignValue).join(" · ")}</dd></div>
+        <div><dt>Maneuver dimensions</dt><dd>{submission.maneuver_dimensions.map(humanizeCampaignValue).join(" · ")}</dd></div>
+        <div><dt>Protected separation</dt><dd>{submission.clearance.required_pairwise_center_separation_m.toFixed(2)} m center-to-center</dd></div>
+        <div><dt>Coordination</dt><dd>{submission.coordination.synchronized_launch_required ? "Synchronized launch" : "Release timing is flexible"} · maximum release delay {submission.coordination.maximum_release_delay_s.toFixed(1)} s</dd></div>
+        <div><dt>Objective</dt><dd>{submission.objective.terms.map((term) => humanizeCampaignValue(term.metric)).join(" → ")}</dd></div>
+        <div><dt>Causal question</dt><dd>{submission.admission.causal_question}</dd></div>
+        <div><dt>Evidence gate</dt><dd>{submission.admission.distinguishing_oracle}</dd></div>
+        <div><dt>Learning value</dt><dd>{submission.admission.learning_value}</dd></div>
+      </dl>
+    </article>
+  );
+}
+
+const TELEMETRY_MOTOR_IDS: CampaignMotorId[] = ["m1", "m2", "m3", "m4"];
+const TELEMETRY_AXES: CampaignAxis[] = ["x", "y", "z"];
+
+type TelemetryChartLine = {
+  id: string;
+  label: string;
+  className: string;
+  value: (sample: CampaignTelemetryChartSample) => number | undefined;
+};
+
+function CampaignTelemetryPlots({
+  state,
+  runNumber,
+}: {
+  state: CampaignTelemetryLoadState | undefined;
+  runNumber: number;
+}) {
+  if (!state) {
+    return (
+      <section className="campaign-telemetry-plots is-loading" aria-label={`Flight graphs for run ${runNumber}`}>
+        <LoaderCircle className="spin" size={14} /> Loading flight graphs from the retained CSV
+      </section>
+    );
+  }
+  if (state.status === "error") {
+    return (
+      <section className="campaign-telemetry-plots is-empty" aria-label={`Flight graphs for run ${runNumber}`}>
+        <CircleAlert size={14} />
+        <span>Graphs unavailable: {state.message}. The raw CSV remains available from Run history.</span>
+      </section>
+    );
+  }
+  const { value } = state;
+  if (!value.vehicles.length || !value.rowCount) {
+    return (
+      <section className="campaign-telemetry-plots is-empty" aria-label={`Flight graphs for run ${runNumber}`}>
+        <CircleAlert size={14} /> No velocity, altitude, or motor percentage samples were recorded.
+      </section>
+    );
+  }
+  const allSamples = value.vehicles.flatMap((vehicle) => vehicle.samples);
+  const speedDomain = telemetryDomain(
+    allSamples.flatMap((sample) => sample.speedMS === undefined ? [] : [sample.speedMS]),
+    true,
+  );
+  const altitudeDomain = telemetryDomain(
+    allSamples.flatMap((sample) => sample.altitudeM === undefined ? [] : [sample.altitudeM]),
+  );
+  const attitudeDomain = telemetrySymmetricDomain(allSamples.flatMap(
+    (sample) => TELEMETRY_AXES.flatMap(
+      (axis) => sample.attitudeDeg[axis] === undefined ? [] : [sample.attitudeDeg[axis]],
+    ),
+  ));
+  const accelerationDomain = telemetrySymmetricDomain(allSamples.flatMap(
+    (sample) => TELEMETRY_AXES.flatMap(
+      (axis) => sample.accelerationMS2[axis] === undefined ? [] : [sample.accelerationMS2[axis]],
+    ),
+  ));
+  const angularVelocityDomain = telemetrySymmetricDomain(allSamples.flatMap(
+    (sample) => TELEMETRY_AXES.flatMap(
+      (axis) => sample.angularVelocityRadS[axis] === undefined
+        ? []
+        : [sample.angularVelocityRadS[axis]],
+    ),
+  ));
+  return (
+    <section className="campaign-telemetry-plots" aria-label={`Flight graphs for run ${runNumber}`}>
+      <header>
+        <div><span>Flight graphs</span><small>CSV-derived compact view</small></div>
+        <strong>{value.vehicles.length} {value.vehicles.length === 1 ? "drone" : "drones"} · {value.durationS.toFixed(1)} s</strong>
+      </header>
+      <div className="campaign-telemetry-vehicles">
+        {value.vehicles.map((vehicle) => (
+          <article key={vehicle.vehicleId}>
+            <header>
+              <strong>{humanizeCampaignValue(vehicle.vehicleId)}</strong>
+              <span>{vehicle.sampleCount.toLocaleString()} rows</span>
+            </header>
+            <CampaignTelemetryMetricChart
+              title="Speed"
+              source="Velocity magnitude"
+              unit="m/s"
+              durationS={value.durationS}
+              domain={speedDomain}
+              samples={vehicle.samples}
+              lines={[{
+                id: "speed",
+                label: "Speed",
+                className: "series-speed",
+                value: (sample) => sample.speedMS,
+              }]}
+            />
+            <CampaignTelemetryMetricChart
+              title="World Z"
+              source={vehicle.altitudeSource}
+              unit="m"
+              durationS={value.durationS}
+              domain={altitudeDomain}
+              samples={vehicle.samples}
+              lines={[{
+                id: "altitude",
+                label: "World Z",
+                className: "series-altitude",
+                value: (sample) => sample.altitudeM,
+              }]}
+            />
+            <CampaignTelemetryMetricChart
+              title="Motor output"
+              source={vehicle.motorSource}
+              unit="%"
+              durationS={value.durationS}
+              domain={[0, 100]}
+              samples={vehicle.samples}
+              lines={TELEMETRY_MOTOR_IDS.map((motorId) => ({
+                id: motorId,
+                label: motorId.toUpperCase(),
+                className: `series-${motorId}`,
+                value: (sample) => sample.motorPercent[motorId],
+              }))}
+            />
+            <CampaignTelemetryMetricChart
+              title="Attitude"
+              source="Roll / pitch / yaw"
+              unit="°"
+              durationS={value.durationS}
+              domain={attitudeDomain}
+              samples={vehicle.samples}
+              lines={TELEMETRY_AXES.map((axis) => ({
+                id: `attitude-${axis}`,
+                label: axis === "x" ? "Roll" : axis === "y" ? "Pitch" : "Yaw",
+                className: `series-axis-${axis}`,
+                value: (sample) => sample.attitudeDeg[axis],
+              }))}
+            />
+            <CampaignTelemetryMetricChart
+              title="Acceleration"
+              source="IMU body frame"
+              unit="m/s²"
+              durationS={value.durationS}
+              domain={accelerationDomain}
+              samples={vehicle.samples}
+              lines={TELEMETRY_AXES.map((axis) => ({
+                id: `acceleration-${axis}`,
+                label: axis.toUpperCase(),
+                className: `series-axis-${axis}`,
+                value: (sample) => sample.accelerationMS2[axis],
+              }))}
+            />
+            <CampaignTelemetryMetricChart
+              title="Angular velocity"
+              source="IMU body frame"
+              unit="rad/s"
+              durationS={value.durationS}
+              domain={angularVelocityDomain}
+              samples={vehicle.samples}
+              lines={TELEMETRY_AXES.map((axis) => ({
+                id: `angular-velocity-${axis}`,
+                label: axis.toUpperCase(),
+                className: `series-axis-${axis}`,
+                value: (sample) => sample.angularVelocityRadS[axis],
+              }))}
+            />
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CampaignTelemetryMetricChart({
+  title,
+  source,
+  unit,
+  durationS,
+  domain,
+  samples,
+  lines,
+}: {
+  title: string;
+  source: string;
+  unit: string;
+  durationS: number;
+  domain: [number, number];
+  samples: CampaignTelemetryChartSample[];
+  lines: TelemetryChartLine[];
+}) {
+  const values = lines.flatMap((line) => samples.flatMap((sample) => {
+    const value = line.value(sample);
+    return value === undefined ? [] : [value];
+  }));
+  const observedMinimum = values.length ? Math.min(...values) : undefined;
+  const observedMaximum = values.length ? Math.max(...values) : undefined;
+  const range = observedMinimum === undefined || observedMaximum === undefined
+    ? "No data"
+    : `${observedMinimum.toFixed(2)}–${observedMaximum.toFixed(2)} ${unit}`;
+  return (
+    <figure className="campaign-telemetry-chart">
+      <figcaption>
+        <span><strong>{title}</strong><small>{source}</small></span>
+        <em>{range}</em>
+      </figcaption>
+      {values.length ? (
+        <>
+          <svg viewBox="0 0 240 62" preserveAspectRatio="none" role="img" aria-label={`${title} over ${durationS.toFixed(1)} seconds; ${range}`}>
+            <line className="grid-line" x1="0" x2="240" y1="8" y2="8" />
+            <line className="grid-line" x1="0" x2="240" y1="30" y2="30" />
+            <line className="grid-line" x1="0" x2="240" y1="52" y2="52" />
+            {lines.flatMap((line) => telemetryPathSegments(
+              samples,
+              line.value,
+              domain,
+              durationS,
+            ).map((path, index) => (
+              <path
+                key={`${line.id}-${index}`}
+                className={line.className}
+                d={path}
+                fill="none"
+                vectorEffect="non-scaling-stroke"
+              />
+            )))}
+          </svg>
+          <div className="campaign-telemetry-time"><span>0 s</span><span>{durationS.toFixed(1)} s</span></div>
+          {lines.length > 1 ? (
+            <div className="campaign-telemetry-legend">
+              {lines.map((line) => <span key={line.id} className={line.className}>{line.label}</span>)}
+            </div>
+          ) : null}
+        </>
+      ) : <p>No recorded {title.toLowerCase()} values</p>}
+    </figure>
+  );
+}
+
+function telemetryDomain(values: number[], includeZero = false): [number, number] {
+  if (!values.length) return [0, 1];
+  let minimum = Math.min(...values);
+  let maximum = Math.max(...values);
+  if (includeZero) minimum = Math.min(0, minimum);
+  if (Math.abs(maximum - minimum) < 1e-9) {
+    const padding = Math.max(Math.abs(maximum) * 0.05, 0.05);
+    minimum -= includeZero ? 0 : padding;
+    maximum += padding;
+  } else {
+    const padding = (maximum - minimum) * 0.06;
+    minimum -= includeZero ? 0 : padding;
+    maximum += padding;
+  }
+  return [minimum, maximum];
+}
+
+function telemetrySymmetricDomain(values: number[]): [number, number] {
+  if (!values.length) return [-1, 1];
+  const bound = Math.max(...values.map((value) => Math.abs(value)), 1e-6);
+  const paddedBound = Math.max(bound * 1.08, 0.01);
+  return [-paddedBound, paddedBound];
+}
+
+function telemetryPathSegments(
+  samples: CampaignTelemetryChartSample[],
+  valueForSample: (sample: CampaignTelemetryChartSample) => number | undefined,
+  domain: [number, number],
+  durationS: number,
+): string[] {
+  const paths: string[] = [];
+  let points: string[] = [];
+  const flush = () => {
+    if (points.length === 1) points.push(points[0]);
+    if (points.length) paths.push(`M ${points.join(" L ")}`);
+    points = [];
+  };
+  const span = Math.max(1e-9, domain[1] - domain[0]);
+  const plottedDurationS = Math.max(1e-9, durationS);
+  for (const sample of samples) {
+    const value = valueForSample(sample);
+    if (value === undefined) {
+      flush();
+      continue;
+    }
+    const x = Math.max(0, Math.min(240, sample.timeS / plottedDurationS * 240));
+    const y = 52 - Math.max(0, Math.min(1, (value - domain[0]) / span)) * 44;
+    points.push(`${x.toFixed(2)} ${y.toFixed(2)}`);
+  }
+  flush();
+  return paths;
+}
+
 export function CampaignLab({
   api,
   onNotice,
   onActiveCaseChange,
   onCampaignRunChange,
   onExecutionModeChange,
+  onSubmissionChange,
+  onPlanningSubmissionChange,
 }: {
   api: ControlApi;
   onNotice: (message: string) => void;
   onActiveCaseChange?: (campaignCase: CampaignCaseView | undefined) => void;
   onCampaignRunChange?: (run: CampaignRunSummary | undefined) => void;
   onExecutionModeChange?: (mode: CampaignRunMode) => void;
+  onSubmissionChange?: (submissionId: string | undefined) => void;
+  onPlanningSubmissionChange?: (planningSubmissionId: string | undefined) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [workspaceTab, setWorkspaceTab] = useState<CampaignWorkspaceTab>("catalog");
   const [preferencesReady, setPreferencesReady] = useState(false);
   const [catalog, setCatalog] = useState<CampaignCatalogView>();
   const [workspace, setWorkspace] = useState<CampaignWorkspaceView>();
+  const [loadError, setLoadError] = useState<string>();
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [selectedId, setSelectedId] = useState("");
+  const [submissionByCase, setSubmissionByCase] = useState<Record<string, string>>({});
+  const [planningSubmissionByCase, setPlanningSubmissionByCase] = useState<Record<string, string>>({});
   const [environment, setEnvironment] = useState<EnvironmentFilter>("SIMULATION");
   const [fleetSize, setFleetSize] = useState<FleetSizeFilter>("1");
   const [cluster, setCluster] = useState<ClusterFilter>("all");
@@ -299,7 +694,14 @@ export function CampaignLab({
   const [advanced, setAdvanced] = useState(false);
   const [seed, setSeed] = useState("42");
   const [repetitions, setRepetitions] = useState("1");
-  const [observation, setObservation] = useState("");
+  const [selectedReviewRunId, setSelectedReviewRunId] = useState("");
+  const [observationDrafts, setObservationDrafts] = useState<Record<string, string>>({});
+  const [snapshotCommentDrafts, setSnapshotCommentDrafts] = useState<Record<string, string>>({});
+  const [snapshotAssessmentDrafts, setSnapshotAssessmentDrafts] = useState<Record<string, string>>({});
+  const [snapshotAssessmentDispositions, setSnapshotAssessmentDispositions] = useState<Record<string, SnapshotAssessmentDisposition>>({});
+  const [selectedSnapshotId, setSelectedSnapshotId] = useState("");
+  const [copiedCaseId, setCopiedCaseId] = useState<string>();
+  const [telemetryChartsByExecution, setTelemetryChartsByExecution] = useState<Record<string, CampaignTelemetryLoadState>>({});
   const launcherRef = useRef<HTMLButtonElement>(null);
   const workspaceRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -377,6 +779,10 @@ export function CampaignLab({
     const handleWorkspaceKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
+        if (workspaceRef.current?.querySelector(".campaign-snapshot-viewer")) {
+          setSelectedSnapshotId("");
+          return;
+        }
         setOpen(false);
         return;
       }
@@ -436,31 +842,128 @@ export function CampaignLab({
       })
       .catch((error: unknown) => {
         if (!cancelled) {
-          onNotice(error instanceof Error ? error.message : "Campaign catalog unavailable");
+          const message = error instanceof Error ? error.message : "Campaign catalog unavailable";
+          setLoadError(message);
+          onNotice(message);
         }
       });
     return () => {
       cancelled = true;
     };
-  }, [api, catalog, onNotice, preferencesReady]);
+  }, [api, catalog, loadAttempt, onNotice, preferencesReady]);
 
   const cases = useMemo(
     () => filterCampaignCases(catalog?.cases ?? [], environment, cluster, fleetSize),
     [catalog, environment, cluster, fleetSize],
   );
-  const selected = cases.find((item) => item.case_id === selectedId);
+  const selected = catalog?.cases.find((item) => item.case_id === selectedId);
   const active = catalog?.cases.find((item) => item.case_id === workspace?.active_case_id);
+  const selectedSubmission = (selected?.submissions ?? []).find(
+    (item) => item.submission_id === submissionByCase[selected?.case_id ?? ""],
+  ) ?? (selected?.submissions ?? []).find((item) => item.status === "EXECUTABLE");
+  const activeSubmission = (active?.submissions ?? []).find(
+    (item) => item.submission_id === submissionByCase[active?.case_id ?? ""],
+  ) ?? (active?.submissions ?? []).find((item) => item.status === "EXECUTABLE");
+  const selectedPlanningSubmission = (selected?.planning_submissions ?? []).find(
+    (item) => item.planning_submission_id === planningSubmissionByCase[selected?.case_id ?? ""],
+  ) ?? (selected?.planning_submissions ?? []).find((item) => item.status === "EXECUTABLE");
+  const activePlanningSubmission = (active?.planning_submissions ?? []).find(
+    (item) => item.planning_submission_id === planningSubmissionByCase[active?.case_id ?? ""],
+  ) ?? (active?.planning_submissions ?? []).find((item) => item.status === "EXECUTABLE");
+  const latestActiveCampaignRun = workspace?.runs.toReversed().find((run) => (
+    run.locked_inputs.case_id === workspace.active_case_id
+    && run.locked_inputs.case_sha256 === active?.case_sha256
+  ));
   const activeCampaignRun = workspace?.runs.toReversed().find((run) => (
     run.locked_inputs.case_id === workspace.active_case_id
+    && run.locked_inputs.case_sha256 === active?.case_sha256
     && (run.status === "QUEUED" || run.status === "RUNNING")
   ));
-  const latestReview = workspace?.reviews.at(-1);
+  const reviewCaseId = selected?.case_id ?? active?.case_id;
+  const reviewCase = catalog?.cases.find((item) => item.case_id === reviewCaseId);
+  const reviewByRunId = new Map(
+    (workspace?.reviews ?? [])
+      .filter((review) => review.case_id === reviewCaseId)
+      .map((review) => [review.run_id, review] as const),
+  );
+  const campaignRunEntries = (workspace?.runs ?? [])
+    .filter((run) => (
+      run.locked_inputs.case_id === reviewCaseId
+      && run.locked_inputs.case_sha256 === reviewCase?.case_sha256
+    ))
+    .map((run, index) => ({ run, review: reviewByRunId.get(run.run_id), number: index + 1 }))
+    .toReversed();
+  // Runs are an operator's chronological investigation journal. A changed planner
+  // version or lock hash is evidence to compare, not proof that a work-package
+  // implementation was completed and a new iteration began.
+  const selectedRunEntry = campaignRunEntries.find(
+    ({ run }) => run.run_id === selectedReviewRunId,
+  ) ?? campaignRunEntries[0];
+  const selectedMissionExecutionId = selectedRunEntry?.run.mission_execution_id;
+  const selectedTelemetryCharts = selectedMissionExecutionId
+    ? telemetryChartsByExecution[selectedMissionExecutionId]
+    : undefined;
+  const selectedRunSnapshots = (workspace?.snapshots ?? []).filter(
+    (snapshot) => snapshot.run_id === selectedRunEntry?.run.run_id,
+  );
+  const selectedCaseRunIds = new Set((workspace?.runs ?? [])
+    .filter((run) => run.locked_inputs.case_id === selected?.case_id)
+    .map((run) => run.run_id));
+  const unassessedSnapshotCount = (workspace?.snapshots ?? []).filter((snapshot) => (
+    selectedCaseRunIds.has(snapshot.run_id)
+    && snapshot.image_available
+    && (!snapshot.neutral_assessment || !snapshot.assessment_disposition || !snapshot.assessed_at_utc)
+  )).length;
+  const selectedSnapshot = selectedRunSnapshots.find(
+    (snapshot) => snapshot.snapshot_id === selectedSnapshotId,
+  );
+  const headerSummary = campaignWorkspaceHeaderSummary({
+    selectedCase: selected,
+    runMode,
+    reviewStatus: selectedRunEntry?.review?.status ?? selectedRunEntry?.run.status,
+  });
 
   useEffect(() => {
     if (!catalog || !workspace) return;
     onActiveCaseChange?.(active);
-    if (activeCampaignRun) onCampaignRunChange?.(activeCampaignRun);
-  }, [active, activeCampaignRun, catalog, onActiveCaseChange, onCampaignRunChange, workspace]);
+    onCampaignRunChange?.(latestActiveCampaignRun);
+  }, [active, catalog, latestActiveCampaignRun, onActiveCaseChange, onCampaignRunChange, workspace]);
+
+  useEffect(() => {
+    onSubmissionChange?.(activeSubmission?.submission_id);
+  }, [activeSubmission?.submission_id, onSubmissionChange]);
+
+  useEffect(() => {
+    onPlanningSubmissionChange?.(activePlanningSubmission?.planning_submission_id);
+  }, [activePlanningSubmission?.planning_submission_id, onPlanningSubmissionChange]);
+
+  useEffect(() => {
+    if (!selectedMissionExecutionId || telemetryChartsByExecution[selectedMissionExecutionId]) return;
+    let cancelled = false;
+    void api.campaignTelemetryCharts(selectedMissionExecutionId)
+      .then((value) => {
+        if (!cancelled) {
+          setTelemetryChartsByExecution((current) => ({
+            ...current,
+            [selectedMissionExecutionId]: { status: "ready", value },
+          }));
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setTelemetryChartsByExecution((current) => ({
+            ...current,
+            [selectedMissionExecutionId]: {
+              status: "error",
+              message: error instanceof Error ? error.message : "telemetry could not be loaded",
+            },
+          }));
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [api, selectedMissionExecutionId, telemetryChartsByExecution]);
 
   useEffect(() => {
     if (!activeCampaignRun) return;
@@ -474,6 +977,9 @@ export function CampaignLab({
         const tracked = nextWorkspace.runs.find((run) => run.run_id === activeCampaignRun.run_id);
         if (tracked?.status === "QUEUED" || tracked?.status === "RUNNING") {
           timer = window.setTimeout(poll, 500);
+        } else {
+          const nextCatalog = await api.campaignCatalog();
+          if (!cancelled) setCatalog(nextCatalog);
         }
       } catch {
         if (!cancelled) timer = window.setTimeout(poll, 2_000);
@@ -509,6 +1015,61 @@ export function CampaignLab({
     badge: lifecycleLabel(item.lifecycle),
     badgeClassName: `state-${item.lifecycle.toLowerCase()}`,
   })), [cases]);
+  const submissionOptions = (campaignCase: CampaignCaseView | undefined) => (
+    campaignCase?.submissions?.map((item) => ({
+      value: item.submission_id,
+      label: item.display_name,
+      meta: humanizeCampaignValue(item.kind),
+      badge: item.run_eligible ? "Eligible" : item.status === "EXECUTABLE" ? "Prerequisite" : "Future",
+      badgeClassName: item.run_eligible ? "state-ready" : "state-blocked",
+      disabled: !item.run_eligible,
+    })) ?? []
+  );
+  const planningSubmissionOptions = (campaignCase: CampaignCaseView | undefined) => (
+    campaignCase?.planning_submissions?.map((item) => ({
+      value: item.planning_submission_id,
+      label: item.display_name,
+      meta: item.maneuver_dimensions.map(humanizeCampaignValue).join(" · "),
+      badge: item.status === "EXECUTABLE" ? "Eligible" : "Future",
+      badgeClassName: item.status === "EXECUTABLE" ? "state-ready" : "state-blocked",
+      disabled: item.status !== "EXECUTABLE",
+    })) ?? []
+  );
+  const selectSubmission = (caseId: string, submissionId: string) => {
+    setSubmissionByCase((current) => ({ ...current, [caseId]: submissionId }));
+    setPreview(undefined);
+  };
+  const selectPlanningSubmission = (caseId: string, planningSubmissionId: string) => {
+    setPlanningSubmissionByCase((current) => ({
+      ...current,
+      [caseId]: planningSubmissionId,
+    }));
+    setPreview(undefined);
+  };
+  const reviewCaseOptions = useMemo<CampaignDropdownOption[]>(() => {
+    const runCounts = new Map<string, number>();
+    for (const run of workspace?.runs ?? []) {
+      runCounts.set(run.locked_inputs.case_id, (runCounts.get(run.locked_inputs.case_id) ?? 0) + 1);
+    }
+    return (catalog?.cases ?? [])
+      .filter((item) => item.environment === environment)
+      .filter((item) => runCounts.has(item.case_id))
+      .toSorted((left, right) => (
+        (runCounts.get(right.case_id) ?? 0) - (runCounts.get(left.case_id) ?? 0)
+        || left.family.localeCompare(right.family)
+        || left.variation_name.localeCompare(right.variation_name)
+      ))
+      .map((item) => {
+        const runCount = runCounts.get(item.case_id) ?? 0;
+        return {
+          value: item.case_id,
+          label: humanizeCampaignValue(item.family),
+          meta: `${humanizeCampaignValue(item.variation_name)} · ${runCount} ${runCount === 1 ? "run" : "runs"}`,
+          badge: lifecycleLabel(item.lifecycle),
+          badgeClassName: `state-${item.lifecycle.toLowerCase()}`,
+        };
+      });
+  }, [catalog?.cases, environment, workspace?.runs]);
 
   const chooseFilters = (
     nextEnvironment: EnvironmentFilter,
@@ -564,12 +1125,75 @@ export function CampaignLab({
     }
   };
 
+  const copyCaseId = async (caseId: string) => {
+    try {
+      await navigator.clipboard.writeText(caseId);
+      setCopiedCaseId(caseId);
+      onNotice("Mission case ID copied");
+    } catch {
+      onNotice("Mission case ID could not be copied");
+    }
+  };
+
   const footerActions = (
     <div className="campaign-actions">
-      <button type="button" disabled={!selected || Boolean(busy)} onClick={() => selected && void act("Static validation complete", () => api.staticValidateCampaignCase(selected.case_id))}>Validate</button>
-      <button type="button" disabled={!selected || selected.case_id === active?.case_id || selected.environment === "REAL" || selected.implementation_status !== "EXECUTABLE" || Boolean(busy)} onClick={() => selected && void act("Active mission locked", () => api.setActiveCampaignCase(selected.case_id, "operator selected in campaign workspace"))}>Set active</button>
-      <button type="button" disabled={!active || Boolean(busy)} onClick={() => void act("Plan preview ready", async () => {
-        setPreview(await api.previewActiveCampaign());
+      <label className="campaign-lifecycle-picker">
+        <span>Mission state</span>
+        <select
+          aria-label="Mission state"
+          value={selected?.lifecycle ?? ""}
+          disabled={!selected || Boolean(busy)}
+          onChange={(event) => {
+            if (!selected) return;
+            const state = event.target.value as CampaignLifecycle;
+            void act(
+              `Mission state changed to ${lifecycleLabel(state)}`,
+              () => api.setCampaignCaseLifecycle(
+                selected.case_id,
+                state,
+                `operator changed case lifecycle to ${lifecycleLabel(state)}`,
+              ),
+            );
+          }}
+        >
+          {CAMPAIGN_LIFECYCLE_STATES.map((state) => (
+            <option key={state} value={state}>{lifecycleLabel(state)}</option>
+          ))}
+        </select>
+      </label>
+      <button
+        className="campaign-action-validate"
+        type="button"
+        disabled={!selected || Boolean(busy)}
+        title="Optional: run planning checks without selecting this mission"
+        onClick={() => selected && void act("Mission checks complete", () => api.staticValidateCampaignCase(selected.case_id))}
+      >Check only</button>
+      <button
+        className="campaign-action-active"
+        type="button"
+        disabled={!selected || selected.case_id === active?.case_id || selected.environment === "REAL" || selected.implementation_status !== "EXECUTABLE" || Boolean(busy)}
+        title="Checks the mission and selects it in one step"
+        onClick={() => selected && void act("Mission selected and checks passed", () => api.setActiveCampaignCase(selected.case_id, "operator selected mission for development"))}
+      >Use mission</button>
+      <button
+        className="campaign-action-review"
+        type="button"
+        disabled={!selected || selected.lifecycle === "BASELINED" || !workspace?.reviews.some((review) => review.case_id === selected.case_id) || unassessedSnapshotCount > 0 || Boolean(busy)}
+        title={unassessedSnapshotCount ? `${unassessedSnapshotCount} retained snapshot${unassessedSnapshotCount === 1 ? " requires" : "s require"} a neutral assessment` : undefined}
+        onClick={() => selected && void act("Mission case moved to review", () => api.moveCampaignCaseToReview(selected.case_id, "operator moved case to review"))}
+      >Move to review</button>
+      <button
+        className="campaign-action-complete"
+        type="button"
+        disabled={!selected || selected.lifecycle === "PROMOTED" || !workspace?.reviews.some((review) => review.case_id === selected.case_id && review.status === "SUCCEEDED") || unassessedSnapshotCount > 0 || Boolean(busy)}
+        title={unassessedSnapshotCount ? "Assess every retained snapshot before evidence purge and completion" : undefined}
+        onClick={() => selected && void act("Mission case completed", () => api.completeCampaignCase(selected.case_id, "operator confirmed review is complete"))}
+      >Completed</button>
+      <button className="campaign-action-preview" type="button" disabled={!active || Boolean(busy)} onClick={() => void act("Plan preview ready", async () => {
+        setPreview(await api.previewActiveCampaign(
+          activeSubmission?.submission_id,
+          activePlanningSubmission?.planning_submission_id,
+        ));
         setWorkspaceTab("run");
       })}>Preview plan</button>
     </div>
@@ -589,9 +1213,7 @@ export function CampaignLab({
             <span><Beaker size={17} /></span>
             <div>
               <h2 id="campaign-workspace-title">Campaign Laboratory</h2>
-              <small>{active
-                ? `Active · ${humanizeCampaignValue(active.family)} · ${lifecycleLabel(active.lifecycle)}`
-                : "No active mission"}</small>
+              <small>{headerSummary}</small>
             </div>
           </div>
           <div className="campaign-filter campaign-workspace-environment" role="group" aria-label="Environment">
@@ -605,6 +1227,26 @@ export function CampaignLab({
                 {value === "SIMULATION" ? "Simulation" : "Real"}
               </button>
             ))}
+          </div>
+          <div className="campaign-workspace-downloads" aria-label="Qualification downloads">
+            <a
+              className="campaign-qualification-download"
+              href={api.campaignQualificationUrl()}
+              download
+              title="Download the hash-bound static qualification manifest"
+            >
+              <Download size={14} /> Qualification
+            </a>
+            {typeof api.campaignConstraintQualificationUrl === "function" ? (
+              <a
+                className="campaign-qualification-download"
+                href={api.campaignConstraintQualificationUrl()}
+                download
+                title="Download the retained bottleneck, head-on, merge, geometry, and dynamic-replanning matrix"
+              >
+                <Download size={14} /> Constraint matrix
+              </a>
+            ) : null}
           </div>
           <button ref={closeButtonRef} className="campaign-workspace-close" type="button" aria-label="Close Campaign Laboratory" onClick={() => setOpen(false)}><X size={18} /></button>
         </header>
@@ -627,7 +1269,17 @@ export function CampaignLab({
         </div>
 
         <div className="campaign-workspace-body">
-          {!catalog ? <div className="campaign-loading"><LoaderCircle className="spin" size={16} />Loading campaign workspace</div> : null}
+          {!catalog && !loadError ? <div className="campaign-loading"><LoaderCircle className="spin" size={16} />Loading campaign workspace</div> : null}
+          {loadError ? (
+            <div className="campaign-loading" role="alert">
+              <CircleAlert size={16} />
+              <span>Campaign workspace unavailable: {loadError}</span>
+              <button type="button" onClick={() => {
+                setLoadError(undefined);
+                setLoadAttempt((value) => value + 1);
+              }}>Retry</button>
+            </div>
+          ) : null}
 
           {catalog && workspaceTab === "catalog" ? (
             <section id="campaign-workspace-panel-catalog" className="campaign-catalog-workspace" role="tabpanel" aria-labelledby="campaign-workspace-tab-catalog">
@@ -666,18 +1318,76 @@ export function CampaignLab({
                     setPreview(undefined);
                   }}
                 />
+                {selected && (selected.submissions?.length ?? 0) > 1 ? (
+                  <div className="campaign-submission-picker">
+                    <CampaignDropdown
+                      label="Execution submission"
+                      value={selectedSubmission?.submission_id ?? ""}
+                      options={submissionOptions(selected)}
+                      onChange={(submissionId) => selectSubmission(selected.case_id, submissionId)}
+                    />
+                  </div>
+                ) : null}
+                {selected && (selected.planning_submissions?.length ?? 0) > 1 ? (
+                  <div className="campaign-submission-picker">
+                    <CampaignDropdown
+                      label="Planning contract"
+                      value={selectedPlanningSubmission?.planning_submission_id ?? ""}
+                      options={planningSubmissionOptions(selected)}
+                      onChange={(planningSubmissionId) => selectPlanningSubmission(selected.case_id, planningSubmissionId)}
+                    />
+                  </div>
+                ) : null}
               </div>
               <div className="campaign-case-detail">
                 {selected ? (
                   <>
                     <header className="campaign-case-detail-header">
                       <div>
-                        <small>{humanizeCampaignValue(selected.variation_name)}</small>
                         <h3>{humanizeCampaignValue(selected.family)}</h3>
                       </div>
                       <span className={`campaign-status state-${selected.lifecycle.toLowerCase()}`}>{lifecycleLabel(selected.lifecycle)}</span>
                     </header>
+                    <button
+                      className={copiedCaseId === selected.case_id ? "campaign-case-id is-copied" : "campaign-case-id"}
+                      type="button"
+                      aria-label={`Copy mission case ID ${selected.case_id}`}
+                      title={`Copy mission case ID: ${selected.case_id}`}
+                      onClick={() => void copyCaseId(selected.case_id)}
+                    >
+                      <code>{selected.case_id}</code>
+                      <span>{copiedCaseId === selected.case_id ? <Check size={12} /> : <Copy size={12} />}{copiedCaseId === selected.case_id ? "Copied" : "Copy"}</span>
+                    </button>
                     <CaseSummary campaignCase={selected} />
+                    {selected.submission_registry?.baseline_only ? (
+                      <p className="campaign-inline-note">
+                        Baseline only: {selected.submission_registry.baseline_only_rationale}
+                      </p>
+                    ) : null}
+                    {(selected.submissions?.length ?? 0) > 1 && selectedSubmission ? (
+                      <section
+                        className="campaign-submission-detail"
+                        aria-label={`Selected execution submission: ${selectedSubmission.display_name}`}
+                      >
+                        <div className="campaign-submission-detail-title">
+                          <span>Selected submission</span>
+                          <strong>{selectedSubmission.display_name}</strong>
+                        </div>
+                        <SubmissionSummary submission={selectedSubmission} />
+                      </section>
+                    ) : null}
+                    {(selected.planning_submissions?.length ?? 0) > 1 && selectedPlanningSubmission ? (
+                      <section
+                        className="campaign-submission-detail"
+                        aria-label={`Selected planning contract: ${selectedPlanningSubmission.display_name}`}
+                      >
+                        <div className="campaign-submission-detail-title">
+                          <span>Selected planning contract</span>
+                          <strong>{selectedPlanningSubmission.planning_submission_id}</strong>
+                        </div>
+                        <PlanningSubmissionSummary submission={selectedPlanningSubmission} />
+                      </section>
+                    ) : null}
                   </>
                 ) : <div className="campaign-workspace-empty"><CircleAlert size={16} />Select a mission case</div>}
               </div>
@@ -693,6 +1403,40 @@ export function CampaignLab({
                 </header>
               ) : <div className="campaign-workspace-empty"><CircleAlert size={16} />Choose and activate a mission from the Catalog tab</div>}
               {activeCampaignRun ? <div className="campaign-running"><LoaderCircle className="spin" size={14} />{humanizeCampaignValue(activeCampaignRun.status)} run</div> : null}
+              {active && (active.submissions?.length ?? 0) > 1 ? (
+                <div className="campaign-submission-panel">
+                  <CampaignDropdown
+                    label="Execution submission"
+                    value={activeSubmission?.submission_id ?? ""}
+                    options={submissionOptions(active)}
+                    onChange={(submissionId) => selectSubmission(active.case_id, submissionId)}
+                  />
+                  {activeSubmission ? <SubmissionSummary submission={activeSubmission} /> : null}
+                </div>
+              ) : null}
+              {active && (active.planning_submissions?.length ?? 0) > 1 ? (
+                <div className="campaign-submission-panel">
+                  <CampaignDropdown
+                    label="Planning contract"
+                    value={activePlanningSubmission?.planning_submission_id ?? ""}
+                    options={planningSubmissionOptions(active)}
+                    onChange={(planningSubmissionId) => selectPlanningSubmission(active.case_id, planningSubmissionId)}
+                  />
+                  {activePlanningSubmission ? <PlanningSubmissionSummary submission={activePlanningSubmission} /> : null}
+                </div>
+              ) : null}
+              {active && typeof api.campaignResolvedPackageUrl === "function" ? (
+                <a
+                  className="campaign-qualification-download"
+                  href={api.campaignResolvedPackageUrl(
+                    activeSubmission?.submission_id,
+                    activePlanningSubmission?.planning_submission_id,
+                  )}
+                  download
+                >
+                  <Download size={14} /> Download resolved package
+                </a>
+              ) : null}
               <button className="campaign-advanced-toggle" type="button" aria-expanded={advanced} onClick={() => setAdvanced((value) => !value)}>Advanced inputs <ChevronDown className={advanced ? "is-open" : ""} size={13} /></button>
               {advanced ? (
                 <div className="campaign-advanced">
@@ -705,7 +1449,7 @@ export function CampaignLab({
                   }}>Save as new case</button>
                 </div>
               ) : null}
-              {preview ? <PlanPreview value={preview} /> : null}
+              {preview ? <PlanPreview value={preview} campaignCase={active} /> : null}
               <div className="campaign-run-mode" role="radiogroup" aria-label="Campaign execution mode">
                 <button
                   type="button"
@@ -729,21 +1473,158 @@ export function CampaignLab({
 
           {catalog && workspaceTab === "review" ? (
             <section id="campaign-workspace-panel-review" className="campaign-review-workspace" role="tabpanel" aria-labelledby="campaign-workspace-tab-review">
-              {latestReview ? (
-                <section className="campaign-review">
-                  <header><span>Latest review</span><strong>{humanizeCampaignValue(latestReview.status)}</strong></header>
-                  <p>{latestReview.analysis.primary_cause.reason}</p>
-                  <label className="campaign-observation-field">
-                    <span>Operator comment</span>
-                    <textarea aria-label="Operator observation" placeholder={latestReview.operator_questions[0] ?? "Add an operator observation"} value={observation} onChange={(event) => setObservation(event.target.value)} />
-                  </label>
-                  <div>
-                    <button type="button" disabled={!observation.trim() || Boolean(busy)} onClick={() => void act("Observation added", async () => { await api.addCampaignObservation(latestReview.review_id, observation); setObservation(""); })}>Add note</button>
-                    <button type="button" disabled={Boolean(busy)} onClick={() => void act("Review approved", () => api.decideCampaignReview(latestReview.review_id, "APPROVE", "operator approved campaign evidence"))}><Check size={12} />Approve</button>
-                    <button type="button" disabled={Boolean(busy)} onClick={() => void act("Rerun requested", () => api.decideCampaignReview(latestReview.review_id, "NEEDS_RERUN", "operator requested same-input rerun"))}>Needs rerun</button>
-                  </div>
-                </section>
-              ) : <div className="campaign-workspace-empty"><CircleAlert size={16} />No review is available yet</div>}
+              {selectedRunEntry ? (
+                <div className="campaign-review-journal">
+                  <section className="campaign-run-history" aria-label={`Runs for ${reviewCase ? humanizeCampaignValue(reviewCase.family) : "campaign"}`}>
+                    <div className="campaign-review-case-picker">
+                      <CampaignDropdown
+                        label="Review mission case"
+                        value={reviewCaseId ?? ""}
+                        options={reviewCaseOptions}
+                        searchable
+                        onChange={(nextCaseId) => {
+                          const nextCase = catalog.cases.find((item) => item.case_id === nextCaseId);
+                          setSelectedId(nextCaseId);
+                          setSelectedReviewRunId("");
+                          setSelectedSnapshotId("");
+                          if (nextCase) {
+                            setEnvironment(nextCase.environment);
+                            setFleetSize(String(nextCase.drone_count) as FleetSizeFilter);
+                          }
+                        }}
+                      />
+                    </div>
+                    <header>
+                      <span>Run history</span>
+                      <strong>{campaignRunEntries.length}</strong>
+                    </header>
+                    <div className="campaign-run-history-list">
+                      {campaignRunEntries.map(({ run, number }) => (
+                        <Fragment key={run.run_id}>
+                          <article className={run.run_id === selectedRunEntry.run.run_id ? "is-selected" : ""}>
+                          <button type="button" aria-pressed={run.run_id === selectedRunEntry.run.run_id} onClick={() => setSelectedReviewRunId(run.run_id)}>
+                            <span><strong>Run {number}</strong><small>{run.locked_inputs.submission_id ? `${humanizeCampaignValue(run.locked_inputs.submission_id)} · ` : ""}{formatCampaignRunDate(run.finished_at_utc ?? run.requested_at_utc)}</small></span>
+                            <em className={`state-${run.status.toLowerCase()}`}>{humanizeCampaignValue(run.status)}</em>
+                          </button>
+                          {run.mission_execution_id ? (
+                            <a href={api.campaignTelemetryCsvUrl(run.mission_execution_id)} download aria-label={`Download telemetry CSV for run ${number}`} title="Download telemetry CSV"><Download size={13} /></a>
+                          ) : null}
+                          <button
+                            className="campaign-delete-run"
+                            type="button"
+                            aria-label={`Delete run ${number}`}
+                            title={run.status === "RUNNING" || run.status === "QUEUED" ? "Active runs cannot be deleted" : "Delete run"}
+                            disabled={run.status === "RUNNING" || run.status === "QUEUED" || Boolean(busy)}
+                            onClick={() => {
+                              const runId = run.run_id;
+                              void act("Campaign run deleted", async () => {
+                                await api.deleteCampaignRun(runId);
+                                setSelectedReviewRunId("");
+                              });
+                            }}
+                          ><Trash2 size={13} /></button>
+                          </article>
+                        </Fragment>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="campaign-review-detail">
+                    <header>
+                      <span>Run {selectedRunEntry.number}</span>
+                      <strong>{humanizeCampaignValue(selectedRunEntry.run.status)}</strong>
+                    </header>
+                    <p>{selectedRunEntry.review?.analysis.primary_cause.reason
+                      ?? selectedRunEntry.run.failure_reason
+                      ?? (selectedRunEntry.run.status === "RUNNING" || selectedRunEntry.run.status === "QUEUED"
+                        ? "This run is still in progress."
+                        : "Evidence for this run is not available.")}</p>
+                    <div className="campaign-run-facts">
+                      <span><small>Mode</small><strong>{selectedRunEntry.run.mode === "AUTOMATED_ACCELERATED" ? "Accelerated" : "Realtime"}</strong></span>
+                      <span><small>CSV rows</small><strong>{selectedRunEntry.review?.analysis.telemetry_row_count?.toLocaleString() ?? "—"}</strong></span>
+                      <span><small>Finished</small><strong>{formatCampaignRunDate(selectedRunEntry.run.finished_at_utc)}</strong></span>
+                    </div>
+                    {selectedRunEntry.review ? (
+                      <EvidenceReconciliation analysis={selectedRunEntry.review.analysis} />
+                    ) : null}
+                    <div className="campaign-review-detail-body">
+                      {selectedMissionExecutionId ? (
+                        <CampaignTelemetryPlots
+                          state={selectedTelemetryCharts}
+                          runNumber={selectedRunEntry.number}
+                        />
+                      ) : (
+                        <section className="campaign-telemetry-plots is-empty" aria-label={`Flight graphs for run ${selectedRunEntry.number}`}>
+                          <CircleAlert size={14} /> Flight graphs become available when the run telemetry CSV is retained.
+                        </section>
+                      )}
+                      {selectedRunEntry.review ? (
+                        <>
+                          {selectedRunEntry.review.operator_observations.length ? (
+                            <div className="campaign-observation-log">
+                              <span>Saved observations</span>
+                              <ol>
+                                {selectedRunEntry.review.operator_observations.map((note, index) => <li key={`${selectedRunEntry.review?.review_id}-${index}`}>{note}</li>)}
+                              </ol>
+                            </div>
+                          ) : null}
+                          <div className="campaign-review-composer">
+                            <label className="campaign-observation-field">
+                              <span>Operator comment</span>
+                              <textarea
+                                aria-label={`Operator comment for run ${selectedRunEntry.number}`}
+                                placeholder={selectedRunEntry.review.operator_questions[0] ?? "Record what you observed during this run"}
+                                value={observationDrafts[selectedRunEntry.review.review_id] ?? ""}
+                                onChange={(event) => setObservationDrafts((current) => ({
+                                  ...current,
+                                  [selectedRunEntry.review!.review_id]: event.target.value,
+                                }))}
+                              />
+                            </label>
+                            <button
+                              className="campaign-save-observation"
+                              type="button"
+                              disabled={!observationDrafts[selectedRunEntry.review.review_id]?.trim() || Boolean(busy)}
+                              onClick={() => {
+                                const reviewId = selectedRunEntry.review!.review_id;
+                                const note = observationDrafts[reviewId] ?? "";
+                                void act("Operator comment saved", async () => {
+                                  await api.addCampaignObservation(reviewId, note);
+                                  setObservationDrafts((current) => ({ ...current, [reviewId]: "" }));
+                                });
+                              }}
+                            >Save comment</button>
+                          </div>
+                        </>
+                      ) : null}
+                      <section className="campaign-snapshot-strip" aria-label={`Snapshots for run ${selectedRunEntry.number}`}>
+                        <header>
+                          <span><ImageIcon size={12} />Scene snapshots</span>
+                          <strong>{selectedRunSnapshots.length}</strong>
+                        </header>
+                        {selectedRunSnapshots.length ? (
+                          <div>
+                            {selectedRunSnapshots.map((snapshot, index) => (
+                              <button
+                                type="button"
+                                key={snapshot.snapshot_id}
+                                aria-label={`Review snapshot ${index + 1} from run ${selectedRunEntry.number}`}
+                                onClick={() => setSelectedSnapshotId(snapshot.snapshot_id)}
+                              >
+                                {snapshot.image_available ? (
+                                  <Image unoptimized src={api.campaignSnapshotImageUrl(snapshot.snapshot_id)} width={92} height={54} alt="" />
+                                ) : <ImageOff size={17} />}
+                                <span>{index + 1}</span>
+                                {snapshot.operator_comment ? <i aria-label="Comment saved" /> : null}
+                              </button>
+                            ))}
+                          </div>
+                        ) : <p>No scene snapshots were captured during this run.</p>}
+                      </section>
+                    </div>
+                  </section>
+                </div>
+              ) : <div className="campaign-workspace-empty"><CircleAlert size={16} />No runs have been recorded for this campaign yet</div>}
             </section>
           ) : null}
         </div>
@@ -751,6 +1632,116 @@ export function CampaignLab({
         <footer className="campaign-workspace-footer">
           {footerActions}
         </footer>
+        {selectedSnapshot && selectedRunEntry ? (
+          <div className="campaign-snapshot-viewer-backdrop">
+            <section className="campaign-snapshot-viewer" role="dialog" aria-modal="true" aria-labelledby="campaign-snapshot-viewer-title">
+              <header>
+                <div>
+                  <span>Run {selectedRunEntry.number} · Scene snapshot</span>
+                  <h3 id="campaign-snapshot-viewer-title">{formatCampaignRunDate(selectedSnapshot.captured_at_utc)}</h3>
+                </div>
+                <button type="button" aria-label="Close snapshot review" onClick={() => setSelectedSnapshotId("")}><X size={16} /></button>
+              </header>
+              <div className="campaign-snapshot-image">
+                {selectedSnapshot.image_available ? (
+                  <Image
+                    unoptimized
+                    src={api.campaignSnapshotImageUrl(selectedSnapshot.snapshot_id)}
+                    width={selectedSnapshot.width_px}
+                    height={selectedSnapshot.height_px}
+                    alt={`Scene captured during run ${selectedRunEntry.number}`}
+                  />
+                ) : (
+                  <div><ImageOff size={24} /><strong>Image removed</strong><span>The retained comment and capture metadata remain available.</span></div>
+                )}
+              </div>
+              <label className="campaign-snapshot-comment">
+                <span>Comment for this snapshot</span>
+                <textarea
+                  aria-label="Snapshot comment"
+                  placeholder="What was visible at this moment?"
+                  value={snapshotCommentDrafts[selectedSnapshot.snapshot_id] ?? selectedSnapshot.operator_comment ?? ""}
+                  onChange={(event) => setSnapshotCommentDrafts((current) => ({
+                    ...current,
+                    [selectedSnapshot.snapshot_id]: event.target.value,
+                  }))}
+                />
+              </label>
+              {selectedSnapshot.review_frame ? (
+                <div className="campaign-run-facts" aria-label="Snapshot source-time identity">
+                  <span><small>Source time</small><strong>{selectedSnapshot.review_frame.source_timestamp_s.toFixed(3)} s</strong></span>
+                  <span><small>Estimate / truth</small><strong>{selectedSnapshot.review_frame.estimate_source_timestamp_s.toFixed(3)} / {selectedSnapshot.review_frame.truth_source_timestamp_s?.toFixed(3) ?? "—"} s</strong></span>
+                  <span><small>Display age</small><strong>{selectedSnapshot.review_frame.playback_buffer_age_s.toFixed(3)} s</strong></span>
+                  <span><small>Interpolation</small><strong>{humanizeCampaignValue(selectedSnapshot.review_frame.interpolation_state)}</strong></span>
+                </div>
+              ) : null}
+              <button
+                className="campaign-save-snapshot-comment"
+                type="button"
+                disabled={
+                  !(snapshotCommentDrafts[selectedSnapshot.snapshot_id] ?? selectedSnapshot.operator_comment ?? "").trim()
+                  || (snapshotCommentDrafts[selectedSnapshot.snapshot_id] ?? selectedSnapshot.operator_comment ?? "").trim() === (selectedSnapshot.operator_comment ?? "")
+                  || Boolean(busy)
+                }
+                onClick={() => {
+                  const note = (snapshotCommentDrafts[selectedSnapshot.snapshot_id] ?? selectedSnapshot.operator_comment ?? "").trim();
+                  void act("Snapshot comment saved", async () => {
+                    await api.updateCampaignSnapshotComment(selectedSnapshot.snapshot_id, note);
+                    setSnapshotCommentDrafts((current) => ({ ...current, [selectedSnapshot.snapshot_id]: note }));
+                  });
+                }}
+              >Save snapshot comment</button>
+              <label className="campaign-snapshot-comment">
+                <span>Neutral evidence assessment</span>
+                <textarea
+                  aria-label="Neutral snapshot evidence assessment"
+                  placeholder="Separate what the evidence supports from the operator observation"
+                  value={snapshotAssessmentDrafts[selectedSnapshot.snapshot_id] ?? selectedSnapshot.neutral_assessment ?? ""}
+                  onChange={(event) => setSnapshotAssessmentDrafts((current) => ({
+                    ...current,
+                    [selectedSnapshot.snapshot_id]: event.target.value,
+                  }))}
+                />
+                <select
+                  aria-label="Neutral assessment disposition"
+                  value={snapshotAssessmentDispositions[selectedSnapshot.snapshot_id] ?? selectedSnapshot.assessment_disposition ?? "NEEDS_MORE_EVIDENCE"}
+                  onChange={(event) => setSnapshotAssessmentDispositions((current) => ({
+                    ...current,
+                    [selectedSnapshot.snapshot_id]: event.target.value as SnapshotAssessmentDisposition,
+                  }))}
+                >
+                  <option value="VALID">Valid</option>
+                  <option value="PARTLY_VALID">Partly valid</option>
+                  <option value="DISPLAY_EFFECT">Display effect</option>
+                  <option value="NOT_SUPPORTED">Not supported</option>
+                  <option value="NEEDS_MORE_EVIDENCE">Needs more evidence</option>
+                </select>
+              </label>
+              <button
+                className="campaign-save-snapshot-comment"
+                type="button"
+                disabled={!(snapshotAssessmentDrafts[selectedSnapshot.snapshot_id] ?? selectedSnapshot.neutral_assessment ?? "").trim() || Boolean(busy)}
+                onClick={() => {
+                  const assessment = (snapshotAssessmentDrafts[selectedSnapshot.snapshot_id] ?? selectedSnapshot.neutral_assessment ?? "").trim();
+                  const disposition = snapshotAssessmentDispositions[selectedSnapshot.snapshot_id] ?? selectedSnapshot.assessment_disposition ?? "NEEDS_MORE_EVIDENCE";
+                  void act("Neutral snapshot assessment saved", async () => {
+                    await api.updateCampaignSnapshotAssessment(
+                      selectedSnapshot.snapshot_id,
+                      assessment,
+                      disposition,
+                      selectedSnapshot.assessment_confidence ?? 0.8,
+                      selectedSnapshot.assessment_evidence_refs ?? [],
+                    );
+                    setSnapshotAssessmentDrafts((current) => ({
+                      ...current,
+                      [selectedSnapshot.snapshot_id]: assessment,
+                    }));
+                  });
+                }}
+              >Save neutral assessment</button>
+            </section>
+          </div>
+        ) : null}
       </section>
     </div>,
     document.body,
@@ -770,24 +1761,151 @@ export function CampaignLab({
   );
 }
 
+function formatCampaignRunDate(value?: string): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+type CampaignReviewAnalysis = CampaignWorkspaceView["reviews"][number]["analysis"];
+type CampaignEvidencePoint = { x: number; y: number; z: number };
+
+function formatEvidencePoint(point?: CampaignEvidencePoint): string {
+  if (!point) return "—";
+  return `(${point.x.toFixed(3)}, ${point.y.toFixed(3)}, ${point.z.toFixed(3)}) m`;
+}
+
+function evidenceDistance(left?: CampaignEvidencePoint, right?: CampaignEvidencePoint): string {
+  if (!left || !right) return "—";
+  return Math.hypot(left.x - right.x, left.y - right.y, left.z - right.z).toFixed(3);
+}
+
+function EvidenceReconciliation({ analysis }: { analysis: CampaignReviewAnalysis }) {
+  const kinematics = (analysis.vehicles ?? []).filter(
+    (vehicle) => vehicle.kinematics_gate_reconciliation,
+  );
+  return (
+    <section className="campaign-plan-preview" aria-label="Evidence reconciliation">
+      <header><span>EVIDENCE RECONCILIATION</span><strong>Raw + processed</strong></header>
+      {analysis.planning_submission_id ? (
+        <div>
+          <span>Accepted planning authority</span>
+          <p>{analysis.planning_submission_id} · submission {analysis.planning_submission_sha256?.slice(0, 12) ?? "—"} · package {analysis.resolved_planning_package_sha256?.slice(0, 12) ?? "—"}</p>
+        </div>
+      ) : null}
+      {kinematics.map((vehicle) => {
+        const gate = vehicle.kinematics_gate_reconciliation!;
+        return (
+          <div key={`kinematics-${vehicle.vehicle_id}`}>
+            <span>{vehicle.vehicle_id} kinematics {gate.gate_disagreement ? "· GATE DISAGREEMENT" : ""}</span>
+            <p>
+              Raw H/V {gate.raw_horizontal_speed_peak_m_s?.toFixed(3) ?? "—"}/{gate.raw_vertical_speed_peak_m_s?.toFixed(3) ?? "—"} m/s ({gate.raw_gate_passed === undefined ? "not evaluated" : gate.raw_gate_passed ? "pass" : "fail"}) · Processed H/V {gate.processed_horizontal_speed_peak_m_s?.toFixed(3) ?? "—"}/{gate.processed_vertical_speed_peak_m_s?.toFixed(3) ?? "—"} m/s ({gate.processed_gate_passed === undefined ? "not evaluated" : gate.processed_gate_passed ? "pass" : "fail"}) · Limits {gate.maximum_horizontal_speed_m_s?.toFixed(2) ?? "—"}/{gate.maximum_vertical_speed_m_s?.toFixed(2) ?? "—"} m/s
+            </p>
+          </div>
+        );
+      })}
+      {(analysis.landing ?? []).map((landing) => (
+        <div key={`landing-${landing.vehicle_id}`}>
+          <span>{landing.vehicle_id} role-relative landing target {landing.landing_goal_id ? `· ${landing.landing_goal_id}` : ""}</span>
+          <p>
+            Accepted {formatEvidencePoint(landing.accepted_landing_center_m)} · Planned arrival {formatEvidencePoint(landing.planned_arrival_m)} ({evidenceDistance(landing.planned_arrival_m, landing.accepted_landing_center_m)} m) · Estimate {formatEvidencePoint(landing.estimated_touchdown_m)} ({evidenceDistance(landing.estimated_touchdown_m, landing.accepted_landing_center_m)} m) · Truth {formatEvidencePoint(landing.truth_touchdown_m)} ({evidenceDistance(landing.truth_touchdown_m, landing.accepted_landing_center_m)} m) · Display marker {formatEvidencePoint(landing.displayed_goal_marker_m)} ({evidenceDistance(landing.displayed_goal_marker_m, landing.accepted_landing_center_m)} m)
+          </p>
+          <p>Coordinate chain: {landing.coordinate_conversion_chain.join(" → ")}{landing.terminal_contact ? ` · ${humanizeCampaignValue(landing.terminal_contact)}` : ""}{landing.motors_cut_after_contact === undefined ? "" : ` · motors ${landing.motors_cut_after_contact ? "cut after contact" : "not confirmed cut after contact"}`}</p>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 export function CaseSummary({ campaignCase }: { campaignCase: CampaignCaseView }) {
+  const semantics = campaignCase.semantics;
+  const routeCount = semantics ? Object.keys(semantics.route_intent_by_role).length : 0;
+  const oracleCount = semantics?.behavior_oracles.length ?? 0;
   return (
     <article className="campaign-case-summary">
-      <div><span>What it does</span><p>{campaignCase.behavior_under_test}</p></div>
-      <div><span>Expected outcome</span><p>{campaignCase.expected_outcome}</p></div>
+      {semantics ? (
+        <section className="campaign-case-objective">
+          <span>Level {semantics.curriculum_level} objective</span>
+          <p>{semantics.learning_objective}</p>
+        </section>
+      ) : null}
+      <div className="campaign-case-highlights">
+        <div><span>What it does</span><p>{campaignCase.behavior_under_test}</p></div>
+        <div><span>Expected outcome</span><p>{campaignCase.expected_outcome}</p></div>
+      </div>
+      {semantics ? (
+        <details className="campaign-case-technical">
+          <summary>
+            <span>Technical criteria</span>
+            <strong>
+              {routeCount} {routeCount === 1 ? "route" : "routes"} · {oracleCount} {oracleCount === 1 ? "check" : "checks"}
+            </strong>
+            <ChevronDown size={14} aria-hidden="true" />
+          </summary>
+          <div>
+            <div><span>Level rationale</span><p>{semantics.difficulty_rationale}</p></div>
+            <div>
+              <span>Authored route</span>
+              <p>{Object.entries(semantics.route_intent_by_role).map(([role, nodes]) => `${role}: ${nodes.map((node) => `${humanizeCampaignValue(node.mode)}${node.mode === "CAPTURE_AND_HOLD" ? ` ${node.dwell_s}s` : ""} · ${node.region_id}`).join(" → ")}`).join(" · ")}</p>
+            </div>
+            {semantics.scenario_events.length ? (
+              <div><span>Injected events</span><p>{semantics.scenario_events.map((event) => `${event.trigger_time_s.toFixed(1)}s · ${humanizeCampaignValue(event.kind)} · ${humanizeCampaignValue(event.expected_disposition)}`).join(" · ")}</p></div>
+            ) : null}
+            <div>
+              <span>Evidence checks</span>
+              <p>{semantics.behavior_oracles.map((oracle) => `${humanizeCampaignValue(oracle.kind)}${oracle.threshold === undefined ? "" : `: ${oracle.threshold} ${oracle.unit ?? ""}`}`).join(" · ")}</p>
+            </div>
+          </div>
+        </details>
+      ) : null}
     </article>
   );
 }
 
-function PlanPreview({ value }: { value: Record<string, unknown> }) {
+function PlanPreview({ value, campaignCase }: { value: Record<string, unknown>; campaignCase?: CampaignCaseView }) {
   const plan = value.plan && typeof value.plan === "object" ? value.plan as Record<string, unknown> : {};
+  const resolvedPackage = value.resolved_package && typeof value.resolved_package === "object"
+    ? value.resolved_package as Record<string, unknown>
+    : {};
+  const planningSubmission = resolvedPackage.planning_submission && typeof resolvedPackage.planning_submission === "object"
+    ? resolvedPackage.planning_submission as Record<string, unknown>
+    : {};
+  const certificate = plan.feasibility_certificate && typeof plan.feasibility_certificate === "object"
+    ? plan.feasibility_certificate as Record<string, unknown>
+    : undefined;
   const candidates = Array.isArray(plan.retained_candidates) ? plan.retained_candidates : [];
   const selectedIndex = typeof plan.selected_candidate_index === "number" ? plan.selected_candidate_index : -1;
   const selected = selectedIndex >= 0 && typeof candidates[selectedIndex] === "object" ? candidates[selectedIndex] as Record<string, unknown> : undefined;
+  const routes = Array.isArray(selected?.routes) ? selected.routes as Array<Record<string, unknown>> : [];
   return (
     <article className="campaign-plan-preview">
       <header><span>PLAN PREVIEW</span><strong>{humanizeCampaignValue(String(selected?.strategy ?? plan.status ?? "BLOCKED"))}</strong></header>
       <p>{String(plan.optimality_claim ?? plan.blocking_reason ?? "Bounded plan ready")}</p>
+      <div>
+        <span>Resolved authority</span>
+        <p>{String(planningSubmission.display_name ?? plan.planning_submission_id ?? "Baseline planning contract")} · package {String(resolvedPackage.resolved_package_sha256 ?? "unavailable").slice(0, 12)} · plan {String(plan.plan_sha256 ?? "unavailable").slice(0, 12)}</p>
+      </div>
+      <div>
+        <span>Bounded search</span>
+        <p>{humanizeCampaignValue(String(plan.search_disposition ?? plan.status ?? "UNKNOWN"))} · {Number(plan.generated_candidate_count ?? candidates.length)} generated · {Number(plan.retained_candidate_count ?? candidates.length)} retained · {Array.isArray(plan.representative_candidate_sha256s) ? plan.representative_candidate_sha256s.length : 0} representative · {plan.bounded_search_complete === true ? "declared bounds complete" : "bounds incomplete"}</p>
+      </div>
+      {certificate ? (
+        <div>
+          <span>Independent feasibility certificate</span>
+          <p>{certificate.passed === true ? "PASS" : "FAIL"} · protected pairwise clearance {Number(certificate.minimum_pairwise_protected_clearance_m ?? 0).toFixed(3)} m · protected solid clearance {Number(certificate.minimum_solid_protected_clearance_m ?? 0).toFixed(3)} m · boundary clearance {Number(certificate.minimum_boundary_clearance_m ?? 0).toFixed(3)} m · certificate {String(certificate.certificate_sha256 ?? "unavailable").slice(0, 12)}</p>
+        </div>
+      ) : null}
+      {routes.map((route) => {
+        const points = Array.isArray(route.points_m) ? route.points_m as Array<Record<string, unknown>> : [];
+        return <div key={String(route.role_id)}><span>{String(route.role_id)} route</span><p>{points.map((point) => `(${Number(point.x).toFixed(2)}, ${Number(point.y).toFixed(2)}, ${Number(point.z).toFixed(2)})`).join(" → ")}</p></div>;
+      })}
+      {campaignCase?.semantics?.scenario_events.length ? <div><span>Event triggers</span><p>{campaignCase.semantics.scenario_events.map((event) => `${event.trigger_time_s.toFixed(1)}s ${humanizeCampaignValue(event.kind)}`).join(" · ")}</p></div> : null}
     </article>
   );
 }

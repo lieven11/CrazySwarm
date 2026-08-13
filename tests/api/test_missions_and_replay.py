@@ -13,7 +13,7 @@ from pytest import MonkeyPatch
 
 from crazyswarm_app.api.runtime import ApplicationRuntime
 from crazyswarm_app.domain.errors import ErrorCode
-from crazyswarm_app.domain.models import Vector3, VehicleState
+from crazyswarm_app.domain.models import Vector3, VehicleIdentity, VehicleState
 from crazyswarm_app.missions.models import MissionResult, MissionRunSnapshot, MissionStatus
 from crazyswarm_app.observability.events import EvidenceEvent, EvidenceKind, MissionResultPayload
 from crazyswarm_app.observability.replay import ReplayClock
@@ -556,6 +556,20 @@ def test_run_queries_diagnostic_export_and_command_free_replay(
     assert replayed[-1].kind is EvidenceKind.MISSION_RESULT
     assert isinstance(replayed[-1].payload, MissionResultPayload)
     assert replayed[-1].payload.result.status.value == "SUCCEEDED"
+    deleted = client.delete(
+        f"/api/v1/run-files/{run_id}",
+        headers=auth_headers("delete-run-files"),
+    )
+    assert deleted.status_code == 200
+    assert deleted.json()["deleted_run_ids"] == [run_id]
+    assert not any(
+        item["mission_execution_id"] == run_id
+        for item in client.get("/api/v1/run-files", headers=auth_headers()).json()
+    )
+    assert not any(
+        item["run_id"] == run_id
+        for item in client.get("/api/v1/runs", headers=auth_headers()).json()
+    )
     schema = client.get("/api/v1/schema", headers=auth_headers()).json()
     replay_paths = [path for path in schema["paths"] if path.startswith("/api/v1/replay")]
     assert replay_paths == [
@@ -591,6 +605,12 @@ def test_telemetry_csv_rejects_unknown_and_incomplete_but_exports_aborted_run(
     incomplete = client.get(f"/api/v1/runs/{incomplete_id}/telemetry.csv", headers=auth_headers())
     assert incomplete.status_code == 409
     assert incomplete.json()["error"]["code"] == "RUN_INCOMPLETE"
+    deleting_incomplete = client.delete(
+        f"/api/v1/run-files/{incomplete_id}",
+        headers=auth_headers("delete-incomplete-run-files"),
+    )
+    assert deleting_incomplete.status_code == 409
+    assert deleting_incomplete.json()["error"]["code"] == "INVALID_STATE"
 
     aborted_id = "run-api-aborted-csv"
     runtime.store.begin_run(
@@ -736,6 +756,57 @@ def test_simulation_world_clock_and_fault_routes(
     assert unsafe_pause.json()["error"]["message"] == (
         "simulation clock controls require a disconnected vehicle"
     )
+
+
+def test_simulation_fleet_reset_replaces_the_previous_visible_roster(
+    api_client: tuple[TestClient, ApplicationRuntime],
+) -> None:
+    client, runtime = api_client
+    primary = cast(SimulatedVehicle, runtime.vehicles["sim01"])
+    stale = SimulatedVehicle(
+        VehicleIdentity(
+            vehicle_id="stale-from-previous-mission",
+            display_name="Stale previous mission drone",
+            adapter="sim",
+        ),
+        primary.world,
+        config=primary.config,
+        initial_position_m=Vector3(x=0.7, y=0.3, z=0.0),
+    )
+    runtime.vehicles[stale.identity.vehicle_id] = stale
+    runtime.supervisor.register_vehicle(stale)
+    runtime.active_vehicle_ids = {"sim01", stale.identity.vehicle_id}
+    connected = client.post(
+        "/api/v1/vehicles/sim01/connect",
+        headers=auth_headers("connect-before-fleet-reset"),
+        json={},
+    )
+    assert connected.status_code == 200
+    assert runtime.supervisor.session("sim01").state is VehicleState.READY
+
+    before = client.get("/api/v1/state", headers=auth_headers()).json()
+    assert {item["identity"]["vehicle_id"] for item in before["vehicles"]} == {
+        "sim01",
+        "stale-from-previous-mission",
+    }
+
+    reset = client.post(
+        "/api/v1/simulation/fleet/reset-poses",
+        headers=auth_headers("reset-selected-simulation-fleet"),
+        json={"vehicle_ids": ["sim01"]},
+    )
+
+    assert reset.status_code == 200
+    assert reset.json()["vehicle_ids"] == ["sim01"]
+    assert reset.json()["reset_scope"] == [
+        "active_fleet",
+        "pose",
+        "motion",
+        "estimator_state",
+    ]
+    assert runtime.supervisor.session("sim01").state is VehicleState.DISCONNECTED
+    after = client.get("/api/v1/state", headers=auth_headers()).json()
+    assert [item["identity"]["vehicle_id"] for item in after["vehicles"]] == ["sim01"]
 
 
 def test_authenticated_operator_emergency_preempts_mission_owned_lease(

@@ -1,0 +1,26 @@
+schema_version: 1
+capabilities:
+- capability_id: core.constant_path_speed
+  owner: TIME_PARAMETERIZER
+  status: EXECUTABLE
+  qualified_backend_profile_ids: [fast-sim-v1]
+  anchor_case_ids: [1d.altitude_transition.canonical_nominal]
+  rationale: Reuses the independently measured constant-speed time law on planner-selected geometry.
+- capability_id: core.route_fidelity
+  owner: PLANNER
+  status: EXECUTABLE
+  qualified_backend_profile_ids: [fast-sim-v1]
+  anchor_case_ids: [1d.curved_route.canonical_nominal]
+  rationale: Binds the planner-owned EXACT_ROUTE policy with the frozen 1e-6 m centerline bound while preserving the baseline time law and all other authority.
+- capability_id: core.corner_transition
+  owner: TIME_PARAMETERIZER
+  status: EXECUTABLE
+  qualified_backend_profile_ids: [fast-sim-v1]
+  anchor_case_ids: [1d.planar_shape_loop.rounded_square]
+  rationale: Uses authored lookahead time and deterministic derived distance/radius for smooth knot transitions.
+- capability_id: core.energy_aware_retiming
+  owner: TIME_PARAMETERIZER
+  status: EXECUTABLE
+  qualified_backend_profile_ids: [fast-sim-v1]
+  anchor_case_ids: [1d.point_to_point_relocation.canonical_nominal, 2d.parallel_routes.canonical_nominal]
+  rationale: A no-scalar request evaluates the frozen five-factor family with the versioned coupled-powertrain oracle and binds the lowest-energy feasible result.

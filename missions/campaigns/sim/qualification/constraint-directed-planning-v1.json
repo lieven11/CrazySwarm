@@ -1,0 +1,244 @@
+{
+  "dynamic_rows": [
+    {
+      "actual_disposition": "ACCEPTED",
+      "committed_route_count": 2,
+      "decision_sha256": "9857bf3322cd11d4b31b272412920a8b752898776ccc145f9c022d4cf0a13523",
+      "event_kind": "OBSTACLE_ADDED",
+      "fallback": null,
+      "feasibility_certificate_sha256s": [
+        "c27024e823ca332755b1b66940b159a376b685beac1f71d676a3895fae1f7c39",
+        "07cd738ac246f61b7ac366ee489a1cda67aaaa7d84ca48c58045731cf6fedee6"
+      ],
+      "passed": true,
+      "proposal_sha256": "92290aed5d0aa943c78d4ea5b1b884f248376a4783529c04cf6e07e7188aa52a",
+      "qualification_scope": "REAL_CHANGED_WORLD_PLAN_PLUS_COORDINATOR_COMMIT",
+      "reaction_horizon_passed": true,
+      "replacement_world_sha256": "996efd365c68673c399cb049b43e47693964838025f979d36acc717ab4d28b40",
+      "result_sha256": "df223e8411c1ea55cca20b075fc474b9bf66e3899c33675703fe9e3a0cf0d969",
+      "row_id": "dynamic.obstacle-atomic-cutover"
+    },
+    {
+      "actual_disposition": "ACCEPTED",
+      "committed_route_count": 2,
+      "decision_sha256": "7dae125081fa1ccb5785f2b1f031512ee33e5436f53e11fdd9d41f4072a304fc",
+      "event_kind": "PEER_TRAJECTORY_UPDATED",
+      "fallback": null,
+      "feasibility_certificate_sha256s": [],
+      "passed": true,
+      "proposal_sha256": null,
+      "qualification_scope": "COORDINATOR_TRANSACTION_ONLY",
+      "reaction_horizon_passed": true,
+      "replacement_world_sha256": null,
+      "result_sha256": "3cd02ea235b00b0b6687f73c33f2c4aa539abd59f73d62c0656aa021c1bf65e3",
+      "row_id": "dynamic.peer-atomic-cutover"
+    },
+    {
+      "actual_disposition": "BLOCKED_REACTION_HORIZON",
+      "committed_route_count": 0,
+      "decision_sha256": "75526ad3d79ecfc461d40e155e4e3bf6b651ccd3c5a906bd0f8e6cb2858d66df",
+      "event_kind": "OBSTACLE_ADDED",
+      "fallback": "FLEET_ABORT_AND_LAND",
+      "feasibility_certificate_sha256s": [],
+      "passed": true,
+      "proposal_sha256": null,
+      "qualification_scope": "COORDINATOR_TRANSACTION_ONLY",
+      "reaction_horizon_passed": false,
+      "replacement_world_sha256": null,
+      "result_sha256": "ae5e446ba156e404b06366bd4835aa4a4f53dfb7ae3bea3c4da12dc7c66c8d78",
+      "row_id": "dynamic.obstacle-late-fallback"
+    },
+    {
+      "actual_disposition": "BLOCKED_ATOMIC_COMMIT",
+      "committed_route_count": 0,
+      "decision_sha256": "5a472410396b815b962c4af4b6525235328bbacb9be37460a969020a76a95e32",
+      "event_kind": "PEER_TRAJECTORY_UPDATED",
+      "fallback": "CONTINUE_OLD_SAFE_EPOCH",
+      "feasibility_certificate_sha256s": [],
+      "passed": true,
+      "proposal_sha256": null,
+      "qualification_scope": "COORDINATOR_TRANSACTION_ONLY",
+      "reaction_horizon_passed": true,
+      "replacement_world_sha256": null,
+      "result_sha256": "64788d42a015af30cc72558b63c6fc6becc58e19336f94c85b900efc6c5041c8",
+      "row_id": "dynamic.peer-partial-ack-zero-commit"
+    }
+  ],
+  "geometry_rows": [
+    {
+      "contradictions": [],
+      "passable": true,
+      "passed": true,
+      "result_sha256": "03ea02699d76e76eadfba9ca148100cb60db02a55f5b8406bcb81ef2b6e671c9",
+      "row_id": "obstacle.under-only-clearance",
+      "valid": true
+    },
+    {
+      "contradictions": [
+        "PASSAGE_TOO_SMALL:obstacle.under-only-too-low.passage"
+      ],
+      "passable": false,
+      "passed": true,
+      "result_sha256": "92ee6f8bb1b92705b13dbddae95e426063c1278b38429fe8a8951f26c6176458",
+      "row_id": "obstacle.under-only-too-low",
+      "valid": false
+    },
+    {
+      "contradictions": [],
+      "passable": true,
+      "passed": true,
+      "result_sha256": "8fdde59b3245e4fe30a877721371c3ac1b470c0d04ad263fa82d7d6f86596f93",
+      "row_id": "obstacle.side-opening",
+      "valid": true
+    },
+    {
+      "contradictions": [],
+      "passable": true,
+      "passed": true,
+      "result_sha256": "06a136cb6b56c567ea84898b595b56525f428e1877edfb3f586465d77c6a86f7",
+      "row_id": "obstacle.open-ceiling",
+      "valid": true
+    },
+    {
+      "contradictions": [],
+      "passable": true,
+      "passed": true,
+      "result_sha256": "e151cad456f15966f2eb60a193c03cad249734f6fb1ac48a743d3624755c9c72",
+      "row_id": "obstacle.parallel-corridor",
+      "valid": true
+    },
+    {
+      "contradictions": [
+        "SOLID_FREE_SPACE_CONTRADICTION:obstacle.solid-free-contradiction.solid:obstacle.solid-free-contradiction.passage"
+      ],
+      "passable": true,
+      "passed": true,
+      "result_sha256": "01abffe46a142258b5b994a91e551a3372eafc6db6aee55b744110379ef66f0c",
+      "row_id": "obstacle.solid-free-contradiction",
+      "valid": false
+    }
+  ],
+  "matrix_id": "constraint-directed-bottleneck-head-on-merge-v1",
+  "passed": true,
+  "report_sha256": "b1fe22d1666974c282c273c8bf12f9cb1b0a2409d972031bd9d3307f124b3a23",
+  "rows": [
+    {
+      "actual_status": "READY",
+      "case_id": "2d.bottleneck.canonical_nominal",
+      "case_sha256": "7a26bbfc46dcae94a341fe84fe8e74b2366f7754aabe8278135534222edad425",
+      "feasibility_certificate_sha256": "10480d175df8d197116eea7b4d34548f6b9e99caf0e9a6e42c89efc7437f9d0d",
+      "passed": true,
+      "planning_submission_sha256": "c6ba37739a66c2333753ee5c2ba577dee00a18728894a9237d5a6e0c90672c85",
+      "result_sha256": "08e947efc69f5300842b312203845f2dd888a546b174ca56f07a0bbf65e01827",
+      "row_id": "bottleneck.serialized-baseline",
+      "search_disposition": "SELECTED",
+      "selected_candidate_sha256": "c6d4efe97747cf797e5b66e90f7d2930ae007640a6cb07736794befa118ec356",
+      "selected_strategy": "GROUND_DELAY"
+    },
+    {
+      "actual_status": "READY",
+      "case_id": "2d.bottleneck.canonical_nominal",
+      "case_sha256": "7a26bbfc46dcae94a341fe84fe8e74b2366f7754aabe8278135534222edad425",
+      "feasibility_certificate_sha256": "385163e581ead73a9dcd451b7eeb2a8f03aaf852ace48f0e45f0919439e083c5",
+      "passed": true,
+      "planning_submission_sha256": "a36488317d9e83df2ff9f0dbfaca1a6fa3c8333ddb01030b0f38f2e86a108623",
+      "result_sha256": "9b80559fcbc1d2eafa53fe0b1d082db7f0d442981c3f847c2a49beaff4a4853e",
+      "row_id": "bottleneck.simultaneous-vertical",
+      "search_disposition": "SELECTED",
+      "selected_candidate_sha256": "0737c13cd3555e2306acdbef47b9198cbce8c3a22e140a9cb7d066fb31322144",
+      "selected_strategy": "VERTICAL_LAYER"
+    },
+    {
+      "actual_status": "BLOCKED",
+      "case_id": "2d.bottleneck.canonical_nominal.qualification.simultaneous-no-vertical",
+      "case_sha256": "12a5c119c87392f9d1640c178f161d5037f2b122b50167caa6106749820d8f3c",
+      "feasibility_certificate_sha256": null,
+      "passed": true,
+      "planning_submission_sha256": "a36488317d9e83df2ff9f0dbfaca1a6fa3c8333ddb01030b0f38f2e86a108623",
+      "result_sha256": "6f36d3bceaa5dd16457611e1bca3bdd76e71f4bc63eb469df2b6c7dea63833de",
+      "row_id": "bottleneck.simultaneous-no-vertical",
+      "search_disposition": "INDEPENDENT_VERIFICATION_REJECTED",
+      "selected_candidate_sha256": null,
+      "selected_strategy": null
+    },
+    {
+      "actual_status": "BLOCKED",
+      "case_id": "2d.head_on_conflict.canonical_nominal.qualification.direct-only",
+      "case_sha256": "b4cb680022f27f85691503c0d9913561cb7b232c01b9feeb7c2e96c1ca22860a",
+      "feasibility_certificate_sha256": null,
+      "passed": true,
+      "planning_submission_sha256": "269e875b322dd1bb3ea42cf06e2c0f8d936ff6ff8eb8228efa793f02a412f37a",
+      "result_sha256": "b5c9786769d84abdf2769f2a243cef8f48c0cbf53a6803f733bc7544a553bcb4",
+      "row_id": "head-on.direct-only",
+      "search_disposition": "PROVEN_INFEASIBLE_WITHIN_DECLARED_BOUNDS",
+      "selected_candidate_sha256": null,
+      "selected_strategy": null
+    },
+    {
+      "actual_status": "READY",
+      "case_id": "2d.head_on_conflict.canonical_nominal",
+      "case_sha256": "3099fdec3eafd86551d81204af3dcaa93a9ae557ac96537364bef079067e3cd7",
+      "feasibility_certificate_sha256": "fa69a1b1bc5ec91dacd9dddc49a26ffdf7d834013b3b24ea8cc47926b0bd427c",
+      "passed": true,
+      "planning_submission_sha256": "fb6ba336658acdb42c1971f5b49fccae7d0f5af60d0a85b9acbd874cff03845d",
+      "result_sha256": "2864c4aa687f4dff1aab22465b3b94811d999b779855d9added3d4e3c2e4ca05",
+      "row_id": "head-on.paired-lateral",
+      "search_disposition": "SELECTED",
+      "selected_candidate_sha256": "2175d36545efcef311c49bec2ba50ccb4a591c241b6872096ad68479ea7c0626",
+      "selected_strategy": "HORIZONTAL_DETOUR"
+    },
+    {
+      "actual_status": "READY",
+      "case_id": "2d.head_on_conflict.canonical_nominal.qualification.open-ceiling-vertical",
+      "case_sha256": "a73f98c20c0abff1f77785c1b43d787d55e04fc7d7472e4e6d75ea7bea42009f",
+      "feasibility_certificate_sha256": "baae37bb3091338d102023b5ffa7428e90152111ddaa8fe0b415fd3cd566951b",
+      "passed": true,
+      "planning_submission_sha256": "4db4aa5db186d952732a45b9938bf8b6f4aa0fd48d97fd80a2effa7cc79b87c4",
+      "result_sha256": "687a8bb621a1e9e4cae0cad647b8553364811599efdf04556a1ff5b22c7b51aa",
+      "row_id": "head-on.open-ceiling-vertical",
+      "search_disposition": "SELECTED",
+      "selected_candidate_sha256": "2d4c5421632356495f98dacb2c7db290da5a2c097632676679d161933e936161",
+      "selected_strategy": "VERTICAL_LAYER"
+    },
+    {
+      "actual_status": "BLOCKED",
+      "case_id": "2d.merge.canonical_nominal.qualification.direct-only",
+      "case_sha256": "2f836cf0ec3ea9aa26f736fa6b0fd425aecd7660c8b5488b7d0d9be8d19b9d8a",
+      "feasibility_certificate_sha256": null,
+      "passed": true,
+      "planning_submission_sha256": "50d33ab8fdb11d0eecb769a8957ad336e93fe88e7674a9a47eb661120abaa6a3",
+      "result_sha256": "9dcfb69e4f6679a42d0bacc117cb554701ace26ac008ff5c328bbb421bf8ee62",
+      "row_id": "merge.direct-only",
+      "search_disposition": "PROVEN_INFEASIBLE_WITHIN_DECLARED_BOUNDS",
+      "selected_candidate_sha256": null,
+      "selected_strategy": null
+    },
+    {
+      "actual_status": "READY",
+      "case_id": "2d.merge.canonical_nominal",
+      "case_sha256": "70b346469dac4fa40f99da5383cfac4f96d59a0f6d48015b9f548d341ec4e10c",
+      "feasibility_certificate_sha256": "71e8a55c18170f280c3c4f999efb1b34fa77f58df2cae8c8a5133ae81fc5407d",
+      "passed": true,
+      "planning_submission_sha256": "d17e2ef69f2b76786d61911c00baf79380a4ebd315cf0e86dc86b0fdb62dcc3e",
+      "result_sha256": "d1c717cb56e53d66b11271ee45becaf1a1aee1f65923c4bd7e46641853869007",
+      "row_id": "merge.flexible-geometry",
+      "search_disposition": "SELECTED",
+      "selected_candidate_sha256": "3bef20bd026ddb4c52f309c7fd95b5431bb682643b98c68b0c50f7a85737cac9",
+      "selected_strategy": "HORIZONTAL_DETOUR"
+    },
+    {
+      "actual_status": "READY",
+      "case_id": "2d.merge.canonical_nominal",
+      "case_sha256": "70b346469dac4fa40f99da5383cfac4f96d59a0f6d48015b9f548d341ec4e10c",
+      "feasibility_certificate_sha256": "a1759dfacd494baa05c375505b9a660bc18ab97d1b31345bd392f09e2054d341",
+      "passed": true,
+      "planning_submission_sha256": "cc151b287ad1e4acc225738d08d05781ed0d08cecc94fa3ba1c533864c08efbc",
+      "result_sha256": "86946cd4d8ccca5a95a93af3d793dea58b5f843178de8613617ad7fbf14663cf",
+      "row_id": "merge.serialized-baseline",
+      "search_disposition": "SELECTED",
+      "selected_candidate_sha256": "c888c25aa10b27ff3df4204fc1337a00a362e0cd89ac57a655c36d10ecd75e79",
+      "selected_strategy": "GROUND_DELAY"
+    }
+  ],
+  "schema_version": 1
+}

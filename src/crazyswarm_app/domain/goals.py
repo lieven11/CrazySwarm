@@ -70,7 +70,7 @@ class GoalCaptureAttempt(ContractModel):
 
 
 class GoalCaptureRecord(ContractModel):
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 2
     goal: LandingGoalRegion
     attempts: tuple[GoalCaptureAttempt, ...]
     attempt_count: int = Field(ge=1)
@@ -79,6 +79,14 @@ class GoalCaptureRecord(ContractModel):
     terminal_estimated_position_m: Vector3 | None = None
     terminal_truth_position_m: Vector3 | None = None
     terminal_speed_m_s: float | None = Field(default=None, ge=0.0)
+    target_center_horizontal_error_m: float | None = Field(default=None, ge=0.0)
+    alignment_completed_source_timestamp_s: float | None = Field(default=None, ge=0.0)
+    pre_contact_vertical_speed_m_s: float | None = Field(default=None, ge=0.0)
+    contact_source_timestamp_s: float | None = Field(default=None, ge=0.0)
+    disarmed_source_timestamp_s: float | None = Field(default=None, ge=0.0)
+    post_contact_settling_s: float | None = Field(default=None, ge=0.0)
+    motors_cut_after_contact: bool | None = None
+    correction_count: int = Field(default=0, ge=0)
     terminal_state: str | None = None
     terminal_contact: Literal[
         "SIMULATED_GROUND_CONTACT",

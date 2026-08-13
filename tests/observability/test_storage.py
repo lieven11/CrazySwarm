@@ -423,6 +423,55 @@ async def test_persists_one_atomic_mission_folder_with_one_csv_for_all_vehicles(
 
 
 @pytest.mark.asyncio
+async def test_deleting_completed_mission_removes_evidence_and_archive_folder(
+    tmp_path: Path,
+) -> None:
+    archive = tmp_path / "run-files"
+    store, run_id = await recorded_mission(tmp_path / "delete-mission.sqlite3")
+    store.run_files_directory = archive
+    store.materialize_run_files_for_run(run_id)
+    folder = next(path for path in archive.iterdir() if path.is_dir())
+
+    deleted = store.delete_run_file_mission(run_id)
+
+    assert deleted == {"mission_execution_id": run_id, "deleted_run_ids": [run_id]}
+    assert not folder.exists()
+    assert store.list_run_file_missions() == []
+    with pytest.raises(KeyError):
+        store.get_run(run_id)
+    store.close()
+
+
+@pytest.mark.asyncio
+async def test_backfill_skips_complete_archives_and_repairs_missing_files(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store, run_id = await recorded_mission(tmp_path / "backfill.sqlite3")
+    manifest = store.list_run_file_missions()[0]
+    folder = Path(str(manifest["_folder"]))
+    bundle = manifest["bundle"]
+    bundle_path = folder / str(bundle["filename"])
+    original_materialize = store._materialize_mission
+    materialized: list[str] = []
+
+    def track_materialization(mission_execution_id: str) -> dict[str, object]:
+        materialized.append(mission_execution_id)
+        return original_materialize(mission_execution_id)
+
+    monkeypatch.setattr(store, "_materialize_mission", track_materialization)
+
+    assert store.backfill_run_files() == 0
+    assert materialized == []
+
+    bundle_path.unlink()
+    assert store.backfill_run_files() == 1
+    assert materialized == [run_id]
+    assert bundle_path.stat().st_size == bundle["size_bytes"]
+    store.close()
+
+
+@pytest.mark.asyncio
 async def test_mission_retention_keeps_latest_completed_folder_and_active_group(
     tmp_path: Path,
 ) -> None:

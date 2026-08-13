@@ -6,7 +6,7 @@ cases:
   cluster: CONSTRAINTS_AND_OPTIMIZATION
   family: boundary_constrained_route
   variation_name: canonical_nominal
-  parent_case_sha256: 36952216ec2140b9eea3118eaa9154f03e8eef8a5543d67841cd00b4f453ec62
+  parent_case_sha256: d33c452b854ed70a0d594ee68278d6f29952cd3bf6f95a05fba0ed1eda7a6004
   baseline_sha256: null
   purpose: Qualify the bounded boundary constrained route behavior for 1 drone(s).
   behavior_under_test: Checks that boundary constrained route hard limits and objective
@@ -24,34 +24,64 @@ cases:
       region_id: Alpha-start
       frame: world
       minimum_m:
-        x: -1.54
-        y: -0.04
+        x: -1.34
+        y: -1.24
         z: 0.0
       maximum_m:
-        x: -1.46
-        y: 0.04
+        x: -1.26
+        y: -1.16
         z: 0.08
     goal_sequence:
     - region_id: Alpha-goal-1
       frame: world
       minimum_m:
-        x: 1.45
-        y: -0.05
-        z: 0.25
+        x: -1.6
+        y: -0.8500000000000001
+        z: 0.3
       maximum_m:
-        x: 1.55
-        y: 0.05
-        z: 0.35
+        x: -1.5
+        y: -0.75
+        z: 0.39999999999999997
+    - region_id: Alpha-goal-2
+      frame: world
+      minimum_m:
+        x: -1.25
+        y: 1.5
+        z: 0.4
+      maximum_m:
+        x: -1.15
+        y: 1.6
+        z: 0.5
+    - region_id: Alpha-goal-3
+      frame: world
+      minimum_m:
+        x: 1.5
+        y: 1.15
+        z: 0.3
+      maximum_m:
+        x: 1.6
+        y: 1.25
+        z: 0.39999999999999997
+    - region_id: Alpha-goal-4
+      frame: world
+      minimum_m:
+        x: 1.2
+        y: -1.0
+        z: 0.3
+      maximum_m:
+        x: 1.3
+        y: -0.8999999999999999
+        z: 0.39999999999999997
     landing_region:
       region_id: Alpha-landing
       frame: world
       minimum_m:
-        x: 1.46
-        y: -0.04
+        x: 1.21
+        y: -0.99
         z: 0.0
       maximum_m:
-        x: 1.54
-        y: 0.04
+        x: 1.29
+        y: -0.9099999999999999
         z: 0.08
     initial_battery_percent: 100.0
     minimum_reserve_battery_percent: 20.0
@@ -165,13 +195,12 @@ cases:
   - Did every role reach the declared goal and landing region?
   - Did the selected strategy match the pre-play rationale?
   difficulty: 3
-  prerequisites: []
+  prerequisites:
+  - 1d.curved_route.canonical_nominal
   claim_boundary: Bounded Fast Sim behavior for at most three drones; no physical-flight
     claim.
   named_variations:
   - canonical_nominal
-  - compact
-  - wide
   search:
     implementation_id: bounded-joint-candidate-planner
     implementation_version: 1.0.0
@@ -213,6 +242,76 @@ cases:
     maximum_interpolation_gap_s: 0.2
     maximum_extrapolation_s: 0.1
   replanning_authority: ABORT_ONLY
+  semantics:
+    contract_version: 1
+    curriculum_level: 4
+    learning_objective: Learn and verify the causal boundary constrained route behavior
+      for 1 drone(s) in the canonical nominal authored scenario.
+    difficulty_rationale: Difficulty reflects 1 active role(s) plus route geometry.
+    route_intent_by_role:
+      Alpha:
+      - region_id: Alpha-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Alpha-goal-2
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Alpha-goal-3
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Alpha-goal-4
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+    environment_constraints:
+      keep_out_regions: []
+      required_corridors: []
+    coordination_constraints:
+      synchronized_route_start_required: false
+      maximum_route_start_skew_s: 0.2
+      minimum_simultaneous_flight_s: 0.0
+      maximum_formation_error_m: null
+      formation_offsets_m: {}
+      formation_offsets_by_node_m: {}
+    scenario_events: []
+    behavior_oracles:
+    - oracle_id: ordered-route-capture
+      kind: ROUTE_NODES_CAPTURED
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      threshold: null
+      unit: null
+      required: true
+    - oracle_id: no-undeclared-stop
+      kind: NO_UNDECLARED_STOP
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      threshold: 0.0
+      unit: count
+      required: true
+    - oracle_id: offset-landing
+      kind: DISTINCT_START_AND_LANDING
+      evidence_source: AUTHORED_ROUTE
+      role_ids:
+      - Alpha
+      threshold: 0.2
+      unit: m
+      required: true
+    - oracle_id: sampled-boundary-margin
+      kind: BOUNDARY_MARGIN
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      threshold: 0.1
+      unit: m
+      required: true
+    semantic_baseline_case_id: null
+    intended_delta: null
   field_classification:
     hard_constraints: HARD_CONSTRAINT
     allowed_strategies: HARD_CONSTRAINT
@@ -225,7 +324,7 @@ cases:
   cluster: CONSTRAINTS_AND_OPTIMIZATION
   family: unequal_priority
   variation_name: canonical_nominal
-  parent_case_sha256: 992edb61a51567aa8ffd80912181ccdbe64150a6ff5da36cc8c16063a0ce07ee
+  parent_case_sha256: 0e4b2b5b0a71e2eda70209997b8531589c263e4bbaac5fe808243041f1af5997
   baseline_sha256: null
   purpose: Qualify the bounded unequal priority behavior for 2 drone(s).
   behavior_under_test: Checks that unequal priority hard limits and objective order
@@ -243,33 +342,33 @@ cases:
       region_id: Alpha-start
       frame: world
       minimum_m:
-        x: -1.54
+        x: -1.44
         y: -0.04
         z: 0.0
       maximum_m:
-        x: -1.46
+        x: -1.3599999999999999
         y: 0.04
         z: 0.08
     goal_sequence:
     - region_id: Alpha-goal-1
       frame: world
       minimum_m:
-        x: 1.45
+        x: 1.3499999999999999
         y: -0.05
-        z: 0.25
+        z: 0.3
       maximum_m:
-        x: 1.55
+        x: 1.45
         y: 0.05
-        z: 0.35
+        z: 0.39999999999999997
     landing_region:
       region_id: Alpha-landing
       frame: world
       minimum_m:
-        x: 1.46
+        x: 1.3599999999999999
         y: -0.04
         z: 0.0
       maximum_m:
-        x: 1.54
+        x: 1.44
         y: 0.04
         z: 0.08
     initial_battery_percent: 100.0
@@ -294,33 +393,33 @@ cases:
       frame: world
       minimum_m:
         x: -0.04
-        y: -1.54
+        y: -1.44
         z: 0.0
       maximum_m:
         x: 0.04
-        y: -1.46
+        y: -1.3599999999999999
         z: 0.08
     goal_sequence:
     - region_id: Beta-goal-1
       frame: world
       minimum_m:
         x: -0.05
-        y: 1.45
-        z: 0.25
+        y: 1.3499999999999999
+        z: 0.3
       maximum_m:
         x: 0.05
-        y: 1.55
-        z: 0.35
+        y: 1.45
+        z: 0.39999999999999997
     landing_region:
       region_id: Beta-landing
       frame: world
       minimum_m:
         x: -0.04
-        y: 1.46
+        y: 1.3599999999999999
         z: 0.0
       maximum_m:
         x: 0.04
-        y: 1.54
+        y: 1.44
         z: 0.08
     initial_battery_percent: 100.0
     minimum_reserve_battery_percent: 20.0
@@ -435,13 +534,11 @@ cases:
   - Did the selected strategy match the pre-play rationale?
   difficulty: 5
   prerequisites:
-  - 1d.takeoff_hover_land.canonical_nominal
+  - 2d.perpendicular_crossing.nominal_equal_priority
   claim_boundary: Bounded Fast Sim behavior for at most three drones; no physical-flight
     claim.
   named_variations:
   - canonical_nominal
-  - compact
-  - wide
   search:
     implementation_id: bounded-joint-candidate-planner
     implementation_version: 1.0.0
@@ -483,6 +580,83 @@ cases:
     maximum_interpolation_gap_s: 0.2
     maximum_extrapolation_s: 0.1
   replanning_authority: ABORT_ONLY
+  semantics:
+    contract_version: 1
+    curriculum_level: 4
+    learning_objective: Learn and verify the causal unequal priority behavior for
+      2 drone(s) in the canonical nominal authored scenario.
+    difficulty_rationale: Difficulty reflects 2 active role(s) plus time-aligned separation
+      and joint coordination.
+    route_intent_by_role:
+      Alpha:
+      - region_id: Alpha-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      Beta:
+      - region_id: Beta-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+    environment_constraints:
+      keep_out_regions: []
+      required_corridors: []
+    coordination_constraints:
+      synchronized_route_start_required: false
+      maximum_route_start_skew_s: 0.2
+      minimum_simultaneous_flight_s: 0.0
+      maximum_formation_error_m: null
+      formation_offsets_m: {}
+      formation_offsets_by_node_m: {}
+    scenario_events: []
+    behavior_oracles:
+    - oracle_id: ordered-route-capture
+      kind: ROUTE_NODES_CAPTURED
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      threshold: null
+      unit: null
+      required: true
+    - oracle_id: no-undeclared-stop
+      kind: NO_UNDECLARED_STOP
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      threshold: 0.0
+      unit: count
+      required: true
+    - oracle_id: offset-landing
+      kind: DISTINCT_START_AND_LANDING
+      evidence_source: AUTHORED_ROUTE
+      role_ids:
+      - Alpha
+      - Beta
+      threshold: 0.2
+      unit: m
+      required: true
+    - oracle_id: joint-separation
+      kind: CONFLICT_RESOLVED
+      evidence_source: PLANNER_PREDICTION
+      role_ids:
+      - Alpha
+      - Beta
+      threshold: 0.8
+      unit: m
+      required: true
+    - oracle_id: priority-precedence
+      kind: PRIORITY_PRECEDENCE
+      evidence_source: PLANNER_PREDICTION
+      role_ids:
+      - Alpha
+      - Beta
+      threshold: 0.1
+      unit: s
+      required: true
+    semantic_baseline_case_id: 2d.perpendicular_crossing.nominal_equal_priority
+    intended_delta: Alpha has priority 200 while Beta has priority 100.
   field_classification:
     hard_constraints: HARD_CONSTRAINT
     allowed_strategies: HARD_CONSTRAINT
@@ -495,7 +669,7 @@ cases:
   cluster: CONSTRAINTS_AND_OPTIMIZATION
   family: constrained_border_height
   variation_name: canonical_nominal
-  parent_case_sha256: 1c1b30ca802d9d712c9cc044f86e27bb04490745d9d2bbc63a1ac2c0514b0d0f
+  parent_case_sha256: 1bc4d919712807793b6944503eb09360dd91375476fe4fb6938fd24e940b7672
   baseline_sha256: null
   purpose: Qualify the bounded constrained border height behavior for 2 drone(s).
   behavior_under_test: Checks that constrained border height hard limits and objective
@@ -513,33 +687,33 @@ cases:
       region_id: Alpha-start
       frame: world
       minimum_m:
-        x: -1.54
+        x: -1.44
         y: -0.04
         z: 0.0
       maximum_m:
-        x: -1.46
+        x: -1.3599999999999999
         y: 0.04
         z: 0.08
     goal_sequence:
     - region_id: Alpha-goal-1
       frame: world
       minimum_m:
-        x: 1.45
+        x: 1.3499999999999999
         y: -0.05
-        z: 0.25
+        z: 0.3
       maximum_m:
-        x: 1.55
+        x: 1.45
         y: 0.05
-        z: 0.35
+        z: 0.39999999999999997
     landing_region:
       region_id: Alpha-landing
       frame: world
       minimum_m:
-        x: 1.46
+        x: 1.3599999999999999
         y: -0.04
         z: 0.0
       maximum_m:
-        x: 1.54
+        x: 1.44
         y: 0.04
         z: 0.08
     initial_battery_percent: 100.0
@@ -564,33 +738,33 @@ cases:
       frame: world
       minimum_m:
         x: -0.04
-        y: -1.54
+        y: -1.44
         z: 0.0
       maximum_m:
         x: 0.04
-        y: -1.46
+        y: -1.3599999999999999
         z: 0.08
     goal_sequence:
     - region_id: Beta-goal-1
       frame: world
       minimum_m:
         x: -0.05
-        y: 1.45
-        z: 0.25
+        y: 1.3499999999999999
+        z: 0.3
       maximum_m:
         x: 0.05
-        y: 1.55
-        z: 0.35
+        y: 1.45
+        z: 0.39999999999999997
     landing_region:
       region_id: Beta-landing
       frame: world
       minimum_m:
         x: -0.04
-        y: 1.46
+        y: 1.3599999999999999
         z: 0.0
       maximum_m:
         x: 0.04
-        y: 1.54
+        y: 1.44
         z: 0.08
     initial_battery_percent: 100.0
     minimum_reserve_battery_percent: 20.0
@@ -619,7 +793,7 @@ cases:
       maximum_m:
         x: 1.8
         y: 1.8
-        z: 1.0
+        z: 0.42
     warning_separation_m: 0.75
     critical_separation_m: 0.5
     position_uncertainty_m: 0.05
@@ -633,7 +807,7 @@ cases:
     deadline_s: 180.0
     hover_allowed: true
     maximum_hover_s: 60.0
-    vertical_layers_allowed: true
+    vertical_layers_allowed: false
     synchronized_launch_required: false
     maximum_unrequired_airborne_wait_s: 2.0
     maximum_equal_route_battery_spread_percent: 1.0
@@ -654,8 +828,6 @@ cases:
   - SPEED_RETIMING
   - HORIZONTAL_DETOUR
   - AIRBORNE_STAGING
-  - VERTICAL_LAYER
-  - COMBINED_TIMING_GEOMETRY
   objective_order:
   - PRIORITY_INVERSION
   - STARVATION
@@ -672,7 +844,6 @@ cases:
   - DIRECT
   - GROUND_DELAY
   - HORIZONTAL_DETOUR
-  - VERTICAL_LAYER
   pass_fail_metrics:
   - metric_id: minimum_truth_separation_m
     comparator: GREATER_THAN_OR_EQUAL
@@ -705,13 +876,11 @@ cases:
   - Did the selected strategy match the pre-play rationale?
   difficulty: 5
   prerequisites:
-  - 1d.takeoff_hover_land.canonical_nominal
+  - 2d.perpendicular_crossing.nominal_equal_priority
   claim_boundary: Bounded Fast Sim behavior for at most three drones; no physical-flight
     claim.
   named_variations:
   - canonical_nominal
-  - compact
-  - wide
   search:
     implementation_id: bounded-joint-candidate-planner
     implementation_version: 1.0.0
@@ -753,6 +922,83 @@ cases:
     maximum_interpolation_gap_s: 0.2
     maximum_extrapolation_s: 0.1
   replanning_authority: ABORT_ONLY
+  semantics:
+    contract_version: 1
+    curriculum_level: 4
+    learning_objective: Learn and verify the causal constrained border height behavior
+      for 2 drone(s) in the canonical nominal authored scenario.
+    difficulty_rationale: Difficulty reflects 2 active role(s) plus time-aligned separation
+      and joint coordination.
+    route_intent_by_role:
+      Alpha:
+      - region_id: Alpha-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      Beta:
+      - region_id: Beta-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+    environment_constraints:
+      keep_out_regions: []
+      required_corridors: []
+    coordination_constraints:
+      synchronized_route_start_required: false
+      maximum_route_start_skew_s: 0.2
+      minimum_simultaneous_flight_s: 0.0
+      maximum_formation_error_m: null
+      formation_offsets_m: {}
+      formation_offsets_by_node_m: {}
+    scenario_events: []
+    behavior_oracles:
+    - oracle_id: ordered-route-capture
+      kind: ROUTE_NODES_CAPTURED
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      threshold: null
+      unit: null
+      required: true
+    - oracle_id: no-undeclared-stop
+      kind: NO_UNDECLARED_STOP
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      threshold: 0.0
+      unit: count
+      required: true
+    - oracle_id: offset-landing
+      kind: DISTINCT_START_AND_LANDING
+      evidence_source: AUTHORED_ROUTE
+      role_ids:
+      - Alpha
+      - Beta
+      threshold: 0.2
+      unit: m
+      required: true
+    - oracle_id: joint-separation
+      kind: CONFLICT_RESOLVED
+      evidence_source: PLANNER_PREDICTION
+      role_ids:
+      - Alpha
+      - Beta
+      threshold: 0.8
+      unit: m
+      required: true
+    - oracle_id: vertical-constraint-enforced
+      kind: CONSTRAINT_ENFORCED
+      evidence_source: PLANNER_PREDICTION
+      role_ids:
+      - Alpha
+      - Beta
+      threshold: 1.0
+      unit: boolean
+      required: true
+    semantic_baseline_case_id: 2d.perpendicular_crossing.nominal_equal_priority
+    intended_delta: The flight ceiling rejects vertical separation candidates.
   field_classification:
     hard_constraints: HARD_CONSTRAINT
     allowed_strategies: HARD_CONSTRAINT
@@ -765,7 +1011,7 @@ cases:
   cluster: CONSTRAINTS_AND_OPTIMIZATION
   family: no_hover_crossing
   variation_name: canonical_nominal
-  parent_case_sha256: a7f6f7ae28995999cb9e36a33e0508bdb3191598b49179a15428ab98b3fb5b26
+  parent_case_sha256: d5c0d301e81351bace32b21f08981641dc6288e6607385c7ff1f9e7c89ce1248
   baseline_sha256: null
   purpose: Qualify the bounded no hover crossing behavior for 2 drone(s).
   behavior_under_test: Checks that no hover crossing hard limits and objective order
@@ -783,33 +1029,33 @@ cases:
       region_id: Alpha-start
       frame: world
       minimum_m:
-        x: -1.54
+        x: -1.44
         y: -0.04
         z: 0.0
       maximum_m:
-        x: -1.46
+        x: -1.3599999999999999
         y: 0.04
         z: 0.08
     goal_sequence:
     - region_id: Alpha-goal-1
       frame: world
       minimum_m:
-        x: 1.45
+        x: 1.3499999999999999
         y: -0.05
-        z: 0.25
+        z: 0.3
       maximum_m:
-        x: 1.55
+        x: 1.45
         y: 0.05
-        z: 0.35
+        z: 0.39999999999999997
     landing_region:
       region_id: Alpha-landing
       frame: world
       minimum_m:
-        x: 1.46
+        x: 1.3599999999999999
         y: -0.04
         z: 0.0
       maximum_m:
-        x: 1.54
+        x: 1.44
         y: 0.04
         z: 0.08
     initial_battery_percent: 100.0
@@ -834,33 +1080,33 @@ cases:
       frame: world
       minimum_m:
         x: -0.04
-        y: -1.54
+        y: -1.44
         z: 0.0
       maximum_m:
         x: 0.04
-        y: -1.46
+        y: -1.3599999999999999
         z: 0.08
     goal_sequence:
     - region_id: Beta-goal-1
       frame: world
       minimum_m:
         x: -0.05
-        y: 1.45
-        z: 0.25
+        y: 1.3499999999999999
+        z: 0.3
       maximum_m:
         x: 0.05
-        y: 1.55
-        z: 0.35
+        y: 1.45
+        z: 0.39999999999999997
     landing_region:
       region_id: Beta-landing
       frame: world
       minimum_m:
         x: -0.04
-        y: 1.46
+        y: 1.3599999999999999
         z: 0.0
       maximum_m:
         x: 0.04
-        y: 1.54
+        y: 1.44
         z: 0.08
     initial_battery_percent: 100.0
     minimum_reserve_battery_percent: 20.0
@@ -974,13 +1220,11 @@ cases:
   - Did the selected strategy match the pre-play rationale?
   difficulty: 5
   prerequisites:
-  - 1d.takeoff_hover_land.canonical_nominal
+  - 2d.perpendicular_crossing.nominal_equal_priority
   claim_boundary: Bounded Fast Sim behavior for at most three drones; no physical-flight
     claim.
   named_variations:
   - canonical_nominal
-  - compact
-  - wide
   search:
     implementation_id: bounded-joint-candidate-planner
     implementation_version: 1.0.0
@@ -1022,6 +1266,84 @@ cases:
     maximum_interpolation_gap_s: 0.2
     maximum_extrapolation_s: 0.1
   replanning_authority: ABORT_ONLY
+  semantics:
+    contract_version: 1
+    curriculum_level: 4
+    learning_objective: Learn and verify the causal no hover crossing behavior for
+      2 drone(s) in the canonical nominal authored scenario.
+    difficulty_rationale: Difficulty reflects 2 active role(s) plus time-aligned separation
+      and joint coordination.
+    route_intent_by_role:
+      Alpha:
+      - region_id: Alpha-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      Beta:
+      - region_id: Beta-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+    environment_constraints:
+      keep_out_regions: []
+      required_corridors: []
+    coordination_constraints:
+      synchronized_route_start_required: false
+      maximum_route_start_skew_s: 0.2
+      minimum_simultaneous_flight_s: 0.0
+      maximum_formation_error_m: null
+      formation_offsets_m: {}
+      formation_offsets_by_node_m: {}
+    scenario_events: []
+    behavior_oracles:
+    - oracle_id: ordered-route-capture
+      kind: ROUTE_NODES_CAPTURED
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      threshold: null
+      unit: null
+      required: true
+    - oracle_id: no-undeclared-stop
+      kind: NO_UNDECLARED_STOP
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      threshold: 0.0
+      unit: count
+      required: true
+    - oracle_id: offset-landing
+      kind: DISTINCT_START_AND_LANDING
+      evidence_source: AUTHORED_ROUTE
+      role_ids:
+      - Alpha
+      - Beta
+      threshold: 0.2
+      unit: m
+      required: true
+    - oracle_id: joint-separation
+      kind: CONFLICT_RESOLVED
+      evidence_source: PLANNER_PREDICTION
+      role_ids:
+      - Alpha
+      - Beta
+      threshold: 0.8
+      unit: m
+      required: true
+    - oracle_id: zero-airborne-hold
+      kind: NO_AIRBORNE_HOLD
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      threshold: 0.0
+      unit: s
+      required: true
+    semantic_baseline_case_id: 2d.perpendicular_crossing.nominal_equal_priority
+    intended_delta: Airborne holding is forbidden; resolution must remain continuous
+      or ground-first.
   field_classification:
     hard_constraints: HARD_CONSTRAINT
     allowed_strategies: HARD_CONSTRAINT
@@ -1034,7 +1356,7 @@ cases:
   cluster: CONSTRAINTS_AND_OPTIMIZATION
   family: unequal_priorities
   variation_name: canonical_nominal
-  parent_case_sha256: 550dc4d21834b5155cc5567cfef109c8db6d66ecf5dffd455b24032b5a7b7ff2
+  parent_case_sha256: 39dc9654ce510226dd0c30bf239ec0a5d852ac1ec02868211c907216e80de605
   baseline_sha256: null
   purpose: Qualify the bounded unequal priorities behavior for 3 drone(s).
   behavior_under_test: Checks that unequal priorities hard limits and objective order
@@ -1052,33 +1374,33 @@ cases:
       region_id: Alpha-start
       frame: world
       minimum_m:
-        x: -1.54
+        x: -1.44
         y: -0.04
         z: 0.0
       maximum_m:
-        x: -1.46
+        x: -1.3599999999999999
         y: 0.04
         z: 0.08
     goal_sequence:
     - region_id: Alpha-goal-1
       frame: world
       minimum_m:
-        x: 1.45
+        x: 1.3499999999999999
         y: -0.05
-        z: 0.25
+        z: 0.3
       maximum_m:
-        x: 1.55
+        x: 1.45
         y: 0.05
-        z: 0.35
+        z: 0.39999999999999997
     landing_region:
       region_id: Alpha-landing
       frame: world
       minimum_m:
-        x: 1.46
+        x: 1.3599999999999999
         y: -0.04
         z: 0.0
       maximum_m:
-        x: 1.54
+        x: 1.44
         y: 0.04
         z: 0.08
     initial_battery_percent: 100.0
@@ -1103,33 +1425,33 @@ cases:
       frame: world
       minimum_m:
         x: -0.04
-        y: -1.54
+        y: -1.44
         z: 0.0
       maximum_m:
         x: 0.04
-        y: -1.46
+        y: -1.3599999999999999
         z: 0.08
     goal_sequence:
     - region_id: Beta-goal-1
       frame: world
       minimum_m:
         x: -0.05
-        y: 1.45
-        z: 0.25
+        y: 1.3499999999999999
+        z: 0.3
       maximum_m:
         x: 0.05
-        y: 1.55
-        z: 0.35
+        y: 1.45
+        z: 0.39999999999999997
     landing_region:
       region_id: Beta-landing
       frame: world
       minimum_m:
         x: -0.04
-        y: 1.46
+        y: 1.3599999999999999
         z: 0.0
       maximum_m:
         x: 0.04
-        y: 1.54
+        y: 1.44
         z: 0.08
     initial_battery_percent: 100.0
     minimum_reserve_battery_percent: 20.0
@@ -1152,34 +1474,34 @@ cases:
       region_id: Gamma-start
       frame: world
       minimum_m:
-        x: -1.1
-        y: -1.1
+        x: -1.24
+        y: -1.24
         z: 0.0
       maximum_m:
-        x: -1.02
-        y: -1.02
+        x: -1.16
+        y: -1.16
         z: 0.08
     goal_sequence:
     - region_id: Gamma-goal-1
       frame: world
       minimum_m:
-        x: 1.01
-        y: 1.01
-        z: 0.25
+        x: 1.15
+        y: 1.15
+        z: 0.3
       maximum_m:
-        x: 1.11
-        y: 1.11
-        z: 0.35
+        x: 1.25
+        y: 1.25
+        z: 0.39999999999999997
     landing_region:
       region_id: Gamma-landing
       frame: world
       minimum_m:
-        x: 1.02
-        y: 1.02
+        x: 1.16
+        y: 1.16
         z: 0.0
       maximum_m:
-        x: 1.1
-        y: 1.1
+        x: 1.24
+        y: 1.24
         z: 0.08
     initial_battery_percent: 100.0
     minimum_reserve_battery_percent: 20.0
@@ -1294,13 +1616,11 @@ cases:
   - Did the selected strategy match the pre-play rationale?
   difficulty: 7
   prerequisites:
-  - 1d.takeoff_hover_land.canonical_nominal
+  - 3d.simultaneous_center_conflict.joint_schedule_v2
   claim_boundary: Bounded Fast Sim behavior for at most three drones; no physical-flight
     claim.
   named_variations:
   - canonical_nominal
-  - compact
-  - wide
   search:
     implementation_id: bounded-joint-candidate-planner
     implementation_version: 1.0.0
@@ -1342,6 +1662,93 @@ cases:
     maximum_interpolation_gap_s: 0.2
     maximum_extrapolation_s: 0.1
   replanning_authority: ABORT_ONLY
+  semantics:
+    contract_version: 1
+    curriculum_level: 4
+    learning_objective: Learn and verify the causal unequal priorities behavior for
+      3 drone(s) in the canonical nominal authored scenario.
+    difficulty_rationale: Difficulty reflects 3 active role(s) plus time-aligned separation
+      and joint coordination.
+    route_intent_by_role:
+      Alpha:
+      - region_id: Alpha-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      Beta:
+      - region_id: Beta-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      Gamma:
+      - region_id: Gamma-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+    environment_constraints:
+      keep_out_regions: []
+      required_corridors: []
+    coordination_constraints:
+      synchronized_route_start_required: false
+      maximum_route_start_skew_s: 0.2
+      minimum_simultaneous_flight_s: 0.0
+      maximum_formation_error_m: null
+      formation_offsets_m: {}
+      formation_offsets_by_node_m: {}
+    scenario_events: []
+    behavior_oracles:
+    - oracle_id: ordered-route-capture
+      kind: ROUTE_NODES_CAPTURED
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: null
+      unit: null
+      required: true
+    - oracle_id: no-undeclared-stop
+      kind: NO_UNDECLARED_STOP
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.0
+      unit: count
+      required: true
+    - oracle_id: offset-landing
+      kind: DISTINCT_START_AND_LANDING
+      evidence_source: AUTHORED_ROUTE
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.2
+      unit: m
+      required: true
+    - oracle_id: joint-separation
+      kind: CONFLICT_RESOLVED
+      evidence_source: PLANNER_PREDICTION
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.8
+      unit: m
+      required: true
+    - oracle_id: priority-precedence
+      kind: PRIORITY_PRECEDENCE
+      evidence_source: PLANNER_PREDICTION
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.1
+      unit: s
+      required: true
+    semantic_baseline_case_id: null
+    intended_delta: null
   field_classification:
     hard_constraints: HARD_CONSTRAINT
     allowed_strategies: HARD_CONSTRAINT
@@ -1354,7 +1761,7 @@ cases:
   cluster: CONSTRAINTS_AND_OPTIMIZATION
   family: constrained_volume
   variation_name: canonical_nominal
-  parent_case_sha256: 3b3a1ab805aceee848aeb50f2011b72f96c649270dd40af19f2fd100ef14a4b6
+  parent_case_sha256: 72d88991a23235143d387ef8cdbb6ac2f4ed97b944929eaa0c538a92c0596b17
   baseline_sha256: null
   purpose: Qualify the bounded constrained volume behavior for 3 drone(s).
   behavior_under_test: Checks that constrained volume hard limits and objective order
@@ -1372,33 +1779,33 @@ cases:
       region_id: Alpha-start
       frame: world
       minimum_m:
-        x: -1.54
+        x: -1.44
         y: -0.04
         z: 0.0
       maximum_m:
-        x: -1.46
+        x: -1.3599999999999999
         y: 0.04
         z: 0.08
     goal_sequence:
     - region_id: Alpha-goal-1
       frame: world
       minimum_m:
-        x: 1.45
+        x: 1.3499999999999999
         y: -0.05
-        z: 0.25
+        z: 0.3
       maximum_m:
-        x: 1.55
+        x: 1.45
         y: 0.05
-        z: 0.35
+        z: 0.39999999999999997
     landing_region:
       region_id: Alpha-landing
       frame: world
       minimum_m:
-        x: 1.46
+        x: 1.3599999999999999
         y: -0.04
         z: 0.0
       maximum_m:
-        x: 1.54
+        x: 1.44
         y: 0.04
         z: 0.08
     initial_battery_percent: 100.0
@@ -1423,33 +1830,33 @@ cases:
       frame: world
       minimum_m:
         x: -0.04
-        y: -1.54
+        y: -1.44
         z: 0.0
       maximum_m:
         x: 0.04
-        y: -1.46
+        y: -1.3599999999999999
         z: 0.08
     goal_sequence:
     - region_id: Beta-goal-1
       frame: world
       minimum_m:
         x: -0.05
-        y: 1.45
-        z: 0.25
+        y: 1.3499999999999999
+        z: 0.3
       maximum_m:
         x: 0.05
-        y: 1.55
-        z: 0.35
+        y: 1.45
+        z: 0.39999999999999997
     landing_region:
       region_id: Beta-landing
       frame: world
       minimum_m:
         x: -0.04
-        y: 1.46
+        y: 1.3599999999999999
         z: 0.0
       maximum_m:
         x: 0.04
-        y: 1.54
+        y: 1.44
         z: 0.08
     initial_battery_percent: 100.0
     minimum_reserve_battery_percent: 20.0
@@ -1472,34 +1879,34 @@ cases:
       region_id: Gamma-start
       frame: world
       minimum_m:
-        x: -1.1
-        y: -1.1
+        x: -1.24
+        y: -1.24
         z: 0.0
       maximum_m:
-        x: -1.02
-        y: -1.02
+        x: -1.16
+        y: -1.16
         z: 0.08
     goal_sequence:
     - region_id: Gamma-goal-1
       frame: world
       minimum_m:
-        x: 1.01
-        y: 1.01
-        z: 0.25
+        x: 1.15
+        y: 1.15
+        z: 0.3
       maximum_m:
-        x: 1.11
-        y: 1.11
-        z: 0.35
+        x: 1.25
+        y: 1.25
+        z: 0.39999999999999997
     landing_region:
       region_id: Gamma-landing
       frame: world
       minimum_m:
-        x: 1.02
-        y: 1.02
+        x: 1.16
+        y: 1.16
         z: 0.0
       maximum_m:
-        x: 1.1
-        y: 1.1
+        x: 1.24
+        y: 1.24
         z: 0.08
     initial_battery_percent: 100.0
     minimum_reserve_battery_percent: 20.0
@@ -1528,7 +1935,7 @@ cases:
       maximum_m:
         x: 1.8
         y: 1.8
-        z: 1.0
+        z: 0.42
     warning_separation_m: 0.75
     critical_separation_m: 0.5
     position_uncertainty_m: 0.05
@@ -1542,7 +1949,7 @@ cases:
     deadline_s: 180.0
     hover_allowed: true
     maximum_hover_s: 60.0
-    vertical_layers_allowed: true
+    vertical_layers_allowed: false
     synchronized_launch_required: false
     maximum_unrequired_airborne_wait_s: 2.0
     maximum_equal_route_battery_spread_percent: 1.0
@@ -1563,8 +1970,6 @@ cases:
   - SPEED_RETIMING
   - HORIZONTAL_DETOUR
   - AIRBORNE_STAGING
-  - VERTICAL_LAYER
-  - COMBINED_TIMING_GEOMETRY
   objective_order:
   - PRIORITY_INVERSION
   - STARVATION
@@ -1581,7 +1986,6 @@ cases:
   - DIRECT
   - GROUND_DELAY
   - HORIZONTAL_DETOUR
-  - VERTICAL_LAYER
   pass_fail_metrics:
   - metric_id: minimum_truth_separation_m
     comparator: GREATER_THAN_OR_EQUAL
@@ -1614,13 +2018,11 @@ cases:
   - Did the selected strategy match the pre-play rationale?
   difficulty: 7
   prerequisites:
-  - 1d.takeoff_hover_land.canonical_nominal
+  - 3d.simultaneous_center_conflict.joint_schedule_v2
   claim_boundary: Bounded Fast Sim behavior for at most three drones; no physical-flight
     claim.
   named_variations:
   - canonical_nominal
-  - compact
-  - wide
   search:
     implementation_id: bounded-joint-candidate-planner
     implementation_version: 1.0.0
@@ -1662,6 +2064,93 @@ cases:
     maximum_interpolation_gap_s: 0.2
     maximum_extrapolation_s: 0.1
   replanning_authority: ABORT_ONLY
+  semantics:
+    contract_version: 1
+    curriculum_level: 4
+    learning_objective: Learn and verify the causal constrained volume behavior for
+      3 drone(s) in the canonical nominal authored scenario.
+    difficulty_rationale: Difficulty reflects 3 active role(s) plus time-aligned separation
+      and joint coordination.
+    route_intent_by_role:
+      Alpha:
+      - region_id: Alpha-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      Beta:
+      - region_id: Beta-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      Gamma:
+      - region_id: Gamma-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+    environment_constraints:
+      keep_out_regions: []
+      required_corridors: []
+    coordination_constraints:
+      synchronized_route_start_required: false
+      maximum_route_start_skew_s: 0.2
+      minimum_simultaneous_flight_s: 0.0
+      maximum_formation_error_m: null
+      formation_offsets_m: {}
+      formation_offsets_by_node_m: {}
+    scenario_events: []
+    behavior_oracles:
+    - oracle_id: ordered-route-capture
+      kind: ROUTE_NODES_CAPTURED
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: null
+      unit: null
+      required: true
+    - oracle_id: no-undeclared-stop
+      kind: NO_UNDECLARED_STOP
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.0
+      unit: count
+      required: true
+    - oracle_id: offset-landing
+      kind: DISTINCT_START_AND_LANDING
+      evidence_source: AUTHORED_ROUTE
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.2
+      unit: m
+      required: true
+    - oracle_id: joint-separation
+      kind: CONFLICT_RESOLVED
+      evidence_source: PLANNER_PREDICTION
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.8
+      unit: m
+      required: true
+    - oracle_id: vertical-constraint-enforced
+      kind: CONSTRAINT_ENFORCED
+      evidence_source: PLANNER_PREDICTION
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 1.0
+      unit: boolean
+      required: true
+    semantic_baseline_case_id: null
+    intended_delta: null
   field_classification:
     hard_constraints: HARD_CONSTRAINT
     allowed_strategies: HARD_CONSTRAINT
@@ -1674,7 +2163,7 @@ cases:
   cluster: CONSTRAINTS_AND_OPTIMIZATION
   family: alternative_layers_detours
   variation_name: canonical_nominal
-  parent_case_sha256: 168a3776ba49358acd64507bbde64fd562f4dafc999c0a90170b066bab32a556
+  parent_case_sha256: c019057796345c7587fd5112fab191ec35b285e519de594da58a9bf11a2de408
   baseline_sha256: null
   purpose: Qualify the bounded alternative layers detours behavior for 3 drone(s).
   behavior_under_test: Checks that alternative layers detours hard limits and objective
@@ -1692,33 +2181,53 @@ cases:
       region_id: Alpha-start
       frame: world
       minimum_m:
-        x: -1.54
+        x: -1.44
         y: -0.04
         z: 0.0
       maximum_m:
-        x: -1.46
+        x: -1.3599999999999999
         y: 0.04
         z: 0.08
     goal_sequence:
     - region_id: Alpha-goal-1
       frame: world
       minimum_m:
-        x: 1.45
+        x: -1.45
         y: -0.05
-        z: 0.25
+        z: 0.3
       maximum_m:
-        x: 1.55
+        x: -1.3499999999999999
         y: 0.05
-        z: 0.35
+        z: 0.39999999999999997
+    - region_id: Alpha-goal-2
+      frame: world
+      minimum_m:
+        x: -0.05
+        y: -0.05
+        z: 0.2
+      maximum_m:
+        x: 0.05
+        y: 0.05
+        z: 0.3
+    - region_id: Alpha-goal-3
+      frame: world
+      minimum_m:
+        x: 1.3499999999999999
+        y: -0.05
+        z: 0.3
+      maximum_m:
+        x: 1.45
+        y: 0.05
+        z: 0.39999999999999997
     landing_region:
       region_id: Alpha-landing
       frame: world
       minimum_m:
-        x: 1.46
+        x: 1.3599999999999999
         y: -0.04
         z: 0.0
       maximum_m:
-        x: 1.54
+        x: 1.44
         y: 0.04
         z: 0.08
     initial_battery_percent: 100.0
@@ -1743,33 +2252,53 @@ cases:
       frame: world
       minimum_m:
         x: -0.04
-        y: -1.54
+        y: -1.44
         z: 0.0
       maximum_m:
         x: 0.04
-        y: -1.46
+        y: -1.3599999999999999
         z: 0.08
     goal_sequence:
     - region_id: Beta-goal-1
       frame: world
       minimum_m:
         x: -0.05
-        y: 1.45
-        z: 0.25
+        y: -1.45
+        z: 0.3
       maximum_m:
         x: 0.05
-        y: 1.55
-        z: 0.35
+        y: -1.3499999999999999
+        z: 0.39999999999999997
+    - region_id: Beta-goal-2
+      frame: world
+      minimum_m:
+        x: -0.05
+        y: -0.05
+        z: 0.5
+      maximum_m:
+        x: 0.05
+        y: 0.05
+        z: 0.6000000000000001
+    - region_id: Beta-goal-3
+      frame: world
+      minimum_m:
+        x: -0.05
+        y: 1.3499999999999999
+        z: 0.3
+      maximum_m:
+        x: 0.05
+        y: 1.45
+        z: 0.39999999999999997
     landing_region:
       region_id: Beta-landing
       frame: world
       minimum_m:
         x: -0.04
-        y: 1.46
+        y: 1.3599999999999999
         z: 0.0
       maximum_m:
         x: 0.04
-        y: 1.54
+        y: 1.44
         z: 0.08
     initial_battery_percent: 100.0
     minimum_reserve_battery_percent: 20.0
@@ -1792,34 +2321,54 @@ cases:
       region_id: Gamma-start
       frame: world
       minimum_m:
-        x: -1.1
-        y: -1.1
+        x: -1.24
+        y: -1.24
         z: 0.0
       maximum_m:
-        x: -1.02
-        y: -1.02
+        x: -1.16
+        y: -1.16
         z: 0.08
     goal_sequence:
     - region_id: Gamma-goal-1
       frame: world
       minimum_m:
-        x: 1.01
-        y: 1.01
-        z: 0.25
+        x: -1.25
+        y: -1.25
+        z: 0.3
       maximum_m:
-        x: 1.11
-        y: 1.11
-        z: 0.35
+        x: -1.15
+        y: -1.15
+        z: 0.39999999999999997
+    - region_id: Gamma-goal-2
+      frame: world
+      minimum_m:
+        x: -0.05
+        y: -0.05
+        z: 0.7999999999999999
+      maximum_m:
+        x: 0.05
+        y: 0.05
+        z: 0.9
+    - region_id: Gamma-goal-3
+      frame: world
+      minimum_m:
+        x: 1.15
+        y: 1.15
+        z: 0.3
+      maximum_m:
+        x: 1.25
+        y: 1.25
+        z: 0.39999999999999997
     landing_region:
       region_id: Gamma-landing
       frame: world
       minimum_m:
-        x: 1.02
-        y: 1.02
+        x: 1.16
+        y: 1.16
         z: 0.0
       maximum_m:
-        x: 1.1
-        y: 1.1
+        x: 1.24
+        y: 1.24
         z: 0.08
     initial_battery_percent: 100.0
     minimum_reserve_battery_percent: 20.0
@@ -1934,13 +2483,11 @@ cases:
   - Did the selected strategy match the pre-play rationale?
   difficulty: 7
   prerequisites:
-  - 1d.takeoff_hover_land.canonical_nominal
+  - 3d.constrained_volume.canonical_nominal
   claim_boundary: Bounded Fast Sim behavior for at most three drones; no physical-flight
     claim.
   named_variations:
   - canonical_nominal
-  - compact
-  - wide
   search:
     implementation_id: bounded-joint-candidate-planner
     implementation_version: 1.0.0
@@ -1982,6 +2529,117 @@ cases:
     maximum_interpolation_gap_s: 0.2
     maximum_extrapolation_s: 0.1
   replanning_authority: ABORT_ONLY
+  semantics:
+    contract_version: 1
+    curriculum_level: 4
+    learning_objective: Learn and verify the causal alternative layers detours behavior
+      for 3 drone(s) in the canonical nominal authored scenario.
+    difficulty_rationale: Difficulty reflects 3 active role(s) plus time-aligned separation
+      and joint coordination.
+    route_intent_by_role:
+      Alpha:
+      - region_id: Alpha-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Alpha-goal-2
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Alpha-goal-3
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      Beta:
+      - region_id: Beta-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Beta-goal-2
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Beta-goal-3
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      Gamma:
+      - region_id: Gamma-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Gamma-goal-2
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Gamma-goal-3
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+    environment_constraints:
+      keep_out_regions: []
+      required_corridors: []
+    coordination_constraints:
+      synchronized_route_start_required: false
+      maximum_route_start_skew_s: 0.2
+      minimum_simultaneous_flight_s: 0.0
+      maximum_formation_error_m: null
+      formation_offsets_m: {}
+      formation_offsets_by_node_m: {}
+    scenario_events: []
+    behavior_oracles:
+    - oracle_id: ordered-route-capture
+      kind: ROUTE_NODES_CAPTURED
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: null
+      unit: null
+      required: true
+    - oracle_id: no-undeclared-stop
+      kind: NO_UNDECLARED_STOP
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.0
+      unit: count
+      required: true
+    - oracle_id: altitude-layers
+      kind: ALTITUDE_TRANSITION
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 3.0
+      unit: count
+      required: true
+    - oracle_id: offset-landing
+      kind: DISTINCT_START_AND_LANDING
+      evidence_source: AUTHORED_ROUTE
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.2
+      unit: m
+      required: true
+    - oracle_id: joint-separation
+      kind: CONFLICT_RESOLVED
+      evidence_source: PLANNER_PREDICTION
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.8
+      unit: m
+      required: true
+    semantic_baseline_case_id: null
+    intended_delta: null
   field_classification:
     hard_constraints: HARD_CONSTRAINT
     allowed_strategies: HARD_CONSTRAINT

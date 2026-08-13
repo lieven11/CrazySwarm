@@ -106,6 +106,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/campaign/qualification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Campaign Qualification */
+        get: operations["campaign_qualification_api_v1_campaign_qualification_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/campaign/qualification/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Campaign Qualification */
+        get: operations["export_campaign_qualification_api_v1_campaign_qualification_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/campaign/qualification/constraint-directed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Campaign Constraint Directed Qualification */
+        get: operations["campaign_constraint_directed_qualification_api_v1_campaign_qualification_constraint_directed_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/campaign/qualification/selective-submissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Campaign Selective Submission Qualification */
+        get: operations["campaign_selective_submission_qualification_api_v1_campaign_qualification_selective_submissions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/campaign/cases/static-validate": {
         parameters: {
             query?: never;
@@ -140,6 +208,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/campaign/cases/in-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Campaign Move To Review */
+        post: operations["campaign_move_to_review_api_v1_campaign_cases_in_review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/campaign/cases/lifecycle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Campaign Set Lifecycle */
+        post: operations["campaign_set_lifecycle_api_v1_campaign_cases_lifecycle_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/campaign/cases/completed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Campaign Complete Case */
+        post: operations["campaign_complete_case_api_v1_campaign_cases_completed_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/campaign/active/preview": {
         parameters: {
             query?: never;
@@ -149,6 +268,23 @@ export interface paths {
         };
         /** Campaign Preview Active */
         get: operations["campaign_preview_active_api_v1_campaign_active_preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/campaign/active/package": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Campaign Download Active Package */
+        get: operations["campaign_download_active_package_api_v1_campaign_active_package_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -202,6 +338,91 @@ export interface paths {
         put?: never;
         /** Campaign Cancel Run */
         post: operations["campaign_cancel_run_api_v1_campaign_runs__run_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/campaign/runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Campaign Delete Run */
+        delete: operations["campaign_delete_run_api_v1_campaign_runs__run_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/campaign/runs/{run_id}/snapshots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Campaign Capture Snapshot */
+        post: operations["campaign_capture_snapshot_api_v1_campaign_runs__run_id__snapshots_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/campaign/snapshots/{snapshot_id}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Campaign Snapshot Image */
+        get: operations["campaign_snapshot_image_api_v1_campaign_snapshots__snapshot_id__image_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/campaign/snapshots/{snapshot_id}/comment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Campaign Snapshot Comment */
+        post: operations["campaign_snapshot_comment_api_v1_campaign_snapshots__snapshot_id__comment_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/campaign/snapshots/{snapshot_id}/assessment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Campaign Snapshot Assessment */
+        post: operations["campaign_snapshot_assessment_api_v1_campaign_snapshots__snapshot_id__assessment_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1401,6 +1622,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/simulation/fleet/reset-poses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reset Simulation Fleet */
+        post: operations["reset_simulation_fleet_api_v1_simulation_fleet_reset_poses_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/simulation/vehicles/{vehicle_id}/clock": {
         parameters: {
             query?: never;
@@ -1464,6 +1702,23 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/run-files/{mission_execution_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Run File Mission */
+        delete: operations["delete_run_file_mission_api_v1_run_files__mission_execution_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1731,6 +1986,10 @@ export interface components {
         /** CampaignRunRequest */
         CampaignRunRequest: {
             mode: components["schemas"]["CampaignRunMode"];
+            /** Submission Id */
+            submission_id?: string | null;
+            /** Planning Submission Id */
+            planning_submission_id?: string | null;
         };
         /** ChildCaseRequest */
         ChildCaseRequest: {
@@ -1946,6 +2205,11 @@ export interface components {
          */
         InitialFleetRole: "ACTIVE" | "RESERVE" | "UNASSIGNED";
         /**
+         * LifecycleState
+         * @enum {string}
+         */
+        LifecycleState: "DEFINED_NOT_RUN" | "READY" | "ACTIVE_DEVELOPMENT" | "BASELINED" | "PROMOTED" | "BLOCKED";
+        /**
          * MissionExecutionMode
          * @enum {string}
          */
@@ -2128,6 +2392,14 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** SetLifecycleStateRequest */
+        SetLifecycleStateRequest: {
+            /** Case Id */
+            case_id: string;
+            /** Reason */
+            reason: string;
+            state: components["schemas"]["LifecycleState"];
+        };
         /**
          * SimulationClockAction
          * @enum {string}
@@ -2138,6 +2410,34 @@ export interface components {
             action: components["schemas"]["SimulationClockAction"];
             /** Battery Percent */
             battery_percent?: number | null;
+        };
+        /** SimulationFleetResetRequest */
+        SimulationFleetResetRequest: {
+            /** Vehicle Ids */
+            vehicle_ids: string[];
+        };
+        /**
+         * SnapshotAssessmentDisposition
+         * @enum {string}
+         */
+        SnapshotAssessmentDisposition: "VALID" | "PARTLY_VALID" | "DISPLAY_EFFECT" | "NOT_SUPPORTED" | "NEEDS_MORE_EVIDENCE";
+        /** SnapshotAssessmentRequest */
+        SnapshotAssessmentRequest: {
+            /** Assessment */
+            assessment: string;
+            disposition: components["schemas"]["SnapshotAssessmentDisposition"];
+            /** Confidence */
+            confidence: number;
+            /**
+             * Evidence Refs
+             * @default []
+             */
+            evidence_refs: string[];
+        };
+        /** SnapshotCommentRequest */
+        SnapshotCommentRequest: {
+            /** Note */
+            note: string;
         };
         /** StaticValidateCaseRequest */
         StaticValidateCaseRequest: {
@@ -2467,6 +2767,132 @@ export interface operations {
             };
         };
     };
+    campaign_qualification_api_v1_campaign_qualification_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Local-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_campaign_qualification_api_v1_campaign_qualification_export_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Local-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    campaign_constraint_directed_qualification_api_v1_campaign_qualification_constraint_directed_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Local-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    campaign_selective_submission_qualification_api_v1_campaign_qualification_selective_submissions_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Local-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     campaign_static_validate_api_v1_campaign_cases_static_validate_post: {
         parameters: {
             query?: never;
@@ -2545,9 +2971,129 @@ export interface operations {
             };
         };
     };
-    campaign_preview_active_api_v1_campaign_active_preview_get: {
+    campaign_move_to_review_api_v1_campaign_cases_in_review_post: {
         parameters: {
             query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetActiveCaseRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    campaign_set_lifecycle_api_v1_campaign_cases_lifecycle_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetLifecycleStateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    campaign_complete_case_api_v1_campaign_cases_completed_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetActiveCaseRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    campaign_preview_active_api_v1_campaign_active_preview_get: {
+        parameters: {
+            query?: {
+                submission_id?: string | null;
+                planning_submission_id?: string | null;
+            };
             header?: {
                 "X-Local-Token"?: string | null;
             };
@@ -2565,6 +3111,40 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    campaign_download_active_package_api_v1_campaign_active_package_get: {
+        parameters: {
+            query?: {
+                submission_id?: string | null;
+                planning_submission_id?: string | null;
+            };
+            header?: {
+                "X-Local-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -2689,11 +3269,218 @@ export interface operations {
             };
         };
     };
-    campaign_review_observation_api_v1_campaign_reviews__review_id__observations_post: {
+    campaign_delete_run_api_v1_campaign_runs__run_id__delete: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    campaign_capture_snapshot_api_v1_campaign_runs__run_id__snapshots_post: {
+        parameters: {
+            query: {
+                width_px: number;
+                height_px: number;
+                source_timestamp_s?: number | null;
+                source_clock_id?: string | null;
+                source_clock_epoch?: number | null;
+                source_sequence?: number | null;
+                correlation_id?: string | null;
+                estimate_source_timestamp_s?: number | null;
+                truth_source_timestamp_s?: number | null;
+                desired_source_timestamp_s?: number | null;
+                playback_buffer_age_s?: number | null;
+                source_rows_json?: string | null;
+                same_time_truth_estimate_error_m?: number | null;
+                buffer_induced_estimate_displacement_m?: number | null;
+                interpolation_state?: ("EXACT" | "INTERPOLATED" | "FROZEN" | "UNAVAILABLE") | null;
+            };
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    campaign_snapshot_image_api_v1_campaign_snapshots__snapshot_id__image_get: {
         parameters: {
             query?: never;
             header?: {
                 "X-Local-Token"?: string | null;
+            };
+            path: {
+                snapshot_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    campaign_snapshot_comment_api_v1_campaign_snapshots__snapshot_id__comment_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path: {
+                snapshot_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SnapshotCommentRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    campaign_snapshot_assessment_api_v1_campaign_snapshots__snapshot_id__assessment_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path: {
+                snapshot_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SnapshotAssessmentRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    campaign_review_observation_api_v1_campaign_reviews__review_id__observations_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
             };
             path: {
                 review_id: string;
@@ -5302,6 +6089,43 @@ export interface operations {
             };
         };
     };
+    reset_simulation_fleet_api_v1_simulation_fleet_reset_poses_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SimulationFleetResetRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     simulation_clock_api_v1_simulation_vehicles__vehicle_id__clock_post: {
         parameters: {
             query?: never;
@@ -5423,6 +6247,41 @@ export interface operations {
                 "X-Local-Token"?: string | null;
             };
             path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_run_file_mission_api_v1_run_files__mission_execution_id__delete: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path: {
+                mission_execution_id: string;
+            };
             cookie?: never;
         };
         requestBody?: never;

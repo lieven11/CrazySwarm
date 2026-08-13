@@ -7,6 +7,7 @@ from pathlib import Path
 
 from crazyswarm_app.config import AppConfig
 from crazyswarm_app.domain.errors import CrazySwarmError, ErrorCode
+from crazyswarm_app.domain.models import BackendRole, VehicleState
 from crazyswarm_app.engineering import ParameterService
 from crazyswarm_app.fleet.coordinator import FleetCoordinator, FleetResult
 from crazyswarm_app.fleet.execution import ExecutionCoordinator
@@ -70,18 +71,6 @@ class ApplicationRuntime:
 
     async def start(self) -> None:
         self.store.open()
-        if self.run_files_backfill_task is None or self.run_files_backfill_task.done():
-
-            async def backfill_run_files() -> None:
-                try:
-                    await asyncio.to_thread(self.store.backfill_run_files)
-                except Exception as error:  # pragma: no cover - defensive maintenance boundary
-                    self.recorder.last_error = f"run-file backfill {type(error).__name__}: {error}"
-
-            self.run_files_backfill_task = asyncio.create_task(
-                backfill_run_files(),
-                name="run-files-backfill",
-            )
         await self.recorder.start()
         for vehicle_id, vehicle in self.vehicles.items():
             if (
@@ -98,6 +87,20 @@ class ApplicationRuntime:
                     self._consume_telemetry(vehicle),
                     name=f"telemetry-{vehicle_id}",
                 )
+        if self.run_files_backfill_task is None or self.run_files_backfill_task.done():
+
+            async def backfill_run_files() -> None:
+                try:
+                    await asyncio.to_thread(self.store.backfill_run_files)
+                except Exception as error:  # pragma: no cover - defensive maintenance boundary
+                    self.recorder.last_error = f"run-file backfill {type(error).__name__}: {error}"
+
+            # Schedule archive maintenance only after the live recorder and telemetry
+            # consumers are ready. Complete archives take the manifest-only fast path.
+            self.run_files_backfill_task = asyncio.create_task(
+                backfill_run_files(),
+                name="run-files-backfill",
+            )
 
     async def stop(self) -> None:
         for execution in self.executions.values():
@@ -199,14 +202,41 @@ class ApplicationRuntime:
             self.active_vehicle_ids.discard(vehicle_id)
 
     async def cleanup_completed_execution_vehicles(self) -> None:
-        """Retain completed software vehicles until the application runtime stops.
+        """Replace completed session vehicles before staging a new execution.
 
-        A completed mission releases command authority and disconnects its adapters, but
-        the simulated pose, battery, and estimator state remain part of the operator's
-        scenario.  The session-created ownership records are intentionally kept so
-        ``stop()`` can still tear the adapters down at process shutdown.
+        Session-created simulators keep their last pose for post-run inspection.  They
+        cannot be reused for another deployment, however, because their configured home
+        belongs to the case that created them.  Tear down only completed sessions here;
+        the next provider call will create fresh vehicles at the next deployment homes.
         """
-        return
+
+        for session_id, vehicle_ids in tuple(self.session_created_vehicle_ids.items()):
+            coordinator = self.fleet_coordinators.get(session_id)
+            fleet_run_id = (
+                coordinator.identity.fleet_run_id if coordinator is not None else session_id
+            )
+            task = self.fleet_tasks.get(fleet_run_id)
+            if task is not None and not task.done():
+                continue
+
+            for vehicle_id in sorted(vehicle_ids):
+                vehicle = self.vehicles.get(vehicle_id)
+                if vehicle is None:
+                    continue
+                session = self.supervisor.session(vehicle_id)
+                controls = vehicle.simulation_controls
+                if (
+                    session.state is not VehicleState.DISCONNECTED
+                    and vehicle.backend_profile.role is BackendRole.FAST_SIM
+                    and controls is not None
+                ):
+                    # A failed simulated abort may leave an adapter armed even though
+                    # its owning execution has ended. Resetting the simulator is the
+                    # explicit recovery boundary before it is unregistered.
+                    await controls.reset_pose()
+                    await self.supervisor.reconcile_terminal_adapter_state(vehicle_id)
+
+            await self.cleanup_session_vehicles(session_id)
 
     async def _consume_telemetry(self, vehicle: Vehicle) -> None:
         last_source_timestamp_s = -float("inf")

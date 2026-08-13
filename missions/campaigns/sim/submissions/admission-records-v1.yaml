@@ -1,0 +1,3017 @@
+schema_version: 1
+oracle_contract_version: wp52-56-r6-verified-oracle-v1
+rows:
+- case_id: 1d.abort_and_land_goal_fallback.dynamic_nominal
+  expected_case_sha256: 47a6e0ddda8bfea35b2691d80320f0b7faf9b31a05e700fd2f028e66fc424bc9
+  lifecycle: BASELINE_ONLY
+  proposed_additions_or_disposition: '`BASELINE_ONLY`'
+  causal_question: The case already anchors the approved abort/land fallback. Alternative destination/event
+    truth would require a successor case.
+  baseline_limitation: '`BASELINE_ONLY`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: The case already anchors the approved abort/land fallback. Alternative
+    destination/event truth would require a successor case.
+  metric_ids:
+  - DS_FALLBACK
+  - DS_TERMINAL_STATE
+  - SP_CAPTURE
+  - DS_COMMAND_OWNERSHIP
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: The case already anchors the approved abort/land fallback. Alternative destination/event
+    truth would require a successor case.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: The case already anchors the approved abort/land fallback. Alternative destination/event
+    truth would require a successor case.
+  learning_value: '`BASELINE_ONLY`'
+  proposals: []
+- case_id: 1d.altitude_transition.canonical_nominal
+  expected_case_sha256: 1a5690bb4ac98aa63cf7020e40ab8f83fc530bfcdeaf4075cb0ad31d4de1333b
+  lifecycle: RETAIN_EXISTING_ONLY
+  proposed_additions_or_disposition: Retain current `E constant_path_speed.slow`, `E constant_path_speed.stress`,
+    and `E ramped_segment_speed.altitude_kinks`; add nothing
+  causal_question: This remains the reusable constant-speed/intentional-speed-transition anchor; do not
+    manufacture another smoothing choice. Existing measured steady-window, dynamics, actuator, energy,
+    and terminal gates remain authoritative.
+  baseline_limitation: Retain current `E constant_path_speed.slow`, `E constant_path_speed.stress`, and
+    `E ramped_segment_speed.altitude_kinks`; add nothing
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: This remains the reusable constant-speed/intentional-speed-transition
+    anchor; do not manufacture another smoothing choice. Existing measured steady-window, dynamics, actuator,
+    energy, and terminal gates remain authoritative.
+  metric_ids:
+  - DY_SPEED_TRACKING
+  - DY_ACCELERATION
+  - DY_JERK
+  - EN_ENERGY_WH
+  - EN_ACTUATOR_HEADROOM_N
+  - SP_CAPTURE
+  - DS_TERMINAL_STATE
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: This remains the reusable constant-speed/intentional-speed-transition anchor;
+    do not manufacture another smoothing choice. Existing measured steady-window, dynamics, actuator,
+    energy, and terminal gates remain authoritative.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: This remains the reusable constant-speed/intentional-speed-transition anchor; do
+    not manufacture another smoothing choice. Existing measured steady-window, dynamics, actuator, energy,
+    and terminal gates remain authoritative.
+  learning_value: Retain current `E constant_path_speed.slow`, `E constant_path_speed.stress`, and `E
+    ramped_segment_speed.altitude_kinks`; add nothing
+  proposals: []
+- case_id: 1d.altitude_transition.wide
+  expected_case_sha256: c2a7c0950a22c12c7f93fb1b1699fc97e0caa88a5766a937cb79f43694cca6e3
+  lifecycle: RETAIN_EXISTING_ONLY
+  proposed_additions_or_disposition: Retain current `E constant_path_speed.stress` and `E bounded_vertical_rate.wide`;
+    add nothing
+  causal_question: Reuse the canonical primitive and test only wide-envelope vertical tracking/headroom/energy
+    coupling; do not repeat the full canonical sweep.
+  baseline_limitation: Retain current `E constant_path_speed.stress` and `E bounded_vertical_rate.wide`;
+    add nothing
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Reuse the canonical primitive and test only wide-envelope vertical
+    tracking/headroom/energy coupling; do not repeat the full canonical sweep.
+  metric_ids:
+  - DY_VERTICAL_TRACKING
+  - DY_SPEED_TRACKING
+  - DY_ACCELERATION
+  - DY_JERK
+  - EN_ENERGY_WH
+  - EN_ACTUATOR_HEADROOM_N
+  - SP_CAPTURE
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Reuse the canonical primitive and test only wide-envelope vertical tracking/headroom/energy
+    coupling; do not repeat the full canonical sweep.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Reuse the canonical primitive and test only wide-envelope vertical tracking/headroom/energy
+    coupling; do not repeat the full canonical sweep.
+  learning_value: Retain current `E constant_path_speed.stress` and `E bounded_vertical_rate.wide`; add
+    nothing
+  proposals: []
+- case_id: 1d.blocked_replan.dynamic_nominal
+  expected_case_sha256: 811b3b95754c4e57127170c54348a394f61525fd527c10819b30dff2f1a3d217
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`R blocked_replan.safe_prefix`; `R blocked_replan.controlled_land`'
+  causal_question: 'Same infeasible goal: retain a safe prefix when its horizon proves valid versus select
+    a prevalidated landing contingency. Both must preserve hard constraints and explain infeasibility.'
+  baseline_limitation: '`R blocked_replan.safe_prefix`; `R blocked_replan.controlled_land`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same infeasible goal: retain a safe prefix when its horizon proves
+    valid versus select a prevalidated landing contingency. Both must preserve hard constraints and explain
+    infeasibility.'
+  metric_ids:
+  - DS_FALLBACK
+  - TM_HORIZON
+  - SP_CAPTURE
+  - SP_CLEARANCE
+  - DS_TERMINAL_STATE
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same infeasible goal: retain a safe prefix when its horizon proves valid versus
+    select a prevalidated landing contingency. Both must preserve hard constraints and explain infeasibility.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same infeasible goal: retain a safe prefix when its horizon proves valid versus
+    select a prevalidated landing contingency. Both must preserve hard constraints and explain infeasibility.'
+  learning_value: '`R blocked_replan.safe_prefix`; `R blocked_replan.controlled_land`'
+  proposals:
+  - submission_id: blocked_replan.safe_prefix
+    experiment_id: blocked_replan.fallback
+    axis: FALLBACK_POLICY
+    axis_value: safe_prefix
+    qualifying_relation: CAT(DS_FALLBACK=safe_prefix),PASS(SP_CLEARANCE),PASS(DS_TERMINAL_STATE)
+    comparator_id: BASELINE(1d.blocked_replan.dynamic_nominal)
+    comparison_context_id: null
+  - submission_id: blocked_replan.controlled_land
+    experiment_id: blocked_replan.fallback
+    axis: FALLBACK_POLICY
+    axis_value: controlled_land
+    qualifying_relation: CAT(DS_FALLBACK=controlled_land),PASS(SP_CAPTURE),PASS(DS_TERMINAL_STATE)
+    comparator_id: BASELINE(1d.blocked_replan.dynamic_nominal)
+    comparison_context_id: null
+- case_id: 1d.boundary_constrained_route.canonical_nominal
+  expected_case_sha256: d33c452b854ed70a0d594ee68278d6f29952cd3bf6f95a05fba0ed1eda7a6004
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P boundary.route_fidelity`; `P boundary.robustness_first`'
+  causal_question: 'Same boundary/world: authored-route adherence versus maximum protected boundary margin
+    inside required regions. Continuous boundary clearance and reference deviation must move in opposite
+    expected directions.'
+  baseline_limitation: '`P boundary.route_fidelity`; `P boundary.robustness_first`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same boundary/world: authored-route adherence versus maximum
+    protected boundary margin inside required regions. Continuous boundary clearance and reference deviation
+    must move in opposite expected directions.'
+  metric_ids:
+  - SP_BOUNDARY
+  - SP_REFERENCE
+  - SP_CAPTURE
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same boundary/world: authored-route adherence versus maximum protected boundary
+    margin inside required regions. Continuous boundary clearance and reference deviation must move in
+    opposite expected directions.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same boundary/world: authored-route adherence versus maximum protected boundary
+    margin inside required regions. Continuous boundary clearance and reference deviation must move in
+    opposite expected directions.'
+  learning_value: '`P boundary.route_fidelity`; `P boundary.robustness_first`'
+  proposals:
+  - submission_id: boundary.route_fidelity
+    experiment_id: boundary.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: route_fidelity
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(1d.boundary_constrained_route.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: boundary.robustness_first
+    experiment_id: boundary.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: robustness
+    qualifying_relation: MAX(SP_BOUNDARY),PASS(SP_REFERENCE),PASS(SP_CAPTURE)
+    comparator_id: BASELINE(1d.boundary_constrained_route.canonical_nominal)
+    comparison_context_id: null
+- case_id: 1d.continuous_waypoint_sequence.canonical_nominal
+  expected_case_sha256: 5d087df1dbd703f1f72d7933609b1ecb755412d4a7ff4fb5f8ccd6b262490edd
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P waypoint.centerline_first`; `P waypoint.smoothness_first`'
+  causal_question: Same ordered fly-through regions, hard tube, lookahead input, candidates, and authority;
+    only lexicographic objective order changes between cross-track error and integrated jerk. Compare
+    knot/region capture, transition-start distance, unintended stops, maximum deviation, curvature/jerk,
+    and time.
+  baseline_limitation: '`P waypoint.centerline_first`; `P waypoint.smoothness_first`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Same ordered fly-through regions, hard tube, lookahead input,
+    candidates, and authority; only lexicographic objective order changes between cross-track error and
+    integrated jerk. Compare knot/region capture, transition-start distance, unintended stops, maximum
+    deviation, curvature/jerk, and time.
+  metric_ids:
+  - SP_CAPTURE
+  - TM_TRANSITION_START
+  - DS_UNINTENDED_STOP_COUNT
+  - SP_REFERENCE
+  - DY_CURVATURE
+  - DY_JERK
+  - TM_DURATION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Same ordered fly-through regions, hard tube, lookahead input, candidates, and
+    authority; only lexicographic objective order changes between cross-track error and integrated jerk.
+    Compare knot/region capture, transition-start distance, unintended stops, maximum deviation, curvature/jerk,
+    and time.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Same ordered fly-through regions, hard tube, lookahead input, candidates, and authority;
+    only lexicographic objective order changes between cross-track error and integrated jerk. Compare
+    knot/region capture, transition-start distance, unintended stops, maximum deviation, curvature/jerk,
+    and time.
+  learning_value: '`P waypoint.centerline_first`; `P waypoint.smoothness_first`'
+  proposals:
+  - submission_id: waypoint.centerline_first
+    experiment_id: waypoint.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: centerline
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(1d.continuous_waypoint_sequence.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: waypoint.smoothness_first
+    experiment_id: waypoint.execution_profile
+    axis: CAPABILITY_BINDING
+    axis_value: corner_transition_0_60s_at_0_08m_s
+    qualifying_relation: MIN(DY_CURVATURE),MIN(SP_REFERENCE),MAX(TM_DURATION),PASS(SP_CAPTURE),ZERO(DS_UNINTENDED_STOP_COUNT)
+    comparator_id: BASELINE_EXECUTION_PROFILE(1d.continuous_waypoint_sequence.canonical_nominal)
+    comparison_context_id: null
+- case_id: 1d.curved_route.canonical_nominal
+  expected_case_sha256: 0ced06fe8bede051d7ee8af6e2c54b424131c8e7cf08e00d576a3836b0487438
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P curve.centerline_fidelity`; `P curve.jerk_first`'
+  causal_question: Same curve and required regions; radial/cross-track error versus integrated jerk. An
+    independent dense sampler must show a real Pareto trade-off or the second choice is removed.
+  baseline_limitation: '`P curve.centerline_fidelity`; `P curve.jerk_first`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Same curve and required regions; radial/cross-track error versus
+    integrated jerk. An independent dense sampler must show a real Pareto trade-off or the second choice
+    is removed.
+  metric_ids:
+  - SP_RADIAL
+  - SP_REFERENCE
+  - SP_CAPTURE
+  - DY_CURVATURE
+  - DY_JERK
+  - TM_DURATION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Same curve and required regions; radial/cross-track error versus integrated jerk.
+    An independent dense sampler must show a real Pareto trade-off or the second choice is removed.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Same curve and required regions; radial/cross-track error versus integrated jerk.
+    An independent dense sampler must show a real Pareto trade-off or the second choice is removed.
+  learning_value: '`P curve.centerline_fidelity`; `P curve.jerk_first`'
+  proposals:
+  - submission_id: curve.centerline_fidelity
+    experiment_id: curve.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: centerline
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(1d.curved_route.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: curve.jerk_first
+    experiment_id: curve.execution_profile
+    axis: SCALAR_PARAMETER
+    axis_value: duration_scale_1_30
+    qualifying_relation: MIN(DY_JERK),MAX(TM_DURATION),PASS(SP_RADIAL),PASS(SP_REFERENCE),PASS(SP_CAPTURE)
+    comparator_id: BASELINE_EXECUTION_PROFILE(1d.curved_route.canonical_nominal)
+    comparison_context_id: null
+- case_id: 1d.duplicate_stale_goal_update.dynamic_nominal
+  expected_case_sha256: 6a2adec13a9de0676ecaf6adf84971377427dc9bdc04e2e0e08b69745ece62db
+  lifecycle: BASELINE_ONLY
+  proposed_additions_or_disposition: '`BASELINE_ONLY`'
+  causal_question: Duplicate/older generations must always reject without route/hash/cutover change; accepting
+    them is not a valid submission alternative.
+  baseline_limitation: '`BASELINE_ONLY`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Duplicate/older generations must always reject without route/hash/cutover
+    change; accepting them is not a valid submission alternative.
+  metric_ids:
+  - DS_DISPOSITION
+  - DS_GENERATION
+  - DS_ROUTE_IDENTITY
+  - DS_STALE_COMMAND_COUNT
+  - DS_PARTIAL_COMMIT_COUNT
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Duplicate/older generations must always reject without route/hash/cutover change;
+    accepting them is not a valid submission alternative.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Duplicate/older generations must always reject without route/hash/cutover change;
+    accepting them is not a valid submission alternative.
+  learning_value: '`BASELINE_ONLY`'
+  proposals: []
+- case_id: 1d.failure_recovery.dynamic_nominal
+  expected_case_sha256: fd29ed25660a76706222a45975ff4e821683b31fbfcbd8064c825647a34aae85
+  lifecycle: BASELINE_ONLY
+  proposed_additions_or_disposition: '`BASELINE_ONLY`'
+  causal_question: Observation loss cannot be made interesting by speculative navigation. The existing
+    safe recovery stays authoritative; an independently prevalidated return-home contingency would require
+    a later explicit design/admission gate.
+  baseline_limitation: '`BASELINE_ONLY`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Observation loss cannot be made interesting by speculative navigation.
+    The existing safe recovery stays authoritative; an independently prevalidated return-home contingency
+    would require a later explicit design/admission gate.
+  metric_ids:
+  - DS_FALLBACK
+  - DS_COMMAND_OWNERSHIP
+  - DS_TERMINAL_STATE
+  - SP_CAPTURE
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Observation loss cannot be made interesting by speculative navigation. The existing
+    safe recovery stays authoritative; an independently prevalidated return-home contingency would require
+    a later explicit design/admission gate.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Observation loss cannot be made interesting by speculative navigation. The existing
+    safe recovery stays authoritative; an independently prevalidated return-home contingency would require
+    a later explicit design/admission gate.
+  learning_value: '`BASELINE_ONLY`'
+  proposals: []
+- case_id: 1d.mid_route_goal_replacement.dynamic_nominal
+  expected_case_sha256: 474d3563dd12fad6fe0c2868d3e0b1f30f6392b5db9de40b755f963700fb2d1b
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`R goal_replacement.minimum_latency`; `R goal_replacement.smooth_splice`'
+  causal_question: 'Same authenticated replacement: earliest safe cutover versus later bounded smooth
+    splice. Compare exact cutover source time, stale-command count, splice state continuity, jerk, and
+    final capture.'
+  baseline_limitation: '`R goal_replacement.minimum_latency`; `R goal_replacement.smooth_splice`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same authenticated replacement: earliest safe cutover versus
+    later bounded smooth splice. Compare exact cutover source time, stale-command count, splice state
+    continuity, jerk, and final capture.'
+  metric_ids:
+  - DS_GENERATION
+  - TM_CUTOVER
+  - DS_STALE_COMMAND_COUNT
+  - SP_SPLICE_POSITION
+  - DY_JERK
+  - SP_CAPTURE
+  - DS_TERMINAL_STATE
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same authenticated replacement: earliest safe cutover versus later bounded smooth
+    splice. Compare exact cutover source time, stale-command count, splice state continuity, jerk, and
+    final capture.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same authenticated replacement: earliest safe cutover versus later bounded smooth
+    splice. Compare exact cutover source time, stale-command count, splice state continuity, jerk, and
+    final capture.'
+  learning_value: '`R goal_replacement.minimum_latency`; `R goal_replacement.smooth_splice`'
+  proposals:
+  - submission_id: goal_replacement.minimum_latency
+    experiment_id: goal_replacement.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: minimum_latency
+    qualifying_relation: MIN(TM_CUTOVER),ZERO(DS_STALE_COMMAND_COUNT),PASS(SP_CAPTURE),PASS(DS_TERMINAL_STATE)
+    comparator_id: BASELINE(1d.mid_route_goal_replacement.dynamic_nominal)
+    comparison_context_id: null
+  - submission_id: goal_replacement.smooth_splice
+    experiment_id: goal_replacement.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: smooth_splice
+    qualifying_relation: MIN(SP_SPLICE_POSITION),MIN(DY_JERK),ZERO(DS_STALE_COMMAND_COUNT),PASS(SP_CAPTURE),PASS(DS_TERMINAL_STATE)
+    comparator_id: BASELINE(1d.mid_route_goal_replacement.dynamic_nominal)
+    comparison_context_id: null
+- case_id: 1d.move_return.canonical_nominal
+  expected_case_sha256: 47a33916b1c6a27d415221958daf560018d13644fa234505e1b2fbae90382075
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P turnaround.reversal_stop_first`; `P turnaround.continuity_first`'
+  causal_question: Same route tube, candidates, and authority; only lexicographic objective order changes
+    between minimum centerline/reversal-speed error and minimum jerk/stop duration. Compare reversal count,
+    minimum turn speed, deviation, jerk, duration, and home capture.
+  baseline_limitation: '`P turnaround.reversal_stop_first`; `P turnaround.continuity_first`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Same route tube, candidates, and authority; only lexicographic
+    objective order changes between minimum centerline/reversal-speed error and minimum jerk/stop duration.
+    Compare reversal count, minimum turn speed, deviation, jerk, duration, and home capture.
+  metric_ids:
+  - DS_REVERSAL_COUNT
+  - DY_SPEED_MIN
+  - SP_REFERENCE
+  - DY_JERK
+  - TM_DURATION
+  - SP_CAPTURE
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Same route tube, candidates, and authority; only lexicographic objective order
+    changes between minimum centerline/reversal-speed error and minimum jerk/stop duration. Compare reversal
+    count, minimum turn speed, deviation, jerk, duration, and home capture.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Same route tube, candidates, and authority; only lexicographic objective order
+    changes between minimum centerline/reversal-speed error and minimum jerk/stop duration. Compare reversal
+    count, minimum turn speed, deviation, jerk, duration, and home capture.
+  learning_value: '`P turnaround.reversal_stop_first`; `P turnaround.continuity_first`'
+  proposals:
+  - submission_id: turnaround.reversal_stop_first
+    experiment_id: turnaround.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: reversal_stop
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(1d.move_return.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: turnaround.continuity_first
+    experiment_id: turnaround.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: continuity
+    qualifying_relation: MIN(DY_JERK),PASS(SP_CAPTURE),CAT(DS_REVERSAL_COUNT=1)
+    comparator_id: BASELINE(1d.move_return.canonical_nominal)
+    comparison_context_id: null
+- case_id: 1d.moving_target.dynamic_nominal
+  expected_case_sha256: f8bd430f8d5dd8f36f0f763b1b4fbb5e08457f8ab9e9d51382f378dbe4593e96
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`R moving_target.earliest_intercept`; `R moving_target.smooth_intercept`'
+  causal_question: 'Same update generations: minimum final capture time versus minimum splice jerk/deviation.
+    Compare accepted generation, cutover latency, future-only command replacement, capture, and dynamics.'
+  baseline_limitation: '`R moving_target.earliest_intercept`; `R moving_target.smooth_intercept`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same update generations: minimum final capture time versus minimum
+    splice jerk/deviation. Compare accepted generation, cutover latency, future-only command replacement,
+    capture, and dynamics.'
+  metric_ids:
+  - DS_GENERATION
+  - TM_CUTOVER
+  - DS_STALE_COMMAND_COUNT
+  - SP_SPLICE_POSITION
+  - DY_JERK
+  - SP_CAPTURE
+  - DS_TERMINAL_STATE
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same update generations: minimum final capture time versus minimum splice jerk/deviation.
+    Compare accepted generation, cutover latency, future-only command replacement, capture, and dynamics.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same update generations: minimum final capture time versus minimum splice jerk/deviation.
+    Compare accepted generation, cutover latency, future-only command replacement, capture, and dynamics.'
+  learning_value: '`R moving_target.earliest_intercept`; `R moving_target.smooth_intercept`'
+  proposals:
+  - submission_id: moving_target.earliest_intercept
+    experiment_id: moving_target.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: earliest_intercept
+    qualifying_relation: MIN(TM_CUTOVER),ZERO(DS_STALE_COMMAND_COUNT),PASS(SP_CAPTURE),PASS(DS_TERMINAL_STATE)
+    comparator_id: BASELINE(1d.moving_target.dynamic_nominal)
+    comparison_context_id: null
+  - submission_id: moving_target.smooth_intercept
+    experiment_id: moving_target.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: smooth_intercept
+    qualifying_relation: MIN(SP_SPLICE_POSITION),MIN(DY_JERK),ZERO(DS_STALE_COMMAND_COUNT),PASS(SP_CAPTURE),PASS(DS_TERMINAL_STATE)
+    comparator_id: BASELINE(1d.moving_target.dynamic_nominal)
+    comparison_context_id: null
+- case_id: 1d.operator_approval_goal_replacement.dynamic_nominal
+  expected_case_sha256: 34a8f0ff6196719dcb10e56191644444d07f9432b64877c9501c23b62d57f964
+  lifecycle: BASELINE_ONLY
+  proposed_additions_or_disposition: '`BASELINE_ONLY`'
+  causal_question: Hash-bound approval is the causal question. A bypass or auto-approval option would
+    weaken authority; before/after approval remains event evidence, not two submissions.
+  baseline_limitation: '`BASELINE_ONLY`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Hash-bound approval is the causal question. A bypass or auto-approval
+    option would weaken authority; before/after approval remains event evidence, not two submissions.
+  metric_ids:
+  - DS_DISPOSITION
+  - DS_GENERATION
+  - DS_COMMAND_OWNERSHIP
+  - DS_PARTIAL_COMMIT_COUNT
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Hash-bound approval is the causal question. A bypass or auto-approval option would
+    weaken authority; before/after approval remains event evidence, not two submissions.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Hash-bound approval is the causal question. A bypass or auto-approval option would
+    weaken authority; before/after approval remains event evidence, not two submissions.
+  learning_value: '`BASELINE_ONLY`'
+  proposals: []
+- case_id: 1d.planar_shape_loop.circle
+  expected_case_sha256: 63e950ef3d00b2f9085f889bac8ecc9bc657c98de2cf7f939f306b399e87b31c
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P loop.radial_fidelity`; `C core.constant_path_speed` for one curved-motion
+    integration observation'
+  causal_question: Preserve circle topology; compare radial/closure error with the baseline and verify
+    constant speed under continuous curvature without creating a copied speed experiment.
+  baseline_limitation: '`P loop.radial_fidelity`; `C core.constant_path_speed` for one curved-motion integration
+    observation'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Preserve circle topology; compare radial/closure error with the
+    baseline and verify constant speed under continuous curvature without creating a copied speed experiment.
+  metric_ids:
+  - SP_RADIAL
+  - SP_CLOSURE
+  - DY_SPEED_TRACKING
+  - DY_CURVATURE
+  - DS_TOPOLOGY
+  - EN_ENERGY_WH
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Preserve circle topology; compare radial/closure error with the baseline and verify
+    constant speed under continuous curvature without creating a copied speed experiment.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Preserve circle topology; compare radial/closure error with the baseline and verify
+    constant speed under continuous curvature without creating a copied speed experiment.
+  learning_value: '`P loop.radial_fidelity`; `C core.constant_path_speed` for one curved-motion integration
+    observation'
+  proposals:
+  - submission_id: loop.radial_fidelity
+    experiment_id: circle.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: radial_fidelity
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(1d.planar_shape_loop.circle)
+    comparison_context_id: null
+  - submission_id: core.constant_path_speed
+    experiment_id: circle.capability
+    axis: CAPABILITY_BINDING
+    axis_value: constant_path_speed
+    qualifying_relation: MIN(DY_SPEED_TRACKING),CAT(DS_TOPOLOGY=closed_circle),PASS(SP_CLOSURE)
+    comparator_id: BASELINE(1d.planar_shape_loop.circle)
+    comparison_context_id: null
+- case_id: 1d.planar_shape_loop.figure_eight
+  expected_case_sha256: 356723fbda7bd5f7ab8c6bdfce027437892e6ffcfafc6395f87e07ba8857e97e
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P loop.crossover_fidelity`; `P loop.curvature_continuity`'
+  causal_question: 'Same lobes/crossover order: tight crossover capture versus continuity/jerk objective.
+    Reject any smoothing result that changes lobe order or removes the crossing.'
+  baseline_limitation: '`P loop.crossover_fidelity`; `P loop.curvature_continuity`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same lobes/crossover order: tight crossover capture versus continuity/jerk
+    objective. Reject any smoothing result that changes lobe order or removes the crossing.'
+  metric_ids:
+  - SP_CAPTURE
+  - SP_REFERENCE
+  - DY_CURVATURE
+  - DY_JERK
+  - DS_TOPOLOGY
+  - DS_LOBE_ORDER
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same lobes/crossover order: tight crossover capture versus continuity/jerk objective.
+    Reject any smoothing result that changes lobe order or removes the crossing.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same lobes/crossover order: tight crossover capture versus continuity/jerk objective.
+    Reject any smoothing result that changes lobe order or removes the crossing.'
+  learning_value: '`P loop.crossover_fidelity`; `P loop.curvature_continuity`'
+  proposals:
+  - submission_id: loop.crossover_fidelity
+    experiment_id: figure_eight.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: crossover_fidelity
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(1d.planar_shape_loop.figure_eight)
+    comparison_context_id: null
+  - submission_id: loop.curvature_continuity
+    experiment_id: figure_eight.execution_profile
+    axis: CAPABILITY_BINDING
+    axis_value: corner_transition_0_60s_at_0_08m_s
+    qualifying_relation: MIN(DY_CURVATURE),MIN(SP_REFERENCE),PASS(SP_CAPTURE),CAT(DS_TOPOLOGY=figure_eight),CAT(DS_LOBE_ORDER=authored)
+    comparator_id: BASELINE_EXECUTION_PROFILE(1d.planar_shape_loop.figure_eight)
+    comparison_context_id: null
+- case_id: 1d.planar_shape_loop.rounded_square
+  expected_case_sha256: cf2eaffc36c3fe70e9cbf16d701d9c655243af9cf6bc7307ca7263112f0a7ff1
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`E corner_transition.lookahead_0_20s`; `E corner_transition.lookahead_0_60s`'
+  causal_question: Same shape, hard tube, objective, blend derivation, speed profile, and authority; only
+    authored `lookahead_time_s` changes. Compare actual transition start, edge coverage, corner cut, Hausdorff
+    deviation, derived radius, curvature, jerk, and loop closure. This is the primary steering-lookahead
+    anchor.
+  baseline_limitation: '`E corner_transition.lookahead_0_20s`; `E corner_transition.lookahead_0_60s`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Same shape, hard tube, objective, blend derivation, speed profile,
+    and authority; only authored `lookahead_time_s` changes. Compare actual transition start, edge coverage,
+    corner cut, Hausdorff deviation, derived radius, curvature, jerk, and loop closure. This is the primary
+    steering-lookahead anchor.
+  metric_ids:
+  - TM_TRANSITION_START
+  - SP_CAPTURE
+  - SP_CORNER_CUT
+  - SP_REFERENCE
+  - DY_CURVATURE
+  - DY_JERK
+  - SP_CLOSURE
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Same shape, hard tube, objective, blend derivation, speed profile, and authority;
+    only authored `lookahead_time_s` changes. Compare actual transition start, edge coverage, corner cut,
+    Hausdorff deviation, derived radius, curvature, jerk, and loop closure. This is the primary steering-lookahead
+    anchor.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Same shape, hard tube, objective, blend derivation, speed profile, and authority;
+    only authored `lookahead_time_s` changes. Compare actual transition start, edge coverage, corner cut,
+    Hausdorff deviation, derived radius, curvature, jerk, and loop closure. This is the primary steering-lookahead
+    anchor.
+  learning_value: '`E corner_transition.lookahead_0_20s`; `E corner_transition.lookahead_0_60s`'
+  proposals:
+  - submission_id: corner_transition.lookahead_0_20s
+    experiment_id: corner_transition.lookahead
+    axis: SCALAR_PARAMETER
+    axis_value: lookahead_0_20s
+    qualifying_relation: MIN(TM_TRANSITION_START),MIN(SP_CORNER_CUT),PASS(SP_CAPTURE),PASS(SP_CLOSURE)
+      OR REJECT(DEADLINE_VIOLATION)
+    comparator_id: BASELINE(1d.planar_shape_loop.rounded_square)
+    comparison_context_id: null
+  - submission_id: corner_transition.lookahead_0_60s
+    experiment_id: corner_transition.lookahead
+    axis: SCALAR_PARAMETER
+    axis_value: lookahead_0_60s
+    qualifying_relation: MAX(TM_TRANSITION_START),MIN(DY_JERK),PASS(SP_CAPTURE),PASS(SP_CLOSURE)
+    comparator_id: BASELINE(1d.planar_shape_loop.rounded_square)
+    comparison_context_id: null
+- case_id: 1d.planning_budget_expiry.dynamic_nominal
+  expected_case_sha256: 5d25b42b0e1371b916e47c01384acd9a9a8f69c3d3b8153e07df9fabcc575189
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`R budget_expiry.safe_prefix`; `R budget_expiry.bounded_hold`'
+  causal_question: 'Same expired search: continue only an independently proven-safe old prefix versus
+    enter a prevalidated bounded hold. Compare issued authority, stop/hold region, timeout, and absence
+    of partial candidates.'
+  baseline_limitation: '`R budget_expiry.safe_prefix`; `R budget_expiry.bounded_hold`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same expired search: continue only an independently proven-safe
+    old prefix versus enter a prevalidated bounded hold. Compare issued authority, stop/hold region, timeout,
+    and absence of partial candidates.'
+  metric_ids:
+  - DS_FALLBACK
+  - TM_HOLD
+  - SP_CAPTURE
+  - DS_PARTIAL_COMMIT_COUNT
+  - DS_DISPOSITION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same expired search: continue only an independently proven-safe old prefix versus
+    enter a prevalidated bounded hold. Compare issued authority, stop/hold region, timeout, and absence
+    of partial candidates.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same expired search: continue only an independently proven-safe old prefix versus
+    enter a prevalidated bounded hold. Compare issued authority, stop/hold region, timeout, and absence
+    of partial candidates.'
+  learning_value: '`R budget_expiry.safe_prefix`; `R budget_expiry.bounded_hold`'
+  proposals:
+  - submission_id: budget_expiry.safe_prefix
+    experiment_id: budget_expiry.fallback
+    axis: FALLBACK_POLICY
+    axis_value: safe_prefix
+    qualifying_relation: CAT(DS_FALLBACK=safe_prefix),ZERO(DS_PARTIAL_COMMIT_COUNT),CAT(DS_DISPOSITION=blocked_budget)
+    comparator_id: BASELINE(1d.planning_budget_expiry.dynamic_nominal)
+    comparison_context_id: null
+  - submission_id: budget_expiry.bounded_hold
+    experiment_id: budget_expiry.fallback
+    axis: FALLBACK_POLICY
+    axis_value: bounded_hold
+    qualifying_relation: CAT(DS_FALLBACK=bounded_hold),PASS(TM_HOLD),ZERO(DS_PARTIAL_COMMIT_COUNT),CAT(DS_DISPOSITION=blocked_budget)
+    comparator_id: BASELINE(1d.planning_budget_expiry.dynamic_nominal)
+    comparison_context_id: null
+- case_id: 1d.point_to_point_relocation.canonical_nominal
+  expected_case_sha256: 9e466ca6bd43e2107aa97fe09520e2f2fc072e37ce4915b7bfd999f0fa314d6c
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P relocation.minimum_time`; `P relocation.energy_reserve`'
+  causal_question: Same start/goal and direct geometry; duration-first versus energy-reserve-first retiming.
+    Collapse the pair if independent energy/runtime evidence shows no accepted time-law difference.
+  baseline_limitation: '`P relocation.minimum_time`; `P relocation.energy_reserve`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Same start/goal and direct geometry; duration-first versus energy-reserve-first
+    retiming. Collapse the pair if independent energy/runtime evidence shows no accepted time-law difference.
+  metric_ids:
+  - TM_DURATION
+  - EN_ENERGY_WH
+  - EN_RESERVE_PP
+  - DY_ACCELERATION
+  - DY_JERK
+  - SP_CAPTURE
+  - DS_TERMINAL_STATE
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Same start/goal and direct geometry; duration-first versus energy-reserve-first
+    retiming. Collapse the pair if independent energy/runtime evidence shows no accepted time-law difference.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Same start/goal and direct geometry; duration-first versus energy-reserve-first
+    retiming. Collapse the pair if independent energy/runtime evidence shows no accepted time-law difference.
+  learning_value: '`P relocation.minimum_time`; `P relocation.energy_reserve`'
+  proposals:
+  - submission_id: relocation.minimum_time
+    experiment_id: relocation.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: minimum_time
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(1d.point_to_point_relocation.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: relocation.energy_reserve
+    experiment_id: relocation.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: energy_reserve
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(1d.point_to_point_relocation.canonical_nominal)
+    comparison_context_id: null
+- case_id: 1d.static_multi_goal_sequence.canonical_nominal
+  expected_case_sha256: 7ed3edb32498665c554054f2771420a83162ca67cad25acd54d778348acc2580
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P goals.shortest_valid_capture`; `P goals.smooth_transition`'
+  causal_question: 'Same ordered regions and declared holds: earliest valid region entry versus smoother
+    inter-region approach. All captures/holds remain hard; compare path, jerk, capture point, dwell timing,
+    and unintended stops.'
+  baseline_limitation: '`P goals.shortest_valid_capture`; `P goals.smooth_transition`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same ordered regions and declared holds: earliest valid region
+    entry versus smoother inter-region approach. All captures/holds remain hard; compare path, jerk, capture
+    point, dwell timing, and unintended stops.'
+  metric_ids:
+  - SP_CAPTURE
+  - TM_DWELL
+  - TM_DURATION
+  - DY_JERK
+  - DS_UNINTENDED_STOP_COUNT
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same ordered regions and declared holds: earliest valid region entry versus smoother
+    inter-region approach. All captures/holds remain hard; compare path, jerk, capture point, dwell timing,
+    and unintended stops.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same ordered regions and declared holds: earliest valid region entry versus smoother
+    inter-region approach. All captures/holds remain hard; compare path, jerk, capture point, dwell timing,
+    and unintended stops.'
+  learning_value: '`P goals.shortest_valid_capture`; `P goals.smooth_transition`'
+  proposals:
+  - submission_id: goals.shortest_valid_capture
+    experiment_id: multi_goal.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: shortest_capture
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(1d.static_multi_goal_sequence.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: goals.smooth_transition
+    experiment_id: multi_goal.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: smooth_transition
+    qualifying_relation: MIN(DY_JERK),PASS(SP_CAPTURE),PASS(TM_DWELL),ZERO(DS_UNINTENDED_STOP_COUNT)
+    comparator_id: BASELINE(1d.static_multi_goal_sequence.canonical_nominal)
+    comparison_context_id: null
+- case_id: 1d.takeoff_hover_land.canonical_nominal
+  expected_case_sha256: 6606710c701f0277289b654f7a4cfa188759d0d26fe3b67233bb5e72e72bfc72
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`E vertical_cycle.precision_first`; `E vertical_cycle.minimum_duration`'
+  causal_question: Same vertical route; terminal-error/settle margin versus cycle time/energy. Sampled
+    commanded and observed vertical profiles, touchdown region, monotonic terminal deceleration, and actuator
+    margin distinguish them. Promote the accepted vertical time-law primitive once.
+  baseline_limitation: '`E vertical_cycle.precision_first`; `E vertical_cycle.minimum_duration`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Same vertical route; terminal-error/settle margin versus cycle
+    time/energy. Sampled commanded and observed vertical profiles, touchdown region, monotonic terminal
+    deceleration, and actuator margin distinguish them. Promote the accepted vertical time-law primitive
+    once.
+  metric_ids:
+  - SP_CAPTURE
+  - TM_SETTLE
+  - TM_DURATION
+  - DY_VERTICAL_TRACKING
+  - DY_ACCELERATION
+  - DY_JERK
+  - EN_ENERGY_WH
+  - EN_ACTUATOR_HEADROOM_N
+  - DS_TERMINAL_STATE
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Same vertical route; terminal-error/settle margin versus cycle time/energy. Sampled
+    commanded and observed vertical profiles, touchdown region, monotonic terminal deceleration, and actuator
+    margin distinguish them. Promote the accepted vertical time-law primitive once.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Same vertical route; terminal-error/settle margin versus cycle time/energy. Sampled
+    commanded and observed vertical profiles, touchdown region, monotonic terminal deceleration, and actuator
+    margin distinguish them. Promote the accepted vertical time-law primitive once.
+  learning_value: '`E vertical_cycle.precision_first`; `E vertical_cycle.minimum_duration`'
+  proposals:
+  - submission_id: vertical_cycle.precision_first
+    experiment_id: vertical_cycle.duration
+    axis: SCALAR_PARAMETER
+    axis_value: precision
+    qualifying_relation: MIN(DY_VERTICAL_TRACKING),MIN(TM_SETTLE),MAX(TM_DURATION),PASS(SP_CAPTURE),PASS(DS_TERMINAL_STATE)
+    comparator_id: BASELINE(1d.takeoff_hover_land.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: vertical_cycle.minimum_duration
+    experiment_id: vertical_cycle.duration
+    axis: SCALAR_PARAMETER
+    axis_value: minimum_duration
+    qualifying_relation: MIN(TM_DURATION),PASS(DY_VERTICAL_TRACKING),PASS(SP_CAPTURE),PASS(DS_TERMINAL_STATE)
+    comparator_id: BASELINE(1d.takeoff_hover_land.canonical_nominal)
+    comparison_context_id: null
+- case_id: 2d.bottleneck.canonical_nominal
+  expected_case_sha256: 7a26bbfc46dcae94a341fe84fe8e74b2366f7754aabe8278135534222edad425
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: Objective experiment `P bottleneck.earliest_safe_release` versus
+    `P bottleneck.fair_precedence`; separate authority experiment retaining/splitting current `P bottleneck.simultaneous_vertical`
+  causal_question: The timing pair changes only completion-versus-maximum-wait objective order; the vertical
+    experiment changes only the admitted maneuver dimension against a matched simultaneous contract. Every
+    role's occupancy interval, wait, overlap, clearance, and binding constraint are required.
+  baseline_limitation: Objective experiment `P bottleneck.earliest_safe_release` versus `P bottleneck.fair_precedence`;
+    separate authority experiment retaining/splitting current `P bottleneck.simultaneous_vertical`
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: The timing pair changes only completion-versus-maximum-wait objective
+    order; the vertical experiment changes only the admitted maneuver dimension against a matched simultaneous
+    contract. Every role's occupancy interval, wait, overlap, clearance, and binding constraint are required.
+  metric_ids:
+  - DS_OCCUPANCY_INTERVALS
+  - TM_WAIT
+  - TM_OVERLAP
+  - SP_CLEARANCE
+  - DS_MANEUVER
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: The timing pair changes only completion-versus-maximum-wait objective order; the
+    vertical experiment changes only the admitted maneuver dimension against a matched simultaneous contract.
+    Every role's occupancy interval, wait, overlap, clearance, and binding constraint are required.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: The timing pair changes only completion-versus-maximum-wait objective order; the
+    vertical experiment changes only the admitted maneuver dimension against a matched simultaneous contract.
+    Every role's occupancy interval, wait, overlap, clearance, and binding constraint are required.
+  learning_value: Objective experiment `P bottleneck.earliest_safe_release` versus `P bottleneck.fair_precedence`;
+    separate authority experiment retaining/splitting current `P bottleneck.simultaneous_vertical`
+  proposals:
+  - submission_id: constraint_directed.bottleneck.simultaneous_vertical
+    experiment_id: bottleneck.vertical
+    axis: MANEUVER_DIMENSION
+    axis_value: vertical
+    qualifying_relation: CAT(DS_MANEUVER=vertical),PASS(SP_CLEARANCE),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta})
+    comparator_id: BASELINE(2d.bottleneck.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: bottleneck.earliest_safe_release
+    experiment_id: bottleneck.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: earliest
+    qualifying_relation: MIN(TM_WAIT),CAT(DS_OCCUPANCY_INTERVALS=earliest_feasible),PASS(SP_CLEARANCE),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta})
+    comparator_id: BASELINE(2d.bottleneck.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: bottleneck.fair_precedence
+    experiment_id: bottleneck.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: fair
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: PEER(2d.bottleneck.canonical_nominal/bottleneck.earliest_safe_release)
+    comparison_context_id: null
+- case_id: 2d.constrained_border_height.canonical_nominal
+  expected_case_sha256: 1bc4d919712807793b6944503eb09360dd91375476fe4fb6938fd24e940b7672
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P constrained_height.timing_only`; `P constrained_height.lateral_only`'
+  causal_question: Ceiling remains immutable and vertical is forbidden. Compare minimum release with a
+    continuously certified side detour; no vertical candidate may appear.
+  baseline_limitation: '`P constrained_height.timing_only`; `P constrained_height.lateral_only`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Ceiling remains immutable and vertical is forbidden. Compare minimum
+    release with a continuously certified side detour; no vertical candidate may appear.
+  metric_ids:
+  - TM_RELEASE
+  - DS_MANEUVER
+  - SP_CLEARANCE
+  - SP_REFERENCE
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Ceiling remains immutable and vertical is forbidden. Compare minimum release with
+    a continuously certified side detour; no vertical candidate may appear.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Ceiling remains immutable and vertical is forbidden. Compare minimum release with
+    a continuously certified side detour; no vertical candidate may appear.
+  learning_value: '`P constrained_height.timing_only`; `P constrained_height.lateral_only`'
+  proposals:
+  - submission_id: constrained_height.timing_only
+    experiment_id: constrained_height.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: timing
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(2d.constrained_border_height.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: constrained_height.lateral_only
+    experiment_id: constrained_height.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: lateral
+    qualifying_relation: CAT(DS_MANEUVER=lateral),MIN(SP_REFERENCE),PASS(SP_CLEARANCE)
+    comparator_id: BASELINE(2d.constrained_border_height.canonical_nominal)
+    comparison_context_id: null
+- case_id: 2d.coordination_failure.dynamic_nominal
+  expected_case_sha256: 241e12edcf47c4e66044defe630b0e9cbde8ea21c97a1039b553262d8b369ecf
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`R coordination_failure.safe_old_epoch`; `R coordination_failure.coordinated_land`'
+  causal_question: 'Same communication failure: continue only a proven-safe old epoch versus coordinated
+    landing. No mixed/new partial generation is permitted.'
+  baseline_limitation: '`R coordination_failure.safe_old_epoch`; `R coordination_failure.coordinated_land`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same communication failure: continue only a proven-safe old epoch
+    versus coordinated landing. No mixed/new partial generation is permitted.'
+  metric_ids:
+  - DS_FLEET_EPOCH
+  - DS_FALLBACK
+  - DS_PARTIAL_COMMIT_COUNT
+  - DS_TERMINAL_STATE
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same communication failure: continue only a proven-safe old epoch versus coordinated
+    landing. No mixed/new partial generation is permitted.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same communication failure: continue only a proven-safe old epoch versus coordinated
+    landing. No mixed/new partial generation is permitted.'
+  learning_value: '`R coordination_failure.safe_old_epoch`; `R coordination_failure.coordinated_land`'
+  proposals:
+  - submission_id: coordination_failure.safe_old_epoch
+    experiment_id: coordination_failure.fallback
+    axis: FALLBACK_POLICY
+    axis_value: safe_old_epoch
+    qualifying_relation: CAT(DS_FALLBACK=safe_old_epoch),ZERO(DS_PARTIAL_COMMIT_COUNT),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta})
+    comparator_id: BASELINE(2d.coordination_failure.dynamic_nominal)
+    comparison_context_id: null
+  - submission_id: coordination_failure.coordinated_land
+    experiment_id: coordination_failure.fallback
+    axis: FALLBACK_POLICY
+    axis_value: coordinated_land
+    qualifying_relation: CAT(DS_FALLBACK=coordinated_land),ZERO(DS_PARTIAL_COMMIT_COUNT),SET(DS_TERMINAL_STATE={Alpha:landed,Beta:landed})
+    comparator_id: BASELINE(2d.coordination_failure.dynamic_nominal)
+    comparison_context_id: null
+- case_id: 2d.crossing_goal_change.dynamic_nominal
+  expected_case_sha256: 4f4610518135e756cfde2e27b0c1418473bffac9fcb5494e1844c300c2c4a75d
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`R crossing_update.minimum_delay`; `R crossing_update.minimum_affected_set`'
+  causal_question: 'Same update: optimize new fleet completion versus change the fewest role programs.
+    Compare invalidated segments, affected roles, cutover epoch, clearance, and unaffected-role delay.'
+  baseline_limitation: '`R crossing_update.minimum_delay`; `R crossing_update.minimum_affected_set`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same update: optimize new fleet completion versus change the
+    fewest role programs. Compare invalidated segments, affected roles, cutover epoch, clearance, and
+    unaffected-role delay.'
+  metric_ids:
+  - DS_AFFECTED_ROLES
+  - DS_FLEET_EPOCH
+  - TM_CUTOVER
+  - SP_CLEARANCE
+  - TM_WAIT
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same update: optimize new fleet completion versus change the fewest role programs.
+    Compare invalidated segments, affected roles, cutover epoch, clearance, and unaffected-role delay.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same update: optimize new fleet completion versus change the fewest role programs.
+    Compare invalidated segments, affected roles, cutover epoch, clearance, and unaffected-role delay.'
+  learning_value: '`R crossing_update.minimum_delay`; `R crossing_update.minimum_affected_set`'
+  proposals:
+  - submission_id: crossing_update.minimum_delay
+    experiment_id: crossing_update.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: minimum_delay
+    qualifying_relation: MIN(TM_CUTOVER),PASS(SP_CLEARANCE),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta})
+    comparator_id: BASELINE(2d.crossing_goal_change.dynamic_nominal)
+    comparison_context_id: null
+  - submission_id: crossing_update.minimum_affected_set
+    experiment_id: crossing_update.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: minimum_affected_set
+    qualifying_relation: MIN_CARDINALITY(DS_AFFECTED_ROLES),PASS(SP_CLEARANCE),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta})
+    comparator_id: BASELINE(2d.crossing_goal_change.dynamic_nominal)
+    comparison_context_id: null
+- case_id: 2d.duplicate_assignment_rejection.dynamic_nominal
+  expected_case_sha256: 9381d922ec09fef67f7c944ef3accd6355e21c85fc799ba9b32b8b58599b54b3
+  lifecycle: BASELINE_ONLY
+  proposed_additions_or_disposition: '`BASELINE_ONLY`'
+  causal_question: "Atomic duplicate rejection has no safe \u201Caccept duplicate\u201D alternative; role\
+    \ reorder is a counterexample run, not a submission."
+  baseline_limitation: '`BASELINE_ONLY`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: "Atomic duplicate rejection has no safe \u201Caccept duplicate\u201D\
+    \ alternative; role reorder is a counterexample run, not a submission."
+  metric_ids:
+  - DS_DISPOSITION
+  - DS_ASSIGNMENT
+  - DS_COMMAND_OWNERSHIP
+  - DS_PARTIAL_COMMIT_COUNT
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: "Atomic duplicate rejection has no safe \u201Caccept duplicate\u201D alternative;\
+    \ role reorder is a counterexample run, not a submission."
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: "Atomic duplicate rejection has no safe \u201Caccept duplicate\u201D alternative;\
+    \ role reorder is a counterexample run, not a submission."
+  learning_value: '`BASELINE_ONLY`'
+  proposals: []
+- case_id: 2d.formation_spacing.canonical_nominal
+  expected_case_sha256: a3c9b793ce76a8d16f4426b76dd0ea2d271c558736529b081ca9aa13521e4c81
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P formation.spacing_fidelity`; `P formation.centroid_smoothness`'
+  causal_question: Pairwise spacing error versus centroid/trajectory smoothness while both remain hard-bounded.
+    Report complete pair and per-role evidence.
+  baseline_limitation: '`P formation.spacing_fidelity`; `P formation.centroid_smoothness`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Pairwise spacing error versus centroid/trajectory smoothness while
+    both remain hard-bounded. Report complete pair and per-role evidence.
+  metric_ids:
+  - SP_SPACING
+  - DY_JERK
+  - DS_ALL_ROLE_COMPLETION
+  - SP_CLEARANCE
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Pairwise spacing error versus centroid/trajectory smoothness while both remain
+    hard-bounded. Report complete pair and per-role evidence.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Pairwise spacing error versus centroid/trajectory smoothness while both remain
+    hard-bounded. Report complete pair and per-role evidence.
+  learning_value: '`P formation.spacing_fidelity`; `P formation.centroid_smoothness`'
+  proposals:
+  - submission_id: formation.spacing_fidelity
+    experiment_id: formation.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: spacing
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(2d.formation_spacing.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: formation.centroid_smoothness
+    experiment_id: formation.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: centroid_smoothness
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(2d.formation_spacing.canonical_nominal)
+    comparison_context_id: null
+- case_id: 2d.head_on_conflict.canonical_nominal
+  expected_case_sha256: 3099fdec3eafd86551d81204af3dcaa93a9ae557ac96537364bef079067e3cd7
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: Retain compatibility submission; add timing experiment `P head_on.earliest_safe_release`;
+    authority experiment `P head_on.synchronized_lateral` versus `P head_on.synchronized_vertical`; objective
+    experiment `P head_on.path_fidelity_combined` versus `P head_on.robustness_combined`
+  causal_question: 'Each experiment keeps all non-axis fields fixed: continuous timing resolution, lateral-versus-vertical
+    active authority, or path-error-versus-clearance objective order. Active submissions require launch/route
+    skew and overlap and cannot pass by full serialization.'
+  baseline_limitation: Retain compatibility submission; add timing experiment `P head_on.earliest_safe_release`;
+    authority experiment `P head_on.synchronized_lateral` versus `P head_on.synchronized_vertical`; objective
+    experiment `P head_on.path_fidelity_combined` versus `P head_on.robustness_combined`
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Each experiment keeps all non-axis fields fixed: continuous timing
+    resolution, lateral-versus-vertical active authority, or path-error-versus-clearance objective order.
+    Active submissions require launch/route skew and overlap and cannot pass by full serialization.'
+  metric_ids:
+  - TM_RELEASE
+  - TM_OVERLAP
+  - DS_MANEUVER
+  - SP_REFERENCE
+  - SP_CLEARANCE
+  - DS_AFFECTED_ROLES
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Each experiment keeps all non-axis fields fixed: continuous timing resolution,
+    lateral-versus-vertical active authority, or path-error-versus-clearance objective order. Active submissions
+    require launch/route skew and overlap and cannot pass by full serialization.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Each experiment keeps all non-axis fields fixed: continuous timing resolution,
+    lateral-versus-vertical active authority, or path-error-versus-clearance objective order. Active submissions
+    require launch/route skew and overlap and cannot pass by full serialization.'
+  learning_value: Retain compatibility submission; add timing experiment `P head_on.earliest_safe_release`;
+    authority experiment `P head_on.synchronized_lateral` versus `P head_on.synchronized_vertical`; objective
+    experiment `P head_on.path_fidelity_combined` versus `P head_on.robustness_combined`
+  proposals:
+  - submission_id: constraint_directed.head_on.same_path
+    experiment_id: head_on.compatibility
+    axis: CAPABILITY_BINDING
+    axis_value: retained
+    qualifying_relation: CAT(DS_MANEUVER=retained_combined),PASS(SP_CLEARANCE),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta})
+    comparator_id: BASELINE(2d.head_on_conflict.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: head_on.earliest_safe_release
+    experiment_id: head_on.timing
+    axis: MANEUVER_DIMENSION
+    axis_value: timing
+    qualifying_relation: CAT(DS_MANEUVER=timing),ARGMIN_BOUNDED(TM_RELEASE),PASS(TM_OVERLAP),PASS(SP_CLEARANCE)
+    comparator_id: BASELINE(2d.head_on_conflict.canonical_nominal,overlap-capacity-v1)
+    comparison_context_id: overlap-capacity-v1
+  - submission_id: head_on.synchronized_lateral
+    experiment_id: head_on.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: lateral
+    qualifying_relation: CAT(DS_MANEUVER=lateral),PASS(TM_OVERLAP),PASS(SP_CLEARANCE),SET(DS_AFFECTED_ROLES={Alpha,Beta})
+    comparator_id: PEER(2d.head_on_conflict.canonical_nominal/head_on.synchronized_vertical)
+    comparison_context_id: null
+  - submission_id: head_on.synchronized_vertical
+    experiment_id: head_on.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: vertical
+    qualifying_relation: CAT(DS_MANEUVER=vertical),PASS(TM_OVERLAP),PASS(SP_CLEARANCE),SET(DS_AFFECTED_ROLES={Alpha,Beta})
+    comparator_id: PEER(2d.head_on_conflict.canonical_nominal/head_on.synchronized_lateral)
+    comparison_context_id: null
+  - submission_id: head_on.path_fidelity_combined
+    experiment_id: head_on.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: path_fidelity
+    qualifying_relation: MIN(SP_REFERENCE),PASS(TM_OVERLAP),PASS(SP_CLEARANCE),SET(DS_AFFECTED_ROLES={Alpha,Beta})
+    comparator_id: PEER(2d.head_on_conflict.canonical_nominal/head_on.robustness_combined)
+    comparison_context_id: null
+  - submission_id: head_on.robustness_combined
+    experiment_id: head_on.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: robustness
+    qualifying_relation: MAX(SP_CLEARANCE),PASS(TM_OVERLAP),SET(DS_AFFECTED_ROLES={Alpha,Beta})
+    comparator_id: PEER(2d.head_on_conflict.canonical_nominal/head_on.path_fidelity_combined)
+    comparison_context_id: null
+- case_id: 2d.leader_follower.canonical_nominal
+  expected_case_sha256: 403b16e2fde356f2625315a64d92bcc59d5723493aadc655af6cff592deff8c0
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P leader_follower.rigid_offset`; `P leader_follower.elastic_smooth`'
+  causal_question: Tight relative offset versus bounded elastic offset to reduce follower jerk/energy.
+    Compare role binding, offset envelope, command routing, jerk, energy, and terminal capture.
+  baseline_limitation: '`P leader_follower.rigid_offset`; `P leader_follower.elastic_smooth`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Tight relative offset versus bounded elastic offset to reduce
+    follower jerk/energy. Compare role binding, offset envelope, command routing, jerk, energy, and terminal
+    capture.
+  metric_ids:
+  - DS_COMMAND_OWNERSHIP
+  - SP_OFFSET
+  - DY_JERK
+  - EN_ENERGY_WH
+  - SP_CAPTURE
+  - DS_TERMINAL_STATE
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Tight relative offset versus bounded elastic offset to reduce follower jerk/energy.
+    Compare role binding, offset envelope, command routing, jerk, energy, and terminal capture.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Tight relative offset versus bounded elastic offset to reduce follower jerk/energy.
+    Compare role binding, offset envelope, command routing, jerk, energy, and terminal capture.
+  learning_value: '`P leader_follower.rigid_offset`; `P leader_follower.elastic_smooth`'
+  proposals:
+  - submission_id: leader_follower.rigid_offset
+    experiment_id: leader_follower.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: rigid_offset
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(2d.leader_follower.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: leader_follower.elastic_smooth
+    experiment_id: leader_follower.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: elastic_smooth
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(2d.leader_follower.canonical_nominal)
+    comparison_context_id: null
+- case_id: 2d.leader_loss.dynamic_nominal
+  expected_case_sha256: 78fccc9fc6a56ee6528b5a238346252db682d2d4039d497433ce5e58810f5078
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`R leader_loss.promote_follower`; `R leader_loss.coordinated_land`'
+  causal_question: 'Same fault: hash-bound successor leadership with revalidated formation versus all-role
+    terminal fallback. Compare lease/role generation, commands, spacing, and terminal states.'
+  baseline_limitation: '`R leader_loss.promote_follower`; `R leader_loss.coordinated_land`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same fault: hash-bound successor leadership with revalidated
+    formation versus all-role terminal fallback. Compare lease/role generation, commands, spacing, and
+    terminal states.'
+  metric_ids:
+  - DS_LEASE_GENERATION
+  - DS_COMMAND_OWNERSHIP
+  - SP_SPACING
+  - DS_TERMINAL_STATE
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same fault: hash-bound successor leadership with revalidated formation versus
+    all-role terminal fallback. Compare lease/role generation, commands, spacing, and terminal states.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same fault: hash-bound successor leadership with revalidated formation versus
+    all-role terminal fallback. Compare lease/role generation, commands, spacing, and terminal states.'
+  learning_value: '`R leader_loss.promote_follower`; `R leader_loss.coordinated_land`'
+  proposals:
+  - submission_id: leader_loss.promote_follower
+    experiment_id: leader_loss.fallback
+    axis: FALLBACK_POLICY
+    axis_value: promote_follower
+    qualifying_relation: CAT(DS_COMMAND_OWNERSHIP=declared_successor),PASS(SP_SPACING),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta})
+    comparator_id: BASELINE(2d.leader_loss.dynamic_nominal)
+    comparison_context_id: null
+  - submission_id: leader_loss.coordinated_land
+    experiment_id: leader_loss.fallback
+    axis: FALLBACK_POLICY
+    axis_value: coordinated_land
+    qualifying_relation: CAT(DS_COMMAND_OWNERSHIP=no_successor),SET(DS_TERMINAL_STATE={Alpha:landed,Beta:landed}),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta})
+    comparator_id: BASELINE(2d.leader_loss.dynamic_nominal)
+    comparison_context_id: null
+- case_id: 2d.merge.canonical_nominal
+  expected_case_sha256: 70b346469dac4fa40f99da5383cfac4f96d59a0f6d48015b9f548d341ec4e10c
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: Retain compatibility submission; objective experiment `P merge.earliest_precedence`
+    versus `P merge.fair_release`; authority experiment `P merge.parallel_lanes` versus `P merge.vertical_stack`
+  causal_question: The first pair changes only completion-versus-maximum-wait objective order; the second
+    changes only lateral-versus-vertical authority under one fixed simultaneous-progress objective. A
+    capacity option stays non-executable if current free space cannot certify it.
+  baseline_limitation: Retain compatibility submission; objective experiment `P merge.earliest_precedence`
+    versus `P merge.fair_release`; authority experiment `P merge.parallel_lanes` versus `P merge.vertical_stack`
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: The first pair changes only completion-versus-maximum-wait objective
+    order; the second changes only lateral-versus-vertical authority under one fixed simultaneous-progress
+    objective. A capacity option stays non-executable if current free space cannot certify it.
+  metric_ids:
+  - TM_RELEASE
+  - TM_WAIT
+  - TM_OVERLAP
+  - DS_MANEUVER
+  - SP_CLEARANCE
+  - DS_ROLE_ORDER
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: The first pair changes only completion-versus-maximum-wait objective order; the
+    second changes only lateral-versus-vertical authority under one fixed simultaneous-progress objective.
+    A capacity option stays non-executable if current free space cannot certify it.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: The first pair changes only completion-versus-maximum-wait objective order; the
+    second changes only lateral-versus-vertical authority under one fixed simultaneous-progress objective.
+    A capacity option stays non-executable if current free space cannot certify it.
+  learning_value: Retain compatibility submission; objective experiment `P merge.earliest_precedence`
+    versus `P merge.fair_release`; authority experiment `P merge.parallel_lanes` versus `P merge.vertical_stack`
+  proposals:
+  - submission_id: constraint_directed.merge.flexible_geometry
+    experiment_id: merge.compatibility
+    axis: CAPABILITY_BINDING
+    axis_value: retained
+    qualifying_relation: CAT(DS_MANEUVER=retained_combined),PASS(SP_CLEARANCE)
+    comparator_id: BASELINE(2d.merge.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: merge.earliest_precedence
+    experiment_id: merge.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: earliest
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(2d.merge.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: merge.fair_release
+    experiment_id: merge.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: fair
+    qualifying_relation: MIN(TM_WAIT),PASS(TM_OVERLAP),PASS(SP_CLEARANCE)
+    comparator_id: BASELINE(2d.merge.canonical_nominal,overlap-capacity-v1)
+    comparison_context_id: overlap-capacity-v1
+  - submission_id: merge.parallel_lanes
+    experiment_id: merge.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: lateral
+    qualifying_relation: CAT(DS_MANEUVER=lateral),PASS(TM_OVERLAP),PASS(SP_CLEARANCE)
+    comparator_id: PEER(2d.merge.canonical_nominal/merge.vertical_stack)
+    comparison_context_id: null
+  - submission_id: merge.vertical_stack
+    experiment_id: merge.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: vertical
+    qualifying_relation: CAT(DS_MANEUVER=vertical),PASS(TM_OVERLAP),PASS(SP_CLEARANCE)
+    comparator_id: PEER(2d.merge.canonical_nominal/merge.parallel_lanes)
+    comparison_context_id: null
+- case_id: 2d.no_hover_crossing.canonical_nominal
+  expected_case_sha256: d5c0d301e81351bace32b21f08981641dc6288e6607385c7ff1f9e7c89ce1248
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P no_hover.ground_release`; separate authority experiments `P no_hover.speed_only`
+    and `P no_hover.lateral_only`'
+  causal_question: Each active experiment changes exactly one allowed maneuver dimension against the same
+    objective/adherence/search contract; speed and lateral authority are never bundled. Airborne hold
+    duration must be zero for every choice.
+  baseline_limitation: '`P no_hover.ground_release`; separate authority experiments `P no_hover.speed_only`
+    and `P no_hover.lateral_only`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Each active experiment changes exactly one allowed maneuver dimension
+    against the same objective/adherence/search contract; speed and lateral authority are never bundled.
+    Airborne hold duration must be zero for every choice.
+  metric_ids:
+  - TM_RELEASE
+  - DS_MANEUVER
+  - TM_HOLD
+  - SP_CLEARANCE
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Each active experiment changes exactly one allowed maneuver dimension against
+    the same objective/adherence/search contract; speed and lateral authority are never bundled. Airborne
+    hold duration must be zero for every choice.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Each active experiment changes exactly one allowed maneuver dimension against the
+    same objective/adherence/search contract; speed and lateral authority are never bundled. Airborne
+    hold duration must be zero for every choice.
+  learning_value: '`P no_hover.ground_release`; separate authority experiments `P no_hover.speed_only`
+    and `P no_hover.lateral_only`'
+  proposals:
+  - submission_id: no_hover.ground_release
+    experiment_id: no_hover.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: ground_release
+    qualifying_relation: CAT(DS_MANEUVER=ground_release),ZERO(TM_HOLD),PASS(SP_CLEARANCE)
+    comparator_id: BASELINE(2d.no_hover_crossing.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: no_hover.speed_only
+    experiment_id: no_hover.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: speed
+    qualifying_relation: CAT(DS_MANEUVER=speed),ZERO(TM_HOLD),PASS(SP_CLEARANCE)
+    comparator_id: BASELINE(2d.no_hover_crossing.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: no_hover.lateral_only
+    experiment_id: no_hover.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: lateral
+    qualifying_relation: CAT(DS_MANEUVER=lateral),ZERO(TM_HOLD),PASS(SP_CLEARANCE)
+    comparator_id: BASELINE(2d.no_hover_crossing.canonical_nominal)
+    comparison_context_id: null
+- case_id: 2d.overtake.canonical_nominal
+  expected_case_sha256: 817d4409558fec37bca32108f31dada98df5d1ad5cb933fdfd08cf000d48c54a
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P overtake.speed_retimed_follow`; `P overtake.lateral_pass`; `P
+    overtake.vertical_pass`'
+  causal_question: 'Same routes: remain behind by retiming versus active side/height pass. Compare passing
+    completion, overlap, deviation/layer use, clearance, energy, and no role inversion. Case remains quarantined
+    until production behavior exists.'
+  baseline_limitation: '`P overtake.speed_retimed_follow`; `P overtake.lateral_pass`; `P overtake.vertical_pass`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same routes: remain behind by retiming versus active side/height
+    pass. Compare passing completion, overlap, deviation/layer use, clearance, energy, and no role inversion.
+    Case remains quarantined until production behavior exists.'
+  metric_ids:
+  - TM_DURATION
+  - TM_OVERLAP
+  - DS_MANEUVER
+  - SP_REFERENCE
+  - SP_CLEARANCE
+  - EN_ENERGY_WH
+  - DS_ROLE_ORDER
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same routes: remain behind by retiming versus active side/height pass. Compare
+    passing completion, overlap, deviation/layer use, clearance, energy, and no role inversion. Case remains
+    quarantined until production behavior exists.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same routes: remain behind by retiming versus active side/height pass. Compare
+    passing completion, overlap, deviation/layer use, clearance, energy, and no role inversion. Case remains
+    quarantined until production behavior exists.'
+  learning_value: '`P overtake.speed_retimed_follow`; `P overtake.lateral_pass`; `P overtake.vertical_pass`'
+  proposals:
+  - submission_id: overtake.speed_retimed_follow
+    experiment_id: overtake.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: speed
+    qualifying_relation: CAT(DS_MANEUVER=speed),ORDER(DS_ROLE_ORDER=leader_before_follower),PASS(SP_CLEARANCE)
+    comparator_id: BASELINE(2d.overtake.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: overtake.lateral_pass
+    experiment_id: overtake.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: lateral
+    qualifying_relation: CAT(DS_MANEUVER=lateral),ORDER(DS_ROLE_ORDER=follower_passes_leader),PASS(SP_CLEARANCE)
+    comparator_id: BASELINE(2d.overtake.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: overtake.vertical_pass
+    experiment_id: overtake.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: vertical
+    qualifying_relation: CAT(DS_MANEUVER=vertical),ORDER(DS_ROLE_ORDER=follower_passes_leader),PASS(SP_CLEARANCE)
+    comparator_id: BASELINE(2d.overtake.canonical_nominal)
+    comparison_context_id: null
+- case_id: 2d.parallel_routes.canonical_nominal
+  expected_case_sha256: 7e20328d443d10bd4539f6230ae35e9daa15394b43319c2ac61fd4936c7fcdbc
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P parallel.phase_locked`; `P parallel.energy_balanced`'
+  causal_question: 'Same nonconflicting routes: minimize source-time progress skew versus allow independent
+    energy-aware retiming. Compare phase error, energy spread, finish skew, and separation.'
+  baseline_limitation: '`P parallel.phase_locked`; `P parallel.energy_balanced`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same nonconflicting routes: minimize source-time progress skew
+    versus allow independent energy-aware retiming. Compare phase error, energy spread, finish skew, and
+    separation.'
+  metric_ids:
+  - TM_PHASE_ERROR
+  - EN_SPREAD_PP
+  - TM_FINISH_SKEW
+  - SP_CLEARANCE
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same nonconflicting routes: minimize source-time progress skew versus allow independent
+    energy-aware retiming. Compare phase error, energy spread, finish skew, and separation.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same nonconflicting routes: minimize source-time progress skew versus allow independent
+    energy-aware retiming. Compare phase error, energy spread, finish skew, and separation.'
+  learning_value: '`P parallel.phase_locked`; `P parallel.energy_balanced`'
+  proposals:
+  - submission_id: parallel.phase_locked
+    experiment_id: parallel.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: phase_locked
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(2d.parallel_routes.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: parallel.energy_balanced
+    experiment_id: parallel.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: energy_balanced
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(2d.parallel_routes.canonical_nominal)
+    comparison_context_id: null
+- case_id: 2d.partial_replacement_failure.dynamic_nominal
+  expected_case_sha256: f36b11d3664a5251effc67d37b76b8fa8e92e17e2549147806cb6c4d227df109
+  lifecycle: BASELINE_ONLY
+  proposed_additions_or_disposition: '`BASELINE_ONLY`'
+  causal_question: Partial commit is always forbidden. Alternative all-or-zero fallback may be a later
+    capability, but accepting the prepared subset is never a submission.
+  baseline_limitation: '`BASELINE_ONLY`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Partial commit is always forbidden. Alternative all-or-zero fallback
+    may be a later capability, but accepting the prepared subset is never a submission.
+  metric_ids:
+  - DS_PREPARED_ROLES
+  - DS_ACKNOWLEDGED_ROLES
+  - DS_PARTIAL_COMMIT_COUNT
+  - DS_FLEET_EPOCH
+  - DS_DISPOSITION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Partial commit is always forbidden. Alternative all-or-zero fallback may be a
+    later capability, but accepting the prepared subset is never a submission.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Partial commit is always forbidden. Alternative all-or-zero fallback may be a later
+    capability, but accepting the prepared subset is never a submission.
+  learning_value: '`BASELINE_ONLY`'
+  proposals: []
+- case_id: 2d.perpendicular_crossing.nominal_equal_priority
+  expected_case_sha256: 0d6c6fb34dca0aa109edfffce08b83fd3a519987fdcb3062b9139e1baa081730
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P crossing.earliest_equal_release`; `P crossing.synchronized_lateral`;
+    `P crossing.synchronized_vertical`'
+  causal_question: Equal-priority timing tie-break versus same-time geometry. Compare release, overlap,
+    maneuver dimension, symmetry/fairness, path deviation, and separation.
+  baseline_limitation: '`P crossing.earliest_equal_release`; `P crossing.synchronized_lateral`; `P crossing.synchronized_vertical`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Equal-priority timing tie-break versus same-time geometry. Compare
+    release, overlap, maneuver dimension, symmetry/fairness, path deviation, and separation.
+  metric_ids:
+  - TM_RELEASE
+  - TM_OVERLAP
+  - DS_MANEUVER
+  - TM_WAIT
+  - SP_REFERENCE
+  - SP_CLEARANCE
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Equal-priority timing tie-break versus same-time geometry. Compare release, overlap,
+    maneuver dimension, symmetry/fairness, path deviation, and separation.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Equal-priority timing tie-break versus same-time geometry. Compare release, overlap,
+    maneuver dimension, symmetry/fairness, path deviation, and separation.
+  learning_value: '`P crossing.earliest_equal_release`; `P crossing.synchronized_lateral`; `P crossing.synchronized_vertical`'
+  proposals:
+  - submission_id: crossing.earliest_equal_release
+    experiment_id: crossing.timing
+    axis: MANEUVER_DIMENSION
+    axis_value: timing
+    qualifying_relation: CAT(DS_MANEUVER=timing),ARGMIN_BOUNDED(TM_RELEASE),PASS(TM_OVERLAP),PASS(SP_CLEARANCE)
+    comparator_id: BASELINE(2d.perpendicular_crossing.nominal_equal_priority,overlap-capacity-v1)
+    comparison_context_id: overlap-capacity-v1
+  - submission_id: crossing.synchronized_lateral
+    experiment_id: crossing.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: lateral
+    qualifying_relation: CAT(DS_MANEUVER=lateral),PASS(TM_OVERLAP),PASS(SP_CLEARANCE)
+    comparator_id: PEER(2d.perpendicular_crossing.nominal_equal_priority/crossing.synchronized_vertical)
+    comparison_context_id: null
+  - submission_id: crossing.synchronized_vertical
+    experiment_id: crossing.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: vertical
+    qualifying_relation: CAT(DS_MANEUVER=vertical),PASS(TM_OVERLAP),PASS(SP_CLEARANCE)
+    comparator_id: PEER(2d.perpendicular_crossing.nominal_equal_priority/crossing.synchronized_lateral)
+    comparison_context_id: null
+- case_id: 2d.role_allocation.canonical_nominal
+  expected_case_sha256: 20f2c866647aa36b669a85c64c7b2569d31e1d835d2819ac41165f32483ffc44
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P allocation.capability_first`; `P allocation.energy_reserve`'
+  causal_question: 'Same tasks/vehicles: lexicographic capability/priority versus feasible assignment
+    with maximum remaining reserve. Unique ownership and no wrong-role command remain invariant.'
+  baseline_limitation: '`P allocation.capability_first`; `P allocation.energy_reserve`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same tasks/vehicles: lexicographic capability/priority versus
+    feasible assignment with maximum remaining reserve. Unique ownership and no wrong-role command remain
+    invariant.'
+  metric_ids:
+  - DS_ASSIGNMENT
+  - DS_COMMAND_OWNERSHIP
+  - EN_RESERVE_PP
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same tasks/vehicles: lexicographic capability/priority versus feasible assignment
+    with maximum remaining reserve. Unique ownership and no wrong-role command remain invariant.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same tasks/vehicles: lexicographic capability/priority versus feasible assignment
+    with maximum remaining reserve. Unique ownership and no wrong-role command remain invariant.'
+  learning_value: '`P allocation.capability_first`; `P allocation.energy_reserve`'
+  proposals:
+  - submission_id: allocation.capability_first
+    experiment_id: allocation.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: capability
+    qualifying_relation: CAT(DS_ASSIGNMENT=capability_priority_optimum),PASS(DS_COMMAND_OWNERSHIP),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta})
+    comparator_id: BASELINE(2d.role_allocation.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: allocation.energy_reserve
+    experiment_id: allocation.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: energy
+    qualifying_relation: MAX(EN_RESERVE_PP),PASS(DS_COMMAND_OWNERSHIP),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta})
+    comparator_id: BASELINE(2d.role_allocation.canonical_nominal)
+    comparison_context_id: null
+- case_id: 2d.simultaneous_conflicting_updates.dynamic_nominal
+  expected_case_sha256: 626cce30c93622f220979db02067d0698b7493a5b8b938fc1c99a409d089ac4d
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`R conflicting_updates.source_order`; `R conflicting_updates.role_priority`'
+  causal_question: 'Same two updates: deterministic source-generation order versus declared role-priority
+    arbitration. Compare accepted/rejected generations, one fleet epoch, and resulting routes; neither
+    may combine contradictory authority.'
+  baseline_limitation: '`R conflicting_updates.source_order`; `R conflicting_updates.role_priority`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same two updates: deterministic source-generation order versus
+    declared role-priority arbitration. Compare accepted/rejected generations, one fleet epoch, and resulting
+    routes; neither may combine contradictory authority.'
+  metric_ids:
+  - DS_GENERATION
+  - DS_DISPOSITION
+  - DS_FLEET_EPOCH
+  - DS_ROUTE_IDENTITY
+  - DS_PARTIAL_COMMIT_COUNT
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same two updates: deterministic source-generation order versus declared role-priority
+    arbitration. Compare accepted/rejected generations, one fleet epoch, and resulting routes; neither
+    may combine contradictory authority.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same two updates: deterministic source-generation order versus declared role-priority
+    arbitration. Compare accepted/rejected generations, one fleet epoch, and resulting routes; neither
+    may combine contradictory authority.'
+  learning_value: '`R conflicting_updates.source_order`; `R conflicting_updates.role_priority`'
+  proposals:
+  - submission_id: conflicting_updates.source_order
+    experiment_id: conflicting_updates.policy
+    axis: FALLBACK_POLICY
+    axis_value: source_order
+    qualifying_relation: CAT(DS_DISPOSITION=source_order),ORDER(DS_GENERATION=source_sequence),ZERO(DS_PARTIAL_COMMIT_COUNT)
+    comparator_id: BASELINE(2d.simultaneous_conflicting_updates.dynamic_nominal)
+    comparison_context_id: null
+  - submission_id: conflicting_updates.role_priority
+    experiment_id: conflicting_updates.policy
+    axis: FALLBACK_POLICY
+    axis_value: role_priority
+    qualifying_relation: CAT(DS_DISPOSITION=role_priority),ORDER(DS_GENERATION=declared_role_priority),ZERO(DS_PARTIAL_COMMIT_COUNT)
+    comparator_id: BASELINE(2d.simultaneous_conflicting_updates.dynamic_nominal)
+    comparison_context_id: null
+- case_id: 2d.unequal_priority.canonical_nominal
+  expected_case_sha256: 0e4b2b5b0a71e2eda70209997b8531589c263e4bbaac5fe808243041f1af5997
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P priority.strict_lexicographic`; `P priority.bounded_fairness`'
+  causal_question: 'Same priorities: minimize high-priority delay versus retain priority while minimizing
+    maximum wait/starvation. Compare precedence, each wait, inversions, and completion.'
+  baseline_limitation: '`P priority.strict_lexicographic`; `P priority.bounded_fairness`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same priorities: minimize high-priority delay versus retain priority
+    while minimizing maximum wait/starvation. Compare precedence, each wait, inversions, and completion.'
+  metric_ids:
+  - DS_ROLE_ORDER
+  - TM_WAIT
+  - DS_PRIORITY_INVERSION_COUNT
+  - TM_DURATION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same priorities: minimize high-priority delay versus retain priority while minimizing
+    maximum wait/starvation. Compare precedence, each wait, inversions, and completion.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same priorities: minimize high-priority delay versus retain priority while minimizing
+    maximum wait/starvation. Compare precedence, each wait, inversions, and completion.'
+  learning_value: '`P priority.strict_lexicographic`; `P priority.bounded_fairness`'
+  proposals:
+  - submission_id: priority.strict_lexicographic
+    experiment_id: priority.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: strict
+    qualifying_relation: ORDER(DS_ROLE_ORDER=declared_priority),ZERO(DS_PRIORITY_INVERSION_COUNT)
+    comparator_id: BASELINE(2d.unequal_priority.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: priority.bounded_fairness
+    experiment_id: priority.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: bounded_fairness
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: PEER(2d.unequal_priority.canonical_nominal/priority.strict_lexicographic)
+    comparison_context_id: null
+- case_id: 3d.acknowledgement_loss.dynamic_nominal
+  expected_case_sha256: 70ed7ccdae9e327af2e46ed12a3922262964722585985d06305a9cdadd7782a0
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`R ack_loss.safe_old_epoch`; `R ack_loss.fleet_land`'
+  causal_question: 'Same missing acknowledgement: continue the independently proven-safe old fleet epoch
+    or coordinate all-role landing. Zero partial commit is invariant.'
+  baseline_limitation: '`R ack_loss.safe_old_epoch`; `R ack_loss.fleet_land`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same missing acknowledgement: continue the independently proven-safe
+    old fleet epoch or coordinate all-role landing. Zero partial commit is invariant.'
+  metric_ids:
+  - DS_ACKNOWLEDGED_ROLES
+  - DS_PARTIAL_COMMIT_COUNT
+  - DS_FALLBACK
+  - DS_FLEET_EPOCH
+  - DS_TERMINAL_STATE
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same missing acknowledgement: continue the independently proven-safe old fleet
+    epoch or coordinate all-role landing. Zero partial commit is invariant.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same missing acknowledgement: continue the independently proven-safe old fleet
+    epoch or coordinate all-role landing. Zero partial commit is invariant.'
+  learning_value: '`R ack_loss.safe_old_epoch`; `R ack_loss.fleet_land`'
+  proposals:
+  - submission_id: ack_loss.safe_old_epoch
+    experiment_id: ack_loss.fallback
+    axis: FALLBACK_POLICY
+    axis_value: safe_old_epoch
+    qualifying_relation: CAT(DS_FALLBACK=safe_old_epoch),ZERO(DS_PARTIAL_COMMIT_COUNT),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.acknowledgement_loss.dynamic_nominal)
+    comparison_context_id: null
+  - submission_id: ack_loss.fleet_land
+    experiment_id: ack_loss.fallback
+    axis: FALLBACK_POLICY
+    axis_value: fleet_land
+    qualifying_relation: CAT(DS_FALLBACK=fleet_land),ZERO(DS_PARTIAL_COMMIT_COUNT),SET(DS_TERMINAL_STATE={Alpha:landed,Beta:landed,Gamma:landed})
+    comparator_id: BASELINE(3d.acknowledgement_loss.dynamic_nominal)
+    comparison_context_id: null
+- case_id: 3d.alternative_layers_detours.canonical_nominal
+  expected_case_sha256: c019057796345c7587fd5112fab191ec35b285e519de594da58a9bf11a2de408
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: Authority experiment `P alternatives.lateral_only` versus `P alternatives.vertical_only`;
+    objective experiment `P alternatives.energy_combined` versus `P alternatives.robust_combined`
+  causal_question: The first pair changes only the maneuver dimension; the second keeps combined authority
+    fixed and changes only energy-versus-clearance objective order. Retain rejected representatives and
+    binding reasons, not generator order.
+  baseline_limitation: Authority experiment `P alternatives.lateral_only` versus `P alternatives.vertical_only`;
+    objective experiment `P alternatives.energy_combined` versus `P alternatives.robust_combined`
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: The first pair changes only the maneuver dimension; the second
+    keeps combined authority fixed and changes only energy-versus-clearance objective order. Retain rejected
+    representatives and binding reasons, not generator order.
+  metric_ids:
+  - DS_MANEUVER
+  - EN_ENERGY_WH
+  - SP_CLEARANCE
+  - SP_REFERENCE
+  - DS_AFFECTED_ROLES
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: The first pair changes only the maneuver dimension; the second keeps combined
+    authority fixed and changes only energy-versus-clearance objective order. Retain rejected representatives
+    and binding reasons, not generator order.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: The first pair changes only the maneuver dimension; the second keeps combined authority
+    fixed and changes only energy-versus-clearance objective order. Retain rejected representatives and
+    binding reasons, not generator order.
+  learning_value: Authority experiment `P alternatives.lateral_only` versus `P alternatives.vertical_only`;
+    objective experiment `P alternatives.energy_combined` versus `P alternatives.robust_combined`
+  proposals:
+  - submission_id: alternatives.lateral_only
+    experiment_id: alternatives.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: lateral
+    qualifying_relation: CAT(DS_MANEUVER=lateral),PASS(SP_CLEARANCE),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.alternative_layers_detours.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: alternatives.vertical_only
+    experiment_id: alternatives.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: vertical
+    qualifying_relation: CAT(DS_MANEUVER=vertical),PASS(SP_CLEARANCE),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.alternative_layers_detours.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: alternatives.energy_combined
+    experiment_id: alternatives.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: energy
+    qualifying_relation: MIN(EN_ENERGY_WH),PASS(SP_CLEARANCE),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.alternative_layers_detours.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: alternatives.robust_combined
+    experiment_id: alternatives.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: robust
+    qualifying_relation: MAX(SP_CLEARANCE),PASS(EN_ENERGY_WH),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.alternative_layers_detours.canonical_nominal)
+    comparison_context_id: null
+- case_id: 3d.bottleneck.canonical_nominal
+  expected_case_sha256: 86b842d04b715046d9fd647266d2d297b284e65eb83bdd2979011e02164cdc4e
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P bottleneck.earliest_queue`; `P bottleneck.max_wait_fair`; `P
+    bottleneck.direction_batch`'
+  causal_question: Minimum makespan versus minimum maximum wait versus bounded same-direction batching.
+    Compare queue order, occupancy, direction changes, starvation, pad occupancy, and all-role terminal
+    state.
+  baseline_limitation: '`P bottleneck.earliest_queue`; `P bottleneck.max_wait_fair`; `P bottleneck.direction_batch`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Minimum makespan versus minimum maximum wait versus bounded same-direction
+    batching. Compare queue order, occupancy, direction changes, starvation, pad occupancy, and all-role
+    terminal state.
+  metric_ids:
+  - DS_QUEUE_ORDER
+  - DS_OCCUPANCY_INTERVALS
+  - DS_DIRECTION_CHANGE_COUNT
+  - TM_STARVATION
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Minimum makespan versus minimum maximum wait versus bounded same-direction batching.
+    Compare queue order, occupancy, direction changes, starvation, pad occupancy, and all-role terminal
+    state.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Minimum makespan versus minimum maximum wait versus bounded same-direction batching.
+    Compare queue order, occupancy, direction changes, starvation, pad occupancy, and all-role terminal
+    state.
+  learning_value: '`P bottleneck.earliest_queue`; `P bottleneck.max_wait_fair`; `P bottleneck.direction_batch`'
+  proposals:
+  - submission_id: bottleneck.earliest_queue
+    experiment_id: bottleneck3.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: earliest
+    qualifying_relation: CAT(DS_QUEUE_ORDER=earliest_feasible),PASS(DS_OCCUPANCY_INTERVALS),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.bottleneck.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: bottleneck.max_wait_fair
+    experiment_id: bottleneck3.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: max_wait
+    qualifying_relation: MIN(TM_STARVATION),PASS(DS_OCCUPANCY_INTERVALS),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.bottleneck.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: bottleneck.direction_batch
+    experiment_id: bottleneck3.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: direction_batch
+    qualifying_relation: MIN(DS_DIRECTION_CHANGE_COUNT),PASS(DS_OCCUPANCY_INTERVALS),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.bottleneck.canonical_nominal)
+    comparison_context_id: null
+- case_id: 3d.cascading_replan.dynamic_nominal
+  expected_case_sha256: 690859bca46281e687e7ed5af75b943f0fb3597a6c5c14aeac71aa1c0d02553c
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`R cascade.minimum_affected_set`; `R cascade.minimum_completion`;
+    `R cascade.robustness_first`'
+  causal_question: 'Same three-generation cascade: minimize changed roles, makespan, or post-cutover clearance.
+    One bounded cascade order/epoch and no stale command are invariant.'
+  baseline_limitation: '`R cascade.minimum_affected_set`; `R cascade.minimum_completion`; `R cascade.robustness_first`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same three-generation cascade: minimize changed roles, makespan,
+    or post-cutover clearance. One bounded cascade order/epoch and no stale command are invariant.'
+  metric_ids:
+  - DS_AFFECTED_ROLES
+  - TM_DURATION
+  - SP_CLEARANCE
+  - DS_GENERATION
+  - DS_FLEET_EPOCH
+  - DS_STALE_COMMAND_COUNT
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same three-generation cascade: minimize changed roles, makespan, or post-cutover
+    clearance. One bounded cascade order/epoch and no stale command are invariant.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same three-generation cascade: minimize changed roles, makespan, or post-cutover
+    clearance. One bounded cascade order/epoch and no stale command are invariant.'
+  learning_value: '`R cascade.minimum_affected_set`; `R cascade.minimum_completion`; `R cascade.robustness_first`'
+  proposals:
+  - submission_id: cascade.minimum_affected_set
+    experiment_id: cascade.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: affected_set
+    qualifying_relation: MIN_CARDINALITY(DS_AFFECTED_ROLES),ZERO(DS_STALE_COMMAND_COUNT),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.cascading_replan.dynamic_nominal)
+    comparison_context_id: null
+  - submission_id: cascade.minimum_completion
+    experiment_id: cascade.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: completion
+    qualifying_relation: MIN(TM_DURATION),ZERO(DS_STALE_COMMAND_COUNT),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.cascading_replan.dynamic_nominal)
+    comparison_context_id: null
+  - submission_id: cascade.robustness_first
+    experiment_id: cascade.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: robustness
+    qualifying_relation: MAX(SP_CLEARANCE),ZERO(DS_STALE_COMMAND_COUNT),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.cascading_replan.dynamic_nominal)
+    comparison_context_id: null
+- case_id: 3d.constrained_volume.canonical_nominal
+  expected_case_sha256: 72d88991a23235143d387ef8cdbb6ac2f4ed97b944929eaa0c538a92c0596b17
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P constrained.timing_makespan`; `P constrained.priority_order`;
+    `P constrained.robust_schedule`'
+  causal_question: 'Same volume with geometric options forbidden: completion time, priority, or temporal
+    robustness. No lateral/vertical maneuver may leak into candidates.'
+  baseline_limitation: '`P constrained.timing_makespan`; `P constrained.priority_order`; `P constrained.robust_schedule`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same volume with geometric options forbidden: completion time,
+    priority, or temporal robustness. No lateral/vertical maneuver may leak into candidates.'
+  metric_ids:
+  - TM_DURATION
+  - DS_ROLE_ORDER
+  - SP_CLEARANCE
+  - DS_MANEUVER
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same volume with geometric options forbidden: completion time, priority, or temporal
+    robustness. No lateral/vertical maneuver may leak into candidates.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same volume with geometric options forbidden: completion time, priority, or temporal
+    robustness. No lateral/vertical maneuver may leak into candidates.'
+  learning_value: '`P constrained.timing_makespan`; `P constrained.priority_order`; `P constrained.robust_schedule`'
+  proposals:
+  - submission_id: constrained.timing_makespan
+    experiment_id: constrained3.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: makespan
+    qualifying_relation: MIN(TM_DURATION),CAT(DS_MANEUVER=timing),PASS(SP_CLEARANCE),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.constrained_volume.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: constrained.priority_order
+    experiment_id: constrained3.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: priority
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: PEER(3d.constrained_volume.canonical_nominal/constrained.timing_makespan)
+    comparison_context_id: null
+  - submission_id: constrained.robust_schedule
+    experiment_id: constrained3.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: robust
+    qualifying_relation: MAX(SP_CLEARANCE),CAT(DS_MANEUVER=timing),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.constrained_volume.canonical_nominal)
+    comparison_context_id: null
+- case_id: 3d.duplicate_assignment_rejection.dynamic_nominal
+  expected_case_sha256: 621e24fe08f4e6e3374ebdbe0f8d9427d018a7e2b8edcf7a5cbf7b5b73d0f2e9
+  lifecycle: BASELINE_ONLY
+  proposed_additions_or_disposition: '`BASELINE_ONLY`'
+  causal_question: Duplicate ownership must atomically reject for every role ordering; unsafe acceptance
+    is not an experiment.
+  baseline_limitation: '`BASELINE_ONLY`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Duplicate ownership must atomically reject for every role ordering;
+    unsafe acceptance is not an experiment.
+  metric_ids:
+  - DS_DISPOSITION
+  - DS_ASSIGNMENT
+  - DS_COMMAND_OWNERSHIP
+  - DS_PARTIAL_COMMIT_COUNT
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Duplicate ownership must atomically reject for every role ordering; unsafe acceptance
+    is not an experiment.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Duplicate ownership must atomically reject for every role ordering; unsafe acceptance
+    is not an experiment.
+  learning_value: '`BASELINE_ONLY`'
+  proposals: []
+- case_id: 3d.fleet_abort_fallback.dynamic_nominal
+  expected_case_sha256: b7c1b9f07c9217bcc91da8c6ccc6690f46c165b7fd24f73c72d1db611d74c2f8
+  lifecycle: BASELINE_ONLY
+  proposed_additions_or_disposition: '`BASELINE_ONLY`'
+  causal_question: Old authority is unsafe and replacement cannot commit; coordinated all-fleet abort/landing
+    is the defining safe outcome, not one option among weaker policies.
+  baseline_limitation: '`BASELINE_ONLY`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Old authority is unsafe and replacement cannot commit; coordinated
+    all-fleet abort/landing is the defining safe outcome, not one option among weaker policies.
+  metric_ids:
+  - DS_FALLBACK
+  - DS_TERMINAL_STATE
+  - DS_COMMAND_OWNERSHIP
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Old authority is unsafe and replacement cannot commit; coordinated all-fleet abort/landing
+    is the defining safe outcome, not one option among weaker policies.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Old authority is unsafe and replacement cannot commit; coordinated all-fleet abort/landing
+    is the defining safe outcome, not one option among weaker policies.
+  learning_value: '`BASELINE_ONLY`'
+  proposals: []
+- case_id: 3d.formation_shape_transform.canonical_nominal
+  expected_case_sha256: 7c816dddcdc55264c1a82c4b13a1f84130512bb27d641ec32b8598690578b609
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P formation.shape_fidelity`; `P formation.centroid_smoothness`;
+    `P formation.energy_balance`'
+  causal_question: 'Same transform: minimize shape/phase error, centroid jerk, or fleet energy spread.
+    Shape topology, overlap, pairwise bounds, per-role identity, and landings remain hard.'
+  baseline_limitation: '`P formation.shape_fidelity`; `P formation.centroid_smoothness`; `P formation.energy_balance`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same transform: minimize shape/phase error, centroid jerk, or
+    fleet energy spread. Shape topology, overlap, pairwise bounds, per-role identity, and landings remain
+    hard.'
+  metric_ids:
+  - SP_FORMATION
+  - DY_JERK
+  - EN_SPREAD_PP
+  - TM_OVERLAP
+  - SP_CLEARANCE
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same transform: minimize shape/phase error, centroid jerk, or fleet energy spread.
+    Shape topology, overlap, pairwise bounds, per-role identity, and landings remain hard.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same transform: minimize shape/phase error, centroid jerk, or fleet energy spread.
+    Shape topology, overlap, pairwise bounds, per-role identity, and landings remain hard.'
+  learning_value: '`P formation.shape_fidelity`; `P formation.centroid_smoothness`; `P formation.energy_balance`'
+  proposals:
+  - submission_id: formation.shape_fidelity
+    experiment_id: formation3.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: shape
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(3d.formation_shape_transform.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: formation.centroid_smoothness
+    experiment_id: formation3.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: centroid
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(3d.formation_shape_transform.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: formation.energy_balance
+    experiment_id: formation3.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: energy
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(3d.formation_shape_transform.canonical_nominal)
+    comparison_context_id: null
+- case_id: 3d.leader_follower_recovery.dynamic_nominal
+  expected_case_sha256: 6a8f1089ee132e1b95ac9ea8991a7e0523ffd3192c1cc338f2e3f6e96bff5540
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`R formation_loss.deterministic_successor`; `R formation_loss.fleet_land`'
+  causal_question: 'Same leader loss: rebind a declared successor and revalidate every role, or land all
+    roles. Compare lease generation, shape/spacing recovery, affected commands, and terminals.'
+  baseline_limitation: '`R formation_loss.deterministic_successor`; `R formation_loss.fleet_land`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same leader loss: rebind a declared successor and revalidate
+    every role, or land all roles. Compare lease generation, shape/spacing recovery, affected commands,
+    and terminals.'
+  metric_ids:
+  - DS_LEASE_GENERATION
+  - SP_FORMATION
+  - SP_SPACING
+  - DS_AFFECTED_ROLES
+  - DS_TERMINAL_STATE
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same leader loss: rebind a declared successor and revalidate every role, or land
+    all roles. Compare lease generation, shape/spacing recovery, affected commands, and terminals.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same leader loss: rebind a declared successor and revalidate every role, or land
+    all roles. Compare lease generation, shape/spacing recovery, affected commands, and terminals.'
+  learning_value: '`R formation_loss.deterministic_successor`; `R formation_loss.fleet_land`'
+  proposals:
+  - submission_id: formation_loss.deterministic_successor
+    experiment_id: formation_loss.fallback
+    axis: FALLBACK_POLICY
+    axis_value: successor
+    qualifying_relation: CAT(DS_LEASE_GENERATION=2),PASS(SP_FORMATION),PASS(SP_SPACING),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.leader_follower_recovery.dynamic_nominal)
+    comparison_context_id: null
+  - submission_id: formation_loss.fleet_land
+    experiment_id: formation_loss.fallback
+    axis: FALLBACK_POLICY
+    axis_value: fleet_land
+    qualifying_relation: CAT(DS_LEASE_GENERATION=1),SET(DS_TERMINAL_STATE={Alpha:landed,Beta:landed,Gamma:landed}),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.leader_follower_recovery.dynamic_nominal)
+    comparison_context_id: null
+- case_id: 3d.merge.canonical_nominal
+  expected_case_sha256: 7cef344f644ea7737ecb3bc30dcafc19e863db57c2d4c8b8f306c516de249e0a
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: Objective experiment `P merge.fifo_fair` versus `P merge.priority_precedence`;
+    authority experiment `P merge.parallel_capacity` versus `P merge.vertical_capacity`
+  causal_question: The first pair changes only fairness-versus-priority objective order; the second changes
+    only lateral-versus-vertical capacity authority under a fixed overlap objective. Capacity rows fail
+    closed if free space cannot certify all three protected envelopes.
+  baseline_limitation: Objective experiment `P merge.fifo_fair` versus `P merge.priority_precedence`;
+    authority experiment `P merge.parallel_capacity` versus `P merge.vertical_capacity`
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: The first pair changes only fairness-versus-priority objective
+    order; the second changes only lateral-versus-vertical capacity authority under a fixed overlap objective.
+    Capacity rows fail closed if free space cannot certify all three protected envelopes.
+  metric_ids:
+  - DS_ROLE_ORDER
+  - TM_WAIT
+  - DS_MANEUVER
+  - TM_OVERLAP
+  - SP_CLEARANCE
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: The first pair changes only fairness-versus-priority objective order; the second
+    changes only lateral-versus-vertical capacity authority under a fixed overlap objective. Capacity
+    rows fail closed if free space cannot certify all three protected envelopes.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: The first pair changes only fairness-versus-priority objective order; the second
+    changes only lateral-versus-vertical capacity authority under a fixed overlap objective. Capacity
+    rows fail closed if free space cannot certify all three protected envelopes.
+  learning_value: Objective experiment `P merge.fifo_fair` versus `P merge.priority_precedence`; authority
+    experiment `P merge.parallel_capacity` versus `P merge.vertical_capacity`
+  proposals:
+  - submission_id: merge.fifo_fair
+    experiment_id: merge3.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: fifo_fair
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(3d.merge.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: merge.priority_precedence
+    experiment_id: merge3.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: priority
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(3d.merge.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: merge.parallel_capacity
+    experiment_id: merge3.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: lateral
+    qualifying_relation: CAT(DS_MANEUVER=lateral),PASS(TM_OVERLAP),PASS(SP_CLEARANCE),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: PEER(3d.merge.canonical_nominal/merge.vertical_capacity)
+    comparison_context_id: null
+  - submission_id: merge.vertical_capacity
+    experiment_id: merge3.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: vertical
+    qualifying_relation: CAT(DS_MANEUVER=vertical),PASS(TM_OVERLAP),PASS(SP_CLEARANCE),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: PEER(3d.merge.canonical_nominal/merge.parallel_capacity)
+    comparison_context_id: null
+- case_id: 3d.persistent_coverage_reserve_handover.dynamic_nominal
+  expected_case_sha256: c8622989c20ed74bf469bc13f6c1f711b83ed57e319a15770c29542f719b5cf2
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`R handover.minimum_coverage_gap`; `R handover.maximum_reserve_margin`'
+  causal_question: 'Same threshold/event: fastest certified takeover versus later/safer energy-margin
+    handover. Compare coverage gap, lease epoch, overlap, outgoing landing, reserve energy, and unaffected
+    Beta coverage.'
+  baseline_limitation: '`R handover.minimum_coverage_gap`; `R handover.maximum_reserve_margin`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same threshold/event: fastest certified takeover versus later/safer
+    energy-margin handover. Compare coverage gap, lease epoch, overlap, outgoing landing, reserve energy,
+    and unaffected Beta coverage.'
+  metric_ids:
+  - TM_COVERAGE_GAP
+  - DS_LEASE_GENERATION
+  - TM_OVERLAP
+  - DS_TERMINAL_STATE
+  - EN_RESERVE_PP
+  - SP_UNAFFECTED_PATH
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same threshold/event: fastest certified takeover versus later/safer energy-margin
+    handover. Compare coverage gap, lease epoch, overlap, outgoing landing, reserve energy, and unaffected
+    Beta coverage.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same threshold/event: fastest certified takeover versus later/safer energy-margin
+    handover. Compare coverage gap, lease epoch, overlap, outgoing landing, reserve energy, and unaffected
+    Beta coverage.'
+  learning_value: '`R handover.minimum_coverage_gap`; `R handover.maximum_reserve_margin`'
+  proposals:
+  - submission_id: handover.minimum_coverage_gap
+    experiment_id: handover.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: minimum_gap
+    qualifying_relation: MIN(TM_COVERAGE_GAP),PASS(EN_RESERVE_PP),PASS(SP_UNAFFECTED_PATH)
+    comparator_id: BASELINE(3d.persistent_coverage_reserve_handover.dynamic_nominal)
+    comparison_context_id: null
+  - submission_id: handover.maximum_reserve_margin
+    experiment_id: handover.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: reserve_margin
+    qualifying_relation: MAX(EN_RESERVE_PP),PASS(TM_COVERAGE_GAP),PASS(SP_UNAFFECTED_PATH)
+    comparator_id: BASELINE(3d.persistent_coverage_reserve_handover.dynamic_nominal)
+    comparison_context_id: null
+- case_id: 3d.role_allocation.canonical_nominal
+  expected_case_sha256: 5c84ee7332f354a677cfe959fd33b9fe55c2ca6693cd574db4d98c8d82943c9f
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P allocation.capability_priority`; `P allocation.energy_reserve`;
+    `P allocation.balanced_utilization`'
+  causal_question: 'Same tasks/fleet: capability/priority, total reserve, or workload spread. Compare
+    complete assignment, idle reserve, energy, and deterministic tie-break.'
+  baseline_limitation: '`P allocation.capability_priority`; `P allocation.energy_reserve`; `P allocation.balanced_utilization`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: 'Same tasks/fleet: capability/priority, total reserve, or workload
+    spread. Compare complete assignment, idle reserve, energy, and deterministic tie-break.'
+  metric_ids:
+  - DS_ASSIGNMENT
+  - DS_COMMAND_OWNERSHIP
+  - EN_RESERVE_PP
+  - EN_SPREAD_PP
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: 'Same tasks/fleet: capability/priority, total reserve, or workload spread. Compare
+    complete assignment, idle reserve, energy, and deterministic tie-break.'
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: 'Same tasks/fleet: capability/priority, total reserve, or workload spread. Compare
+    complete assignment, idle reserve, energy, and deterministic tie-break.'
+  learning_value: '`P allocation.capability_priority`; `P allocation.energy_reserve`; `P allocation.balanced_utilization`'
+  proposals:
+  - submission_id: allocation.capability_priority
+    experiment_id: allocation3.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: capability_priority
+    qualifying_relation: CAT(DS_ASSIGNMENT=capability_priority_optimum),PASS(DS_COMMAND_OWNERSHIP),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.role_allocation.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: allocation.energy_reserve
+    experiment_id: allocation3.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: energy
+    qualifying_relation: MAX(EN_RESERVE_PP),PASS(DS_COMMAND_OWNERSHIP),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.role_allocation.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: allocation.balanced_utilization
+    experiment_id: allocation3.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: balanced
+    qualifying_relation: MIN(EN_SPREAD_PP),PASS(DS_COMMAND_OWNERSHIP),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.role_allocation.canonical_nominal)
+    comparison_context_id: null
+- case_id: 3d.simultaneous_center_conflict.joint_schedule_v2
+  expected_case_sha256: 0af5b0e3f217d5ffe67fe8ddc396c095e3978509e10463dc0b5a109c5ee07374
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: Separate timing experiment `P center.global_earliest_schedule`; authority
+    experiment `P center.synchronized_lateral` versus `P center.synchronized_layers`; objective experiment
+    `P center.earliest_combined` versus `P center.robust_combined`
+  causal_question: Each experiment changes only timing resolution, lateral-versus-vertical authority,
+    or completion-versus-clearance objective order. Every pair edge, overlap, priority/wait, and one schedule
+    hash are required.
+  baseline_limitation: Separate timing experiment `P center.global_earliest_schedule`; authority experiment
+    `P center.synchronized_lateral` versus `P center.synchronized_layers`; objective experiment `P center.earliest_combined`
+    versus `P center.robust_combined`
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Each experiment changes only timing resolution, lateral-versus-vertical
+    authority, or completion-versus-clearance objective order. Every pair edge, overlap, priority/wait,
+    and one schedule hash are required.
+  metric_ids:
+  - DS_SCHEDULE
+  - SP_CLEARANCE
+  - TM_OVERLAP
+  - DS_ROLE_ORDER
+  - TM_WAIT
+  - DS_FLEET_EPOCH
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Each experiment changes only timing resolution, lateral-versus-vertical authority,
+    or completion-versus-clearance objective order. Every pair edge, overlap, priority/wait, and one schedule
+    hash are required.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Each experiment changes only timing resolution, lateral-versus-vertical authority,
+    or completion-versus-clearance objective order. Every pair edge, overlap, priority/wait, and one schedule
+    hash are required.
+  learning_value: Separate timing experiment `P center.global_earliest_schedule`; authority experiment
+    `P center.synchronized_lateral` versus `P center.synchronized_layers`; objective experiment `P center.earliest_combined`
+    versus `P center.robust_combined`
+  proposals:
+  - submission_id: center.global_earliest_schedule
+    experiment_id: center.timing
+    axis: MANEUVER_DIMENSION
+    axis_value: timing
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: BASELINE(3d.simultaneous_center_conflict.joint_schedule_v2)
+    comparison_context_id: null
+  - submission_id: center.synchronized_lateral
+    experiment_id: center.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: lateral
+    qualifying_relation: CAT(DS_SCHEDULE=synchronized_lateral),PASS(TM_OVERLAP),PASS(SP_CLEARANCE),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: PEER(3d.simultaneous_center_conflict.joint_schedule_v2/center.synchronized_layers)
+    comparison_context_id: null
+  - submission_id: center.synchronized_layers
+    experiment_id: center.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: vertical
+    qualifying_relation: CAT(DS_SCHEDULE=synchronized_vertical_layers),PASS(TM_OVERLAP),PASS(SP_CLEARANCE),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: PEER(3d.simultaneous_center_conflict.joint_schedule_v2/center.synchronized_lateral)
+    comparison_context_id: null
+  - submission_id: center.earliest_combined
+    experiment_id: center.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: earliest
+    qualifying_relation: OPEN(INCONCLUSIVE_MISSING_FEASIBLE_WITNESS)
+    comparator_id: null
+    comparison_context_id: null
+  - submission_id: center.robust_combined
+    experiment_id: center.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: robust
+    qualifying_relation: ARGMAX_BOUNDED(SP_CLEARANCE),PASS(TM_OVERLAP),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: null
+    comparison_context_id: null
+- case_id: 3d.single_pair_conflict.canonical_nominal
+  expected_case_sha256: c34f1d42427b323ba74fd6bda44d725c6a2867de2bd7d76c72509d93e82e6bc7
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P single_pair.selective_timing`; `P single_pair.selective_lateral`;
+    `P single_pair.selective_vertical`'
+  causal_question: Resolve Alpha/Beta by one admitted dimension while minimizing Gamma impact. Compare
+    changed-role set, Gamma path/delay, overlap, maneuver, and fleet clearance.
+  baseline_limitation: '`P single_pair.selective_timing`; `P single_pair.selective_lateral`; `P single_pair.selective_vertical`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Resolve Alpha/Beta by one admitted dimension while minimizing
+    Gamma impact. Compare changed-role set, Gamma path/delay, overlap, maneuver, and fleet clearance.
+  metric_ids:
+  - DS_AFFECTED_ROLES
+  - SP_UNAFFECTED_PATH
+  - TM_WAIT
+  - TM_OVERLAP
+  - DS_MANEUVER
+  - SP_CLEARANCE
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Resolve Alpha/Beta by one admitted dimension while minimizing Gamma impact. Compare
+    changed-role set, Gamma path/delay, overlap, maneuver, and fleet clearance.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Resolve Alpha/Beta by one admitted dimension while minimizing Gamma impact. Compare
+    changed-role set, Gamma path/delay, overlap, maneuver, and fleet clearance.
+  learning_value: '`P single_pair.selective_timing`; `P single_pair.selective_lateral`; `P single_pair.selective_vertical`'
+  proposals:
+  - submission_id: single_pair.selective_timing
+    experiment_id: single_pair.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: timing
+    qualifying_relation: CAT(DS_MANEUVER=timing),SET(DS_AFFECTED_ROLES={Alpha,Beta}),PASS(SP_UNAFFECTED_PATH),PASS(SP_CLEARANCE)
+    comparator_id: BASELINE(3d.single_pair_conflict.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: single_pair.selective_lateral
+    experiment_id: single_pair.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: lateral
+    qualifying_relation: CAT(DS_MANEUVER=lateral),SET(DS_AFFECTED_ROLES={Alpha,Beta}),PASS(SP_UNAFFECTED_PATH),PASS(SP_CLEARANCE)
+    comparator_id: BASELINE(3d.single_pair_conflict.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: single_pair.selective_vertical
+    experiment_id: single_pair.authority
+    axis: MANEUVER_DIMENSION
+    axis_value: vertical
+    qualifying_relation: CAT(DS_MANEUVER=vertical),SET(DS_AFFECTED_ROLES={Alpha,Beta}),PASS(SP_UNAFFECTED_PATH),PASS(SP_CLEARANCE)
+    comparator_id: BASELINE(3d.single_pair_conflict.canonical_nominal)
+    comparison_context_id: null
+- case_id: 3d.unequal_priorities.canonical_nominal
+  expected_case_sha256: 39dc9654ce510226dd0c30bf239ec0a5d852ac1ec02868211c907216e80de605
+  lifecycle: SUBMISSIONS
+  proposed_additions_or_disposition: '`P priorities.strict_lexicographic`; `P priorities.bounded_fairness`;
+    `P priorities.minimax_wait`'
+  causal_question: Same frozen 200/150/100 roles and authority; objective-order experiments compare priority
+    delay, priority-preserving fairness, and minimum maximum wait. Report every inversion, delay, starvation
+    bound, and completion.
+  baseline_limitation: '`P priorities.strict_lexicographic`; `P priorities.bounded_fairness`; `P priorities.minimax_wait`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: Same frozen 200/150/100 roles and authority; objective-order experiments
+    compare priority delay, priority-preserving fairness, and minimum maximum wait. Report every inversion,
+    delay, starvation bound, and completion.
+  metric_ids:
+  - DS_ROLE_ORDER
+  - DS_PRIORITY_INVERSION_COUNT
+  - TM_WAIT
+  - TM_STARVATION
+  - TM_DURATION
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: Same frozen 200/150/100 roles and authority; objective-order experiments compare
+    priority delay, priority-preserving fairness, and minimum maximum wait. Report every inversion, delay,
+    starvation bound, and completion.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: Same frozen 200/150/100 roles and authority; objective-order experiments compare
+    priority delay, priority-preserving fairness, and minimum maximum wait. Report every inversion, delay,
+    starvation bound, and completion.
+  learning_value: '`P priorities.strict_lexicographic`; `P priorities.bounded_fairness`; `P priorities.minimax_wait`'
+  proposals:
+  - submission_id: priorities.strict_lexicographic
+    experiment_id: priorities3.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: strict
+    qualifying_relation: ORDER(DS_ROLE_ORDER=Alpha,Beta,Gamma),ZERO(DS_PRIORITY_INVERSION_COUNT),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})
+    comparator_id: BASELINE(3d.unequal_priorities.canonical_nominal)
+    comparison_context_id: null
+  - submission_id: priorities.bounded_fairness
+    experiment_id: priorities3.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: bounded_fairness
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: PEER(3d.unequal_priorities.canonical_nominal/priorities.strict_lexicographic)
+    comparison_context_id: null
+  - submission_id: priorities.minimax_wait
+    experiment_id: priorities3.objective
+    axis: OBJECTIVE_ORDER
+    axis_value: minimax_wait
+    qualifying_relation: COLLAPSE_ALL
+    comparator_id: PEER(3d.unequal_priorities.canonical_nominal/priorities.strict_lexicographic)
+    comparison_context_id: null
+- case_id: three_drone_multi_conflict
+  expected_case_sha256: 3a41c886c64b5c1c73998164ae41b6a9a6ac1150911f5e7f126688f384b06c96
+  lifecycle: BASELINE_ONLY
+  proposed_additions_or_disposition: '`BASELINE_ONLY` legacy compatibility/regression'
+  causal_question: It overlaps the simultaneous-center family and receives no new catalog choices. Migration
+    must point operators to the hash-distinct canonical successor without rewriting the legacy case/run.
+  baseline_limitation: '`BASELINE_ONLY` legacy compatibility/regression'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: It overlaps the simultaneous-center family and receives no new
+    catalog choices. Migration must point operators to the hash-distinct canonical successor without rewriting
+    the legacy case/run.
+  metric_ids:
+  - DS_ROUTE_IDENTITY
+  - DS_SCHEDULE
+  - DS_ALL_ROLE_COMPLETION
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: It overlaps the simultaneous-center family and receives no new catalog choices.
+    Migration must point operators to the hash-distinct canonical successor without rewriting the legacy
+    case/run.
+  backend_semantics: The exact resolved package enters the normal fast-sim-v1 production path; no live
+    simulator, hardware, digital-twin, or physical-flight equivalence is implied.
+  safety_bounds: Immutable volume, separation, dynamics, energy, freshness, authority, atomicity, and
+    terminal gates remain hard and may not be weakened.
+  operator_comparison: It overlaps the simultaneous-center family and receives no new catalog choices.
+    Migration must point operators to the hash-distinct canonical successor without rewriting the legacy
+    case/run.
+  learning_value: '`BASELINE_ONLY` legacy compatibility/regression'
+  proposals: []
+source_payload_sha256: abefc1ddc796e801ca783e51018ed529f81e5945bda6aa94ddb4a51bf66cfa41

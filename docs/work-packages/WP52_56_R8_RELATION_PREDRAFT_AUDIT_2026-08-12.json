@@ -1,0 +1,1527 @@
+{
+  "accepted_r7_design_payload_sha256": "4a394f58ecda69b07fce919c009e090aacb20a9ef65bd44a3a7b794fb16ad0a5",
+  "audit_id": "wp52-56-r8-relation-predraft-v1",
+  "audit_sha256": "2ac2c20580f3d1955c323df97cb864704f78417642e19628624bc80ce387d4c5",
+  "base_commit": "4bec32a827785f5c25cb32a4f2084ced8045f3b3",
+  "claim_boundary": "Normal CampaignService.run_active deterministic accelerated Fast Sim; independent JSON/event/trajectory/certificate observations; no live-Isaac, digital-twin, hardware, or physical-flight claim.",
+  "overlay_audit": {
+    "audit_sha256": "3c9562e89e0dc48f6a4f93103b2aa7ea2f4863f6d4d51e2741466554b7fb5382",
+    "case_count": 54,
+    "current_status_counts": {
+      "EXECUTABLE": 25,
+      "PLANNED_NOT_EXECUTABLE": 86
+    },
+    "dependent_peer_collapse": {
+      "comparator_id": "PEER(3d.constrained_volume.canonical_nominal/constrained.timing_makespan)",
+      "passed": true,
+      "proposal_key": "3d.constrained_volume.canonical_nominal/constrained.priority_order",
+      "target_relation": "MIN_RUNTIME_SOURCE_TIME(TM_DURATION),CAT(DS_MANEUVER=timing),PASS(SP_CLEARANCE),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})",
+      "target_remains_executable_in_overlay": true
+    },
+    "disabled_keys": [
+      "1d.takeoff_hover_land.canonical_nominal/vertical_cycle.precision_first",
+      "3d.constrained_volume.canonical_nominal/constrained.robust_schedule"
+    ],
+    "exact_comparators_passed": true,
+    "lifecycle_counts": {
+      "BASELINE_ONLY": 9,
+      "RETAIN_EXISTING_ONLY": 2,
+      "SUBMISSIONS": 43
+    },
+    "metric_membership_passed": true,
+    "no_duplicate_missing_or_extra_key": true,
+    "passed": true,
+    "proposal_count": 111,
+    "proposed_status_counts": {
+      "EXECUTABLE": 23,
+      "PLANNED_NOT_EXECUTABLE": 88
+    },
+    "target_relations": {
+      "1d.takeoff_hover_land.canonical_nominal/vertical_cycle.minimum_duration": "MIN_RUNTIME_SOURCE_TIME(TM_DURATION),PASS(DY_VERTICAL_TRACKING),PASS(SP_CAPTURE),PASS(DS_TERMINAL_STATE)",
+      "1d.takeoff_hover_land.canonical_nominal/vertical_cycle.precision_first": "OPEN(INCONCLUSIVE_RUNTIME_DELTA_BELOW_DISTINCTNESS)",
+      "3d.constrained_volume.canonical_nominal/constrained.robust_schedule": "OPEN(INCONCLUSIVE_AXIS_INVARIANT_METRIC)",
+      "3d.constrained_volume.canonical_nominal/constrained.timing_makespan": "MIN_RUNTIME_SOURCE_TIME(TM_DURATION),CAT(DS_MANEUVER=timing),PASS(SP_CLEARANCE),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})"
+    },
+    "unchanged_key_count": 107,
+    "unique_proposal_count": 111,
+    "visibility_counts": {
+      "hidden": 28,
+      "visible": 83
+    }
+  },
+  "passed": true,
+  "relation_results": [
+    {
+      "baseline_contact_settle_s": 0.09999999999999787,
+      "baseline_protected_clearance_m": 1000000.0,
+      "baseline_source_time_duration_s": 12.359999999999815,
+      "baseline_vertical_tracking_rms_m": 0.00399653157542231,
+      "clearance_delta_subject_minus_baseline_m": 0.0,
+      "directional_relation_passed": true,
+      "duration_delta_baseline_minus_subject_s": 1.0564999999999873,
+      "hard_runtime_gates_passed": true,
+      "passed": true,
+      "proposal_key": "1d.takeoff_hover_land.canonical_nominal/vertical_cycle.minimum_duration",
+      "proposed_disposition": "QUALIFY_RELATION",
+      "relation": "MIN_RUNTIME_SOURCE_TIME(TM_DURATION),PASS(DY_VERTICAL_TRACKING),PASS(SP_CAPTURE),PASS(DS_TERMINAL_STATE)",
+      "subject_contact_settle_s": 0.09999999999999787,
+      "subject_protected_clearance_m": 1000000.0,
+      "subject_source_time_duration_s": 11.303499999999827,
+      "subject_vertical_tracking_rms_m": 0.005218052789311809,
+      "three_repeats_each": true,
+      "vertical_tracking_delta_baseline_minus_subject_m": -0.0012215212138894996
+    },
+    {
+      "baseline_contact_settle_s": 0.09999999999999787,
+      "baseline_protected_clearance_m": 1000000.0,
+      "baseline_source_time_duration_s": 12.359999999999815,
+      "baseline_vertical_tracking_rms_m": 0.00399653157542231,
+      "clearance_delta_subject_minus_baseline_m": 0.0,
+      "directional_relation_passed": false,
+      "duration_delta_baseline_minus_subject_s": -1.6874999999999876,
+      "hard_runtime_gates_passed": true,
+      "passed": true,
+      "proposal_key": "1d.takeoff_hover_land.canonical_nominal/vertical_cycle.precision_first",
+      "proposed_disposition": "OPEN(INCONCLUSIVE_RUNTIME_DELTA_BELOW_DISTINCTNESS)",
+      "relation": "OPEN(INCONCLUSIVE_RUNTIME_DELTA_BELOW_DISTINCTNESS)",
+      "subject_contact_settle_s": 0.09999999999999787,
+      "subject_protected_clearance_m": 1000000.0,
+      "subject_source_time_duration_s": 14.047499999999802,
+      "subject_vertical_tracking_rms_m": 0.002959663067576934,
+      "three_repeats_each": true,
+      "vertical_tracking_delta_baseline_minus_subject_m": 0.0010368685078453758
+    },
+    {
+      "baseline_contact_settle_s": 0.09999999999999194,
+      "baseline_protected_clearance_m": 0.18994949366116665,
+      "baseline_source_time_duration_s": 62.9064501987774,
+      "baseline_vertical_tracking_rms_m": 0.0021319362778545736,
+      "clearance_delta_subject_minus_baseline_m": 0.0,
+      "directional_relation_passed": false,
+      "duration_delta_baseline_minus_subject_s": 0.0,
+      "hard_runtime_gates_passed": true,
+      "passed": true,
+      "proposal_key": "3d.constrained_volume.canonical_nominal/constrained.robust_schedule",
+      "proposed_disposition": "OPEN(INCONCLUSIVE_AXIS_INVARIANT_METRIC)",
+      "relation": "OPEN(INCONCLUSIVE_AXIS_INVARIANT_METRIC)",
+      "subject_contact_settle_s": 0.09999999999999194,
+      "subject_protected_clearance_m": 0.18994949366116665,
+      "subject_source_time_duration_s": 62.9064501987774,
+      "subject_vertical_tracking_rms_m": 0.002131935246579264,
+      "three_repeats_each": true,
+      "vertical_tracking_delta_baseline_minus_subject_m": 1.031275309506391e-09
+    },
+    {
+      "baseline_contact_settle_s": 0.09999999999999194,
+      "baseline_protected_clearance_m": 0.18994949366116665,
+      "baseline_source_time_duration_s": 62.9064501987774,
+      "baseline_vertical_tracking_rms_m": 0.0021319362778545736,
+      "clearance_delta_subject_minus_baseline_m": -0.189949490844027,
+      "directional_relation_passed": true,
+      "duration_delta_baseline_minus_subject_s": 35.469140082186755,
+      "hard_runtime_gates_passed": true,
+      "passed": true,
+      "proposal_key": "3d.constrained_volume.canonical_nominal/constrained.timing_makespan",
+      "proposed_disposition": "QUALIFY_RELATION",
+      "relation": "MIN_RUNTIME_SOURCE_TIME(TM_DURATION),CAT(DS_MANEUVER=timing),PASS(SP_CLEARANCE),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})",
+      "subject_contact_settle_s": 0.10000000000001563,
+      "subject_protected_clearance_m": 2.817139632682597e-09,
+      "subject_source_time_duration_s": 27.43731011659064,
+      "subject_vertical_tracking_rms_m": 0.0021252427886995348,
+      "three_repeats_each": true,
+      "vertical_tracking_delta_baseline_minus_subject_m": 6.693489155038847e-06
+    }
+  ],
+  "repetitions_per_selection": 3,
+  "run_count": 18,
+  "runs": [
+    {
+      "artifact_set_sha256": "4ceb0b22cdf58061cebb2ebf5781fa722ff1e3fec9aa351f0f547cc07ef449cf",
+      "baseline": true,
+      "case_id": "1d.takeoff_hover_land.canonical_nominal",
+      "clearance": {
+        "candidate_sha256": "21cd0ecb7f5b749cfbb6c4ccf714a04573d095a870a48018df9702b3ed1f4de0",
+        "certificate_sha256": "73f776d621197e1acad9b35515b3531dfe41353096644c47f20b808b272c1274",
+        "metric_id": "SP_CLEARANCE",
+        "minimum_pairwise_protected_clearance_m": 1000000.0,
+        "minimum_protected_clearance_m": 1000000.0,
+        "minimum_solid_protected_clearance_m": 1000000.0,
+        "observation_sha256": "ae260928313689ceb4f01784692d1a153782f13c49a72c17af658713ad154dc0",
+        "plan_sha256": "d2f2c30843b05dad6deec4b5fbbead26b2ec3d665544e76bcac1047a654aa635",
+        "verifier_id": "independent-continuous-clearance-v1"
+      },
+      "contact_settle_s": 0.09999999999999787,
+      "evaluation_sha256": "906ebf803dcf6375a8f902e4beb89875ce55199c1e3e3cdda1604e10736b4726",
+      "execution_bundle_file_sha256": "2847bdf0cfc72d9ef0803161ccf323e341c81af869d4ad70def21cec807a0bb7",
+      "execution_bundle_internal_sha256": "65c98226dba439c6474b2ae0d9c17f94e20976c983c581491b1bf937943b3048",
+      "fleet_source_time": {
+        "clock": "shared-fast-sim-simulation_timestamp_s",
+        "completed_roles": [
+          "Alpha"
+        ],
+        "duration_s": 12.359999999999815,
+        "fleet_event_vector_sha256": "c1961bddd5fb0365f0f607b71edc9e32d3554fca2f2453ca873e59f73a52e094",
+        "observation_sha256": "7ac0d654620a4219c9dc1a245248f0a37755d5af9c076cc7398c91d9fdc557e7",
+        "start_event": "FIRST_RETAINED_CHILD_TELEMETRY_AFTER_ADMISSION",
+        "start_source_s": 0.05,
+        "telemetry_envelope_vector_sha256": "5290875c94c386410848b8e2a7e1fb516dae184868c2322cd1f6919badb5ee63",
+        "terminal_event": "LAST_RETAINED_CHILD_TELEMETRY_BEFORE_FLEET_TERMINAL_SUCCEEDED",
+        "terminal_source_s": 12.409999999999815
+      },
+      "hard_runtime_gates_passed": true,
+      "plan_sha256": "d2f2c30843b05dad6deec4b5fbbead26b2ec3d665544e76bcac1047a654aa635",
+      "repetition": 1,
+      "resolved_planning_package_sha256": "e9b3a8d51de34dd959d3c39e7754e41590715714e54c2109496463ab5be5fad0",
+      "schedule_sha256": "17ecd42427e90a1474c70124f0180825a978ee8c89657629a9a2b719f8b9f7fd",
+      "selection_id": "case_baseline",
+      "selection_key": "1d.takeoff_hover_land.canonical_nominal/case_baseline@case-default",
+      "telemetry_csv_sha256": "75a158e4b52e54e9ab4922f80ec695cad9d741f72f71ef0b68d25e1b96df3c80",
+      "trajectory_set_sha256": "c3bd4243619c4a12b66669efdfa3db9ae55ccb4a782f4323088842cd9a09b52e",
+      "vertical_tracking": {
+        "actual_signal": "ground_truth_position_m.z_or_position_m.z",
+        "boundary": "EXECUTE_TRAJECTORY_COMMAND_TO_MATCHING_ACKNOWLEDGEMENT",
+        "commanded_signal": "sampled_accepted_trajectory.position_m.z",
+        "error_vector_sha256": "b70dbacbbecf82342a694fecdce118ee4a19e29e6cf148feba8086579bc6fc95",
+        "maximum_vertical_position_error_m": 0.010552030539787927,
+        "metric_id": "DY_VERTICAL_TRACKING",
+        "observation_sha256": "38014d8d25d662ecfadd4c079d8c9a9ad7d89e7ee1b1219c4223bea004c7354d",
+        "rms_vertical_position_error_m": 0.00399653157542231,
+        "roles": [
+          {
+            "command_ids": [
+              "cmd-5"
+            ],
+            "error_vector_sha256": "b70dbacbbecf82342a694fecdce118ee4a19e29e6cf148feba8086579bc6fc95",
+            "maximum_vertical_position_error_m": 0.010552030539787927,
+            "rms_vertical_position_error_m": 0.00399653157542231,
+            "sample_count": 305,
+            "vehicle_id": "Alpha"
+          }
+        ],
+        "sample_count": 305
+      }
+    },
+    {
+      "artifact_set_sha256": "7f2ec63732e278438a5b66af51129895579862467bfe4e7488ba52ef58b593ac",
+      "baseline": true,
+      "case_id": "1d.takeoff_hover_land.canonical_nominal",
+      "clearance": {
+        "candidate_sha256": "21cd0ecb7f5b749cfbb6c4ccf714a04573d095a870a48018df9702b3ed1f4de0",
+        "certificate_sha256": "73f776d621197e1acad9b35515b3531dfe41353096644c47f20b808b272c1274",
+        "metric_id": "SP_CLEARANCE",
+        "minimum_pairwise_protected_clearance_m": 1000000.0,
+        "minimum_protected_clearance_m": 1000000.0,
+        "minimum_solid_protected_clearance_m": 1000000.0,
+        "observation_sha256": "ae260928313689ceb4f01784692d1a153782f13c49a72c17af658713ad154dc0",
+        "plan_sha256": "d2f2c30843b05dad6deec4b5fbbead26b2ec3d665544e76bcac1047a654aa635",
+        "verifier_id": "independent-continuous-clearance-v1"
+      },
+      "contact_settle_s": 0.09999999999999787,
+      "evaluation_sha256": "1c5d92acbde45fc7eb197e0b66b7978326d06f803f3644766f1fc7370d4bb417",
+      "execution_bundle_file_sha256": "1391a83fdbbd6263d8373286fcabc6510b9802e6efbf39548ec4120fe6742752",
+      "execution_bundle_internal_sha256": "4e71c84e544be46beee799172ae6fcf91bed90c5ec6382c028d47eae03927487",
+      "fleet_source_time": {
+        "clock": "shared-fast-sim-simulation_timestamp_s",
+        "completed_roles": [
+          "Alpha"
+        ],
+        "duration_s": 12.359999999999815,
+        "fleet_event_vector_sha256": "8669c8ac974cfa493854f45ffe4350242f01ba4900269a7a0898c94a20519edd",
+        "observation_sha256": "43be6d9752c3a97dc4e0dc67e84c1ab99993dab3e387ec95c3f401099eb869a0",
+        "start_event": "FIRST_RETAINED_CHILD_TELEMETRY_AFTER_ADMISSION",
+        "start_source_s": 0.05,
+        "telemetry_envelope_vector_sha256": "fce67650b0a6793192f019f6d66a960d877632e3943faacf914f224bd9bb5c0a",
+        "terminal_event": "LAST_RETAINED_CHILD_TELEMETRY_BEFORE_FLEET_TERMINAL_SUCCEEDED",
+        "terminal_source_s": 12.409999999999815
+      },
+      "hard_runtime_gates_passed": true,
+      "plan_sha256": "d2f2c30843b05dad6deec4b5fbbead26b2ec3d665544e76bcac1047a654aa635",
+      "repetition": 2,
+      "resolved_planning_package_sha256": "e9b3a8d51de34dd959d3c39e7754e41590715714e54c2109496463ab5be5fad0",
+      "schedule_sha256": "17ecd42427e90a1474c70124f0180825a978ee8c89657629a9a2b719f8b9f7fd",
+      "selection_id": "case_baseline",
+      "selection_key": "1d.takeoff_hover_land.canonical_nominal/case_baseline@case-default",
+      "telemetry_csv_sha256": "cdeb915cda105dada8fcd99aca35a6f00cb96fb4ed04dab3b5fe6f1a7da1ffa9",
+      "trajectory_set_sha256": "c3bd4243619c4a12b66669efdfa3db9ae55ccb4a782f4323088842cd9a09b52e",
+      "vertical_tracking": {
+        "actual_signal": "ground_truth_position_m.z_or_position_m.z",
+        "boundary": "EXECUTE_TRAJECTORY_COMMAND_TO_MATCHING_ACKNOWLEDGEMENT",
+        "commanded_signal": "sampled_accepted_trajectory.position_m.z",
+        "error_vector_sha256": "b70dbacbbecf82342a694fecdce118ee4a19e29e6cf148feba8086579bc6fc95",
+        "maximum_vertical_position_error_m": 0.010552030539787927,
+        "metric_id": "DY_VERTICAL_TRACKING",
+        "observation_sha256": "38014d8d25d662ecfadd4c079d8c9a9ad7d89e7ee1b1219c4223bea004c7354d",
+        "rms_vertical_position_error_m": 0.00399653157542231,
+        "roles": [
+          {
+            "command_ids": [
+              "cmd-5"
+            ],
+            "error_vector_sha256": "b70dbacbbecf82342a694fecdce118ee4a19e29e6cf148feba8086579bc6fc95",
+            "maximum_vertical_position_error_m": 0.010552030539787927,
+            "rms_vertical_position_error_m": 0.00399653157542231,
+            "sample_count": 305,
+            "vehicle_id": "Alpha"
+          }
+        ],
+        "sample_count": 305
+      }
+    },
+    {
+      "artifact_set_sha256": "2fe3f131c9a098ccf96d90284cef02e40838455622acacefd77dff3d6a404020",
+      "baseline": true,
+      "case_id": "1d.takeoff_hover_land.canonical_nominal",
+      "clearance": {
+        "candidate_sha256": "21cd0ecb7f5b749cfbb6c4ccf714a04573d095a870a48018df9702b3ed1f4de0",
+        "certificate_sha256": "73f776d621197e1acad9b35515b3531dfe41353096644c47f20b808b272c1274",
+        "metric_id": "SP_CLEARANCE",
+        "minimum_pairwise_protected_clearance_m": 1000000.0,
+        "minimum_protected_clearance_m": 1000000.0,
+        "minimum_solid_protected_clearance_m": 1000000.0,
+        "observation_sha256": "ae260928313689ceb4f01784692d1a153782f13c49a72c17af658713ad154dc0",
+        "plan_sha256": "d2f2c30843b05dad6deec4b5fbbead26b2ec3d665544e76bcac1047a654aa635",
+        "verifier_id": "independent-continuous-clearance-v1"
+      },
+      "contact_settle_s": 0.09999999999999787,
+      "evaluation_sha256": "c5b93c1be49c0cf991a35a8c9d2190ef9b82811bacf25cdd925a568d15ccea73",
+      "execution_bundle_file_sha256": "caa457c7b7cf4baf4fc3f1d808c3348c8bdef236194619d922e5079d8b3dba8f",
+      "execution_bundle_internal_sha256": "92465b1c46b511f28bfc42a9a8e11c30792adb9574cad46e6ebf34c79505ebdb",
+      "fleet_source_time": {
+        "clock": "shared-fast-sim-simulation_timestamp_s",
+        "completed_roles": [
+          "Alpha"
+        ],
+        "duration_s": 12.359999999999815,
+        "fleet_event_vector_sha256": "fad66ad5a573c0a65a7042e3ce7632d8593ad694eb619c30bdfc7160f34c913f",
+        "observation_sha256": "30f81a09ba2010508d4e9078ab8ae1e6f3b1c62205fe1352a457968b6aeb53e3",
+        "start_event": "FIRST_RETAINED_CHILD_TELEMETRY_AFTER_ADMISSION",
+        "start_source_s": 0.05,
+        "telemetry_envelope_vector_sha256": "3cfa51a09260ff11ede6989effcf88014d4981e58405b3845be0c33adf39dce5",
+        "terminal_event": "LAST_RETAINED_CHILD_TELEMETRY_BEFORE_FLEET_TERMINAL_SUCCEEDED",
+        "terminal_source_s": 12.409999999999815
+      },
+      "hard_runtime_gates_passed": true,
+      "plan_sha256": "d2f2c30843b05dad6deec4b5fbbead26b2ec3d665544e76bcac1047a654aa635",
+      "repetition": 3,
+      "resolved_planning_package_sha256": "e9b3a8d51de34dd959d3c39e7754e41590715714e54c2109496463ab5be5fad0",
+      "schedule_sha256": "17ecd42427e90a1474c70124f0180825a978ee8c89657629a9a2b719f8b9f7fd",
+      "selection_id": "case_baseline",
+      "selection_key": "1d.takeoff_hover_land.canonical_nominal/case_baseline@case-default",
+      "telemetry_csv_sha256": "31067a77f6c0e5203e7c3c5eada3d7ca75ee89b8dcb58f0280b5e9c84ea4fac7",
+      "trajectory_set_sha256": "c3bd4243619c4a12b66669efdfa3db9ae55ccb4a782f4323088842cd9a09b52e",
+      "vertical_tracking": {
+        "actual_signal": "ground_truth_position_m.z_or_position_m.z",
+        "boundary": "EXECUTE_TRAJECTORY_COMMAND_TO_MATCHING_ACKNOWLEDGEMENT",
+        "commanded_signal": "sampled_accepted_trajectory.position_m.z",
+        "error_vector_sha256": "b70dbacbbecf82342a694fecdce118ee4a19e29e6cf148feba8086579bc6fc95",
+        "maximum_vertical_position_error_m": 0.010552030539787927,
+        "metric_id": "DY_VERTICAL_TRACKING",
+        "observation_sha256": "38014d8d25d662ecfadd4c079d8c9a9ad7d89e7ee1b1219c4223bea004c7354d",
+        "rms_vertical_position_error_m": 0.00399653157542231,
+        "roles": [
+          {
+            "command_ids": [
+              "cmd-5"
+            ],
+            "error_vector_sha256": "b70dbacbbecf82342a694fecdce118ee4a19e29e6cf148feba8086579bc6fc95",
+            "maximum_vertical_position_error_m": 0.010552030539787927,
+            "rms_vertical_position_error_m": 0.00399653157542231,
+            "sample_count": 305,
+            "vehicle_id": "Alpha"
+          }
+        ],
+        "sample_count": 305
+      }
+    },
+    {
+      "artifact_set_sha256": "02787c0c7a00c6bc7e856da6d41f8e36c3351147cd09f7c08ac4db3e044636e3",
+      "baseline": true,
+      "case_id": "3d.constrained_volume.canonical_nominal",
+      "clearance": {
+        "candidate_sha256": "9b5c0a1b0839a3cfda3409ce8a4597b4712acf546313182649fd9543f8da396a",
+        "certificate_sha256": "16e61531d55384100a1dffe2a8f3efaa6031e74b391c035699efdabc77e421ac",
+        "metric_id": "SP_CLEARANCE",
+        "minimum_pairwise_protected_clearance_m": 0.18994949366116665,
+        "minimum_protected_clearance_m": 0.18994949366116665,
+        "minimum_solid_protected_clearance_m": 1000000.0,
+        "observation_sha256": "95be1cb38189bbd60ac1967d6dbe5cb6889b0cbbb0da5115e7aee353f3d18a6a",
+        "plan_sha256": "ccb5f5e280ce9291443d29c565d334714c124e8c2ae84f1679e8efc8a748c5be",
+        "verifier_id": "independent-continuous-clearance-v1"
+      },
+      "contact_settle_s": 0.09999999999999194,
+      "evaluation_sha256": "2f21596227df6166118eaf4b43b1ddc898d1ad47e980005d21c1d2044dbee5c3",
+      "execution_bundle_file_sha256": "fe49a5151585a9a728643090e0957ef6409eae75bf0073ede208a93135399c4a",
+      "execution_bundle_internal_sha256": "eb051e92fbffcc43b8e8ad2b0ff3a771f10b38ffbb12dbccf685f8c3f8ed8a6a",
+      "fleet_source_time": {
+        "clock": "shared-fast-sim-simulation_timestamp_s",
+        "completed_roles": [
+          "Alpha",
+          "Beta",
+          "Gamma"
+        ],
+        "duration_s": 62.9064501987774,
+        "fleet_event_vector_sha256": "9213fce3478bd2b6e0b505fa049fc936dea78fa7d780942b9d5010721cedbdc0",
+        "observation_sha256": "99e40a0182ccec48ebaaf80db412ea4ba4785330389998514c2e0c8907c30290",
+        "start_event": "FIRST_RETAINED_CHILD_TELEMETRY_AFTER_ADMISSION",
+        "start_source_s": 0.05,
+        "telemetry_envelope_vector_sha256": "0751d6b6eacb188e04a4d6c341387ace5b92c65a0785a911cd8ba188089ffdab",
+        "terminal_event": "LAST_RETAINED_CHILD_TELEMETRY_BEFORE_FLEET_TERMINAL_SUCCEEDED",
+        "terminal_source_s": 62.9564501987774
+      },
+      "hard_runtime_gates_passed": true,
+      "plan_sha256": "ccb5f5e280ce9291443d29c565d334714c124e8c2ae84f1679e8efc8a748c5be",
+      "repetition": 1,
+      "resolved_planning_package_sha256": "f22cdd53a902aa55d225c6e37a648b2d28797fa932932d75abe752b38b1ca0f0",
+      "schedule_sha256": "39ff240abd22dc66b1e81502f3fddf2eec1df57e251029c363c4a6eb52c0b622",
+      "selection_id": "case_baseline",
+      "selection_key": "3d.constrained_volume.canonical_nominal/case_baseline@case-default",
+      "telemetry_csv_sha256": "a9f60ad35cbf12687b51b4ce27da512ecb94a7570bf8f82c0ea9f60aab435e26",
+      "trajectory_set_sha256": "61fcd5ba5ff556daf43456e50c53fa3d92eadc4ecf5075b835e61454caab8d74",
+      "vertical_tracking": {
+        "actual_signal": "ground_truth_position_m.z_or_position_m.z",
+        "boundary": "EXECUTE_TRAJECTORY_COMMAND_TO_MATCHING_ACKNOWLEDGEMENT",
+        "commanded_signal": "sampled_accepted_trajectory.position_m.z",
+        "error_vector_sha256": "97eb032833f7bc4ba91a6dfd1d7d0a1e097d9f0c9d3708b09d3f3284b17c9cce",
+        "maximum_vertical_position_error_m": 0.01140898677054758,
+        "metric_id": "DY_VERTICAL_TRACKING",
+        "observation_sha256": "ef822373e71f4963bb5b979e95657ebe337006e11c7784f8196392b5a581cb7f",
+        "rms_vertical_position_error_m": 0.0021319362778545736,
+        "roles": [
+          {
+            "command_ids": [
+              "cmd-13"
+            ],
+            "error_vector_sha256": "cacffbcd227dd40239d58f9ad754b30e588caf7a99f0137e528eab73a6d9b03f",
+            "maximum_vertical_position_error_m": 0.010773924964047388,
+            "rms_vertical_position_error_m": 0.002149514762854125,
+            "sample_count": 1124,
+            "vehicle_id": "Alpha"
+          },
+          {
+            "command_ids": [
+              "cmd-7"
+            ],
+            "error_vector_sha256": "ab601e4f054a5f967c0997aeace56318d67eef72220044e73beeeaada75e5be2",
+            "maximum_vertical_position_error_m": 0.010552030539787982,
+            "rms_vertical_position_error_m": 0.002105485746847408,
+            "sample_count": 1124,
+            "vehicle_id": "Beta"
+          },
+          {
+            "command_ids": [
+              "cmd-19"
+            ],
+            "error_vector_sha256": "1c88cfe41661fee2b32989ca9299c123e38b03435490b8f91436bb882f0abfdc",
+            "maximum_vertical_position_error_m": 0.01140898677054758,
+            "rms_vertical_position_error_m": 0.0021390561257736487,
+            "sample_count": 1361,
+            "vehicle_id": "Gamma"
+          }
+        ],
+        "sample_count": 3609
+      }
+    },
+    {
+      "artifact_set_sha256": "8595879161e14d28a83ccca1b81a2244faca0822ffe366ae1a965d8f3f2a5b06",
+      "baseline": true,
+      "case_id": "3d.constrained_volume.canonical_nominal",
+      "clearance": {
+        "candidate_sha256": "9b5c0a1b0839a3cfda3409ce8a4597b4712acf546313182649fd9543f8da396a",
+        "certificate_sha256": "16e61531d55384100a1dffe2a8f3efaa6031e74b391c035699efdabc77e421ac",
+        "metric_id": "SP_CLEARANCE",
+        "minimum_pairwise_protected_clearance_m": 0.18994949366116665,
+        "minimum_protected_clearance_m": 0.18994949366116665,
+        "minimum_solid_protected_clearance_m": 1000000.0,
+        "observation_sha256": "95be1cb38189bbd60ac1967d6dbe5cb6889b0cbbb0da5115e7aee353f3d18a6a",
+        "plan_sha256": "ccb5f5e280ce9291443d29c565d334714c124e8c2ae84f1679e8efc8a748c5be",
+        "verifier_id": "independent-continuous-clearance-v1"
+      },
+      "contact_settle_s": 0.09999999999999194,
+      "evaluation_sha256": "90fa7584e5599253f99f3f937ab7646d2d630ca8cfb63bfd0e2cc86f3e0c2cb7",
+      "execution_bundle_file_sha256": "4c4db37d4d9d6a64538dd6515c29198a10dc36d5fd6f5b77b795744011e14cc3",
+      "execution_bundle_internal_sha256": "42192a9a137eeee798d3088d3855d3442cc51af075286841e3a4363ccccb9b4c",
+      "fleet_source_time": {
+        "clock": "shared-fast-sim-simulation_timestamp_s",
+        "completed_roles": [
+          "Alpha",
+          "Beta",
+          "Gamma"
+        ],
+        "duration_s": 62.9064501987774,
+        "fleet_event_vector_sha256": "798dbc8ae001cbff341dd3c3b45d920748ee2384a8261490b4673508c3e97974",
+        "observation_sha256": "f7546e0207a32249d3accbf14ce0b9df8f370d1fd13ec261913ca110b03d30ed",
+        "start_event": "FIRST_RETAINED_CHILD_TELEMETRY_AFTER_ADMISSION",
+        "start_source_s": 0.05,
+        "telemetry_envelope_vector_sha256": "6fb923e88218d1e7904a77351f24f40dcfca0e0991912e0b8b7aaa0edd2fdc62",
+        "terminal_event": "LAST_RETAINED_CHILD_TELEMETRY_BEFORE_FLEET_TERMINAL_SUCCEEDED",
+        "terminal_source_s": 62.9564501987774
+      },
+      "hard_runtime_gates_passed": true,
+      "plan_sha256": "ccb5f5e280ce9291443d29c565d334714c124e8c2ae84f1679e8efc8a748c5be",
+      "repetition": 2,
+      "resolved_planning_package_sha256": "f22cdd53a902aa55d225c6e37a648b2d28797fa932932d75abe752b38b1ca0f0",
+      "schedule_sha256": "39ff240abd22dc66b1e81502f3fddf2eec1df57e251029c363c4a6eb52c0b622",
+      "selection_id": "case_baseline",
+      "selection_key": "3d.constrained_volume.canonical_nominal/case_baseline@case-default",
+      "telemetry_csv_sha256": "dcd28cab0e922624edaa8ac2e15c3668b87fb99e67188c64ca459cb6433167b4",
+      "trajectory_set_sha256": "61fcd5ba5ff556daf43456e50c53fa3d92eadc4ecf5075b835e61454caab8d74",
+      "vertical_tracking": {
+        "actual_signal": "ground_truth_position_m.z_or_position_m.z",
+        "boundary": "EXECUTE_TRAJECTORY_COMMAND_TO_MATCHING_ACKNOWLEDGEMENT",
+        "commanded_signal": "sampled_accepted_trajectory.position_m.z",
+        "error_vector_sha256": "97eb032833f7bc4ba91a6dfd1d7d0a1e097d9f0c9d3708b09d3f3284b17c9cce",
+        "maximum_vertical_position_error_m": 0.01140898677054758,
+        "metric_id": "DY_VERTICAL_TRACKING",
+        "observation_sha256": "ef822373e71f4963bb5b979e95657ebe337006e11c7784f8196392b5a581cb7f",
+        "rms_vertical_position_error_m": 0.0021319362778545736,
+        "roles": [
+          {
+            "command_ids": [
+              "cmd-13"
+            ],
+            "error_vector_sha256": "cacffbcd227dd40239d58f9ad754b30e588caf7a99f0137e528eab73a6d9b03f",
+            "maximum_vertical_position_error_m": 0.010773924964047388,
+            "rms_vertical_position_error_m": 0.002149514762854125,
+            "sample_count": 1124,
+            "vehicle_id": "Alpha"
+          },
+          {
+            "command_ids": [
+              "cmd-7"
+            ],
+            "error_vector_sha256": "ab601e4f054a5f967c0997aeace56318d67eef72220044e73beeeaada75e5be2",
+            "maximum_vertical_position_error_m": 0.010552030539787982,
+            "rms_vertical_position_error_m": 0.002105485746847408,
+            "sample_count": 1124,
+            "vehicle_id": "Beta"
+          },
+          {
+            "command_ids": [
+              "cmd-19"
+            ],
+            "error_vector_sha256": "1c88cfe41661fee2b32989ca9299c123e38b03435490b8f91436bb882f0abfdc",
+            "maximum_vertical_position_error_m": 0.01140898677054758,
+            "rms_vertical_position_error_m": 0.0021390561257736487,
+            "sample_count": 1361,
+            "vehicle_id": "Gamma"
+          }
+        ],
+        "sample_count": 3609
+      }
+    },
+    {
+      "artifact_set_sha256": "92a242c430ddface95cc76bbdb0fbe92f9673887d5da1218dfb2d423456c259c",
+      "baseline": true,
+      "case_id": "3d.constrained_volume.canonical_nominal",
+      "clearance": {
+        "candidate_sha256": "9b5c0a1b0839a3cfda3409ce8a4597b4712acf546313182649fd9543f8da396a",
+        "certificate_sha256": "16e61531d55384100a1dffe2a8f3efaa6031e74b391c035699efdabc77e421ac",
+        "metric_id": "SP_CLEARANCE",
+        "minimum_pairwise_protected_clearance_m": 0.18994949366116665,
+        "minimum_protected_clearance_m": 0.18994949366116665,
+        "minimum_solid_protected_clearance_m": 1000000.0,
+        "observation_sha256": "95be1cb38189bbd60ac1967d6dbe5cb6889b0cbbb0da5115e7aee353f3d18a6a",
+        "plan_sha256": "ccb5f5e280ce9291443d29c565d334714c124e8c2ae84f1679e8efc8a748c5be",
+        "verifier_id": "independent-continuous-clearance-v1"
+      },
+      "contact_settle_s": 0.09999999999999194,
+      "evaluation_sha256": "972c056d2e3b11bfe4ef50def1915d63fc0423328299bcb9e07c6c8a9772f4ec",
+      "execution_bundle_file_sha256": "dcf83d88239198591e234661c15b8af4fb8d8d92020f5c7cedb02eee1bfc3b85",
+      "execution_bundle_internal_sha256": "bd4612e02321a99ef6304711ff930180574dacb93f53b176d3b8794adb508d21",
+      "fleet_source_time": {
+        "clock": "shared-fast-sim-simulation_timestamp_s",
+        "completed_roles": [
+          "Alpha",
+          "Beta",
+          "Gamma"
+        ],
+        "duration_s": 62.9064501987774,
+        "fleet_event_vector_sha256": "a1541c717dfcb6464b44d446b31e52d13b8a503e16e202b2cd8b9484ebcb4011",
+        "observation_sha256": "e3433669e0982440108c25741fdd65436885207c48abd7dd8a8b6bf77ff13558",
+        "start_event": "FIRST_RETAINED_CHILD_TELEMETRY_AFTER_ADMISSION",
+        "start_source_s": 0.05,
+        "telemetry_envelope_vector_sha256": "8e2380efbdaec6fb79b4df78d0ce0bd86db3fa3fa7d62bfe6ebc5cbbaa2f9f17",
+        "terminal_event": "LAST_RETAINED_CHILD_TELEMETRY_BEFORE_FLEET_TERMINAL_SUCCEEDED",
+        "terminal_source_s": 62.9564501987774
+      },
+      "hard_runtime_gates_passed": true,
+      "plan_sha256": "ccb5f5e280ce9291443d29c565d334714c124e8c2ae84f1679e8efc8a748c5be",
+      "repetition": 3,
+      "resolved_planning_package_sha256": "f22cdd53a902aa55d225c6e37a648b2d28797fa932932d75abe752b38b1ca0f0",
+      "schedule_sha256": "39ff240abd22dc66b1e81502f3fddf2eec1df57e251029c363c4a6eb52c0b622",
+      "selection_id": "case_baseline",
+      "selection_key": "3d.constrained_volume.canonical_nominal/case_baseline@case-default",
+      "telemetry_csv_sha256": "f58b6099a8a9fff179f8e149c29acde0a2cf4cf6d58ce5c9e4703022cc8d40be",
+      "trajectory_set_sha256": "61fcd5ba5ff556daf43456e50c53fa3d92eadc4ecf5075b835e61454caab8d74",
+      "vertical_tracking": {
+        "actual_signal": "ground_truth_position_m.z_or_position_m.z",
+        "boundary": "EXECUTE_TRAJECTORY_COMMAND_TO_MATCHING_ACKNOWLEDGEMENT",
+        "commanded_signal": "sampled_accepted_trajectory.position_m.z",
+        "error_vector_sha256": "97eb032833f7bc4ba91a6dfd1d7d0a1e097d9f0c9d3708b09d3f3284b17c9cce",
+        "maximum_vertical_position_error_m": 0.01140898677054758,
+        "metric_id": "DY_VERTICAL_TRACKING",
+        "observation_sha256": "ef822373e71f4963bb5b979e95657ebe337006e11c7784f8196392b5a581cb7f",
+        "rms_vertical_position_error_m": 0.0021319362778545736,
+        "roles": [
+          {
+            "command_ids": [
+              "cmd-13"
+            ],
+            "error_vector_sha256": "cacffbcd227dd40239d58f9ad754b30e588caf7a99f0137e528eab73a6d9b03f",
+            "maximum_vertical_position_error_m": 0.010773924964047388,
+            "rms_vertical_position_error_m": 0.002149514762854125,
+            "sample_count": 1124,
+            "vehicle_id": "Alpha"
+          },
+          {
+            "command_ids": [
+              "cmd-7"
+            ],
+            "error_vector_sha256": "ab601e4f054a5f967c0997aeace56318d67eef72220044e73beeeaada75e5be2",
+            "maximum_vertical_position_error_m": 0.010552030539787982,
+            "rms_vertical_position_error_m": 0.002105485746847408,
+            "sample_count": 1124,
+            "vehicle_id": "Beta"
+          },
+          {
+            "command_ids": [
+              "cmd-19"
+            ],
+            "error_vector_sha256": "1c88cfe41661fee2b32989ca9299c123e38b03435490b8f91436bb882f0abfdc",
+            "maximum_vertical_position_error_m": 0.01140898677054758,
+            "rms_vertical_position_error_m": 0.0021390561257736487,
+            "sample_count": 1361,
+            "vehicle_id": "Gamma"
+          }
+        ],
+        "sample_count": 3609
+      }
+    },
+    {
+      "artifact_set_sha256": "af6de4a9e67cd37491bc18dcf7770944b08308fc251a3bc316d2ff99df93933f",
+      "baseline": false,
+      "case_id": "1d.takeoff_hover_land.canonical_nominal",
+      "clearance": {
+        "candidate_sha256": "0f66a3fb7114fbc5cc0d6902d1b8d665e8eb6e031f7f6bb78e84061042ead594",
+        "certificate_sha256": "e3302873b6e2310bd7d00689d938b9f6316346e315ef2e33dcbac8e8deda217f",
+        "metric_id": "SP_CLEARANCE",
+        "minimum_pairwise_protected_clearance_m": 1000000.0,
+        "minimum_protected_clearance_m": 1000000.0,
+        "minimum_solid_protected_clearance_m": 1000000.0,
+        "observation_sha256": "a9bef9d654f9865ca188bf19e09ab2373081959a64905e8c754906120e41a276",
+        "plan_sha256": "f004f4da0a43ffac6d0e61164f0ee811d63a9101082cd04a11a22ee8c74656f8",
+        "verifier_id": "independent-continuous-clearance-v1"
+      },
+      "contact_settle_s": 0.09999999999999787,
+      "evaluation_sha256": "76f64ce8bb31bdf81242064e0a0392682a08abca7126e9329ad6cea2600ffabb",
+      "execution_bundle_file_sha256": "890685b2f068d966de38fa10074408c28f5ec4d0c5df8254b0924e44f813f5f1",
+      "execution_bundle_internal_sha256": "9a0e582b2e370d356ed2646a7dd6780a8cf8cd9b534d7e366fdaf85935e6ae0a",
+      "fleet_source_time": {
+        "clock": "shared-fast-sim-simulation_timestamp_s",
+        "completed_roles": [
+          "Alpha"
+        ],
+        "duration_s": 11.303499999999827,
+        "fleet_event_vector_sha256": "5f6a957f550a91c61e8136673ea6449ea30f15856cf99d2dfedb79c2f5f7893f",
+        "observation_sha256": "5d80848157285f4b6a20f6f7b9824611b83fc597d539488a840c4b04e5faf726",
+        "start_event": "FIRST_RETAINED_CHILD_TELEMETRY_AFTER_ADMISSION",
+        "start_source_s": 0.05,
+        "telemetry_envelope_vector_sha256": "fa0570ce995ac3b9c7d02a680acf4961c6661619c570729d918adc37c202104c",
+        "terminal_event": "LAST_RETAINED_CHILD_TELEMETRY_BEFORE_FLEET_TERMINAL_SUCCEEDED",
+        "terminal_source_s": 11.353499999999828
+      },
+      "hard_runtime_gates_passed": true,
+      "plan_sha256": "f004f4da0a43ffac6d0e61164f0ee811d63a9101082cd04a11a22ee8c74656f8",
+      "repetition": 1,
+      "resolved_planning_package_sha256": "5eda5b15bb299bfa9a3aec55e95b19751b6f4a94032a4f101fe705433f14926e",
+      "schedule_sha256": "59b6c4eb6f7a210f6378177fc6a54598168814393fbb69e4aaa5e7806f6f94b2",
+      "selection_id": "vertical_cycle.minimum_duration",
+      "selection_key": "1d.takeoff_hover_land.canonical_nominal/vertical_cycle.minimum_duration@case-default",
+      "telemetry_csv_sha256": "30f7cff7055fbfbf229d328c3d9e38d48e080cf1f91f5d1a7caa61ba7ac6d153",
+      "trajectory_set_sha256": "ac7186be4133da68c0a72da42f3d7b8f29ea555875675a02271c146ce75bc2a9",
+      "vertical_tracking": {
+        "actual_signal": "ground_truth_position_m.z_or_position_m.z",
+        "boundary": "EXECUTE_TRAJECTORY_COMMAND_TO_MATCHING_ACKNOWLEDGEMENT",
+        "commanded_signal": "sampled_accepted_trajectory.position_m.z",
+        "error_vector_sha256": "1a9cae4e5cc7b592e28c6707325e6ea773b3762892ea7d4588f8a0a8e082c25f",
+        "maximum_vertical_position_error_m": 0.01365087043627733,
+        "metric_id": "DY_VERTICAL_TRACKING",
+        "observation_sha256": "84edd97a9b5b3b5ff59e2e7f085baaaaa5ba88636ad05ad08f495ce46ee297ca",
+        "rms_vertical_position_error_m": 0.005218052789311809,
+        "roles": [
+          {
+            "command_ids": [
+              "cmd-5"
+            ],
+            "error_vector_sha256": "1a9cae4e5cc7b592e28c6707325e6ea773b3762892ea7d4588f8a0a8e082c25f",
+            "maximum_vertical_position_error_m": 0.01365087043627733,
+            "rms_vertical_position_error_m": 0.005218052789311809,
+            "sample_count": 304,
+            "vehicle_id": "Alpha"
+          }
+        ],
+        "sample_count": 304
+      }
+    },
+    {
+      "artifact_set_sha256": "8dede54482d1dd074a38e349d8a986d66fa20c78afa29b8744dd39c86e907a15",
+      "baseline": false,
+      "case_id": "1d.takeoff_hover_land.canonical_nominal",
+      "clearance": {
+        "candidate_sha256": "0f66a3fb7114fbc5cc0d6902d1b8d665e8eb6e031f7f6bb78e84061042ead594",
+        "certificate_sha256": "e3302873b6e2310bd7d00689d938b9f6316346e315ef2e33dcbac8e8deda217f",
+        "metric_id": "SP_CLEARANCE",
+        "minimum_pairwise_protected_clearance_m": 1000000.0,
+        "minimum_protected_clearance_m": 1000000.0,
+        "minimum_solid_protected_clearance_m": 1000000.0,
+        "observation_sha256": "a9bef9d654f9865ca188bf19e09ab2373081959a64905e8c754906120e41a276",
+        "plan_sha256": "f004f4da0a43ffac6d0e61164f0ee811d63a9101082cd04a11a22ee8c74656f8",
+        "verifier_id": "independent-continuous-clearance-v1"
+      },
+      "contact_settle_s": 0.09999999999999787,
+      "evaluation_sha256": "f4e08c9ee76b57d5337f7d1c6b89c8a0f9949c464e47baf4231d1aadee25e193",
+      "execution_bundle_file_sha256": "1677802d4db02659e0f29ef225110a225b00e17397a20c161f18b21719fba8b0",
+      "execution_bundle_internal_sha256": "c59e1d710992bf3bb0929166014fda0af9deeaa1baa96834eeb9e7b947044817",
+      "fleet_source_time": {
+        "clock": "shared-fast-sim-simulation_timestamp_s",
+        "completed_roles": [
+          "Alpha"
+        ],
+        "duration_s": 11.303499999999827,
+        "fleet_event_vector_sha256": "59cb0e6c13e3742c391ca2b341f1519547a81fab716a2ee6e6a9c143937c0451",
+        "observation_sha256": "60f7d8730277d44fbfe54b0a9929363b2a28c9baf917f8ab444bb11b23493928",
+        "start_event": "FIRST_RETAINED_CHILD_TELEMETRY_AFTER_ADMISSION",
+        "start_source_s": 0.05,
+        "telemetry_envelope_vector_sha256": "de598501c5dc683ade0d85a03ac6dc07768bc87b38eb0c2d1021a82854412150",
+        "terminal_event": "LAST_RETAINED_CHILD_TELEMETRY_BEFORE_FLEET_TERMINAL_SUCCEEDED",
+        "terminal_source_s": 11.353499999999828
+      },
+      "hard_runtime_gates_passed": true,
+      "plan_sha256": "f004f4da0a43ffac6d0e61164f0ee811d63a9101082cd04a11a22ee8c74656f8",
+      "repetition": 2,
+      "resolved_planning_package_sha256": "5eda5b15bb299bfa9a3aec55e95b19751b6f4a94032a4f101fe705433f14926e",
+      "schedule_sha256": "59b6c4eb6f7a210f6378177fc6a54598168814393fbb69e4aaa5e7806f6f94b2",
+      "selection_id": "vertical_cycle.minimum_duration",
+      "selection_key": "1d.takeoff_hover_land.canonical_nominal/vertical_cycle.minimum_duration@case-default",
+      "telemetry_csv_sha256": "9a3b64d406a55223f0a1783dcf520561ed5faaa323781a82c31b8ccd3fe2feca",
+      "trajectory_set_sha256": "ac7186be4133da68c0a72da42f3d7b8f29ea555875675a02271c146ce75bc2a9",
+      "vertical_tracking": {
+        "actual_signal": "ground_truth_position_m.z_or_position_m.z",
+        "boundary": "EXECUTE_TRAJECTORY_COMMAND_TO_MATCHING_ACKNOWLEDGEMENT",
+        "commanded_signal": "sampled_accepted_trajectory.position_m.z",
+        "error_vector_sha256": "1a9cae4e5cc7b592e28c6707325e6ea773b3762892ea7d4588f8a0a8e082c25f",
+        "maximum_vertical_position_error_m": 0.01365087043627733,
+        "metric_id": "DY_VERTICAL_TRACKING",
+        "observation_sha256": "84edd97a9b5b3b5ff59e2e7f085baaaaa5ba88636ad05ad08f495ce46ee297ca",
+        "rms_vertical_position_error_m": 0.005218052789311809,
+        "roles": [
+          {
+            "command_ids": [
+              "cmd-5"
+            ],
+            "error_vector_sha256": "1a9cae4e5cc7b592e28c6707325e6ea773b3762892ea7d4588f8a0a8e082c25f",
+            "maximum_vertical_position_error_m": 0.01365087043627733,
+            "rms_vertical_position_error_m": 0.005218052789311809,
+            "sample_count": 304,
+            "vehicle_id": "Alpha"
+          }
+        ],
+        "sample_count": 304
+      }
+    },
+    {
+      "artifact_set_sha256": "2bf2dc1d8132a42a82b3ac32924316a11277805e09c7efb0ad50a8d1d673b5b6",
+      "baseline": false,
+      "case_id": "1d.takeoff_hover_land.canonical_nominal",
+      "clearance": {
+        "candidate_sha256": "0f66a3fb7114fbc5cc0d6902d1b8d665e8eb6e031f7f6bb78e84061042ead594",
+        "certificate_sha256": "e3302873b6e2310bd7d00689d938b9f6316346e315ef2e33dcbac8e8deda217f",
+        "metric_id": "SP_CLEARANCE",
+        "minimum_pairwise_protected_clearance_m": 1000000.0,
+        "minimum_protected_clearance_m": 1000000.0,
+        "minimum_solid_protected_clearance_m": 1000000.0,
+        "observation_sha256": "a9bef9d654f9865ca188bf19e09ab2373081959a64905e8c754906120e41a276",
+        "plan_sha256": "f004f4da0a43ffac6d0e61164f0ee811d63a9101082cd04a11a22ee8c74656f8",
+        "verifier_id": "independent-continuous-clearance-v1"
+      },
+      "contact_settle_s": 0.09999999999999787,
+      "evaluation_sha256": "29e8bd4ab3d1cac7c7dc8bc328bd6612fb10a8307bd9bdb33f3daef0871f361d",
+      "execution_bundle_file_sha256": "68d3b6c5dd22e1df694e4c7fa355ca57cf2068cc0660311e3f31842acd2e10e9",
+      "execution_bundle_internal_sha256": "c1106ea8b614913371e552566899e0976bab1bfac1a06ee35843085a54200676",
+      "fleet_source_time": {
+        "clock": "shared-fast-sim-simulation_timestamp_s",
+        "completed_roles": [
+          "Alpha"
+        ],
+        "duration_s": 11.303499999999827,
+        "fleet_event_vector_sha256": "cd02ac2b804e7853f4cc41d20d87f3b2b060bb17c654f6d71c714a7eb5733a41",
+        "observation_sha256": "1ce916a00a35040aeac5fd241adc32018176df4b478718130e68dfeb4169aa3f",
+        "start_event": "FIRST_RETAINED_CHILD_TELEMETRY_AFTER_ADMISSION",
+        "start_source_s": 0.05,
+        "telemetry_envelope_vector_sha256": "ec5d6f07d268a474130a49632859c4f073278190c06204f4ef5be3ef84160808",
+        "terminal_event": "LAST_RETAINED_CHILD_TELEMETRY_BEFORE_FLEET_TERMINAL_SUCCEEDED",
+        "terminal_source_s": 11.353499999999828
+      },
+      "hard_runtime_gates_passed": true,
+      "plan_sha256": "f004f4da0a43ffac6d0e61164f0ee811d63a9101082cd04a11a22ee8c74656f8",
+      "repetition": 3,
+      "resolved_planning_package_sha256": "5eda5b15bb299bfa9a3aec55e95b19751b6f4a94032a4f101fe705433f14926e",
+      "schedule_sha256": "59b6c4eb6f7a210f6378177fc6a54598168814393fbb69e4aaa5e7806f6f94b2",
+      "selection_id": "vertical_cycle.minimum_duration",
+      "selection_key": "1d.takeoff_hover_land.canonical_nominal/vertical_cycle.minimum_duration@case-default",
+      "telemetry_csv_sha256": "116bcfefd9fa0fabc596565e3db8fada1498db35b1fe4d4e88fb4c8824a821fc",
+      "trajectory_set_sha256": "ac7186be4133da68c0a72da42f3d7b8f29ea555875675a02271c146ce75bc2a9",
+      "vertical_tracking": {
+        "actual_signal": "ground_truth_position_m.z_or_position_m.z",
+        "boundary": "EXECUTE_TRAJECTORY_COMMAND_TO_MATCHING_ACKNOWLEDGEMENT",
+        "commanded_signal": "sampled_accepted_trajectory.position_m.z",
+        "error_vector_sha256": "1a9cae4e5cc7b592e28c6707325e6ea773b3762892ea7d4588f8a0a8e082c25f",
+        "maximum_vertical_position_error_m": 0.01365087043627733,
+        "metric_id": "DY_VERTICAL_TRACKING",
+        "observation_sha256": "84edd97a9b5b3b5ff59e2e7f085baaaaa5ba88636ad05ad08f495ce46ee297ca",
+        "rms_vertical_position_error_m": 0.005218052789311809,
+        "roles": [
+          {
+            "command_ids": [
+              "cmd-5"
+            ],
+            "error_vector_sha256": "1a9cae4e5cc7b592e28c6707325e6ea773b3762892ea7d4588f8a0a8e082c25f",
+            "maximum_vertical_position_error_m": 0.01365087043627733,
+            "rms_vertical_position_error_m": 0.005218052789311809,
+            "sample_count": 304,
+            "vehicle_id": "Alpha"
+          }
+        ],
+        "sample_count": 304
+      }
+    },
+    {
+      "artifact_set_sha256": "36681fdb196b97e2c7456ce73a3993eca12978984b4356a9416523974bcd73f0",
+      "baseline": false,
+      "case_id": "1d.takeoff_hover_land.canonical_nominal",
+      "clearance": {
+        "candidate_sha256": "17ecd524b9ef31af02399d4a16e4aa3eb83de8497d2c990dac78d243ffc352f9",
+        "certificate_sha256": "018954a58fd591614cc4f6c82bf3baf3474131bca3630164d4b6c4bc3d948945",
+        "metric_id": "SP_CLEARANCE",
+        "minimum_pairwise_protected_clearance_m": 1000000.0,
+        "minimum_protected_clearance_m": 1000000.0,
+        "minimum_solid_protected_clearance_m": 1000000.0,
+        "observation_sha256": "d933c75b9bda9299214e9174329d6c3fbad22d63043dcd687199d12131b2d4c3",
+        "plan_sha256": "0dcfb526380f7e130d3cf128077148f19b169a6b15cb901071e37c95f65bab2d",
+        "verifier_id": "independent-continuous-clearance-v1"
+      },
+      "contact_settle_s": 0.09999999999999787,
+      "evaluation_sha256": "ee3de7fa74476cbb75ed8f604febe36f4988befb4762bf35a54358a9a6ba0459",
+      "execution_bundle_file_sha256": "5b804709a4fd317c4b3c30dace3f1d7235674eb93786ca1b985030cb183be2c3",
+      "execution_bundle_internal_sha256": "b6603fb4f8d34ffccd7789835110c1cf89cc5e2044df7a852325d56b7b39ae6a",
+      "fleet_source_time": {
+        "clock": "shared-fast-sim-simulation_timestamp_s",
+        "completed_roles": [
+          "Alpha"
+        ],
+        "duration_s": 14.047499999999802,
+        "fleet_event_vector_sha256": "265b19aeefdb2097047825c89507a363e0294b756e543fd4c38fa1bb8758a206",
+        "observation_sha256": "539a36686e055eef2f3472d2c8a07b3453f382261dca494ec9bcaeeb0d4a7de6",
+        "start_event": "FIRST_RETAINED_CHILD_TELEMETRY_AFTER_ADMISSION",
+        "start_source_s": 0.05,
+        "telemetry_envelope_vector_sha256": "75cd1f28242babbacc70e9cb55726ed57fc0d2d7a2b859e6ce70cac343d7ff01",
+        "terminal_event": "LAST_RETAINED_CHILD_TELEMETRY_BEFORE_FLEET_TERMINAL_SUCCEEDED",
+        "terminal_source_s": 14.097499999999803
+      },
+      "hard_runtime_gates_passed": true,
+      "plan_sha256": "0dcfb526380f7e130d3cf128077148f19b169a6b15cb901071e37c95f65bab2d",
+      "repetition": 1,
+      "resolved_planning_package_sha256": "ae7f8ac81a98826752123d1b7b5ba40377508a8ab807f05294c9f776285ebf07",
+      "schedule_sha256": "331b01dafdce49f5c0a66c29bbb4adae1e989a42abbc30e3320762e43f666874",
+      "selection_id": "vertical_cycle.precision_first",
+      "selection_key": "1d.takeoff_hover_land.canonical_nominal/vertical_cycle.precision_first@case-default",
+      "telemetry_csv_sha256": "5082ef6f0c8b61d90da0416fbb7b8405131fb7af849ed5ef7d51ebd200506438",
+      "trajectory_set_sha256": "d27aaa0b92371a388fed152b0d32586e7f21f1e531fdf1a6d624acf80e8c3e23",
+      "vertical_tracking": {
+        "actual_signal": "ground_truth_position_m.z_or_position_m.z",
+        "boundary": "EXECUTE_TRAJECTORY_COMMAND_TO_MATCHING_ACKNOWLEDGEMENT",
+        "commanded_signal": "sampled_accepted_trajectory.position_m.z",
+        "error_vector_sha256": "5d9e59c1497a8230bd761f4e76a06ecfe3848dad3c9382893dce03ed68045e3a",
+        "maximum_vertical_position_error_m": 0.007585156689926431,
+        "metric_id": "DY_VERTICAL_TRACKING",
+        "observation_sha256": "8a25c24c84a2fd52d1cadcb500415fd5514d486bf719e71f3ef5203d98a63d67",
+        "rms_vertical_position_error_m": 0.002959663067576934,
+        "roles": [
+          {
+            "command_ids": [
+              "cmd-5"
+            ],
+            "error_vector_sha256": "5d9e59c1497a8230bd761f4e76a06ecfe3848dad3c9382893dce03ed68045e3a",
+            "maximum_vertical_position_error_m": 0.007585156689926431,
+            "rms_vertical_position_error_m": 0.002959663067576934,
+            "sample_count": 305,
+            "vehicle_id": "Alpha"
+          }
+        ],
+        "sample_count": 305
+      }
+    },
+    {
+      "artifact_set_sha256": "c61827cc3bdde944ce73f00fa757e5ea8e1225b8703347ad3ddfcc228344be31",
+      "baseline": false,
+      "case_id": "1d.takeoff_hover_land.canonical_nominal",
+      "clearance": {
+        "candidate_sha256": "17ecd524b9ef31af02399d4a16e4aa3eb83de8497d2c990dac78d243ffc352f9",
+        "certificate_sha256": "018954a58fd591614cc4f6c82bf3baf3474131bca3630164d4b6c4bc3d948945",
+        "metric_id": "SP_CLEARANCE",
+        "minimum_pairwise_protected_clearance_m": 1000000.0,
+        "minimum_protected_clearance_m": 1000000.0,
+        "minimum_solid_protected_clearance_m": 1000000.0,
+        "observation_sha256": "d933c75b9bda9299214e9174329d6c3fbad22d63043dcd687199d12131b2d4c3",
+        "plan_sha256": "0dcfb526380f7e130d3cf128077148f19b169a6b15cb901071e37c95f65bab2d",
+        "verifier_id": "independent-continuous-clearance-v1"
+      },
+      "contact_settle_s": 0.09999999999999787,
+      "evaluation_sha256": "423f62513824031ca0dfb37675df2c8398e26724adf108afe824eb5ffb35d59f",
+      "execution_bundle_file_sha256": "a04998221e4f773f683e546999d20b618ebaede3085ad285308821a6dae4c35e",
+      "execution_bundle_internal_sha256": "e7767926fc1967c353994febc82d71869c349c68b1af0d5002a5b36acc4f084f",
+      "fleet_source_time": {
+        "clock": "shared-fast-sim-simulation_timestamp_s",
+        "completed_roles": [
+          "Alpha"
+        ],
+        "duration_s": 14.047499999999802,
+        "fleet_event_vector_sha256": "05ead1a22b8a3b13f8ddf8b6ede8600854e68594b17d7acfafbba727eac495a9",
+        "observation_sha256": "cd2f180272ab613e6a37ee1782ae9e12f67e23eb45403983fdb9affc45d01180",
+        "start_event": "FIRST_RETAINED_CHILD_TELEMETRY_AFTER_ADMISSION",
+        "start_source_s": 0.05,
+        "telemetry_envelope_vector_sha256": "22a1065c01dc44610c3c7d3323921f936a909592a0adaf78389810c6d8841972",
+        "terminal_event": "LAST_RETAINED_CHILD_TELEMETRY_BEFORE_FLEET_TERMINAL_SUCCEEDED",
+        "terminal_source_s": 14.097499999999803
+      },
+      "hard_runtime_gates_passed": true,
+      "plan_sha256": "0dcfb526380f7e130d3cf128077148f19b169a6b15cb901071e37c95f65bab2d",
+      "repetition": 2,
+      "resolved_planning_package_sha256": "ae7f8ac81a98826752123d1b7b5ba40377508a8ab807f05294c9f776285ebf07",
+      "schedule_sha256": "331b01dafdce49f5c0a66c29bbb4adae1e989a42abbc30e3320762e43f666874",
+      "selection_id": "vertical_cycle.precision_first",
+      "selection_key": "1d.takeoff_hover_land.canonical_nominal/vertical_cycle.precision_first@case-default",
+      "telemetry_csv_sha256": "7b0ded7c8263c8be944fafbcb8fe2d756f9b10ce22dc7fec7af69bfdce1fda74",
+      "trajectory_set_sha256": "d27aaa0b92371a388fed152b0d32586e7f21f1e531fdf1a6d624acf80e8c3e23",
+      "vertical_tracking": {
+        "actual_signal": "ground_truth_position_m.z_or_position_m.z",
+        "boundary": "EXECUTE_TRAJECTORY_COMMAND_TO_MATCHING_ACKNOWLEDGEMENT",
+        "commanded_signal": "sampled_accepted_trajectory.position_m.z",
+        "error_vector_sha256": "5d9e59c1497a8230bd761f4e76a06ecfe3848dad3c9382893dce03ed68045e3a",
+        "maximum_vertical_position_error_m": 0.007585156689926431,
+        "metric_id": "DY_VERTICAL_TRACKING",
+        "observation_sha256": "8a25c24c84a2fd52d1cadcb500415fd5514d486bf719e71f3ef5203d98a63d67",
+        "rms_vertical_position_error_m": 0.002959663067576934,
+        "roles": [
+          {
+            "command_ids": [
+              "cmd-5"
+            ],
+            "error_vector_sha256": "5d9e59c1497a8230bd761f4e76a06ecfe3848dad3c9382893dce03ed68045e3a",
+            "maximum_vertical_position_error_m": 0.007585156689926431,
+            "rms_vertical_position_error_m": 0.002959663067576934,
+            "sample_count": 305,
+            "vehicle_id": "Alpha"
+          }
+        ],
+        "sample_count": 305
+      }
+    },
+    {
+      "artifact_set_sha256": "c3f886366055e24c55210cb1f6a42e42abf7ae9a1fddcd5b47685b8fba0af113",
+      "baseline": false,
+      "case_id": "1d.takeoff_hover_land.canonical_nominal",
+      "clearance": {
+        "candidate_sha256": "17ecd524b9ef31af02399d4a16e4aa3eb83de8497d2c990dac78d243ffc352f9",
+        "certificate_sha256": "018954a58fd591614cc4f6c82bf3baf3474131bca3630164d4b6c4bc3d948945",
+        "metric_id": "SP_CLEARANCE",
+        "minimum_pairwise_protected_clearance_m": 1000000.0,
+        "minimum_protected_clearance_m": 1000000.0,
+        "minimum_solid_protected_clearance_m": 1000000.0,
+        "observation_sha256": "d933c75b9bda9299214e9174329d6c3fbad22d63043dcd687199d12131b2d4c3",
+        "plan_sha256": "0dcfb526380f7e130d3cf128077148f19b169a6b15cb901071e37c95f65bab2d",
+        "verifier_id": "independent-continuous-clearance-v1"
+      },
+      "contact_settle_s": 0.09999999999999787,
+      "evaluation_sha256": "7357f351e558eb575ff92d3764344b352acc58ecc878eff9fb70ef42ff6e0a3a",
+      "execution_bundle_file_sha256": "7da41e6480f4cab9436390c00a2f6e041b34f4330271eb0602ee482770919e5d",
+      "execution_bundle_internal_sha256": "b02dad093cedaf43f00b037231d0c7db8e409d467e78d0c4d45e40e5925af70e",
+      "fleet_source_time": {
+        "clock": "shared-fast-sim-simulation_timestamp_s",
+        "completed_roles": [
+          "Alpha"
+        ],
+        "duration_s": 14.047499999999802,
+        "fleet_event_vector_sha256": "59560cc7a73b7c0d04c2ced0078da86983458869fc500deed8477ec871aa2fe5",
+        "observation_sha256": "06c21357cb1e97f2285d1a118fbfa899220abfa4f17edf1d7e6554af2947b4ae",
+        "start_event": "FIRST_RETAINED_CHILD_TELEMETRY_AFTER_ADMISSION",
+        "start_source_s": 0.05,
+        "telemetry_envelope_vector_sha256": "019e4f285afff868eee619a942cf2539519065048ff652cb88b77c4f4049b0a4",
+        "terminal_event": "LAST_RETAINED_CHILD_TELEMETRY_BEFORE_FLEET_TERMINAL_SUCCEEDED",
+        "terminal_source_s": 14.097499999999803
+      },
+      "hard_runtime_gates_passed": true,
+      "plan_sha256": "0dcfb526380f7e130d3cf128077148f19b169a6b15cb901071e37c95f65bab2d",
+      "repetition": 3,
+      "resolved_planning_package_sha256": "ae7f8ac81a98826752123d1b7b5ba40377508a8ab807f05294c9f776285ebf07",
+      "schedule_sha256": "331b01dafdce49f5c0a66c29bbb4adae1e989a42abbc30e3320762e43f666874",
+      "selection_id": "vertical_cycle.precision_first",
+      "selection_key": "1d.takeoff_hover_land.canonical_nominal/vertical_cycle.precision_first@case-default",
+      "telemetry_csv_sha256": "0f193ea91ccbd01e5b0a7d5bdd095d931afadd84e865d4ddcf24350a3ad3fd45",
+      "trajectory_set_sha256": "d27aaa0b92371a388fed152b0d32586e7f21f1e531fdf1a6d624acf80e8c3e23",
+      "vertical_tracking": {
+        "actual_signal": "ground_truth_position_m.z_or_position_m.z",
+        "boundary": "EXECUTE_TRAJECTORY_COMMAND_TO_MATCHING_ACKNOWLEDGEMENT",
+        "commanded_signal": "sampled_accepted_trajectory.position_m.z",
+        "error_vector_sha256": "5d9e59c1497a8230bd761f4e76a06ecfe3848dad3c9382893dce03ed68045e3a",
+        "maximum_vertical_position_error_m": 0.007585156689926431,
+        "metric_id": "DY_VERTICAL_TRACKING",
+        "observation_sha256": "8a25c24c84a2fd52d1cadcb500415fd5514d486bf719e71f3ef5203d98a63d67",
+        "rms_vertical_position_error_m": 0.002959663067576934,
+        "roles": [
+          {
+            "command_ids": [
+              "cmd-5"
+            ],
+            "error_vector_sha256": "5d9e59c1497a8230bd761f4e76a06ecfe3848dad3c9382893dce03ed68045e3a",
+            "maximum_vertical_position_error_m": 0.007585156689926431,
+            "rms_vertical_position_error_m": 0.002959663067576934,
+            "sample_count": 305,
+            "vehicle_id": "Alpha"
+          }
+        ],
+        "sample_count": 305
+      }
+    },
+    {
+      "artifact_set_sha256": "2b5d458e0fa24ef737c5bc60032ecf2a0ccbd4a911c47973d7310b48ed4f3556",
+      "baseline": false,
+      "case_id": "3d.constrained_volume.canonical_nominal",
+      "clearance": {
+        "candidate_sha256": "1076257f7119d82f17d806ce504731e7af3d1b1d637b8b1e21ce723d8c1f149a",
+        "certificate_sha256": "e133a8897280d3806df6bfd2eedade60eae27f1d627352299546f7880b29d57e",
+        "metric_id": "SP_CLEARANCE",
+        "minimum_pairwise_protected_clearance_m": 0.18994949366116665,
+        "minimum_protected_clearance_m": 0.18994949366116665,
+        "minimum_solid_protected_clearance_m": 1000000.0,
+        "observation_sha256": "00e05938a327a9a7bdc4a2f9067793c43dc66f74873c7f7b345771163b100781",
+        "plan_sha256": "9c238d568b3c00ac84da0ba9cdc5b16eee7a5e834239965993b3a04c48c9ae39",
+        "verifier_id": "independent-continuous-clearance-v1"
+      },
+      "contact_settle_s": 0.09999999999999194,
+      "evaluation_sha256": "daea9e90f632e05d8a6da96ff71020c25199c924850d98ecdb070fe667a19918",
+      "execution_bundle_file_sha256": "ab372d30b3811a91f04edb84e83e909b375cea8ea4bc02afdf9e1d520f2fe51e",
+      "execution_bundle_internal_sha256": "c369c37a7bf1c3a3d5155e9f4a57e4a0079dc6cec05e37c3f648348850239a35",
+      "fleet_source_time": {
+        "clock": "shared-fast-sim-simulation_timestamp_s",
+        "completed_roles": [
+          "Alpha",
+          "Beta",
+          "Gamma"
+        ],
+        "duration_s": 62.9064501987774,
+        "fleet_event_vector_sha256": "fd06176f200a4c4e86542879a49fc19e8209feef72dde5e4c822f879fff1127f",
+        "observation_sha256": "0233b459eb510ec6f8c45bba1cb23ace4fa6e1c1088d491918038642ad52be0d",
+        "start_event": "FIRST_RETAINED_CHILD_TELEMETRY_AFTER_ADMISSION",
+        "start_source_s": 0.05,
+        "telemetry_envelope_vector_sha256": "9914c7b09d4c7d0c2c34eecbc891b2b4e4af1996360b977d98ab5424c04227d0",
+        "terminal_event": "LAST_RETAINED_CHILD_TELEMETRY_BEFORE_FLEET_TERMINAL_SUCCEEDED",
+        "terminal_source_s": 62.9564501987774
+      },
+      "hard_runtime_gates_passed": true,
+      "plan_sha256": "9c238d568b3c00ac84da0ba9cdc5b16eee7a5e834239965993b3a04c48c9ae39",
+      "repetition": 1,
+      "resolved_planning_package_sha256": "13c0fb64ba1d58df1fcdae4fae81e52e07eb5ee6d6cca8e05969c9e1910f716a",
+      "schedule_sha256": "7a756dccf83970b53d61da7fc8a7ebc21e055a43396bec7b8dcd9338b6a8ba01",
+      "selection_id": "constrained.robust_schedule",
+      "selection_key": "3d.constrained_volume.canonical_nominal/constrained.robust_schedule@case-default",
+      "telemetry_csv_sha256": "ab340d730d5f423603096b9c0d79a082d4dbd1535197379a5896a6c688d7b4a0",
+      "trajectory_set_sha256": "814ac31ddaaf609d676fce424545a6ccb6f28069dd3e33980e7c048078de5581",
+      "vertical_tracking": {
+        "actual_signal": "ground_truth_position_m.z_or_position_m.z",
+        "boundary": "EXECUTE_TRAJECTORY_COMMAND_TO_MATCHING_ACKNOWLEDGEMENT",
+        "commanded_signal": "sampled_accepted_trajectory.position_m.z",
+        "error_vector_sha256": "5e90bb3d59f6e2a8ef396628e8235b8a157c8a29a9350e57278f4f803c7dfcce",
+        "maximum_vertical_position_error_m": 0.01140898677054758,
+        "metric_id": "DY_VERTICAL_TRACKING",
+        "observation_sha256": "1cb2524f17c0ef1ab9b4c5a97d6bf35be8d91b63476c838e4528792b9db2f769",
+        "rms_vertical_position_error_m": 0.002131935246579264,
+        "roles": [
+          {
+            "command_ids": [
+              "cmd-7"
+            ],
+            "error_vector_sha256": "2b4384dfad6ad452515bea479966605881ff0aa49413c24052c4fecde753ac2d",
+            "maximum_vertical_position_error_m": 0.010552030539787927,
+            "rms_vertical_position_error_m": 0.002105460659775274,
+            "sample_count": 1124,
+            "vehicle_id": "Alpha"
+          },
+          {
+            "command_ids": [
+              "cmd-13"
+            ],
+            "error_vector_sha256": "f25579a34bddda1b26f95a5fa184378334b7482b5fb836c829662a9f0987b24b",
+            "maximum_vertical_position_error_m": 0.010773924964047388,
+            "rms_vertical_position_error_m": 0.0021495360516155175,
+            "sample_count": 1124,
+            "vehicle_id": "Beta"
+          },
+          {
+            "command_ids": [
+              "cmd-19"
+            ],
+            "error_vector_sha256": "1c88cfe41661fee2b32989ca9299c123e38b03435490b8f91436bb882f0abfdc",
+            "maximum_vertical_position_error_m": 0.01140898677054758,
+            "rms_vertical_position_error_m": 0.0021390561257736487,
+            "sample_count": 1361,
+            "vehicle_id": "Gamma"
+          }
+        ],
+        "sample_count": 3609
+      }
+    },
+    {
+      "artifact_set_sha256": "02580fcd3660721f32dafed3513de50c0b0711ee54b8a478c3b8409648981be8",
+      "baseline": false,
+      "case_id": "3d.constrained_volume.canonical_nominal",
+      "clearance": {
+        "candidate_sha256": "1076257f7119d82f17d806ce504731e7af3d1b1d637b8b1e21ce723d8c1f149a",
+        "certificate_sha256": "e133a8897280d3806df6bfd2eedade60eae27f1d627352299546f7880b29d57e",
+        "metric_id": "SP_CLEARANCE",
+        "minimum_pairwise_protected_clearance_m": 0.18994949366116665,
+        "minimum_protected_clearance_m": 0.18994949366116665,
+        "minimum_solid_protected_clearance_m": 1000000.0,
+        "observation_sha256": "00e05938a327a9a7bdc4a2f9067793c43dc66f74873c7f7b345771163b100781",
+        "plan_sha256": "9c238d568b3c00ac84da0ba9cdc5b16eee7a5e834239965993b3a04c48c9ae39",
+        "verifier_id": "independent-continuous-clearance-v1"
+      },
+      "contact_settle_s": 0.09999999999999194,
+      "evaluation_sha256": "9efdd29c0c09f5f807071ba2e31e4b02cd75694376b65f4ca202ebbdcf74c465",
+      "execution_bundle_file_sha256": "ff0876c9b12765430e8f6cc3502895a4d570d3d20bdf9cc8049a98343b7afb4b",
+      "execution_bundle_internal_sha256": "1714c2814426498f4797ee1bcaec3042236c3cdf182a6f4c7cae01d7d772e2d6",
+      "fleet_source_time": {
+        "clock": "shared-fast-sim-simulation_timestamp_s",
+        "completed_roles": [
+          "Alpha",
+          "Beta",
+          "Gamma"
+        ],
+        "duration_s": 62.9064501987774,
+        "fleet_event_vector_sha256": "314ca61220240f079d6b9ce5228eb04adef76dd2a7e093e427239e05573b8799",
+        "observation_sha256": "1a12b2d6f6f79564ed13efe7880d4dda3907055ac8dfc7bdb19a594e39c5fab8",
+        "start_event": "FIRST_RETAINED_CHILD_TELEMETRY_AFTER_ADMISSION",
+        "start_source_s": 0.05,
+        "telemetry_envelope_vector_sha256": "dba394166234fcd94df48c784439e78dde55ff4600ba7e93fbf977d8dcdbe9d5",
+        "terminal_event": "LAST_RETAINED_CHILD_TELEMETRY_BEFORE_FLEET_TERMINAL_SUCCEEDED",
+        "terminal_source_s": 62.9564501987774
+      },
+      "hard_runtime_gates_passed": true,
+      "plan_sha256": "9c238d568b3c00ac84da0ba9cdc5b16eee7a5e834239965993b3a04c48c9ae39",
+      "repetition": 2,
+      "resolved_planning_package_sha256": "13c0fb64ba1d58df1fcdae4fae81e52e07eb5ee6d6cca8e05969c9e1910f716a",
+      "schedule_sha256": "7a756dccf83970b53d61da7fc8a7ebc21e055a43396bec7b8dcd9338b6a8ba01",
+      "selection_id": "constrained.robust_schedule",
+      "selection_key": "3d.constrained_volume.canonical_nominal/constrained.robust_schedule@case-default",
+      "telemetry_csv_sha256": "133e446b24a4c45a19680a2b1ef30a0e6fde638dc147381e3705a71a659279b8",
+      "trajectory_set_sha256": "814ac31ddaaf609d676fce424545a6ccb6f28069dd3e33980e7c048078de5581",
+      "vertical_tracking": {
+        "actual_signal": "ground_truth_position_m.z_or_position_m.z",
+        "boundary": "EXECUTE_TRAJECTORY_COMMAND_TO_MATCHING_ACKNOWLEDGEMENT",
+        "commanded_signal": "sampled_accepted_trajectory.position_m.z",
+        "error_vector_sha256": "5e90bb3d59f6e2a8ef396628e8235b8a157c8a29a9350e57278f4f803c7dfcce",
+        "maximum_vertical_position_error_m": 0.01140898677054758,
+        "metric_id": "DY_VERTICAL_TRACKING",
+        "observation_sha256": "1cb2524f17c0ef1ab9b4c5a97d6bf35be8d91b63476c838e4528792b9db2f769",
+        "rms_vertical_position_error_m": 0.002131935246579264,
+        "roles": [
+          {
+            "command_ids": [
+              "cmd-7"
+            ],
+            "error_vector_sha256": "2b4384dfad6ad452515bea479966605881ff0aa49413c24052c4fecde753ac2d",
+            "maximum_vertical_position_error_m": 0.010552030539787927,
+            "rms_vertical_position_error_m": 0.002105460659775274,
+            "sample_count": 1124,
+            "vehicle_id": "Alpha"
+          },
+          {
+            "command_ids": [
+              "cmd-13"
+            ],
+            "error_vector_sha256": "f25579a34bddda1b26f95a5fa184378334b7482b5fb836c829662a9f0987b24b",
+            "maximum_vertical_position_error_m": 0.010773924964047388,
+            "rms_vertical_position_error_m": 0.0021495360516155175,
+            "sample_count": 1124,
+            "vehicle_id": "Beta"
+          },
+          {
+            "command_ids": [
+              "cmd-19"
+            ],
+            "error_vector_sha256": "1c88cfe41661fee2b32989ca9299c123e38b03435490b8f91436bb882f0abfdc",
+            "maximum_vertical_position_error_m": 0.01140898677054758,
+            "rms_vertical_position_error_m": 0.0021390561257736487,
+            "sample_count": 1361,
+            "vehicle_id": "Gamma"
+          }
+        ],
+        "sample_count": 3609
+      }
+    },
+    {
+      "artifact_set_sha256": "9ed056895845cfead859c80e895e07ed37f72501f40bc681b1fb408d97683851",
+      "baseline": false,
+      "case_id": "3d.constrained_volume.canonical_nominal",
+      "clearance": {
+        "candidate_sha256": "1076257f7119d82f17d806ce504731e7af3d1b1d637b8b1e21ce723d8c1f149a",
+        "certificate_sha256": "e133a8897280d3806df6bfd2eedade60eae27f1d627352299546f7880b29d57e",
+        "metric_id": "SP_CLEARANCE",
+        "minimum_pairwise_protected_clearance_m": 0.18994949366116665,
+        "minimum_protected_clearance_m": 0.18994949366116665,
+        "minimum_solid_protected_clearance_m": 1000000.0,
+        "observation_sha256": "00e05938a327a9a7bdc4a2f9067793c43dc66f74873c7f7b345771163b100781",
+        "plan_sha256": "9c238d568b3c00ac84da0ba9cdc5b16eee7a5e834239965993b3a04c48c9ae39",
+        "verifier_id": "independent-continuous-clearance-v1"
+      },
+      "contact_settle_s": 0.09999999999999194,
+      "evaluation_sha256": "25eb02798984ed46477a4d1ee4f5e3fbf994ff4636d1c75cf7218643830271f7",
+      "execution_bundle_file_sha256": "df515c0aed39108063cd92a5cc17d0da7edbcc1dd128a7b0f6d62b1ff6647289",
+      "execution_bundle_internal_sha256": "a3b0b221331e7924d56ef200f3e2ed53926209cb3cca35bac2e509c393e4f8ea",
+      "fleet_source_time": {
+        "clock": "shared-fast-sim-simulation_timestamp_s",
+        "completed_roles": [
+          "Alpha",
+          "Beta",
+          "Gamma"
+        ],
+        "duration_s": 62.9064501987774,
+        "fleet_event_vector_sha256": "c5059b54494c2d5a3249dce53e796fb366d605833ce298735357b9c10861be1a",
+        "observation_sha256": "d5fb70f6bad296a58c5d4732bd42ccb2e46503672c265b3757b8b35015947ad6",
+        "start_event": "FIRST_RETAINED_CHILD_TELEMETRY_AFTER_ADMISSION",
+        "start_source_s": 0.05,
+        "telemetry_envelope_vector_sha256": "d4c1d0e4393333014c52b7e3f81d44b75a555786a97fbb95a7a607d59feedaed",
+        "terminal_event": "LAST_RETAINED_CHILD_TELEMETRY_BEFORE_FLEET_TERMINAL_SUCCEEDED",
+        "terminal_source_s": 62.9564501987774
+      },
+      "hard_runtime_gates_passed": true,
+      "plan_sha256": "9c238d568b3c00ac84da0ba9cdc5b16eee7a5e834239965993b3a04c48c9ae39",
+      "repetition": 3,
+      "resolved_planning_package_sha256": "13c0fb64ba1d58df1fcdae4fae81e52e07eb5ee6d6cca8e05969c9e1910f716a",
+      "schedule_sha256": "7a756dccf83970b53d61da7fc8a7ebc21e055a43396bec7b8dcd9338b6a8ba01",
+      "selection_id": "constrained.robust_schedule",
+      "selection_key": "3d.constrained_volume.canonical_nominal/constrained.robust_schedule@case-default",
+      "telemetry_csv_sha256": "94c90470ae7601eecc10e6bbaeece176c517101a88da97633cfad7bd6ece63f7",
+      "trajectory_set_sha256": "814ac31ddaaf609d676fce424545a6ccb6f28069dd3e33980e7c048078de5581",
+      "vertical_tracking": {
+        "actual_signal": "ground_truth_position_m.z_or_position_m.z",
+        "boundary": "EXECUTE_TRAJECTORY_COMMAND_TO_MATCHING_ACKNOWLEDGEMENT",
+        "commanded_signal": "sampled_accepted_trajectory.position_m.z",
+        "error_vector_sha256": "5e90bb3d59f6e2a8ef396628e8235b8a157c8a29a9350e57278f4f803c7dfcce",
+        "maximum_vertical_position_error_m": 0.01140898677054758,
+        "metric_id": "DY_VERTICAL_TRACKING",
+        "observation_sha256": "1cb2524f17c0ef1ab9b4c5a97d6bf35be8d91b63476c838e4528792b9db2f769",
+        "rms_vertical_position_error_m": 0.002131935246579264,
+        "roles": [
+          {
+            "command_ids": [
+              "cmd-7"
+            ],
+            "error_vector_sha256": "2b4384dfad6ad452515bea479966605881ff0aa49413c24052c4fecde753ac2d",
+            "maximum_vertical_position_error_m": 0.010552030539787927,
+            "rms_vertical_position_error_m": 0.002105460659775274,
+            "sample_count": 1124,
+            "vehicle_id": "Alpha"
+          },
+          {
+            "command_ids": [
+              "cmd-13"
+            ],
+            "error_vector_sha256": "f25579a34bddda1b26f95a5fa184378334b7482b5fb836c829662a9f0987b24b",
+            "maximum_vertical_position_error_m": 0.010773924964047388,
+            "rms_vertical_position_error_m": 0.0021495360516155175,
+            "sample_count": 1124,
+            "vehicle_id": "Beta"
+          },
+          {
+            "command_ids": [
+              "cmd-19"
+            ],
+            "error_vector_sha256": "1c88cfe41661fee2b32989ca9299c123e38b03435490b8f91436bb882f0abfdc",
+            "maximum_vertical_position_error_m": 0.01140898677054758,
+            "rms_vertical_position_error_m": 0.0021390561257736487,
+            "sample_count": 1361,
+            "vehicle_id": "Gamma"
+          }
+        ],
+        "sample_count": 3609
+      }
+    },
+    {
+      "artifact_set_sha256": "9fb2e21d388da8f10249b37ff6210df040f477a134872d5ec3b549c87238c482",
+      "baseline": false,
+      "case_id": "3d.constrained_volume.canonical_nominal",
+      "clearance": {
+        "candidate_sha256": "523094123f1943786d43aa03e2793d9eb26dad7b8f41a1340c2ec805d6684ba4",
+        "certificate_sha256": "b141d768f9a3e003087655e8ba755f88383c1bb39a3fb18a70419353c806627c",
+        "metric_id": "SP_CLEARANCE",
+        "minimum_pairwise_protected_clearance_m": 2.817139632682597e-09,
+        "minimum_protected_clearance_m": 2.817139632682597e-09,
+        "minimum_solid_protected_clearance_m": 1000000.0,
+        "observation_sha256": "1085817c0585508bc9e2f0ae46758c15773d32cfa5935d69ad8c19a37599faf5",
+        "plan_sha256": "6af0d042bb2907f36eda94b61fb2e7ee471c52e6cdc005ff03dd1904ff72ddf9",
+        "verifier_id": "independent-continuous-clearance-v1"
+      },
+      "contact_settle_s": 0.10000000000001563,
+      "evaluation_sha256": "f3488294a30d3052cf56ddf69e4341d2a60d079715827f9b66506e884427db37",
+      "execution_bundle_file_sha256": "7649db705f5099b65704f70a896eb7f7a174a1609d6ed3ddfdff8e99d5c68fa5",
+      "execution_bundle_internal_sha256": "962f384842cbe8b26478863b47b54546cc019577ef4c0ba377d5d82a0765a375",
+      "fleet_source_time": {
+        "clock": "shared-fast-sim-simulation_timestamp_s",
+        "completed_roles": [
+          "Alpha",
+          "Beta",
+          "Gamma"
+        ],
+        "duration_s": 27.43731011659064,
+        "fleet_event_vector_sha256": "c0b70ae409a915ed08397250c6bf7a077885c1c6d1edeebbf8ccbdd32e544733",
+        "observation_sha256": "7921f867249be7abe19f0e5516192b9b55678a188995e604eef4e234694dfff4",
+        "start_event": "FIRST_RETAINED_CHILD_TELEMETRY_AFTER_ADMISSION",
+        "start_source_s": 0.05,
+        "telemetry_envelope_vector_sha256": "56b31ee9d8a49ea095ecbf97e7750567f699cb87eb39ca9fbfa17b608f2f562b",
+        "terminal_event": "LAST_RETAINED_CHILD_TELEMETRY_BEFORE_FLEET_TERMINAL_SUCCEEDED",
+        "terminal_source_s": 27.487310116590642
+      },
+      "hard_runtime_gates_passed": true,
+      "plan_sha256": "6af0d042bb2907f36eda94b61fb2e7ee471c52e6cdc005ff03dd1904ff72ddf9",
+      "repetition": 1,
+      "resolved_planning_package_sha256": "274b8466e814ae1cebd5c7259f5dcdd7192c667aa85a1d08d2605618339a2b55",
+      "schedule_sha256": "4179a5c40633d25ac7ae9b0a0e6d826aa13235ee3f1b0cfb3d7c2571f06bcd12",
+      "selection_id": "constrained.timing_makespan",
+      "selection_key": "3d.constrained_volume.canonical_nominal/constrained.timing_makespan@case-default",
+      "telemetry_csv_sha256": "20a9fbb608eb53530e308852d38360ecc3ebba259beed8d46c92a7d4071e22fa",
+      "trajectory_set_sha256": "3a39e4f2e4245b6a696f98fc4c31804aa4f1455f7130ddb8cc0a1c645e24a254",
+      "vertical_tracking": {
+        "actual_signal": "ground_truth_position_m.z_or_position_m.z",
+        "boundary": "EXECUTE_TRAJECTORY_COMMAND_TO_MATCHING_ACKNOWLEDGEMENT",
+        "commanded_signal": "sampled_accepted_trajectory.position_m.z",
+        "error_vector_sha256": "6990dbf11d066ddd399c74c6975967c72a789630d904a792b7f6423a3e95e6b1",
+        "maximum_vertical_position_error_m": 0.011105640270903161,
+        "metric_id": "DY_VERTICAL_TRACKING",
+        "observation_sha256": "ed171017e70f5c921c2038bebb7e9bd72a73616b1c3a409dd7186755f831edff",
+        "rms_vertical_position_error_m": 0.0021252427886995348,
+        "roles": [
+          {
+            "command_ids": [
+              "cmd-10"
+            ],
+            "error_vector_sha256": "2b4384dfad6ad452515bea479966605881ff0aa49413c24052c4fecde753ac2d",
+            "maximum_vertical_position_error_m": 0.010552030539787927,
+            "rms_vertical_position_error_m": 0.002105460659775274,
+            "sample_count": 1124,
+            "vehicle_id": "Alpha"
+          },
+          {
+            "command_ids": [
+              "cmd-17"
+            ],
+            "error_vector_sha256": "a16c4560c11c549ca09d688d6d092476ad1aaee2abf0b04d4f8b32186f790d1c",
+            "maximum_vertical_position_error_m": 0.011018085541548983,
+            "rms_vertical_position_error_m": 0.002235958548708075,
+            "sample_count": 1124,
+            "vehicle_id": "Beta"
+          },
+          {
+            "command_ids": [
+              "cmd-12"
+            ],
+            "error_vector_sha256": "8af0ac23a89ea5d1dd37714019d72327d714bf57e2b82706f5d5c81a169942b0",
+            "maximum_vertical_position_error_m": 0.011105640270903161,
+            "rms_vertical_position_error_m": 0.002046217032956282,
+            "sample_count": 1361,
+            "vehicle_id": "Gamma"
+          }
+        ],
+        "sample_count": 3609
+      }
+    },
+    {
+      "artifact_set_sha256": "171e6ae9ac7d1dba33d2903e48cec6a1e1ed7e3501e7f598b33a3f96091568ca",
+      "baseline": false,
+      "case_id": "3d.constrained_volume.canonical_nominal",
+      "clearance": {
+        "candidate_sha256": "523094123f1943786d43aa03e2793d9eb26dad7b8f41a1340c2ec805d6684ba4",
+        "certificate_sha256": "b141d768f9a3e003087655e8ba755f88383c1bb39a3fb18a70419353c806627c",
+        "metric_id": "SP_CLEARANCE",
+        "minimum_pairwise_protected_clearance_m": 2.817139632682597e-09,
+        "minimum_protected_clearance_m": 2.817139632682597e-09,
+        "minimum_solid_protected_clearance_m": 1000000.0,
+        "observation_sha256": "1085817c0585508bc9e2f0ae46758c15773d32cfa5935d69ad8c19a37599faf5",
+        "plan_sha256": "6af0d042bb2907f36eda94b61fb2e7ee471c52e6cdc005ff03dd1904ff72ddf9",
+        "verifier_id": "independent-continuous-clearance-v1"
+      },
+      "contact_settle_s": 0.10000000000001563,
+      "evaluation_sha256": "36b26301b7cdb619e56cd31fc7cd3053f1b2ac077f2c63b90040a792adffa1dd",
+      "execution_bundle_file_sha256": "4dec64ca9fa6c8d1f803c518abd92b1d3e06f3e6c43ceabc95ec6770b7998f74",
+      "execution_bundle_internal_sha256": "6399b852b6d5a4033e8576e2d2953f5865b224e6b00d197907cba5bd4ece6898",
+      "fleet_source_time": {
+        "clock": "shared-fast-sim-simulation_timestamp_s",
+        "completed_roles": [
+          "Alpha",
+          "Beta",
+          "Gamma"
+        ],
+        "duration_s": 27.43731011659064,
+        "fleet_event_vector_sha256": "89d0ff6213efe81541d4d24abf7331f4f042cfd3e499f788411adf39234665cd",
+        "observation_sha256": "4580bc5d3d7f0b6ab31aa920531c844f4af4a6117d5076fdbe7a78730bb4f3d2",
+        "start_event": "FIRST_RETAINED_CHILD_TELEMETRY_AFTER_ADMISSION",
+        "start_source_s": 0.05,
+        "telemetry_envelope_vector_sha256": "34e33de8acab60f002718ae5d4d05ace078c5dd25753e10be9f88134e6618865",
+        "terminal_event": "LAST_RETAINED_CHILD_TELEMETRY_BEFORE_FLEET_TERMINAL_SUCCEEDED",
+        "terminal_source_s": 27.487310116590642
+      },
+      "hard_runtime_gates_passed": true,
+      "plan_sha256": "6af0d042bb2907f36eda94b61fb2e7ee471c52e6cdc005ff03dd1904ff72ddf9",
+      "repetition": 2,
+      "resolved_planning_package_sha256": "274b8466e814ae1cebd5c7259f5dcdd7192c667aa85a1d08d2605618339a2b55",
+      "schedule_sha256": "4179a5c40633d25ac7ae9b0a0e6d826aa13235ee3f1b0cfb3d7c2571f06bcd12",
+      "selection_id": "constrained.timing_makespan",
+      "selection_key": "3d.constrained_volume.canonical_nominal/constrained.timing_makespan@case-default",
+      "telemetry_csv_sha256": "c002b584c66e6f243b17dbe277339df3b34621f7fa5b6a50e7f0061ddfa774c2",
+      "trajectory_set_sha256": "3a39e4f2e4245b6a696f98fc4c31804aa4f1455f7130ddb8cc0a1c645e24a254",
+      "vertical_tracking": {
+        "actual_signal": "ground_truth_position_m.z_or_position_m.z",
+        "boundary": "EXECUTE_TRAJECTORY_COMMAND_TO_MATCHING_ACKNOWLEDGEMENT",
+        "commanded_signal": "sampled_accepted_trajectory.position_m.z",
+        "error_vector_sha256": "6990dbf11d066ddd399c74c6975967c72a789630d904a792b7f6423a3e95e6b1",
+        "maximum_vertical_position_error_m": 0.011105640270903161,
+        "metric_id": "DY_VERTICAL_TRACKING",
+        "observation_sha256": "ed171017e70f5c921c2038bebb7e9bd72a73616b1c3a409dd7186755f831edff",
+        "rms_vertical_position_error_m": 0.0021252427886995348,
+        "roles": [
+          {
+            "command_ids": [
+              "cmd-10"
+            ],
+            "error_vector_sha256": "2b4384dfad6ad452515bea479966605881ff0aa49413c24052c4fecde753ac2d",
+            "maximum_vertical_position_error_m": 0.010552030539787927,
+            "rms_vertical_position_error_m": 0.002105460659775274,
+            "sample_count": 1124,
+            "vehicle_id": "Alpha"
+          },
+          {
+            "command_ids": [
+              "cmd-17"
+            ],
+            "error_vector_sha256": "a16c4560c11c549ca09d688d6d092476ad1aaee2abf0b04d4f8b32186f790d1c",
+            "maximum_vertical_position_error_m": 0.011018085541548983,
+            "rms_vertical_position_error_m": 0.002235958548708075,
+            "sample_count": 1124,
+            "vehicle_id": "Beta"
+          },
+          {
+            "command_ids": [
+              "cmd-12"
+            ],
+            "error_vector_sha256": "8af0ac23a89ea5d1dd37714019d72327d714bf57e2b82706f5d5c81a169942b0",
+            "maximum_vertical_position_error_m": 0.011105640270903161,
+            "rms_vertical_position_error_m": 0.002046217032956282,
+            "sample_count": 1361,
+            "vehicle_id": "Gamma"
+          }
+        ],
+        "sample_count": 3609
+      }
+    },
+    {
+      "artifact_set_sha256": "effc21fed607fc20e440444ed3ba99401bfd97ca9a771052d7dd81f52408edea",
+      "baseline": false,
+      "case_id": "3d.constrained_volume.canonical_nominal",
+      "clearance": {
+        "candidate_sha256": "523094123f1943786d43aa03e2793d9eb26dad7b8f41a1340c2ec805d6684ba4",
+        "certificate_sha256": "b141d768f9a3e003087655e8ba755f88383c1bb39a3fb18a70419353c806627c",
+        "metric_id": "SP_CLEARANCE",
+        "minimum_pairwise_protected_clearance_m": 2.817139632682597e-09,
+        "minimum_protected_clearance_m": 2.817139632682597e-09,
+        "minimum_solid_protected_clearance_m": 1000000.0,
+        "observation_sha256": "1085817c0585508bc9e2f0ae46758c15773d32cfa5935d69ad8c19a37599faf5",
+        "plan_sha256": "6af0d042bb2907f36eda94b61fb2e7ee471c52e6cdc005ff03dd1904ff72ddf9",
+        "verifier_id": "independent-continuous-clearance-v1"
+      },
+      "contact_settle_s": 0.10000000000001563,
+      "evaluation_sha256": "5209961759d21dc8bf2cafc53e099542718bf16fceb739a3276a9378d5b94afa",
+      "execution_bundle_file_sha256": "442f351bb45aab950af1abdc6354c6b09cac53ad7d96602e5eda73bca1e37161",
+      "execution_bundle_internal_sha256": "7a5b15efefb001739d7f76915db912f03c480c82d624c0f9a05e62142436f6a2",
+      "fleet_source_time": {
+        "clock": "shared-fast-sim-simulation_timestamp_s",
+        "completed_roles": [
+          "Alpha",
+          "Beta",
+          "Gamma"
+        ],
+        "duration_s": 27.43731011659064,
+        "fleet_event_vector_sha256": "f28cffe99ccbfb9f4b4bc2a57b092fe72ed1c1bc73564bb33fdc0ec3c253780c",
+        "observation_sha256": "598eccde000a9a8602dc286e60f9127c50a51d99570058f39ee4a5003f26f9ed",
+        "start_event": "FIRST_RETAINED_CHILD_TELEMETRY_AFTER_ADMISSION",
+        "start_source_s": 0.05,
+        "telemetry_envelope_vector_sha256": "e7c65633394ac4587ed955226c41102097d6f7ea1e82a3dbd885212bf8f980b0",
+        "terminal_event": "LAST_RETAINED_CHILD_TELEMETRY_BEFORE_FLEET_TERMINAL_SUCCEEDED",
+        "terminal_source_s": 27.487310116590642
+      },
+      "hard_runtime_gates_passed": true,
+      "plan_sha256": "6af0d042bb2907f36eda94b61fb2e7ee471c52e6cdc005ff03dd1904ff72ddf9",
+      "repetition": 3,
+      "resolved_planning_package_sha256": "274b8466e814ae1cebd5c7259f5dcdd7192c667aa85a1d08d2605618339a2b55",
+      "schedule_sha256": "4179a5c40633d25ac7ae9b0a0e6d826aa13235ee3f1b0cfb3d7c2571f06bcd12",
+      "selection_id": "constrained.timing_makespan",
+      "selection_key": "3d.constrained_volume.canonical_nominal/constrained.timing_makespan@case-default",
+      "telemetry_csv_sha256": "2688e96ffd7daeab77656fbedf7483512a849a825e090441135f3cf1644db302",
+      "trajectory_set_sha256": "3a39e4f2e4245b6a696f98fc4c31804aa4f1455f7130ddb8cc0a1c645e24a254",
+      "vertical_tracking": {
+        "actual_signal": "ground_truth_position_m.z_or_position_m.z",
+        "boundary": "EXECUTE_TRAJECTORY_COMMAND_TO_MATCHING_ACKNOWLEDGEMENT",
+        "commanded_signal": "sampled_accepted_trajectory.position_m.z",
+        "error_vector_sha256": "6990dbf11d066ddd399c74c6975967c72a789630d904a792b7f6423a3e95e6b1",
+        "maximum_vertical_position_error_m": 0.011105640270903161,
+        "metric_id": "DY_VERTICAL_TRACKING",
+        "observation_sha256": "ed171017e70f5c921c2038bebb7e9bd72a73616b1c3a409dd7186755f831edff",
+        "rms_vertical_position_error_m": 0.0021252427886995348,
+        "roles": [
+          {
+            "command_ids": [
+              "cmd-10"
+            ],
+            "error_vector_sha256": "2b4384dfad6ad452515bea479966605881ff0aa49413c24052c4fecde753ac2d",
+            "maximum_vertical_position_error_m": 0.010552030539787927,
+            "rms_vertical_position_error_m": 0.002105460659775274,
+            "sample_count": 1124,
+            "vehicle_id": "Alpha"
+          },
+          {
+            "command_ids": [
+              "cmd-17"
+            ],
+            "error_vector_sha256": "a16c4560c11c549ca09d688d6d092476ad1aaee2abf0b04d4f8b32186f790d1c",
+            "maximum_vertical_position_error_m": 0.011018085541548983,
+            "rms_vertical_position_error_m": 0.002235958548708075,
+            "sample_count": 1124,
+            "vehicle_id": "Beta"
+          },
+          {
+            "command_ids": [
+              "cmd-12"
+            ],
+            "error_vector_sha256": "8af0ac23a89ea5d1dd37714019d72327d714bf57e2b82706f5d5c81a169942b0",
+            "maximum_vertical_position_error_m": 0.011105640270903161,
+            "rms_vertical_position_error_m": 0.002046217032956282,
+            "sample_count": 1361,
+            "vehicle_id": "Gamma"
+          }
+        ],
+        "sample_count": 3609
+      }
+    }
+  ],
+  "schema_version": 1,
+  "selection_count": 6
+}

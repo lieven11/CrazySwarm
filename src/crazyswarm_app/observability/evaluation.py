@@ -75,11 +75,32 @@ class VehicleExecutionMetrics(ContractModel):
     trajectory_generation_unintended_stop_count: int = Field(ge=0)
     trajectory_tracking_rms_error_m: float | None = Field(default=None, ge=0.0)
     trajectory_tracking_max_error_m: float | None = Field(default=None, ge=0.0)
+    trajectory_speed_rms_error_m_s: float | None = Field(default=None, ge=0.0)
+    trajectory_speed_max_error_m_s: float | None = Field(default=None, ge=0.0)
+    profile_submission_id: Identifier | None = None
+    profile_kind: str | None = None
+    planned_profile_conformance_passed: bool | None = None
+    planned_profile_maximum_fractional_error: float | None = Field(default=None, ge=0.0)
+    profile_steady_speed_mean_m_s: float | None = Field(default=None, ge=0.0)
+    profile_steady_speed_p05_m_s: float | None = Field(default=None, ge=0.0)
+    profile_steady_speed_p95_m_s: float | None = Field(default=None, ge=0.0)
+    profile_steady_speed_ripple_m_s: float | None = Field(default=None, ge=0.0)
+    profile_steady_speed_tracking_rms_error_m_s: float | None = Field(default=None, ge=0.0)
+    profile_steady_speed_tracking_max_error_m_s: float | None = Field(default=None, ge=0.0)
+    peak_requested_motor_thrust_n: float | None = Field(default=None, ge=0.0)
+    peak_applied_pwm_percent: float | None = Field(default=None, ge=0.0, le=100.0)
+    minimum_motor_thrust_headroom_n: float | None = Field(default=None, ge=0.0)
+    motor_saturation_sample_count: int = Field(default=0, ge=0)
+    peak_battery_current_a: float | None = Field(default=None, ge=0.0)
     landing_goal_id: Identifier | None = None
     goal_capture_attempt_count: int | None = Field(default=None, ge=1)
     descent_authorized: bool | None = None
     terminal_goal_capture_margin_m: float | None = None
     terminal_contact: str | None = None
+    touchdown_target_center_error_m: float | None = Field(default=None, ge=0.0)
+    pre_contact_vertical_speed_m_s: float | None = Field(default=None, ge=0.0)
+    post_contact_settling_s: float | None = Field(default=None, ge=0.0)
+    motors_cut_after_contact: bool | None = None
 
 
 class FleetExecutionMetrics(ContractModel):
@@ -150,17 +171,23 @@ def evaluate_mission_execution(
         ),
     )
     selected_context = dict(context or {})
-    plan = _mapping(selected_context.get("mission_plan"))
+    plan = _mapping(selected_context.get("mission_plan")) or _campaign_evaluation_plan(
+        selected_context
+    )
     assignments = {
         str(role_id): str(vehicle_id)
         for role_id, vehicle_id in _mapping(selected_context.get("assignments")).items()
     }
-    execution_result = _mapping(selected_context.get("execution_result"))
+    execution_result = _mapping(
+        selected_context.get("execution_result") or selected_context.get("fleet_result")
+    )
     accepted_plan_sha256 = str(
         selected_context.get("mission_plan_sha256")
         or execution_result.get("mission_plan_sha256")
+        or _mapping(selected_context.get("campaign_plan")).get("plan_sha256")
         or ""
     )
+    replacement_authorities = _replacement_command_authorities(selected_context)
     events_by_vehicle: dict[str, list[EvidenceEvent]] = defaultdict(list)
     for event in materialized_events:
         events_by_vehicle[event.vehicle_id].append(event)
@@ -177,6 +204,7 @@ def evaluate_mission_execution(
             plan=plan,
             assignments=assignments,
             accepted_plan_sha256=accepted_plan_sha256,
+            replacement_authorities=replacement_authorities,
         )
         for vehicle_id in vehicle_ids
     )
@@ -185,6 +213,7 @@ def evaluate_mission_execution(
         events_by_vehicle=events_by_vehicle,
         context=selected_context,
         vehicle_count=len(vehicle_ids),
+        vehicles=vehicle_metrics,
     )
     parsed_annotations = tuple(
         OperatorAnnotation.model_validate(item)
@@ -252,6 +281,123 @@ def build_execution_bundle(
     return {**payload, "bundle_sha256": canonical_sha256(payload)}
 
 
+def _campaign_evaluation_plan(context: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Normalize campaign-v2 context into the evaluator's accepted-plan view.
+
+    Campaign execution deliberately uses a bounded campaign plan plus a trajectory
+    set instead of the uploaded-mission planning receipt. Both are accepted authority;
+    normalizing here keeps the generic evaluator strict without requiring historical
+    bundles to be rewritten.
+    """
+
+    campaign_plan = _mapping(context.get("campaign_plan"))
+    schedule = _mapping(context.get("campaign_schedule"))
+    trajectory_set = _mapping(context.get("campaign_trajectories"))
+    case = _mapping(context.get("campaign_case"))
+    if not campaign_plan or not schedule or not trajectory_set or not case:
+        return {}
+    plan_sha256 = str(campaign_plan.get("plan_sha256", ""))
+    if len(plan_sha256) != 64:
+        return {}
+    schedule_roles = {
+        str(_mapping(item).get("role_id", "")): _mapping(item)
+        for item in schedule.get("roles", ())
+        if isinstance(item, Mapping)
+    }
+    drones = {
+        str(_mapping(item).get("role_id", "")): _mapping(item)
+        for item in case.get("drones", ())
+        if isinstance(item, Mapping)
+    }
+    trajectories = tuple(
+        _mapping(item)
+        for item in trajectory_set.get("trajectories", ())
+        if isinstance(item, Mapping)
+    )
+    roles = []
+    for trajectory in trajectories:
+        role_id = str(trajectory.get("role_id", ""))
+        drone = drones.get(role_id, {})
+        landing = _region_center(_mapping(drone.get("landing_region")))
+        role_schedule = schedule_roles.get(role_id, {})
+        if not role_id or landing is None:
+            continue
+        roles.append(
+            {
+                "role_id": role_id,
+                "vehicle_id": str(trajectory.get("vehicle_id", role_id)),
+                "waypoints": ({"end_m": landing.model_dump(mode="json")},),
+                "planned_duration_s": role_schedule.get(
+                    "source_schedule_duration_s", schedule.get("source_schedule_duration_s")
+                ),
+            }
+        )
+    constraints = _mapping(case.get("hard_constraints"))
+    volume = _mapping(constraints.get("flight_volume"))
+    return {
+        "plan_id": f"campaign-plan-{plan_sha256[:20]}",
+        "plan_sha256": plan_sha256,
+        "roles": tuple(roles),
+        "execution_programs": (),
+        "campaign_trajectory_sha256s": tuple(
+            canonical_sha256(trajectory) for trajectory in trajectories
+        ),
+        "profile_submission_id": trajectory_set.get("submission_id"),
+        "profile_audits": tuple(trajectory_set.get("profile_audits", ())),
+        "safety": {
+            "flight_volume_minimum_m": volume.get("minimum_m"),
+            "flight_volume_maximum_m": volume.get("maximum_m"),
+            "warning_separation_m": constraints.get("warning_separation_m"),
+            "critical_separation_m": constraints.get("critical_separation_m"),
+        },
+    }
+
+
+def _replacement_command_authorities(
+    context: Mapping[str, Any],
+) -> tuple[tuple[str, str, str, str], ...]:
+    """Return exact plan/program/trajectory tuples committed by the runtime head."""
+
+    trace = _mapping(context.get("campaign_execution_head_trace"))
+    output: list[tuple[str, str, str, str]] = []
+    for raw_record in trace.get("records", ()):
+        if not isinstance(raw_record, Mapping):
+            continue
+        record = _mapping(raw_record)
+        if str(record.get("disposition", "")) != "ACCEPTED":
+            continue
+        plan_sha256 = str(record.get("plan_sha256", ""))
+        trajectories = _mapping(record.get("replacement_trajectory_sha256_by_role"))
+        authorities = _mapping(record.get("replacement_authority_sha256_by_role"))
+        if len(plan_sha256) != 64 or set(trajectories) != set(authorities):
+            continue
+        plan_id = f"replan-{plan_sha256[:20]}"
+        output.extend(
+            (
+                plan_id,
+                plan_sha256,
+                str(trajectories[role_id]),
+                str(authorities[role_id]),
+            )
+            for role_id in sorted(trajectories)
+            if len(str(trajectories[role_id])) == 64
+            and len(str(authorities[role_id])) == 64
+        )
+    return tuple(output)
+
+
+def _region_center(region: Mapping[str, Any]) -> Vector3 | None:
+    minimum = _vector(region.get("minimum_m"))
+    maximum = _vector(region.get("maximum_m"))
+    if minimum is None or maximum is None:
+        return None
+    return Vector3(
+        x=(minimum.x + maximum.x) / 2.0,
+        y=(minimum.y + maximum.y) / 2.0,
+        z=(minimum.z + maximum.z) / 2.0,
+    )
+
+
 def _vehicle_metrics(
     *,
     vehicle_id: str,
@@ -260,6 +406,7 @@ def _vehicle_metrics(
     plan: Mapping[str, Any],
     assignments: Mapping[str, str],
     accepted_plan_sha256: str,
+    replacement_authorities: tuple[tuple[str, str, str, str], ...],
 ) -> VehicleExecutionMetrics:
     telemetry_events = _telemetry_events(events)
     commands = [item.payload.command for item in events if isinstance(item.payload, CommandPayload)]
@@ -269,7 +416,10 @@ def _vehicle_metrics(
         if isinstance(item.payload, AcknowledgementPayload)
     ]
     samples = [payload.telemetry.telemetry for _, payload in telemetry_events]
-    times = [item.recorded_at_utc.timestamp() for item, _ in telemetry_events]
+    # Dynamics and route-phase semantics live on the source clock. Wall receipt
+    # jitter is retained for delivery diagnostics but must not create fictitious
+    # acceleration, jerk, or stop findings.
+    times = [payload.telemetry.source_timestamp_s for _, payload in telemetry_events]
     estimates = [sample.position_m for sample in samples]
     truths = [sample.ground_truth_position_m for sample in samples]
     velocities = [sample.velocity_m_s for sample in samples]
@@ -296,6 +446,32 @@ def _vehicle_metrics(
     battery_values = [
         sample.battery_percent for sample in samples if sample.battery_percent is not None
     ]
+    motor_readings = [
+        reading
+        for sample in samples
+        if sample.motors is not None
+        for reading in sample.motors.readings
+        if reading.thrust_n > 0.0
+        or (reading.requested_thrust_n is not None and reading.requested_thrust_n > 0.0)
+    ]
+    requested_thrust = [
+        reading.requested_thrust_n
+        for reading in motor_readings
+        if reading.requested_thrust_n is not None
+    ]
+    applied_pwm = [
+        reading.applied_pwm_percent
+        for reading in motor_readings
+        if reading.applied_pwm_percent is not None
+    ]
+    thrust_headroom = [
+        max(0.0, reading.available_thrust_n - reading.thrust_n)
+        for reading in motor_readings
+        if reading.available_thrust_n is not None
+    ]
+    battery_current = [
+        sample.battery_current_a for sample in samples if sample.battery_current_a is not None
+    ]
     selected_positions = [
         truth or estimate for truth, estimate in zip(truths, estimates, strict=True)
     ]
@@ -315,13 +491,37 @@ def _vehicle_metrics(
         trajectory_sha256s,
         generated_stops,
         trajectory_tracking_errors,
-    ) = _trajectory_metrics(events, plan, accepted_plan_sha256)
+        trajectory_speed_errors,
+        route_unintended_stops,
+        profile_steady_speeds,
+        profile_steady_tracking_errors,
+    ) = _trajectory_metrics(
+        events,
+        plan,
+        accepted_plan_sha256,
+        replacement_authorities,
+    )
+    profile_audit = next(
+        (
+            _mapping(item)
+            for item in plan.get("profile_audits", ())
+            if isinstance(item, Mapping)
+            and str(_mapping(item).get("role_id", ""))
+            in {vehicle_id, *_roles_for_vehicle(vehicle_id, assignments)}
+        ),
+        {},
+    )
+    constant_path_profile = str(profile_audit.get("profile_kind", "")) == "CONSTANT_PATH_SPEED"
     (
         landing_goal_id,
         goal_attempt_count,
         descent_authorized,
         terminal_goal_margin,
         terminal_contact,
+        touchdown_target_center_error,
+        pre_contact_vertical_speed,
+        post_contact_settling,
+        motors_cut_after_contact,
     ) = _goal_capture_metrics(events)
     return VehicleExecutionMetrics(
         vehicle_id=vehicle_id,
@@ -348,7 +548,9 @@ def _vehicle_metrics(
         peak_speed_m_s=max((item for item in speeds if item is not None), default=None),
         peak_acceleration_m_s2=max(accelerations, default=None),
         peak_jerk_m_s3=max(jerks, default=None),
-        unintended_stop_count=_unintended_stops(speeds),
+        unintended_stop_count=(
+            route_unintended_stops if trajectory_count else _unintended_stops(speeds)
+        ),
         declared_hold_count=len(hold_commands),
         declared_hold_duration_s=sum(
             float(getattr(command, "duration_s", 0.0)) for command in hold_commands
@@ -372,22 +574,88 @@ def _vehicle_metrics(
         trajectory_generation_unintended_stop_count=generated_stops,
         trajectory_tracking_rms_error_m=_rms(trajectory_tracking_errors),
         trajectory_tracking_max_error_m=max(trajectory_tracking_errors, default=None),
+        trajectory_speed_rms_error_m_s=_rms(trajectory_speed_errors),
+        trajectory_speed_max_error_m_s=max(trajectory_speed_errors, default=None),
+        profile_submission_id=(
+            str(plan["profile_submission_id"]) if plan.get("profile_submission_id") else None
+        ),
+        profile_kind=(
+            str(profile_audit["profile_kind"]) if profile_audit.get("profile_kind") else None
+        ),
+        planned_profile_conformance_passed=(
+            bool(profile_audit["passed"]) if isinstance(profile_audit.get("passed"), bool) else None
+        ),
+        planned_profile_maximum_fractional_error=(
+            float(profile_audit["maximum_fractional_error"])
+            if isinstance(profile_audit.get("maximum_fractional_error"), (int, float))
+            else None
+        ),
+        profile_steady_speed_mean_m_s=(
+            sum(profile_steady_speeds) / len(profile_steady_speeds)
+            if constant_path_profile and profile_steady_speeds
+            else None
+        ),
+        profile_steady_speed_p05_m_s=(
+            _percentile(profile_steady_speeds, 0.05)
+            if constant_path_profile and profile_steady_speeds
+            else None
+        ),
+        profile_steady_speed_p95_m_s=(
+            _percentile(profile_steady_speeds, 0.95)
+            if constant_path_profile and profile_steady_speeds
+            else None
+        ),
+        profile_steady_speed_ripple_m_s=(
+            _percentile(profile_steady_speeds, 0.95) - _percentile(profile_steady_speeds, 0.05)
+            if constant_path_profile and profile_steady_speeds
+            else None
+        ),
+        profile_steady_speed_tracking_rms_error_m_s=(
+            _rms(profile_steady_tracking_errors) if profile_audit else None
+        ),
+        profile_steady_speed_tracking_max_error_m_s=(
+            max(profile_steady_tracking_errors, default=None) if profile_audit else None
+        ),
+        peak_requested_motor_thrust_n=max(requested_thrust, default=None),
+        peak_applied_pwm_percent=max(applied_pwm, default=None),
+        minimum_motor_thrust_headroom_n=min(thrust_headroom, default=None),
+        motor_saturation_sample_count=sum(
+            1
+            for sample in samples
+            if sample.motors is not None
+            and any(reading.saturated for reading in sample.motors.readings)
+        ),
+        peak_battery_current_a=max(battery_current, default=None),
         landing_goal_id=landing_goal_id,
         goal_capture_attempt_count=goal_attempt_count,
         descent_authorized=descent_authorized,
         terminal_goal_capture_margin_m=terminal_goal_margin,
         terminal_contact=terminal_contact,
+        touchdown_target_center_error_m=touchdown_target_center_error,
+        pre_contact_vertical_speed_m_s=pre_contact_vertical_speed,
+        post_contact_settling_s=post_contact_settling,
+        motors_cut_after_contact=motors_cut_after_contact,
     )
 
 
 def _goal_capture_metrics(
     events: Sequence[EvidenceEvent],
-) -> tuple[str | None, int | None, bool | None, float | None, str | None]:
+) -> tuple[
+    str | None,
+    int | None,
+    bool | None,
+    float | None,
+    str | None,
+    float | None,
+    float | None,
+    float | None,
+    bool | None,
+]:
     results = [
         event.payload.result for event in events if isinstance(event.payload, MissionResultPayload)
     ]
     if not results or not results[-1].goal_captures:
-        return None, None, None, None, None
+        return None, None, None, None, None, None, None, None, None
     capture = _mapping(results[-1].goal_captures[-1])
     goal = _mapping(capture.get("goal"))
     target = _vector(goal.get("landing_target_m"))
@@ -415,6 +683,26 @@ def _goal_capture_metrics(
         bool(descent) if isinstance(descent, bool) else None,
         margin,
         str(capture["terminal_contact"]) if capture.get("terminal_contact") else None,
+        (
+            float(capture["target_center_horizontal_error_m"])
+            if isinstance(capture.get("target_center_horizontal_error_m"), (int, float))
+            else None
+        ),
+        (
+            float(capture["pre_contact_vertical_speed_m_s"])
+            if isinstance(capture.get("pre_contact_vertical_speed_m_s"), (int, float))
+            else None
+        ),
+        (
+            float(capture["post_contact_settling_s"])
+            if isinstance(capture.get("post_contact_settling_s"), (int, float))
+            else None
+        ),
+        (
+            bool(capture["motors_cut_after_contact"])
+            if isinstance(capture.get("motors_cut_after_contact"), bool)
+            else None
+        ),
     )
 
 
@@ -422,7 +710,18 @@ def _trajectory_metrics(
     events: Sequence[EvidenceEvent],
     plan: Mapping[str, Any],
     accepted_plan_sha256: str,
-) -> tuple[int, bool | None, tuple[str, ...], int, list[float]]:
+    replacement_authorities: tuple[tuple[str, str, str, str], ...],
+) -> tuple[
+    int,
+    bool | None,
+    tuple[str, ...],
+    int,
+    list[float],
+    list[float],
+    int,
+    list[float],
+    list[float],
+]:
     selected: list[tuple[int, ExecuteTrajectoryCommand]] = []
     for index, event in enumerate(events):
         if isinstance(event.payload, CommandPayload) and isinstance(
@@ -431,7 +730,7 @@ def _trajectory_metrics(
         ):
             selected.append((index, event.payload.command.payload))
     if not selected:
-        return 0, None, (), 0, []
+        return 0, None, (), 0, [], [], 0, [], []
 
     expected_plan_id = str(plan.get("plan_id", ""))
     expected_programs = {
@@ -439,26 +738,60 @@ def _trajectory_metrics(
         for program in plan.get("execution_programs", [])
         if isinstance(program, Mapping)
     }
+    expected_campaign_trajectories = {
+        str(value) for value in plan.get("campaign_trajectory_sha256s", ()) if value
+    }
+    result_program_sha256s = {
+        str(value)
+        for event in events
+        if isinstance(event.payload, MissionResultPayload)
+        for value in (getattr(event.payload.result, "execution_program_sha256", None),)
+        if value
+    }
     identity_match = True
     trajectory_hashes: list[str] = []
     generated_stops = 0
     tracking_errors: list[float] = []
+    speed_errors: list[float] = []
+    profile_steady_speeds: list[float] = []
+    profile_steady_tracking_errors: list[float] = []
+    route_unintended_stops = 0
     for command_index, command in selected:
         trajectory_hashes.append(command.trajectory_sha256)
-        program_matches = any(
-            canonical_sha256(program) == command.execution_program_sha256
-            and command.trajectory_sha256
-            in {
-                str(_mapping(operation).get("trajectory_sha256", ""))
-                for operation in program.get("operations", [])
-                if isinstance(operation, Mapping)
-            }
-            for program in expected_programs.values()
+        program_matches = (
+            any(
+                canonical_sha256(program) == command.execution_program_sha256
+                and command.trajectory_sha256
+                in {
+                    str(_mapping(operation).get("trajectory_sha256", ""))
+                    for operation in program.get("operations", [])
+                    if isinstance(operation, Mapping)
+                }
+                for program in expected_programs.values()
+            )
+            if expected_programs
+            else (
+                command.trajectory_sha256 in expected_campaign_trajectories
+                and command.execution_program_sha256 in result_program_sha256s
+            )
         )
-        identity_match = identity_match and (
+        original_authority_matches = (
             command.accepted_plan_id == expected_plan_id
             and command.accepted_plan_sha256 == accepted_plan_sha256
             and program_matches
+        )
+        replacement_authority_matches = any(
+            (
+                command.accepted_plan_id,
+                command.accepted_plan_sha256,
+                command.trajectory_sha256,
+                command.execution_program_sha256,
+            )
+            == authority
+            for authority in replacement_authorities
+        )
+        identity_match = identity_match and (
+            original_authority_matches or replacement_authority_matches
         )
         declared_stops = set(command.trajectory.declared_stop_sequences)
         generated_stops += sum(
@@ -487,6 +820,14 @@ def _trajectory_metrics(
         ]
         if not samples:
             continue
+        route_times = [envelope.source_timestamp_s for envelope in samples]
+        route_speeds = [
+            _norm(envelope.telemetry.velocity_m_s)
+            if envelope.telemetry.velocity_m_s is not None
+            else None
+            for envelope in samples
+        ]
+        route_unintended_stops += _unintended_stops_timed(route_speeds, route_times)
         source_start_s = samples[0].source_timestamp_s
         for envelope in samples:
             actual = envelope.telemetry.ground_truth_position_m or envelope.telemetry.position_m
@@ -497,12 +838,24 @@ def _trajectory_metrics(
                 envelope.source_timestamp_s - source_start_s,
             )
             tracking_errors.append(_distance(actual, desired.position_m))
+            actual_velocity = envelope.telemetry.velocity_m_s
+            if actual_velocity is not None:
+                actual_speed = _norm(actual_velocity)
+                desired_speed = _norm(desired.velocity_m_s)
+                speed_errors.append(abs(actual_speed - desired_speed))
+                if desired_speed > _STOP_SPEED_M_S and _norm(desired.acceleration_m_s2) <= 1e-6:
+                    profile_steady_speeds.append(actual_speed)
+                    profile_steady_tracking_errors.append(abs(actual_speed - desired_speed))
     return (
         len(selected),
         identity_match,
         tuple(sorted(set(trajectory_hashes))),
         generated_stops,
         tracking_errors,
+        speed_errors,
+        route_unintended_stops,
+        profile_steady_speeds,
+        profile_steady_tracking_errors,
     )
 
 
@@ -601,9 +954,19 @@ def _evidence_completeness(
     events_by_vehicle: Mapping[str, Sequence[EvidenceEvent]],
     context: Mapping[str, Any],
     vehicle_count: int,
+    vehicles: Sequence[VehicleExecutionMetrics],
 ) -> EvidenceCompleteness:
     checks = {
-        "accepted_plan": bool(_mapping(context.get("mission_plan"))),
+        # A complete archive must not merely contain an accepted-plan document: the
+        # command evidence must resolve back to that exact accepted authority.
+        "accepted_authority_identity": all(
+            vehicle.accepted_plan_identity_match is not False for vehicle in vehicles
+        ),
+        "accepted_plan": bool(_mapping(context.get("mission_plan")))
+        or all(
+            bool(_mapping(context.get(key)))
+            for key in ("campaign_plan", "campaign_schedule", "campaign_trajectories")
+        ),
         "acknowledgements": all(
             any(isinstance(item.payload, AcknowledgementPayload) for item in events)
             for events in events_by_vehicle.values()
@@ -615,7 +978,10 @@ def _evidence_completeness(
             for events in events_by_vehicle.values()
         ),
         "deployment": bool(_mapping(context.get("deployment"))),
-        "execution_result": bool(_mapping(context.get("execution_result"))),
+        "dynamic_replanning": _dynamic_replanning_evidence_complete(context),
+        "execution_result": bool(
+            _mapping(context.get("execution_result") or context.get("fleet_result"))
+        ),
         "fleet_events": vehicle_count == 1 or bool(context.get("fleet_events")),
         "provenance": all(_run_has_provenance(run) for run in runs),
         "telemetry": all(
@@ -627,6 +993,83 @@ def _evidence_completeness(
     present = tuple(sorted(name for name, value in checks.items() if value))
     missing = tuple(sorted(name for name, value in checks.items() if not value))
     return EvidenceCompleteness(complete=not missing, present=present, missing=missing)
+
+
+def _dynamic_replanning_evidence_complete(context: Mapping[str, Any]) -> bool:
+    """Require runtime replacement proof for every accepted changed-world event."""
+
+    case = _mapping(context.get("campaign_case"))
+    semantics = _mapping(case.get("semantics"))
+    environment_kinds = {
+        "OBSTACLE_ADDED",
+        "OBSTACLE_MOVED",
+        "OBSTACLE_REMOVED",
+        "PASSAGE_CLOSED",
+        "PASSAGE_OPENED",
+    }
+    expected_event_ids = {
+        str(_mapping(item).get("event_id", ""))
+        for item in semantics.get("scenario_events", ())
+        if isinstance(item, Mapping)
+        and str(_mapping(item).get("kind", "")) in environment_kinds
+        and str(_mapping(item).get("expected_disposition", "")) == "ACCEPTED_UPDATE"
+    }
+    expected_event_ids.discard("")
+    if not expected_event_ids:
+        return True
+
+    expected_roles = {
+        str(_mapping(item).get("role_id", ""))
+        for item in case.get("drones", ())
+        if isinstance(item, Mapping)
+    }
+    expected_roles.discard("")
+    trace = _mapping(context.get("campaign_execution_head_trace"))
+    if trace.get("enabled") is not True:
+        return False
+    accepted_records: dict[str, Mapping[str, Any]] = {}
+    for raw_record in trace.get("records", ()):
+        if not isinstance(raw_record, Mapping):
+            continue
+        record = _mapping(raw_record)
+        if str(record.get("disposition", "")) == "ACCEPTED":
+            accepted_records[str(record.get("event_id", ""))] = record
+    if not expected_event_ids.issubset(accepted_records):
+        return False
+    required_hashes = (
+        "proposal_sha256",
+        "decision_sha256",
+        "plan_sha256",
+        "replacement_world_sha256",
+    )
+    for event_id in expected_event_ids:
+        record = accepted_records[event_id]
+        if record.get("execution_disposition") != "DISPATCHED":
+            return False
+        if any(len(str(record.get(key, ""))) != 64 for key in required_hashes):
+            return False
+        trajectories = _mapping(record.get("replacement_trajectory_sha256_by_role"))
+        authorities = _mapping(record.get("replacement_authority_sha256_by_role"))
+        if set(trajectories) != expected_roles or set(authorities) != expected_roles:
+            return False
+        prepared_roles = record.get("replacement_prepared_role_ids")
+        dispatched_roles = record.get("replacement_dispatch_started_role_ids")
+        if not isinstance(prepared_roles, Sequence) or isinstance(
+            prepared_roles, (str, bytes)
+        ):
+            return False
+        if not isinstance(dispatched_roles, Sequence) or isinstance(
+            dispatched_roles, (str, bytes)
+        ):
+            return False
+        if set(prepared_roles) != expected_roles or set(dispatched_roles) != expected_roles:
+            return False
+        if any(len(str(value)) != 64 for value in (*trajectories.values(), *authorities.values())):
+            return False
+        reaction = _mapping(record.get("reaction_horizon"))
+        if not reaction or not isinstance(record.get("planning_latency_s"), (int, float)):
+            return False
+    return True
 
 
 def _operator_summary(
@@ -699,6 +1142,17 @@ def _run_bundle_view(run: Mapping[str, Any]) -> dict[str, Any]:
         "snapshot": json.loads(str(run["snapshot_json"])),
         "result": json.loads(str(run["result_json"])) if run.get("result_json") else None,
     }
+
+
+def _roles_for_vehicle(
+    vehicle_id: str,
+    assignments: Mapping[str, str],
+) -> tuple[str, ...]:
+    return tuple(
+        role_id
+        for role_id, assigned_vehicle_id in assignments.items()
+        if assigned_vehicle_id == vehicle_id
+    )
 
 
 def _vehicle_plan(
@@ -825,6 +1279,35 @@ def _unintended_stops(speeds: Sequence[float | None]) -> int:
     return count
 
 
+def _unintended_stops_timed(
+    speeds: Sequence[float | None],
+    times: Sequence[float],
+    *,
+    threshold_m_s: float = _STOP_SPEED_M_S,
+    persistence_s: float = 0.20,
+) -> int:
+    if len(speeds) != len(times):
+        raise ValueError("stop detector speed/time evidence lengths differ")
+    moving = [
+        index for index, speed in enumerate(speeds) if speed is not None and speed > threshold_m_s
+    ]
+    if len(moving) < 2:
+        return 0
+    first_moving, last_moving = moving[0], moving[-1]
+    interval_started_s: float | None = None
+    count = 0
+    for index in range(first_moving + 1, last_moving + 1):
+        speed = speeds[index]
+        stopped = speed is not None and speed <= threshold_m_s
+        if stopped and interval_started_s is None:
+            interval_started_s = times[index]
+        if not stopped and interval_started_s is not None:
+            if times[index] - interval_started_s >= persistence_s:
+                count += 1
+            interval_started_s = None
+    return count
+
+
 def _path_length(values: Sequence[Vector3 | None]) -> float | None:
     present = [value for value in values if value is not None]
     if not present:
@@ -875,6 +1358,17 @@ def _norm(value: Vector3) -> float:
 
 def _rms(values: Sequence[float]) -> float | None:
     return math.sqrt(sum(value * value for value in values) / len(values)) if values else None
+
+
+def _percentile(values: Sequence[float], quantile: float) -> float:
+    ordered = sorted(values)
+    position = (len(ordered) - 1) * quantile
+    lower = math.floor(position)
+    upper = math.ceil(position)
+    if lower == upper:
+        return ordered[lower]
+    weight = position - lower
+    return ordered[lower] * (1.0 - weight) + ordered[upper] * weight
 
 
 def _last_present(values: Sequence[T | None]) -> T | None:

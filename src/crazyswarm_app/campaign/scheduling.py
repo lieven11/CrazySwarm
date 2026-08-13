@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from crazyswarm_app.campaign.models import CampaignCase
 from crazyswarm_app.campaign.planner import (
@@ -56,6 +56,8 @@ class GroundFirstSchedule(ContractModel):
     schema_version: Literal[1] = 1
     case_sha256: SHA256
     candidate_sha256: SHA256
+    planning_submission_id: Identifier | None = None
+    planning_submission_sha256: SHA256 | None = None
     roles: tuple[RoleLaunchSchedule, ...]
     source_schedule_duration_s: float = Field(ge=0.0)
     wall_watchdog_s: float = Field(gt=0.0)
@@ -63,8 +65,21 @@ class GroundFirstSchedule(ContractModel):
     watchdog_guard_s: float = Field(ge=0.0)
     schedule_sha256: SHA256
 
+    @model_validator(mode="after")
+    def planning_authority_is_paired(self) -> GroundFirstSchedule:
+        if (self.planning_submission_id is None) != (
+            self.planning_submission_sha256 is None
+        ):
+            raise ValueError("schedule planning submission identity must be complete")
+        return self
+
     def canonical_payload(self) -> dict[str, object]:
-        return self.model_dump(mode="python", exclude={"schedule_sha256"})
+        payload = self.model_dump(mode="python", exclude={"schedule_sha256"})
+        payload.pop("schema_version", None)
+        if self.planning_submission_id is None:
+            payload.pop("planning_submission_id", None)
+            payload.pop("planning_submission_sha256", None)
+        return payload
 
 
 def build_ground_first_schedule(
@@ -74,6 +89,8 @@ def build_ground_first_schedule(
     takeoff_duration_s: float = DEFAULT_TAKEOFF_DURATION_S,
     stabilization_s: float = DEFAULT_STABILIZATION_S,
     landing_duration_s: float = DEFAULT_LANDING_DURATION_S,
+    planning_submission_id: str | None = None,
+    planning_submission_sha256: str | None = None,
 ) -> GroundFirstSchedule:
     drone_by_role = {drone.role_id: drone for drone in case.drones}
     roles = []
@@ -194,6 +211,13 @@ def build_ground_first_schedule(
         "minimum_realtime_factor": case.hard_constraints.minimum_realtime_factor,
         "watchdog_guard_s": case.hard_constraints.watchdog_guard_s,
     }
+    if planning_submission_id is not None or planning_submission_sha256 is not None:
+        payload.update(
+            {
+                "planning_submission_id": planning_submission_id,
+                "planning_submission_sha256": planning_submission_sha256,
+            }
+        )
     return GroundFirstSchedule(**payload, schedule_sha256=canonical_sha256(payload))
 
 

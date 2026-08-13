@@ -169,14 +169,33 @@ class MissionContext:
         )
         self.checkpoint()
 
-    async def land(self, *, duration_s: float) -> None:
+    async def land(
+        self,
+        *,
+        duration_s: float,
+        target_position_m: Vector3 | None = None,
+        goal_region: LandingGoalRegion | None = None,
+    ) -> None:
         self.checkpoint()
-        self._record_intent("land", {"duration_s": duration_s})
+        self._record_intent(
+            "land",
+            {
+                "duration_s": duration_s,
+                "target_position_m": (
+                    target_position_m.model_dump(mode="json")
+                    if target_position_m is not None
+                    else None
+                ),
+                "landing_goal_id": goal_region.goal_id if goal_region is not None else None,
+            },
+        )
         await self.fleet_authority.execute(
             lambda binding: self.supervisor.land(
                 self.vehicle_id,
                 self.owner_id,
                 duration_s=duration_s,
+                target_position_m=target_position_m,
+                goal_region=goal_region,
                 source=CommandSource.MISSION,
                 mission_run_id=self.mission_run_id,
                 fleet_binding=binding,
@@ -249,6 +268,95 @@ class MissionContext:
         )
         self.checkpoint()
 
+    async def stop_and_hold_for_replan(self, *, reason: str) -> None:
+        """Cancel future route authority and establish a stationary cutover state."""
+
+        self.checkpoint()
+        await self._wait_for_command_permission()
+        self._record_intent("replan_stop_and_hold", {"reason": reason})
+        # Replanning cancellation must be able to preempt the serialized ordinary
+        # command currently holding the fleet-authority guard.  This is the same
+        # bounded preemption lane used by the health watchdog; the binding itself
+        # remains immutable during the operation.
+        await self.fleet_authority.evaluate_health(
+            lambda binding: self.supervisor.stop_and_hold(
+                self.vehicle_id,
+                self.owner_id,
+                source=CommandSource.SUPERVISOR,
+                mission_run_id=self.mission_run_id,
+                fleet_binding=binding,
+            )
+        )
+        self.checkpoint()
+
+    async def execute_replanned_trajectory(
+        self,
+        trajectory: TimeParameterizedTrajectory,
+        *,
+        accepted_plan_id: str,
+        accepted_plan_sha256: str,
+        replacement_authority_sha256: str,
+        proposal_sha256: str,
+    ) -> None:
+        """Execute a trajectory admitted by a changed-world proposal and epoch commit."""
+
+        self.checkpoint()
+        await self._wait_for_command_permission()
+        self._record_intent(
+            "execute_replanned_trajectory",
+            {
+                "accepted_plan_id": accepted_plan_id,
+                "accepted_plan_sha256": accepted_plan_sha256,
+                "replacement_authority_sha256": replacement_authority_sha256,
+                "proposal_sha256": proposal_sha256,
+                "trajectory_id": trajectory.trajectory_id,
+                "trajectory_sha256": trajectory.sha256,
+                "route_sha256": trajectory.route_sha256,
+                "duration_s": trajectory.duration_s,
+            },
+        )
+        command = ExecuteTrajectoryCommand(
+            accepted_plan_id=accepted_plan_id,
+            accepted_plan_sha256=accepted_plan_sha256,
+            execution_program_sha256=replacement_authority_sha256,
+            trajectory_sha256=trajectory.sha256,
+            route_sha256=trajectory.route_sha256,
+            trajectory=trajectory,
+        )
+        await self.fleet_authority.execute(
+            lambda binding: self.supervisor.execute_trajectory(
+                self.vehicle_id,
+                self.owner_id,
+                command,
+                source=CommandSource.SUPERVISOR,
+                mission_run_id=self.mission_run_id,
+                fleet_binding=binding,
+            )
+        )
+        self.checkpoint()
+
+    def validate_replanned_trajectory(
+        self,
+        trajectory: TimeParameterizedTrajectory,
+        *,
+        accepted_plan_id: str,
+        accepted_plan_sha256: str,
+        replacement_authority_sha256: str,
+    ) -> None:
+        command = ExecuteTrajectoryCommand(
+            accepted_plan_id=accepted_plan_id,
+            accepted_plan_sha256=accepted_plan_sha256,
+            execution_program_sha256=replacement_authority_sha256,
+            trajectory_sha256=trajectory.sha256,
+            route_sha256=trajectory.route_sha256,
+            trajectory=trajectory,
+        )
+        self.supervisor.validate_trajectory_command(
+            self.vehicle_id,
+            self.owner_id,
+            command,
+        )
+
     async def capture_and_land(
         self,
         goal: LandingGoalRegion,
@@ -267,6 +375,9 @@ class MissionContext:
             observation = await self.observe(timeout_s=0.5)
             attempt = self._goal_capture_attempt(goal, observation, attempt_number)
             attempts.append(attempt)
+            # Region capture authorizes descent. Center guidance remains active in
+            # the LandCommand itself, so an already-safe approach does not add a
+            # discontinuous pre-descent move to the accepted mission program.
             if attempt.aligned:
                 captured = True
                 break
@@ -346,7 +457,20 @@ class MissionContext:
                 details={"goal_id": goal.goal_id, "attempt_count": len(attempts)},
             )
 
-        await self.land(duration_s=duration_s)
+        terminal_target = (
+            goal.diversion_target_m
+            if diverted and goal.diversion_target_m is not None
+            else goal.landing_target_m
+        )
+        await self.land(
+            duration_s=duration_s,
+            target_position_m=Vector3(
+                x=terminal_target.x,
+                y=terminal_target.y,
+                z=0.0,
+            ),
+            goal_region=goal,
+        )
         terminal = self.supervisor.session(self.vehicle_id).telemetry
         terminal_sample = terminal.telemetry if terminal is not None else None
         terminal_estimate = terminal_sample.position_m if terminal_sample is not None else None
@@ -356,11 +480,6 @@ class MissionContext:
         terminal_velocity = terminal_sample.velocity_m_s if terminal_sample is not None else None
         terminal_speed = _vector_norm(terminal_velocity)
         selected_terminal = terminal_truth or terminal_estimate
-        terminal_target = (
-            goal.diversion_target_m
-            if diverted and goal.diversion_target_m is not None
-            else goal.landing_target_m
-        )
         terminal_inside = (
             selected_terminal is not None
             and math.hypot(
@@ -378,6 +497,20 @@ class MissionContext:
             if terminal_inside and terminal_state == "READY"
             else "NO_CONTACT_EVIDENCE"
         )
+        landing_evidence = getattr(
+            self.supervisor.session(self.vehicle_id).vehicle,
+            "last_landing_evidence",
+            None,
+        )
+        landing_evidence = landing_evidence if isinstance(landing_evidence, dict) else {}
+        target_center_horizontal_error_m = (
+            math.hypot(
+                selected_terminal.x - terminal_target.x,
+                selected_terminal.y - terminal_target.y,
+            )
+            if selected_terminal is not None
+            else None
+        )
         outcome = (
             GoalCaptureOutcome.DIVERTED
             if diverted
@@ -394,6 +527,22 @@ class MissionContext:
             terminal_estimated_position_m=terminal_estimate,
             terminal_truth_position_m=terminal_truth,
             terminal_speed_m_s=terminal_speed,
+            target_center_horizontal_error_m=target_center_horizontal_error_m,
+            alignment_completed_source_timestamp_s=landing_evidence.get(
+                "alignment_completed_source_timestamp_s"
+            ),
+            pre_contact_vertical_speed_m_s=landing_evidence.get(
+                "pre_contact_vertical_speed_m_s"
+            ),
+            contact_source_timestamp_s=landing_evidence.get(
+                "contact_source_timestamp_s"
+            ),
+            disarmed_source_timestamp_s=landing_evidence.get(
+                "disarmed_source_timestamp_s"
+            ),
+            post_contact_settling_s=landing_evidence.get("post_contact_settling_s"),
+            motors_cut_after_contact=landing_evidence.get("motors_cut_after_contact"),
+            correction_count=max(0, len(attempts) - 1),
             terminal_state=terminal_state,
             terminal_contact=contact,
         )
@@ -416,6 +565,7 @@ class MissionContext:
             attempt_count=len(attempts),
             descent_authorized=False,
             outcome=GoalCaptureOutcome.REJECTED,
+            correction_count=max(0, len(attempts) - 1),
             terminal_contact="DESCENT_NOT_AUTHORIZED",
         )
         self.goal_captures.append(record.model_dump(mode="json"))

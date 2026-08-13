@@ -7,6 +7,8 @@ from contextlib import suppress
 from typing import TYPE_CHECKING
 
 from crazyswarm_app.campaign.execution import compile_campaign_execution_programs
+from crazyswarm_app.campaign.execution_head import CampaignExecutionHead
+from crazyswarm_app.campaign.scenario import compile_scenario_trace
 from crazyswarm_app.campaign.service import (
     CampaignExecutionRequest,
     CampaignRunMode,
@@ -29,7 +31,14 @@ from crazyswarm_app.fleet.artifacts import (
 )
 from crazyswarm_app.fleet.coordinator import FleetCoordinator, FleetStatus
 from crazyswarm_app.fleet.preparation import FleetPreparation
-from crazyswarm_app.missions.script import MissionFileRecord, ScriptMission, parse_python_mission
+from crazyswarm_app.missions.base import MissionContext
+from crazyswarm_app.missions.script import (
+    EmptyScriptParameters,
+    MissionFileRecord,
+    ScriptMission,
+    execute_accepted_program,
+    parse_python_mission,
+)
 from crazyswarm_app.simulation.clock import ClockMode
 from crazyswarm_app.vehicles.providers import SoftwareBackendVehicleProvider
 
@@ -53,11 +62,18 @@ class FastSimCampaignExecutor:
         runtime = self.runtime
         if request.case.drone_count > 3:
             raise ValueError("Fast Sim campaign execution is bounded to three drones")
+        scenario_trace = compile_scenario_trace(request.case)
+        if not scenario_trace.all_expected_dispositions_observed:
+            raise ValueError("campaign scenario disposition differs from its causal oracle")
         await runtime.cleanup_completed_execution_vehicles()
         runtime.supervisor.set_mode(OperatingMode.SIM)
 
         record = _campaign_mission(request)
-        mission = ScriptMission(record)
+        execution_head = CampaignExecutionHead(
+            case=request.case,
+            planning_submission=request.resolved_package.planning_submission,
+        )
+        mission = _HeadAwareCampaignMission(record, execution_head)
         runtime.missions.register(mission, replace=True)
         programs = compile_campaign_execution_programs(
             case=request.case,
@@ -78,12 +94,24 @@ class FastSimCampaignExecutor:
             if controls is None:
                 raise RuntimeError("campaign executor received a non-simulation vehicle")
             controls.reset()
-            controls.clock.mode = (
-                ClockMode.ACCELERATED
-                if request.mode is CampaignRunMode.AUTOMATED_ACCELERATED
-                else ClockMode.REALTIME
-            )
-            controls.clock.speed = 1.0
+            if (
+                request.mode is CampaignRunMode.AUTOMATED_ACCELERATED
+                and execution_head.enabled
+            ):
+                # A paced accelerated clock gives the source-time execution head a
+                # deterministic observation boundary.  An unpaced coroutine clock
+                # can complete a whole route before another task observes its first
+                # event, which is useful for batch simulation but invalid for an
+                # in-flight reaction-horizon qualification.
+                controls.clock.mode = ClockMode.REALTIME
+                controls.clock.speed = 20.0
+            else:
+                controls.clock.mode = (
+                    ClockMode.ACCELERATED
+                    if request.mode is CampaignRunMode.AUTOMATED_ACCELERATED
+                    else ClockMode.REALTIME
+                )
+                controls.clock.speed = 1.0
 
         preparation = FleetPreparation(
             execution_session_id=request.run_id,
@@ -135,6 +163,7 @@ class FastSimCampaignExecutor:
         execution_task = asyncio.create_task(
             coordinator.run(assignments), name=f"campaign-fleet-{request.run_id}"
         )
+        runtime.track_fleet_task(request.run_id, execution_task)
         cancellation_task = asyncio.create_task(
             cancel_event.wait(), name=f"campaign-cancel-{request.run_id}"
         )
@@ -158,15 +187,19 @@ class FastSimCampaignExecutor:
                 runtime.missions.unregister(record.mission_id)
 
         context = {
+            "campaign_locked_inputs": request.locked_inputs.model_dump(mode="json"),
             "campaign_case": request.case.model_dump(mode="json"),
             "campaign_case_sha256": request.case.case_sha256,
             "campaign_plan": request.plan.model_dump(mode="json"),
             "campaign_schedule": request.schedule.model_dump(mode="json"),
             "campaign_trajectories": request.trajectories.model_dump(mode="json"),
+            "campaign_scenario_trace": scenario_trace.model_dump(mode="json"),
+            "campaign_execution_head_trace": execution_head.trace(),
             "deployment": deployment.model_dump(mode="json"),
             "binding": binding.model_dump(mode="json"),
             "assignments": assignments,
             "fleet_result": result.model_dump(mode="json"),
+            "fleet_events": tuple(item.model_dump(mode="json") for item in result.events),
             "timing_trace": (
                 runtime.recorder.timing_trace.snapshot().model_dump(mode="json")
                 if runtime.recorder.timing_trace is not None
@@ -204,15 +237,54 @@ class FastSimCampaignExecutor:
                 **manifest,
                 "case_sha256": request.case.case_sha256,
                 "plan_sha256": request.plan.plan_sha256,
+                "planning_submission_id": request.locked_inputs.planning_submission_id,
+                "planning_submission_sha256": (
+                    request.locked_inputs.planning_submission_sha256
+                ),
+                "resolved_planning_package_sha256": (
+                    request.locked_inputs.resolved_planning_package_sha256
+                ),
             },
             bundle={
                 **bundle,
                 "case_sha256": request.case.case_sha256,
                 "campaign_plan": request.plan.model_dump(mode="json"),
+                "planning_submission_id": request.locked_inputs.planning_submission_id,
+                "planning_submission_sha256": (
+                    request.locked_inputs.planning_submission_sha256
+                ),
+                "resolved_planning_package_sha256": (
+                    request.locked_inputs.resolved_planning_package_sha256
+                ),
             },
             evaluation=evaluation,
             csv_bytes_sha256=hashlib.sha256(csv_artifact.content).hexdigest(),
             csv_content=csv_artifact.content,
+        )
+
+
+class _HeadAwareCampaignMission(ScriptMission):
+    def __init__(
+        self,
+        record: MissionFileRecord,
+        execution_head: CampaignExecutionHead,
+    ) -> None:
+        super().__init__(record)
+        self.execution_head = execution_head
+
+    async def execute(
+        self,
+        context: MissionContext,
+        parameters: EmptyScriptParameters,
+    ) -> None:
+        del parameters
+        if context.accepted_execution_program is None:
+            await super().execute(context, EmptyScriptParameters())
+            return
+        await execute_accepted_program(
+            self.record,
+            context,
+            trajectory_executor=self.execution_head.execute,
         )
 
 

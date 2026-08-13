@@ -12,9 +12,14 @@ from itertools import combinations, pairwise
 from pathlib import Path
 from typing import Any, Literal, Protocol
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
-from crazyswarm_app.campaign.models import CampaignCase
+from crazyswarm_app.campaign.models import (
+    BehaviorOracleKind,
+    CampaignCase,
+    ScenarioEventKind,
+    ScenarioExpectedDisposition,
+)
 from crazyswarm_app.domain.models import ContractModel, Identifier, Vector3
 from crazyswarm_app.domain.simulation import SHA256, canonical_sha256
 
@@ -44,6 +49,22 @@ class MetricDistribution(ContractModel):
     p50: float | None = None
     p95: float | None = None
     peak: float | None = None
+
+
+class KinematicsGateReconciliation(ContractModel):
+    raw_scope: Literal["ALL_RECORDED_AIRBORNE_SAMPLES"] = (
+        "ALL_RECORDED_AIRBORNE_SAMPLES"
+    )
+    processed_scope: Literal["SMOOTHED_ROUTE_WINDOW"] = "SMOOTHED_ROUTE_WINDOW"
+    raw_horizontal_speed_peak_m_s: float | None = Field(default=None, ge=0.0)
+    raw_vertical_speed_peak_m_s: float | None = Field(default=None, ge=0.0)
+    processed_horizontal_speed_peak_m_s: float | None = Field(default=None, ge=0.0)
+    processed_vertical_speed_peak_m_s: float | None = Field(default=None, ge=0.0)
+    maximum_horizontal_speed_m_s: float = Field(gt=0.0)
+    maximum_vertical_speed_m_s: float = Field(gt=0.0)
+    raw_gate_passed: bool | None = None
+    processed_gate_passed: bool | None = None
+    gate_disagreement: bool
 
 
 class VehicleTimeline(ContractModel):
@@ -76,6 +97,7 @@ class VehicleAnalysis(ContractModel):
     speed_m_s: MetricDistribution
     acceleration_m_s2: MetricDistribution
     jerk_m_s3: MetricDistribution
+    kinematics_gate_reconciliation: KinematicsGateReconciliation
     unintended_stop_count: int = Field(ge=0)
     duplicate_sample_count: int = Field(ge=0)
     missing_sequence_count: int = Field(ge=0)
@@ -102,6 +124,13 @@ class LandingComparison(ContractModel):
     estimated_touchdown_m: Vector3 | None = None
     truth_touchdown_m: Vector3 | None = None
     displayed_goal_marker_m: Vector3 | None = None
+    landing_goal_id: Identifier | None = None
+    terminal_contact: str | None = None
+    pre_contact_vertical_speed_m_s: float | None = Field(default=None, ge=0.0)
+    contact_source_timestamp_s: float | None = Field(default=None, ge=0.0)
+    post_contact_settling_s: float | None = Field(default=None, ge=0.0)
+    disarmed_source_timestamp_s: float | None = Field(default=None, ge=0.0)
+    motors_cut_after_contact: bool | None = None
     coordinate_conversion_chain: tuple[str, ...] = ("world -> world",)
 
 
@@ -111,6 +140,17 @@ class CauseClassification(ContractModel):
     reason: str = Field(min_length=1, max_length=1000)
     evidence_references: tuple[str, ...] = ()
     counter_evidence: tuple[str, ...] = ()
+
+
+class BehaviorOracleResult(ContractModel):
+    oracle_id: Identifier
+    kind: BehaviorOracleKind
+    passed: bool
+    observed_value: float | str | bool | None = None
+    threshold: float | None = None
+    unit: str | None = None
+    reason: str = Field(min_length=1, max_length=1000)
+    evidence_references: tuple[str, ...]
 
 
 class MissionAnalysis(ContractModel):
@@ -128,6 +168,9 @@ class MissionAnalysis(ContractModel):
     parameters: AnalysisParameters
     case_sha256: SHA256
     plan_sha256: SHA256 | None = None
+    planning_submission_id: Identifier | None = None
+    planning_submission_sha256: SHA256 | None = None
+    resolved_planning_package_sha256: SHA256 | None = None
     manifest_sha256: SHA256
     bundle_sha256: SHA256
     csv_sha256: SHA256
@@ -137,7 +180,22 @@ class MissionAnalysis(ContractModel):
     landing: tuple[LandingComparison, ...]
     primary_cause: CauseClassification
     contributors: tuple[CauseClassification, ...] = ()
+    behavior_oracles: tuple[BehaviorOracleResult, ...] = ()
+    all_required_behavior_oracles_passed: bool = True
     analysis_sha256: SHA256
+
+    @model_validator(mode="after")
+    def planning_evidence_identity_is_complete(self) -> MissionAnalysis:
+        if (self.planning_submission_id is None) != (
+            self.planning_submission_sha256 is None
+        ):
+            raise ValueError("analysis planning submission identity must be complete")
+        if (
+            self.resolved_planning_package_sha256 is not None
+            and self.planning_submission_sha256 is None
+        ):
+            raise ValueError("analysis package identity requires planning submission identity")
+        return self
 
     def canonical_payload(self) -> dict[str, Any]:
         return self.model_dump(mode="python", exclude={"analysis_sha256"})
@@ -147,12 +205,14 @@ class ModeComparison(ContractModel):
     schema_version: Literal[1] = 1
     accelerated_analysis_sha256: SHA256
     realtime_analysis_sha256: SHA256
-    maximum_source_clock_target_error_difference_s: float | None = Field(
-        default=None, ge=0.0
-    )
+    maximum_source_clock_target_error_difference_s: float | None = Field(default=None, ge=0.0)
     maximum_truth_path_length_difference_m: float | None = Field(default=None, ge=0.0)
     maximum_tracking_rms_difference_m: float | None = Field(default=None, ge=0.0)
     minimum_separation_difference_m: float | None = Field(default=None, ge=0.0)
+    source_clock_target_error_gate_applicable: bool = True
+    truth_path_length_gate_applicable: bool = True
+    tracking_rms_gate_applicable: bool = True
+    minimum_separation_gate_applicable: bool = True
     source_clock_target_error_gate_passed: bool
     truth_path_length_gate_passed: bool
     tracking_rms_gate_passed: bool
@@ -175,32 +235,74 @@ def compare_execution_modes(
     if set(accelerated_by_vehicle) != set(realtime_by_vehicle):
         raise ValueError("mode comparison vehicle sets differ")
 
-    def maximum_difference(attribute: str) -> float | None:
-        differences = []
+    def maximum_difference(attribute: str) -> tuple[float | None, bool, bool]:
+        differences: list[float] = []
+        applicable = False
+        asymmetric_absence = False
         for vehicle_id in sorted(accelerated_by_vehicle):
             first = getattr(accelerated_by_vehicle[vehicle_id], attribute)
             second = getattr(realtime_by_vehicle[vehicle_id], attribute)
-            if first is not None and second is not None:
-                differences.append(abs(float(first) - float(second)))
-        return max(differences, default=None)
+            if first is None and second is None:
+                continue
+            applicable = True
+            if first is None or second is None:
+                asymmetric_absence = True
+                continue
+            differences.append(abs(float(first) - float(second)))
+        return max(differences, default=None), applicable, asymmetric_absence
 
-    target = maximum_difference("source_clock_target_error_s")
-    path = maximum_difference("truth_path_length_m")
-    tracking = maximum_difference("tracking_rms_error_m")
-    separation = (
-        abs(accelerated.minimum_truth_separation_m - realtime.minimum_truth_separation_m)
-        if accelerated.minimum_truth_separation_m is not None
-        and realtime.minimum_truth_separation_m is not None
-        else None
+    target, target_applicable, target_asymmetric = maximum_difference(
+        "source_clock_target_error_s"
     )
+    path, path_applicable, path_asymmetric = maximum_difference("truth_path_length_m")
+    tracking, tracking_applicable, tracking_asymmetric = maximum_difference(
+        "tracking_rms_error_m"
+    )
+    accelerated_separation = accelerated.minimum_truth_separation_m
+    realtime_separation = realtime.minimum_truth_separation_m
+    separation_applicable = accelerated_separation is not None or realtime_separation is not None
+    separation_asymmetric = (accelerated_separation is None) != (realtime_separation is None)
+    separation = None
+    if accelerated_separation is not None and realtime_separation is not None:
+        separation = abs(accelerated_separation - realtime_separation)
     limits = case.hard_constraints.mode_comparison
+
+    def gate(
+        difference: float | None,
+        *,
+        applicable: bool,
+        asymmetric_absence: bool,
+        limit: float,
+    ) -> bool:
+        if not applicable:
+            return True
+        return not asymmetric_absence and difference is not None and difference <= limit
+
     gates = (
-        target is not None
-        and target <= limits.maximum_source_clock_target_error_difference_s,
-        path is not None and path <= limits.maximum_truth_path_length_difference_m,
-        tracking is not None and tracking <= limits.maximum_tracking_rms_difference_m,
-        separation is not None
-        and separation <= limits.maximum_minimum_separation_difference_m,
+        gate(
+            target,
+            applicable=target_applicable,
+            asymmetric_absence=target_asymmetric,
+            limit=limits.maximum_source_clock_target_error_difference_s,
+        ),
+        gate(
+            path,
+            applicable=path_applicable,
+            asymmetric_absence=path_asymmetric,
+            limit=limits.maximum_truth_path_length_difference_m,
+        ),
+        gate(
+            tracking,
+            applicable=tracking_applicable,
+            asymmetric_absence=tracking_asymmetric,
+            limit=limits.maximum_tracking_rms_difference_m,
+        ),
+        gate(
+            separation,
+            applicable=separation_applicable,
+            asymmetric_absence=separation_asymmetric,
+            limit=limits.maximum_minimum_separation_difference_m,
+        ),
     )
     payload: dict[str, Any] = {
         "accelerated_analysis_sha256": accelerated.analysis_sha256,
@@ -209,6 +311,10 @@ def compare_execution_modes(
         "maximum_truth_path_length_difference_m": path,
         "maximum_tracking_rms_difference_m": tracking,
         "minimum_separation_difference_m": separation,
+        "source_clock_target_error_gate_applicable": target_applicable,
+        "truth_path_length_gate_applicable": path_applicable,
+        "tracking_rms_gate_applicable": tracking_applicable,
+        "minimum_separation_gate_applicable": separation_applicable,
         "source_clock_target_error_gate_passed": gates[0],
         "truth_path_length_gate_passed": gates[1],
         "tracking_rms_gate_passed": gates[2],
@@ -287,6 +393,14 @@ def analyze_execution(
         by_vehicle[row.vehicle_id].append(row)
     drones_by_role = {drone.role_id: drone for drone in case.drones}
     context = _mapping(bundle.get("context", {}), "context")
+    trajectory_values = _mapping(
+        context.get("campaign_trajectories", {}), "campaign_trajectories"
+    ).get("trajectories", ())
+    trajectories_by_role = {
+        str(value.get("role_id")): value
+        for value in trajectory_values
+        if isinstance(value, Mapping)
+    }
     assignments = _mapping(
         bundle.get("assignments") or context.get("assignments", {}), "assignments"
     )
@@ -304,10 +418,14 @@ def analyze_execution(
             case,
             selected,
             planned_route_window_s=route_window,
+            planned_declared_stop_offsets_s=_declared_stop_offsets(
+                trajectories_by_role.get(role_id)
+            ),
         )
         analyses.append(analysis)
         drone = drones_by_role.get(role_id)
         if drone is not None:
+            capture = _goal_capture_for_vehicle(context, vehicle_id)
             plan = _mapping(bundle.get("accepted_plan", {}), "accepted_plan")
             role_plan = _mapping(_mapping(plan.get("roles", {}), "roles").get(role_id, {}), "role")
             campaign_plan = _mapping(
@@ -328,6 +446,27 @@ def analyze_execution(
                     estimated_touchdown_m=analysis.estimated_touchdown_m,
                     truth_touchdown_m=analysis.truth_touchdown_m,
                     displayed_goal_marker_m=_displayed_marker(bundle, role_id),
+                    landing_goal_id=_optional_string(
+                        _mapping(capture.get("goal", {}), "goal").get("goal_id")
+                    ),
+                    terminal_contact=_optional_string(capture.get("terminal_contact")),
+                    pre_contact_vertical_speed_m_s=_optional_nonnegative_float(
+                        capture.get("pre_contact_vertical_speed_m_s")
+                    ),
+                    contact_source_timestamp_s=_optional_nonnegative_float(
+                        capture.get("contact_source_timestamp_s")
+                    ),
+                    post_contact_settling_s=_optional_nonnegative_float(
+                        capture.get("post_contact_settling_s")
+                    ),
+                    disarmed_source_timestamp_s=_optional_nonnegative_float(
+                        capture.get("disarmed_source_timestamp_s")
+                    ),
+                    motors_cut_after_contact=(
+                        capture.get("motors_cut_after_contact")
+                        if isinstance(capture.get("motors_cut_after_contact"), bool)
+                        else None
+                    ),
                     coordinate_conversion_chain=tuple(
                         str(item)
                         for item in bundle.get("coordinate_conversion_chain", ("world -> world",))
@@ -347,6 +486,14 @@ def analyze_execution(
         manifest.get("status") or bundle.get("status") or bundle.get("mission_outcome") or "UNKNOWN"
     )
     primary, contributors = _classify(outcome, analyses, manifest, bundle)
+    oracle_results = _evaluate_behavior_oracles(
+        case,
+        by_vehicle=by_vehicle,
+        assignments=assignments,
+        vehicle_analyses=tuple(analyses),
+        minimum_truth_separation_m=min(truth_minima) if truth_minima else None,
+        context=context,
+    )
     payload: dict[str, Any] = {
         "mission_execution_id": execution_id,
         "mission_outcome": outcome,
@@ -364,8 +511,593 @@ def analyze_execution(
         "landing": tuple(landing),
         "primary_cause": primary,
         "contributors": contributors,
+        "behavior_oracles": oracle_results,
+        "all_required_behavior_oracles_passed": all(
+            result.passed
+            for oracle, result in zip(
+                case.semantics.behavior_oracles if case.semantics is not None else (),
+                oracle_results,
+                strict=True,
+            )
+            if oracle.required
+        ),
     }
+    planning_submission_id = _optional_string(
+        manifest.get("planning_submission_id")
+        or bundle.get("planning_submission_id")
+        or _mapping(context.get("campaign_locked_inputs", {}), "locked_inputs").get(
+            "planning_submission_id"
+        )
+    )
+    planning_submission_sha256 = _optional_sha(
+        manifest.get("planning_submission_sha256")
+        or bundle.get("planning_submission_sha256")
+        or _mapping(context.get("campaign_locked_inputs", {}), "locked_inputs").get(
+            "planning_submission_sha256"
+        )
+    )
+    resolved_package_sha256 = _optional_sha(
+        manifest.get("resolved_planning_package_sha256")
+        or bundle.get("resolved_planning_package_sha256")
+        or _mapping(context.get("campaign_locked_inputs", {}), "locked_inputs").get(
+            "resolved_planning_package_sha256"
+        )
+    )
+    if (planning_submission_id is None) != (planning_submission_sha256 is None):
+        raise ValueError("planning submission evidence identity is incomplete")
+    payload.update(
+        {
+            "planning_submission_id": planning_submission_id,
+            "planning_submission_sha256": planning_submission_sha256,
+            "resolved_planning_package_sha256": resolved_package_sha256,
+        }
+    )
     return MissionAnalysis(**payload, analysis_sha256=canonical_sha256(payload))
+
+
+def _evaluate_behavior_oracles(
+    case: CampaignCase,
+    *,
+    by_vehicle: Mapping[str, list[_Sample]],
+    assignments: Mapping[str, Any],
+    vehicle_analyses: tuple[VehicleAnalysis, ...],
+    minimum_truth_separation_m: float | None,
+    context: Mapping[str, Any],
+) -> tuple[BehaviorOracleResult, ...]:
+    if case.semantics is None:
+        return ()
+    role_to_vehicle = {
+        drone.role_id: str(assignments.get(drone.role_id, drone.role_id)) for drone in case.drones
+    }
+    analyses = {item.vehicle_id: item for item in vehicle_analyses}
+    trajectory_set = _mapping(context.get("campaign_trajectories", {}), "trajectories")
+    audit_values = trajectory_set.get("audits", ())
+    scenario_trace = _mapping(context.get("campaign_scenario_trace", {}), "scenario_trace")
+    execution_head_trace = _mapping(
+        context.get("campaign_execution_head_trace", {}),
+        "execution_head_trace",
+    )
+    campaign_plan = _mapping(context.get("campaign_plan", {}), "campaign_plan")
+    candidates = campaign_plan.get("retained_candidates", ())
+    selected_index = campaign_plan.get("selected_candidate_index")
+    selected_candidate: Mapping[str, Any] = {}
+    if (
+        isinstance(candidates, Sequence)
+        and isinstance(selected_index, int)
+        and 0 <= selected_index < len(candidates)
+        and isinstance(candidates[selected_index], Mapping)
+    ):
+        selected_candidate = candidates[selected_index]
+    planned_routes = {
+        str(value.get("role_id")): value
+        for value in selected_candidate.get("routes", ())
+        if isinstance(value, Mapping)
+    }
+    campaign_schedule = _mapping(context.get("campaign_schedule", {}), "campaign_schedule")
+    scheduled_roles = {
+        str(value.get("role_id")): value
+        for value in campaign_schedule.get("roles", ())
+        if isinstance(value, Mapping)
+    }
+    output = []
+    for oracle in case.semantics.behavior_oracles:
+        passed = False
+        observed: float | str | bool | None = None
+        reason = "No implemented evidence reducer accepted this oracle."
+        references: tuple[str, ...] = ()
+        roles = oracle.role_ids or tuple(drone.role_id for drone in case.drones)
+        if oracle.kind is BehaviorOracleKind.ROUTE_NODES_CAPTURED:
+            captured = 0
+            required = 0
+            drone_by_role = {drone.role_id: drone for drone in case.drones}
+            for role_id in roles:
+                samples = by_vehicle.get(role_to_vehicle[role_id], [])
+                nodes = case.semantics.route_intent_by_role[role_id]
+                for region, node in zip(drone_by_role[role_id].goal_sequence, nodes, strict=True):
+                    required += 1
+                    if any(
+                        point is not None
+                        and _distance(point, region.center_m) <= node.capture_tolerance_m
+                        for sample in samples
+                        for point in (sample.truth or sample.estimate,)
+                    ):
+                        captured += 1
+            observed = float(captured)
+            passed = captured == required
+            reason = f"Captured {captured} of {required} ordered authored route regions."
+            references = ("telemetry.csv:ground_truth_position", "campaign_case:route_intent")
+        elif oracle.kind is BehaviorOracleKind.HOLD_DURATION:
+            hold_errors = []
+            drone_by_role = {drone.role_id: drone for drone in case.drones}
+            trajectory_values = trajectory_set.get("trajectories", ())
+            trajectory_by_role = {
+                str(value.get("role_id")): value
+                for value in trajectory_values
+                if isinstance(value, Mapping)
+            }
+            for role_id in roles:
+                samples = by_vehicle.get(role_to_vehicle[role_id], [])
+                for region, node in zip(
+                    drone_by_role[role_id].goal_sequence,
+                    case.semantics.route_intent_by_role[role_id],
+                    strict=True,
+                ):
+                    if node.dwell_s <= 0.0:
+                        continue
+                    duration = _planned_region_dwell_s(
+                        trajectory_by_role.get(role_id),
+                        region.center_m,
+                        node.capture_tolerance_m,
+                    )
+                    if duration is None:
+                        duration = _longest_region_dwell_s(
+                            samples, region.center_m, node.capture_tolerance_m
+                        )
+                    hold_errors.append(abs(duration - node.dwell_s))
+            observed = max(hold_errors, default=0.0)
+            passed = bool(hold_errors) and observed <= float(oracle.threshold or 0.0)
+            reason = f"Maximum declared-hold duration error was {observed:.3f} s."
+            references = ("telemetry.csv:source_timestamp_s", "campaign_case:dwell_s")
+        elif oracle.kind is BehaviorOracleKind.NO_UNDECLARED_STOP:
+            generated_counts = [
+                int(item.get("generated_unintended_stop_count", 0))
+                for item in audit_values
+                if isinstance(item, Mapping)
+            ]
+            executed_count = sum(
+                analyses[role_to_vehicle[role]].unintended_stop_count for role in roles
+            )
+            generated_count = sum(generated_counts)
+            observed = float(executed_count)
+            threshold = float(oracle.threshold or 0.0)
+            passed = (
+                executed_count <= threshold
+                and generated_count <= threshold
+                and (not generated_counts or generated_count == executed_count)
+            )
+            reason = (
+                "Route-phase telemetry found "
+                f"{executed_count} undeclared stops; the generated-trajectory audit found "
+                f"{generated_count}. Diagnostic takeoff, stabilization, landing-entry, and "
+                "terminal low-speed phases are outside this route window."
+            )
+            references = (
+                "telemetry.csv:planned_route_source_window",
+                "campaign_trajectories:audits",
+            )
+        elif oracle.kind is BehaviorOracleKind.ALTITUDE_TRANSITION:
+            authored_levels = {
+                round(goal.center_m.z, 2)
+                for drone in case.drones
+                if drone.role_id in roles
+                for goal in drone.goal_sequence
+            }
+            observed_levels = {
+                level
+                for role in roles
+                for sample in by_vehicle.get(role_to_vehicle[role], [])
+                for point in (sample.truth or sample.estimate,)
+                if point is not None
+                for level in authored_levels
+                if abs(point.z - level) <= 0.08
+            }
+            observed = float(len(observed_levels))
+            passed = observed >= float(oracle.threshold or 0.0)
+            reason = (
+                f"Execution crossed {int(observed)} of {len(authored_levels)} "
+                "authored altitude levels."
+            )
+            references = ("telemetry.csv:ground_truth_z", "campaign_case:goal_sequence")
+        elif oracle.kind is BehaviorOracleKind.CURVED_PATH:
+            turn = max(
+                (
+                    _integrated_horizontal_turn(
+                        tuple(goal.center_m for goal in drone.goal_sequence)
+                    )
+                    for drone in case.drones
+                    if drone.role_id in roles
+                ),
+                default=0.0,
+            )
+            observed = turn
+            passed = turn >= float(oracle.threshold or 0.0)
+            reason = (
+                f"The executed hash-bound route carries {turn:.3f} rad integrated horizontal turn."
+            )
+            references = ("campaign_plan:selected_candidate.routes", "telemetry.csv:tracking_error")
+        elif oracle.kind is BehaviorOracleKind.CLOSED_SHAPE:
+            closure = min(
+                (
+                    _minimum_nonadjacent_distance(
+                        tuple(goal.center_m for goal in drone.goal_sequence)
+                    )
+                    for drone in case.drones
+                    if drone.role_id in roles
+                ),
+                default=float("inf"),
+            )
+            observed = closure
+            passed = closure <= float(oracle.threshold or 0.0)
+            reason = f"Minimum non-adjacent loop closure error was {closure:.3f} m."
+            references = ("campaign_case:goal_sequence", "telemetry.csv:ordered_capture")
+        elif oracle.kind is BehaviorOracleKind.DISTINCT_START_AND_LANDING:
+            displacement = min(
+                (
+                    _distance(drone.start_region.center_m, drone.landing_region.center_m)
+                    for drone in case.drones
+                    if drone.role_id in roles
+                ),
+                default=0.0,
+            )
+            observed = displacement
+            passed = displacement >= float(oracle.threshold or 0.0)
+            reason = f"Minimum authored start-to-landing displacement was {displacement:.3f} m."
+            references = ("campaign_case:start_region", "campaign_case:landing_region")
+        elif oracle.kind is BehaviorOracleKind.SYNCHRONIZED_ROUTE_START:
+            starts: list[float] = []
+            for role in roles:
+                start = analyses[role_to_vehicle[role]].timeline.route_start_source_s
+                if start is not None:
+                    starts.append(start)
+            observed = max(starts, default=0.0) - min(starts, default=0.0)
+            passed = len(starts) == len(roles) and observed <= float(oracle.threshold or 0.0)
+            reason = f"Observed fleet route-start skew was {observed:.3f} s."
+            references = ("telemetry.csv:route_start_source_s",)
+        elif oracle.kind is BehaviorOracleKind.MINIMUM_FLIGHT_OVERLAP:
+            starts = []
+            ends: list[float] = []
+            for role in roles:
+                timeline = analyses[role_to_vehicle[role]].timeline
+                start = timeline.route_start_source_s
+                end = timeline.landing_start_source_s
+                if start is not None and end is not None:
+                    starts.append(start)
+                    ends.append(end)
+            overlap = max(0.0, min(ends, default=0.0) - max(starts, default=0.0))
+            observed = overlap
+            passed = len(starts) == len(roles) and overlap >= float(oracle.threshold or 0.0)
+            reason = f"Observed simultaneous route-flight overlap was {overlap:.3f} s."
+            references = ("telemetry.csv:source_timeline",)
+        elif oracle.kind is BehaviorOracleKind.FORMATION_ERROR:
+            coordination = case.semantics.coordination_constraints
+            # Planner admission computes this continuously; the retained selected route
+            # and telemetry tracking bounds are both required evidence here.
+            tracking = max(
+                (
+                    analyses[role_to_vehicle[role]].tracking_max_error_m or float("inf")
+                    for role in roles
+                ),
+                default=float("inf"),
+            )
+            observed = tracking
+            passed = tracking <= float(
+                oracle.threshold or coordination.maximum_formation_error_m or 0.0
+            )
+            reason = (
+                f"Maximum role tracking error within the admitted formation was {tracking:.3f} m."
+            )
+            references = ("campaign_plan:formation_admission", "telemetry.csv:tracking_error")
+        elif oracle.kind is BehaviorOracleKind.CONFLICT_RESOLVED:
+            observed = minimum_truth_separation_m
+            passed = observed is not None and observed >= float(oracle.threshold or 0.0)
+            reason = (
+                f"Minimum time-aligned truth separation was {observed:.3f} m."
+                if observed is not None
+                else "No aligned pairwise truth separation evidence was available."
+            )
+            references = ("telemetry.csv:aligned_ground_truth",)
+        elif oracle.kind is BehaviorOracleKind.BOUNDARY_MARGIN:
+            margins: list[float] = []
+            volume = case.hard_constraints.flight_volume
+            for role in roles:
+                for sample in by_vehicle.get(role_to_vehicle[role], []):
+                    point = sample.truth or sample.estimate
+                    # The floor is intentionally reached during takeoff/landing.  This
+                    # oracle concerns the lateral faces and ceiling exercised by the
+                    # authored boundary route while airborne.
+                    if point is None or point.z <= 0.10:
+                        continue
+                    margins.append(
+                        min(
+                            point.x - volume.minimum_m.x,
+                            volume.maximum_m.x - point.x,
+                            point.y - volume.minimum_m.y,
+                            volume.maximum_m.y - point.y,
+                            volume.maximum_m.z - point.z,
+                        )
+                    )
+            observed = min(margins, default=-1.0)
+            passed = bool(margins) and observed >= float(oracle.threshold or 0.0)
+            reason = f"Minimum sampled airborne lateral/ceiling margin was {observed:.3f} m."
+            references = ("telemetry.csv:ground_truth_position", "campaign_case:flight_volume")
+        elif oracle.kind is BehaviorOracleKind.KEEP_OUT_AVOIDED:
+            violations = sum(
+                1
+                for role in roles
+                for sample in by_vehicle.get(role_to_vehicle[role], [])
+                for point in (sample.truth or sample.estimate,)
+                if point is not None
+                and any(
+                    region.contains(point)
+                    for region in case.semantics.environment_constraints.keep_out_regions
+                )
+            )
+            observed = float(violations)
+            passed = violations <= int(oracle.threshold or 0.0)
+            reason = f"Observed {violations} telemetry samples inside configured keep-out regions."
+            references = (
+                "telemetry.csv:ground_truth_position",
+                "campaign_case:environment_constraints.keep_out_regions",
+            )
+        elif oracle.kind is BehaviorOracleKind.NO_AIRBORNE_HOLD:
+            airborne_hold_s = 0.0
+            evidence_complete = True
+            for role in roles:
+                scheduled = scheduled_roles.get(role)
+                energy = scheduled.get("energy") if scheduled is not None else None
+                if not isinstance(energy, Mapping) or not isinstance(
+                    energy.get("airborne_hover_s"), (int, float)
+                ):
+                    evidence_complete = False
+                    continue
+                airborne_hold_s += float(energy["airborne_hover_s"])
+            observed = airborne_hold_s
+            passed = evidence_complete and airborne_hold_s <= float(oracle.threshold or 0.0)
+            reason = f"The retained schedule assigned {airborne_hold_s:.3f} s airborne hold."
+            references = ("campaign_schedule:roles.energy.airborne_hover_s",)
+        elif oracle.kind is BehaviorOracleKind.PRIORITY_PRECEDENCE:
+            prioritized = sorted(
+                (drone for drone in case.drones if drone.role_id in roles),
+                key=lambda drone: (-drone.priority, drone.role_id),
+            )
+            start_times = []
+            for drone in prioritized:
+                route = planned_routes.get(drone.role_id)
+                start = route.get("route_start_s") if route is not None else None
+                if isinstance(start, (int, float)):
+                    start_times.append(float(start))
+            gaps = [later - earlier for earlier, later in pairwise(start_times)]
+            observed = min(gaps, default=-1.0)
+            passed = len(start_times) == len(prioritized) and observed >= float(
+                oracle.threshold or 0.0
+            )
+            reason = (
+                f"Minimum source-time precedence gap from higher to lower priority was "
+                f"{observed:.3f} s."
+            )
+            references = (
+                "campaign_case:drones.priority",
+                "campaign_plan:selected_candidate.routes.route_start_s",
+            )
+        elif oracle.kind is BehaviorOracleKind.CONSTRAINT_ENFORCED:
+            strategy = str(selected_candidate.get("strategy", ""))
+            observed = bool(
+                not case.hard_constraints.vertical_layers_allowed
+                and strategy not in {"VERTICAL_LAYER", "COMBINED_TIMING_GEOMETRY"}
+            )
+            passed = observed
+            reason = (
+                "Vertical layers were forbidden and the selected strategy remained non-vertical."
+                if passed
+                else "The selected plan did not prove enforcement of the forbidden-layer input."
+            )
+            references = (
+                "campaign_case:hard_constraints.vertical_layers_allowed",
+                "campaign_plan:selected_candidate.strategy",
+            )
+        elif oracle.kind is BehaviorOracleKind.UNAFFECTED_ROLE_NONINTERFERENCE:
+            delays = []
+            for role in roles:
+                route = planned_routes.get(role)
+                delay = route.get("ground_wait_s") if route is not None else None
+                if isinstance(delay, (int, float)):
+                    delays.append(float(delay))
+            observed = max(delays, default=float("inf"))
+            passed = len(delays) == len(roles) and observed <= float(oracle.threshold or 0.0)
+            reason = (
+                f"Maximum planner-imposed ground delay for unaffected roles was {observed:.3f} s."
+            )
+            references = (
+                "campaign_plan:selected_candidate.routes.ground_wait_s",
+                "campaign_case:selective_conflict_roles",
+            )
+        elif oracle.kind is BehaviorOracleKind.EVENT_HANDLED:
+            accepted_environment_events = {
+                event.event_id
+                for event in case.semantics.scenario_events
+                if event.kind
+                in {
+                    ScenarioEventKind.OBSTACLE_ADDED,
+                    ScenarioEventKind.OBSTACLE_MOVED,
+                    ScenarioEventKind.OBSTACLE_REMOVED,
+                    ScenarioEventKind.PASSAGE_CLOSED,
+                    ScenarioEventKind.PASSAGE_OPENED,
+                }
+                and event.expected_disposition
+                is ScenarioExpectedDisposition.ACCEPTED_UPDATE
+            }
+            runtime_handled_events = {
+                str(record.get("event_id", ""))
+                for record in execution_head_trace.get("records", ())
+                if isinstance(record, Mapping)
+                and str(record.get("disposition", "")) == "ACCEPTED"
+                and str(record.get("execution_disposition", "")) == "DISPATCHED"
+                and isinstance(
+                    record.get("replacement_trajectory_sha256_by_role"), Mapping
+                )
+                and set(record["replacement_trajectory_sha256_by_role"])
+                == set(role_to_vehicle)
+                and isinstance(
+                    record.get("replacement_authority_sha256_by_role"), Mapping
+                )
+                and set(record["replacement_authority_sha256_by_role"])
+                == set(role_to_vehicle)
+                and isinstance(record.get("replacement_prepared_role_ids"), Sequence)
+                and not isinstance(
+                    record.get("replacement_prepared_role_ids"), (str, bytes)
+                )
+                and set(record.get("replacement_prepared_role_ids", ()))
+                == set(role_to_vehicle)
+                and isinstance(
+                    record.get("replacement_dispatch_started_role_ids"), Sequence
+                )
+                and not isinstance(
+                    record.get("replacement_dispatch_started_role_ids"), (str, bytes)
+                )
+                and set(record.get("replacement_dispatch_started_role_ids", ()))
+                == set(role_to_vehicle)
+                and all(
+                    len(str(record.get(key, ""))) == 64
+                    for key in (
+                        "proposal_sha256",
+                        "decision_sha256",
+                        "plan_sha256",
+                        "replacement_world_sha256",
+                    )
+                )
+            }
+            static_handled = bool(
+                scenario_trace.get("all_expected_dispositions_observed", False)
+            )
+            runtime_handled = accepted_environment_events.issubset(
+                runtime_handled_events
+            )
+            observed = static_handled and runtime_handled
+            passed = observed
+            reason = (
+                "Every injected event produced its declared admission disposition and "
+                "every accepted changed-world event committed a runtime replacement."
+                if passed
+                else "Admission or runtime replacement evidence is missing for an event."
+            )
+            references = (
+                "execution-bundle:campaign_scenario_trace",
+                "execution-bundle:campaign_execution_head_trace",
+            )
+        elif oracle.kind is BehaviorOracleKind.ACCEPTED_EVENT_GOALS_CAPTURED:
+            accepted_goals = [
+                (event.role_id, event.replacement_goal)
+                for event in case.semantics.scenario_events
+                if event.expected_disposition.value == "ACCEPTED_UPDATE"
+                and event.replacement_goal is not None
+                and event.role_id is not None
+            ]
+            captured = sum(
+                1
+                for role_id, replacement_goal in accepted_goals
+                if any(
+                    point is not None and _distance(point, replacement_goal.center_m) <= 0.10
+                    for sample in by_vehicle.get(role_to_vehicle[role_id], [])
+                    for point in (sample.truth or sample.estimate,)
+                )
+            )
+            ratio = captured / len(accepted_goals) if accepted_goals else 0.0
+            observed = ratio
+            passed = bool(accepted_goals) and ratio >= float(oracle.threshold or 1.0)
+            reason = (
+                f"Execution captured {captured} of {len(accepted_goals)} "
+                "accepted replacement goals."
+            )
+            references = (
+                "campaign_scenario_trace:accepted_updates",
+                "telemetry.csv:ground_truth_position",
+            )
+        output.append(
+            BehaviorOracleResult(
+                oracle_id=oracle.oracle_id,
+                kind=oracle.kind,
+                passed=passed,
+                observed_value=observed,
+                threshold=oracle.threshold,
+                unit=oracle.unit,
+                reason=reason,
+                evidence_references=references,
+            )
+        )
+    return tuple(output)
+
+
+def _longest_region_dwell_s(
+    samples: Sequence[_Sample], center: Vector3, tolerance_m: float
+) -> float:
+    longest = 0.0
+    start: float | None = None
+    previous: float | None = None
+    for sample in sorted(samples, key=lambda item: item.source_s):
+        point = sample.truth or sample.estimate
+        inside = point is not None and _distance(point, center) <= tolerance_m
+        if inside:
+            if start is None or (previous is not None and sample.source_s - previous > 0.20):
+                start = sample.source_s
+            previous = sample.source_s
+            longest = max(longest, sample.source_s - start)
+        else:
+            start = None
+            previous = None
+    return longest
+
+
+def _planned_region_dwell_s(
+    trajectory: Mapping[str, Any] | None,
+    center: Vector3,
+    tolerance_m: float,
+) -> float | None:
+    if trajectory is None:
+        return None
+    timestamps = []
+    for raw in trajectory.get("points", ()):
+        if not isinstance(raw, Mapping):
+            continue
+        position = _optional_vector(raw.get("position_m"))
+        raw_timestamp = raw.get("time_from_start_s")
+        timestamp = float(raw_timestamp) if isinstance(raw_timestamp, (int, float)) else None
+        if (
+            position is not None
+            and timestamp is not None
+            and _distance(position, center) <= tolerance_m
+        ):
+            timestamps.append(timestamp)
+    return max(timestamps) - min(timestamps) if len(timestamps) >= 2 else None
+
+
+def _integrated_horizontal_turn(points: tuple[Vector3, ...]) -> float:
+    total = 0.0
+    for first, middle, last in zip(points, points[1:], points[2:], strict=False):
+        first_angle = math.atan2(middle.y - first.y, middle.x - first.x)
+        second_angle = math.atan2(last.y - middle.y, last.x - middle.x)
+        total += abs((second_angle - first_angle + math.pi) % (2 * math.pi) - math.pi)
+    return total
+
+
+def _minimum_nonadjacent_distance(points: tuple[Vector3, ...]) -> float:
+    return min(
+        (
+            _distance(first, second)
+            for index, first in enumerate(points)
+            for second in points[index + 2 :]
+        ),
+        default=float("inf"),
+    )
 
 
 class _Sample:
@@ -409,6 +1141,7 @@ def _analyze_vehicle(
     parameters: AnalysisParameters,
     *,
     planned_route_window_s: tuple[float, float] | None = None,
+    planned_declared_stop_offsets_s: tuple[float, ...] = (),
 ) -> VehicleAnalysis:
     original_order = list(raw)
     out_of_order = sum(
@@ -436,7 +1169,8 @@ def _analyze_vehicle(
     motion = truth or estimate
     resampled = _resample(motion, parameters.source_resample_step_s)
     smoothed = _smooth(resampled, parameters.smoothing_window_s)
-    speeds = _derivative_norms(smoothed)
+    processed_velocity = _derivative_vectors(smoothed)
+    speeds = [(timestamp, _norm(value)) for timestamp, value in processed_velocity]
     tracking = [
         _distance(item.estimate, item.truth)
         for item in unique
@@ -455,9 +1189,31 @@ def _analyze_vehicle(
         else None
     )
     route_speeds = _movement_window(speeds, timeline, absolute_route_window)
+    route_processed_velocity = _movement_vector_window(
+        processed_velocity,
+        timeline,
+        absolute_route_window,
+    )
     route_acceleration = _derivative_values(route_speeds)
     route_jerk = _derivative_values(route_acceleration)
-    stop_count = _count_stops(route_speeds, parameters)
+    declared_stop_base_s = (
+        absolute_route_window[0]
+        if absolute_route_window is not None
+        else timeline.route_start_source_s
+    )
+    declared_stop_source_s = (
+        tuple(
+            declared_stop_base_s + offset
+            for offset in planned_declared_stop_offsets_s
+        )
+        if declared_stop_base_s is not None
+        else ()
+    )
+    stop_count = _count_stops(
+        route_speeds,
+        parameters,
+        declared_stop_source_s=declared_stop_source_s,
+    )
     source_clock_target_error = (
         abs((timeline.route_start_source_s - first.source_s) - planned_route_window_s[0])
         if timeline.route_start_source_s is not None and planned_route_window_s is not None
@@ -465,6 +1221,40 @@ def _analyze_vehicle(
     )
     estimated_touchdown = next((item.estimate for item in reversed(unique) if item.estimate), None)
     truth_touchdown = next((item.truth for item in reversed(unique) if item.truth), None)
+    raw_airborne_velocity = tuple(
+        item.velocity
+        for item in unique
+        if item.velocity is not None and item.flying is True
+    )
+    raw_horizontal_peak = max(
+        (math.hypot(value.x, value.y) for value in raw_airborne_velocity),
+        default=None,
+    )
+    raw_vertical_peak = max(
+        (abs(value.z) for value in raw_airborne_velocity),
+        default=None,
+    )
+    processed_horizontal_peak = max(
+        (math.hypot(value.x, value.y) for _, value in route_processed_velocity),
+        default=None,
+    )
+    processed_vertical_peak = max(
+        (abs(value.z) for _, value in route_processed_velocity),
+        default=None,
+    )
+    limits = case.hard_constraints.dynamics
+    raw_gate_passed = (
+        raw_horizontal_peak <= limits.maximum_horizontal_speed_m_s + 1e-9
+        and raw_vertical_peak <= limits.maximum_vertical_speed_m_s + 1e-9
+        if raw_horizontal_peak is not None and raw_vertical_peak is not None
+        else None
+    )
+    processed_gate_passed = (
+        processed_horizontal_peak <= limits.maximum_horizontal_speed_m_s + 1e-9
+        and processed_vertical_peak <= limits.maximum_vertical_speed_m_s + 1e-9
+        if processed_horizontal_peak is not None and processed_vertical_peak is not None
+        else None
+    )
     return VehicleAnalysis(
         vehicle_id=first.vehicle_id,
         telemetry_row_count=len(raw),
@@ -488,6 +1278,21 @@ def _analyze_vehicle(
         speed_m_s=_distribution([value for _, value in route_speeds]),
         acceleration_m_s2=_distribution([value for _, value in route_acceleration]),
         jerk_m_s3=_distribution([value for _, value in route_jerk]),
+        kinematics_gate_reconciliation=KinematicsGateReconciliation(
+            raw_horizontal_speed_peak_m_s=raw_horizontal_peak,
+            raw_vertical_speed_peak_m_s=raw_vertical_peak,
+            processed_horizontal_speed_peak_m_s=processed_horizontal_peak,
+            processed_vertical_speed_peak_m_s=processed_vertical_peak,
+            maximum_horizontal_speed_m_s=limits.maximum_horizontal_speed_m_s,
+            maximum_vertical_speed_m_s=limits.maximum_vertical_speed_m_s,
+            raw_gate_passed=raw_gate_passed,
+            processed_gate_passed=processed_gate_passed,
+            gate_disagreement=(
+                raw_gate_passed is not None
+                and processed_gate_passed is not None
+                and raw_gate_passed is not processed_gate_passed
+            ),
+        ),
         unintended_stop_count=stop_count,
         duplicate_sample_count=duplicates,
         missing_sequence_count=missing,
@@ -673,8 +1478,7 @@ def _local_linear_value(
         return mean_value
     slope = (
         sum(
-            (item[0] - mean_time) * (float(getattr(item[1], axis)) - mean_value)
-            for item in samples
+            (item[0] - mean_time) * (float(getattr(item[1], axis)) - mean_value) for item in samples
         )
         / denominator
     )
@@ -684,6 +1488,23 @@ def _local_linear_value(
 def _derivative_norms(values: Sequence[tuple[float, Vector3]]) -> list[tuple[float, float]]:
     return [
         (after[0], _distance(after[1], before[1]) / (after[0] - before[0]))
+        for before, after in pairwise(values)
+        if after[0] > before[0]
+    ]
+
+
+def _derivative_vectors(
+    values: Sequence[tuple[float, Vector3]],
+) -> list[tuple[float, Vector3]]:
+    return [
+        (
+            after[0],
+            Vector3(
+                x=(after[1].x - before[1].x) / (after[0] - before[0]),
+                y=(after[1].y - before[1].y) / (after[0] - before[0]),
+                z=(after[1].z - before[1].z) / (after[0] - before[0]),
+            ),
+        )
         for before, after in pairwise(values)
         if after[0] > before[0]
     ]
@@ -746,7 +1567,12 @@ def _horizontal_derivative_norms(
     ]
 
 
-def _count_stops(values: Sequence[tuple[float, float]], parameters: AnalysisParameters) -> int:
+def _count_stops(
+    values: Sequence[tuple[float, float]],
+    parameters: AnalysisParameters,
+    *,
+    declared_stop_source_s: Sequence[float] = (),
+) -> int:
     count = 0
     start: float | None = None
     for timestamp, speed in values:
@@ -756,9 +1582,16 @@ def _count_stops(values: Sequence[tuple[float, float]], parameters: AnalysisPara
             is_terminal_capture_band = (
                 values and values[-1][0] - timestamp <= parameters.stop_persistence_s
             )
+            is_declared = any(
+                start - parameters.stop_persistence_s
+                <= declared
+                <= timestamp + parameters.stop_persistence_s
+                for declared in declared_stop_source_s
+            )
             if (
                 timestamp - start >= parameters.stop_persistence_s
                 and not is_terminal_capture_band
+                and not is_declared
             ):
                 count += 1
             start = None
@@ -787,12 +1620,30 @@ def _movement_window(
         if value is not None
     ]
     end = min(end_candidates) if end_candidates else None
-    return [
-        item
-        for item in values
-        if item[0] >= start
-        and (end is None or item[0] < end)
+    return [item for item in values if item[0] >= start and (end is None or item[0] < end)]
+
+
+def _movement_vector_window(
+    values: Sequence[tuple[float, Vector3]],
+    timeline: VehicleTimeline,
+    planned_window_s: tuple[float, float] | None,
+) -> list[tuple[float, Vector3]]:
+    if timeline.route_start_source_s is None and planned_window_s is None:
+        return list(values)
+    start = timeline.route_start_source_s
+    if start is None:
+        assert planned_window_s is not None
+        start = planned_window_s[0]
+    end_candidates = [
+        value
+        for value in (
+            planned_window_s[1] if planned_window_s is not None else None,
+            timeline.landing_start_source_s,
+        )
+        if value is not None
     ]
+    end = min(end_candidates) if end_candidates else None
+    return [item for item in values if item[0] >= start and (end is None or item[0] < end)]
 
 
 def _distribution(values: Sequence[float]) -> MetricDistribution:
@@ -838,6 +1689,10 @@ def _distance(first: Vector3, second: Vector3) -> float:
     return math.sqrt(
         (first.x - second.x) ** 2 + (first.y - second.y) ** 2 + (first.z - second.z) ** 2
     )
+
+
+def _norm(value: Vector3) -> float:
+    return math.sqrt(value.x**2 + value.y**2 + value.z**2)
 
 
 def _lerp(first: Vector3, second: Vector3, factor: float) -> Vector3:
@@ -901,6 +1756,39 @@ def _optional_vector(value: Any) -> Vector3 | None:
     return Vector3.model_validate(value) if isinstance(value, Mapping) else None
 
 
+def _optional_string(value: Any) -> str | None:
+    return str(value) if value is not None and str(value) else None
+
+
+def _optional_nonnegative_float(value: Any) -> float | None:
+    return float(value) if isinstance(value, (int, float)) and value >= 0.0 else None
+
+
+def _goal_capture_for_vehicle(
+    context: Mapping[str, Any], vehicle_id: str
+) -> Mapping[str, Any]:
+    fleet_result = context.get("fleet_result")
+    if not isinstance(fleet_result, Mapping):
+        return {}
+    children = fleet_result.get("child_results")
+    if not isinstance(children, list):
+        return {}
+    for child in children:
+        if not isinstance(child, Mapping) or str(child.get("vehicle_id")) != vehicle_id:
+            continue
+        mission_result = child.get("mission_result")
+        if not isinstance(mission_result, Mapping):
+            return {}
+        captures = mission_result.get("goal_captures")
+        if not isinstance(captures, list):
+            return {}
+        return next(
+            (capture for capture in reversed(captures) if isinstance(capture, Mapping)),
+            {},
+        )
+    return {}
+
+
 def _displayed_marker(bundle: Mapping[str, Any], role_id: str) -> Vector3 | None:
     diagnostics = bundle.get("display_diagnostics")
     if not isinstance(diagnostics, Mapping):
@@ -942,9 +1830,7 @@ def _campaign_arrival(plan: Mapping[str, Any], role_id: str) -> Vector3 | None:
     return None
 
 
-def _campaign_route_window(
-    context: Mapping[str, Any], role_id: str
-) -> tuple[float, float] | None:
+def _campaign_route_window(context: Mapping[str, Any], role_id: str) -> tuple[float, float] | None:
     schedule = context.get("campaign_schedule")
     if not isinstance(schedule, Mapping):
         return None
@@ -965,3 +1851,25 @@ def _campaign_route_window(
             if isinstance(start, (int, float)) and isinstance(end, (int, float)):
                 return float(start), float(end)
     return None
+
+
+def _declared_stop_offsets(trajectory: Any) -> tuple[float, ...]:
+    """Return internal, hash-bound trajectory stops in route-relative source time."""
+
+    if not isinstance(trajectory, Mapping):
+        return ()
+    points = trajectory.get("points")
+    sequences = trajectory.get("declared_stop_sequences")
+    if not isinstance(points, list) or not isinstance(sequences, list):
+        return ()
+    output = []
+    for sequence in sequences:
+        if not isinstance(sequence, int) or sequence <= 1 or sequence >= len(points):
+            continue
+        point = points[sequence - 1]
+        if not isinstance(point, Mapping):
+            continue
+        timestamp = point.get("time_from_start_s")
+        if isinstance(timestamp, (int, float)):
+            output.append(float(timestamp))
+    return tuple(sorted(set(output)))

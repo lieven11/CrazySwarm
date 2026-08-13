@@ -26,10 +26,12 @@ from crazyswarm_app.domain.commands import (
     TakeoffCommand,
 )
 from crazyswarm_app.domain.errors import CrazySwarmError, ErrorCode
+from crazyswarm_app.domain.goals import LandingGoalRegion
 from crazyswarm_app.domain.models import (
     AuthorityClass,
     CommandSource,
     OperatingMode,
+    Vector3,
     VehicleCapability,
     VehicleState,
 )
@@ -479,6 +481,26 @@ class SafetySupervisor:
         mission_run_id: str | None = None,
         fleet_binding: FleetCommandBinding | None = None,
     ) -> CommandAcknowledgement:
+        self.validate_trajectory_command(vehicle_id, owner_id, command)
+        session = self.session(vehicle_id)
+        acknowledgement = await self._send(
+            session,
+            command,
+            source=source,
+            mission_run_id=mission_run_id,
+            fleet_binding=fleet_binding,
+        )
+        await self._refresh(session)
+        return acknowledgement
+
+    def validate_trajectory_command(
+        self,
+        vehicle_id: str,
+        owner_id: str,
+        command: ExecuteTrajectoryCommand,
+    ) -> None:
+        """Validate replacement authority without starting a partially committed route."""
+
         session = self.session(vehicle_id)
         self._require_flying(session, owner_id)
         if (
@@ -491,15 +513,6 @@ class SafetySupervisor:
             )
         telemetry = cast(TelemetryEnvelope, session.telemetry)
         self._validate_trajectory(telemetry, command)
-        acknowledgement = await self._send(
-            session,
-            command,
-            source=source,
-            mission_run_id=mission_run_id,
-            fleet_binding=fleet_binding,
-        )
-        await self._refresh(session)
-        return acknowledgement
 
     async def replace_trajectory(
         self,
@@ -564,12 +577,21 @@ class SafetySupervisor:
         owner_id: str,
         *,
         duration_s: float = 2.0,
+        target_position_m: Vector3 | None = None,
+        goal_region: LandingGoalRegion | None = None,
         source: CommandSource = CommandSource.UI,
         mission_run_id: str | None = None,
         fleet_binding: FleetCommandBinding | None = None,
     ) -> CommandAcknowledgement:
         session = self.session(vehicle_id)
         self._require_flying(session, owner_id)
+        if target_position_m is not None and not self.policy.flight_volume.contains(
+            target_position_m
+        ):
+            raise CrazySwarmError(
+                ErrorCode.GEOFENCE_BREACH,
+                "landing target is outside the admitted flight volume",
+            )
         if isinstance(session.active_command_payload, ExecuteTrajectoryCommand):
             await self._interrupt_active_command(
                 session,
@@ -581,7 +603,14 @@ class SafetySupervisor:
         self._transition(vehicle_id, VehicleState.LANDING, source)
         acknowledgement = await self._send(
             session,
-            LandCommand(duration_s=duration_s),
+            LandCommand(
+                duration_s=duration_s,
+                target_height_m=(
+                    target_position_m.z if target_position_m is not None else 0.0
+                ),
+                target_position_m=target_position_m,
+                goal_region=goal_region,
+            ),
             source=source,
             mission_run_id=mission_run_id,
             fleet_binding=fleet_binding,
@@ -1424,6 +1453,11 @@ class SafetySupervisor:
             target_state,
             CommandSource.SUPERVISOR,
         )
+
+    async def reconcile_terminal_adapter_state(self, vehicle_id: str) -> None:
+        """Adopt an identity-checked terminal adapter sample after explicit recovery."""
+
+        await self._reconcile_terminal_adapter_state(self.session(vehicle_id))
 
     async def _interrupt_active_command(
         self,

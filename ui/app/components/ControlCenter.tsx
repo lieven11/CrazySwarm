@@ -34,6 +34,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import { ControlApi } from "../lib/api";
 import { campaignMissionPreview } from "../lib/campaign-preview";
 import { createEmptyDashboard } from "../lib/empty";
@@ -57,8 +58,8 @@ import type {
   VehicleView,
 } from "../lib/models";
 import { missionPlan, missionPreviewPaths } from "../lib/spatial";
-import { RoomScene, type HomeBaseView } from "./RoomScene";
-import { FlightReadout, RunFilesControl, type TelemetrySample } from "./TelemetryDock";
+import { RoomScene, type HomeBaseView, type SceneSnapshotCapture } from "./RoomScene";
+import { FlightReadout, RunFilesControl, telemetrySample, type TelemetrySample } from "./TelemetryDock";
 import { CampaignLab, humanizeCampaignValue } from "./CampaignLab";
 
 type ServiceState = "ATTACHING" | "ONLINE" | "OFFLINE";
@@ -83,6 +84,10 @@ export function campaignDockModePresentation(mode: CampaignRunMode): {
   return mode === "AUTOMATED_ACCELERATED"
     ? { label: "Accelerated", actionLabel: "accelerated", buttonClassName: "campaign-mode-accelerated" }
     : { label: "Realtime", actionLabel: "realtime", buttonClassName: "" };
+}
+
+export function campaignMissionFilename(campaignCase: CampaignCaseView): string {
+  return `campaign_${campaignCase.case_id}.py`;
 }
 
 export interface SimulationBatteryStartRisk {
@@ -151,6 +156,52 @@ export function missionPreviewHomeBases(preview: MissionPreview): HomeBaseView[]
   }));
 }
 
+export function missionSceneHomeBases(
+  activeMissionPreview: MissionPreview | undefined,
+  retainedMissionStart: HomeBaseView[] | undefined,
+  campaignCase: CampaignCaseView | undefined,
+  fleet: FleetSessionView | undefined,
+): HomeBaseView[] | undefined {
+  if (retainedMissionStart) return retainedMissionStart;
+  if (activeMissionPreview) return missionPreviewHomeBases(activeMissionPreview);
+  return !campaignCase && fleet?.missionDerived
+    ? fleet.vehicles.flatMap((vehicle, index) => vehicle.home
+        ? [{ vehicleId: vehicle.id, number: index + 1, position: vehicle.home }]
+        : [])
+    : undefined;
+}
+
+export function missionPreviewControlVehicles(
+  preview: MissionPreview | undefined,
+  liveVehicles: VehicleView[],
+): MaintenanceVehicle[] | undefined {
+  if (!preview) return undefined;
+  const liveById = new Map(liveVehicles.map((vehicle) => [vehicle.id, vehicle]));
+  return preview.vehicles.flatMap((vehicle) => {
+    const live = liveById.get(vehicle.vehicleId);
+    if (live) {
+      return [{
+        id: live.id,
+        name: live.name,
+        backendRole: live.backendRole,
+        state: live.state,
+        armed: live.armed,
+        flying: live.flying,
+      }];
+    }
+    return vehicle.existingVehicle && vehicle.backendRole && vehicle.vehicleState
+      ? [{
+          id: vehicle.vehicleId,
+          name: vehicle.displayName,
+          backendRole: vehicle.backendRole,
+          state: vehicle.vehicleState,
+          armed: undefined,
+          flying: undefined,
+        }]
+      : [];
+  });
+}
+
 export function missionIdForRunningReference(
   runningRunId: string | undefined,
   fleet: FleetSessionView | undefined,
@@ -166,15 +217,45 @@ export function missionIdForRunningReference(
     ?? (missionStart?.runId === runningRunId ? missionStart.missionId : undefined);
 }
 
+export function campaignReferencePlan(
+  campaignCase: CampaignCaseView | undefined,
+  preview: MissionPreview | undefined,
+): MissionPreview | undefined {
+  return campaignCase && preview?.sourceSha256 === campaignCase.case_sha256
+    ? preview
+    : undefined;
+}
+
+export function shouldDisplayHistoricalPath(
+  activeMissionPreview: MissionPreview | undefined,
+  campaignCase: CampaignCaseView | undefined,
+  campaignRun: CampaignRunSummary | undefined,
+  retainedMissionScene = false,
+): boolean {
+  return retainedMissionScene || (!activeMissionPreview && (!campaignCase || Boolean(campaignRun)));
+}
+
+export function campaignScenePreview(
+  preview: MissionPreview | undefined,
+  run: CampaignRunSummary | undefined,
+): MissionPreview | undefined {
+  return run && run.status !== "QUEUED" && run.status !== "RUNNING"
+    ? undefined
+    : preview;
+}
+
 export function ControlCenter() {
   const initialModel = useMemo(() => createEmptyDashboard(), []);
   const [model, setModel] = useState<DashboardModel>(initialModel);
   const modelRef = useRef(initialModel);
   const [serviceState, setServiceState] = useState<ServiceState>("ATTACHING");
   const [selectedMissionId, setSelectedMissionId] = useState("");
+  const [activeCampaignCase, setActiveCampaignCase] = useState<CampaignCaseView>();
   const [campaignDockCase, setCampaignDockCase] = useState<CampaignCaseView>();
   const [campaignRun, setCampaignRun] = useState<CampaignRunSummary>();
   const [campaignExecutionMode, setCampaignExecutionMode] = useState<CampaignRunMode>("OPERATOR_OBSERVED_REALTIME");
+  const [campaignSubmissionId, setCampaignSubmissionId] = useState<string>();
+  const [campaignPlanningSubmissionId, setCampaignPlanningSubmissionId] = useState<string>();
   const [executionMode, setExecutionMode] = useState<ExecutionMode>("SIMULATION");
   const [uploadFile, setUploadFile] = useState<File>();
   const [uploadName, setUploadName] = useState("");
@@ -205,6 +286,7 @@ export function ControlCenter() {
   const [runFilesLoaded, setRunFilesLoaded] = useState(false);
   const [runFilesLoading, setRunFilesLoading] = useState(false);
   const [runFilesError, setRunFilesError] = useState<string>();
+  const [deletingRunFileMissionId, setDeletingRunFileMissionId] = useState<string>();
   const [replay, setReplay] = useState<ReplayView>();
   const [batteryMenuOpen, setBatteryMenuOpen] = useState(false);
   const [customBatteryPercent, setCustomBatteryPercent] = useState("50");
@@ -217,15 +299,23 @@ export function ControlCenter() {
   const previewRequestRef = useRef(0);
   const campaignPreviewRequestRef = useRef(0);
   const autoPreviewMissionIdRef = useRef<string | undefined>(undefined);
-  const campaignDockCaseIdRef = useRef<string | undefined>(undefined);
+  const activeCampaignCaseIdRef = useRef<string | undefined>(undefined);
   const batteryControlRef = useRef<HTMLDivElement>(null);
 
   const api = useMemo(() => new ControlApi(LOCAL_API), []);
   const handleActiveCampaignCaseChange = useCallback((campaignCase: CampaignCaseView | undefined) => {
-    if (campaignDockCaseIdRef.current === campaignCase?.case_id) return;
-    campaignDockCaseIdRef.current = campaignCase?.case_id;
+    const activeCaseChanged = activeCampaignCaseIdRef.current !== campaignCase?.case_id;
+    activeCampaignCaseIdRef.current = campaignCase?.case_id;
+    setActiveCampaignCase(campaignCase);
+    if (!activeCaseChanged) {
+      setCampaignDockCase((current) => current?.case_id === campaignCase?.case_id
+        ? campaignCase
+        : current);
+      return;
+    }
     setCampaignDockCase(campaignCase);
     setCampaignPreview(undefined);
+    setCampaignRun(undefined);
     if (!campaignCase) return;
     previewRequestRef.current += 1;
     autoPreviewMissionIdRef.current = undefined;
@@ -241,6 +331,21 @@ export function ControlCenter() {
   const handleCampaignExecutionModeChange = useCallback((mode: CampaignRunMode) => {
     setCampaignExecutionMode(mode);
   }, []);
+  const handleCampaignSubmissionChange = useCallback((submissionId: string | undefined) => {
+    setCampaignSubmissionId(submissionId);
+    setCampaignPreview(undefined);
+  }, []);
+  const handleCampaignPlanningSubmissionChange = useCallback((planningSubmissionId: string | undefined) => {
+    setCampaignPlanningSubmissionId(planningSubmissionId);
+    setCampaignPreview(undefined);
+  }, []);
+  const captureCampaignScene = useCallback(async (capture: SceneSnapshotCapture) => {
+    if (!campaignRun || campaignRun.status !== "RUNNING") {
+      throw new Error("Campaign snapshots are available only while a run is running");
+    }
+    await api.uploadCampaignSnapshot(campaignRun.run_id, capture);
+    setNotice("Campaign scene snapshot captured");
+  }, [api, campaignRun]);
   const observationVehicleId = observedVehicleId && model.vehicles.some((vehicle) => vehicle.id === observedVehicleId)
     ? observedVehicleId
     : model.selectedVehicleId;
@@ -263,14 +368,17 @@ export function ControlCenter() {
   const campaignRunId = campaignRun?.run_id;
   const campaignRunActive = campaignRun?.status === "QUEUED" || campaignRun?.status === "RUNNING";
   const campaignModePresentation = campaignDockModePresentation(campaignExecutionMode);
+  // Keep the admitted campaign geometry available after launch. The live vehicle
+  // positions replace the preview vehicle, but the route remains the operator's
+  // reference for comparing intended and observed motion.
+  const campaignPlanOverview = campaignReferencePlan(campaignDockCase, campaignPreview);
   const activePythonMissionPreview = !runningRunId && missionPreview?.missionId === effectiveMissionId
     ? missionPreview
     : undefined;
   const activeCampaignPreview = !runningRunId
     && !campaignRunActive
-    && campaignDockCase
-    && campaignPreview?.sourceSha256 === campaignDockCase.case_sha256
-    ? campaignPreview
+    && campaignPlanOverview
+    ? campaignPlanOverview
     : undefined;
   const activeMissionPreview = campaignDockCase
     ? activeCampaignPreview
@@ -281,7 +389,7 @@ export function ControlCenter() {
     const requestId = campaignPreviewRequestRef.current + 1;
     campaignPreviewRequestRef.current = requestId;
     let cancelled = false;
-    void api.previewActiveCampaign().then((payload) => {
+    void api.previewActiveCampaign(campaignSubmissionId, campaignPlanningSubmissionId).then((payload) => {
       if (cancelled || campaignPreviewRequestRef.current !== requestId) return;
       const preview = campaignMissionPreview(campaignDockCase, payload);
       if (!preview) throw new Error("Campaign preview has no selected route");
@@ -294,22 +402,11 @@ export function ControlCenter() {
     return () => {
       cancelled = true;
     };
-  }, [api, campaignDockCase, campaignRunActive, runningRunId]);
+  }, [api, campaignDockCase, campaignPlanningSubmissionId, campaignRunActive, campaignSubmissionId, runningRunId]);
 
-  const previewControlVehicles: MaintenanceVehicle[] | undefined = activeMissionPreview?.vehicles.flatMap((vehicle) =>
-    vehicle.existingVehicle && vehicle.backendRole && vehicle.vehicleState
-      ? [{
-          id: vehicle.vehicleId,
-          name: vehicle.displayName,
-          backendRole: vehicle.backendRole,
-          state: vehicle.vehicleState,
-          armed: undefined,
-          flying: undefined,
-        }]
-      : [],
-  );
+  const previewControlVehicles = missionPreviewControlVehicles(activeMissionPreview, model.vehicles);
   const controlScopeVehicles: MaintenanceVehicle[] = campaignDockCase
-    ? previewControlVehicles ?? []
+    ? previewControlVehicles?.length ? previewControlVehicles : model.vehicles
     : activeMissionPreview
     ? previewControlVehicles ?? []
     : model.vehicles;
@@ -342,42 +439,49 @@ export function ControlCenter() {
     ? planOverview
     : undefined;
   const referencePlanOverview = campaignDockCase
-    ? activeCampaignPreview
+    ? campaignPlanOverview
     : runningRunId
       ? activeMissionId && planOverview?.missionId === activeMissionId ? planOverview : undefined
       : selectedPlanOverview;
   const selectedMissionPlanId = runningRunId && !activeMissionId ? undefined : selectedMission?.id;
   const selectedPlanOverviewMissionId = selectedPlanOverview?.missionId;
-  const retainedMissionStart = missionStart?.missionId === effectiveMissionId
+  const retainedMissionStart = !campaignDockCase && missionStart?.missionId === effectiveMissionId
     ? missionStart.homeBases
     : undefined;
+  const retainedCampaignHomeBases = campaignDockCase && campaignPlanOverview
+    ? missionPreviewHomeBases(campaignPlanOverview)
+    : undefined;
+  const retainedSceneHomeBases = retainedCampaignHomeBases ?? retainedMissionStart;
   const detectedLowBatteryRisk = simulationBatteryStartRisk(
     activeMissionPreview,
     model.vehicles,
     selectedVehicle,
     model.safetyPolicy?.minimumTakeoffBatteryPercent,
   );
-  const homeBases = activeMissionPreview
-    ? missionPreviewHomeBases(activeMissionPreview)
-    : retainedMissionStart && (runningRunId || fleet?.missionDerived)
-      ? retainedMissionStart
-      : !campaignDockCase && fleet?.missionDerived
-        ? fleet.vehicles.flatMap((vehicle, index) => vehicle.home
-          ? [{ vehicleId: vehicle.id, number: index + 1, position: vehicle.home }]
-          : [])
-        : undefined;
+  const homeBases = missionSceneHomeBases(
+    activeMissionPreview,
+    retainedSceneHomeBases,
+    campaignDockCase,
+    fleet,
+  );
   const plannedPath = referencePlanOverview
     ? missionPreviewPaths(referencePlanOverview)
     : runningRunId || campaignDockCase
       ? {}
       : missionPlan(selectedMission, model.room);
+  const displayHistoricalPath = shouldDisplayHistoricalPath(
+    activeMissionPreview,
+    campaignDockCase,
+    campaignRun,
+    Boolean(retainedMissionStart || (campaignDockCase && campaignRun)),
+  );
   const historicalPath = useMemo(
-    () => activeMissionPreview || campaignDockCase
-      ? {}
-      : Object.fromEntries(
+    () => displayHistoricalPath
+      ? Object.fromEntries(
           Object.entries(historyByVehicle).map(([vehicleId, value]) => [vehicleId, value.points]),
-        ),
-    [activeMissionPreview, campaignDockCase, historyByVehicle],
+        )
+      : {},
+    [displayHistoricalPath, historyByVehicle],
   );
   const observationModel = withObservationFocus(model, observationVehicleId);
   const targetSelectionModel = withVehicleTargetSelection(
@@ -386,14 +490,13 @@ export function ControlCenter() {
   );
   const rendererModel = replay
     ? { ...targetSelectionModel, mode: "REPLAY" as const }
-    : campaignDockCase && !activeMissionPreview && !campaignRunActive
+    : campaignDockCase && !activeMissionPreview && !campaignRunActive && !runningRunId
       ? { ...targetSelectionModel, vehicles: [] }
       : targetSelectionModel;
   const twinAvailable = model.vehicles.some((vehicle) => vehicle.authorityClass === "PHYSICAL")
     && model.vehicles.some((vehicle) => vehicle.authorityClass === "SIMULATION");
   const selectedVehicleException = singleTargetVehicle ? vehicleException(singleTargetVehicle) : undefined;
   const simulationQuickActionsDisabled = !allCommandTargetsAreFastSim
-    || simulationTargetVehicles.some((vehicle) => vehicle.state !== "DISCONNECTED")
     || Boolean(runningRunId || campaignRunActive)
     || Boolean(busyAction);
   const simulationBatteryDisabled = !allCommandTargetsAreFastSim
@@ -404,9 +507,9 @@ export function ControlCenter() {
     ));
   const simulationQuickActionHint = runningRunId || campaignRunActive
     ? "Stop the mission first"
-    : simulationTargetVehicles.some((vehicle) => vehicle.state !== "DISCONNECTED")
-      ? "Land, disarm, and disconnect every targeted simulator first"
-      : undefined;
+    : campaignDockCase
+      ? "Reset simulator motion before staging this campaign"
+      : "Reset simulator motion and return the drone to its configured home";
   const simulationBatteryHint = runningRunId || campaignRunActive
     ? "Stop the mission first"
     : simulationBatteryDisabled
@@ -573,6 +676,39 @@ export function ControlCenter() {
       if (timer !== undefined) window.clearTimeout(timer);
     };
   }, [api, applyDashboard, campaignRunActive, campaignRunId]);
+
+  // Campaign state only reports lifecycle progress. Poll the shared live state
+  // independently so realtime campaign flights render their current position and
+  // build an observed trace while the route remains visible.
+  useEffect(() => {
+    if (!campaignRunActive) return;
+    let cancelled = false;
+    let timer: number | undefined;
+    const poll = async () => {
+      const startedAtMs = performance.now();
+      try {
+        const { dashboard } = await api.loadLiveDashboard(modelRef.current);
+        if (cancelled) return;
+        applyDashboard(dashboard);
+        setServiceState("ONLINE");
+      } catch (error) {
+        if (!cancelled) {
+          setServiceState("OFFLINE");
+          setNotice(error instanceof Error ? error.message : "Campaign telemetry unavailable");
+          timer = window.setTimeout(poll, 2_000);
+        }
+        return;
+      }
+      if (cancelled) return;
+      const elapsedMs = performance.now() - startedAtMs;
+      timer = window.setTimeout(poll, Math.max(0, LIVE_UPDATE_PERIOD_MS - elapsedMs));
+    };
+    void poll();
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [api, applyDashboard, campaignRunActive]);
 
   useEffect(() => {
     if (!activeRunId) return;
@@ -764,7 +900,11 @@ export function ControlCenter() {
     if (!campaignDockCase || campaignRunActive) return;
     setStarting(true);
     try {
-      const run = await api.runActiveCampaign(campaignExecutionMode);
+      const run = await api.runActiveCampaign(
+        campaignExecutionMode,
+        campaignSubmissionId,
+        campaignPlanningSubmissionId,
+      );
       setCampaignRun(run);
       setMissionOpen(false);
       setNotice(`Starting ${humanizeCampaignValue(campaignDockCase.family)} · ${campaignModePresentation.actionLabel} · ${campaignDockCase.drone_count} ${campaignDockCase.drone_count === 1 ? "drone" : "drones"}`);
@@ -818,7 +958,6 @@ export function ControlCenter() {
     autoPreviewMissionIdRef.current = mission.id;
     setObservedVehicleId(undefined);
     setTargetVehicleIds([]);
-    campaignDockCaseIdRef.current = undefined;
     setCampaignDockCase(undefined);
     setCampaignPreview(undefined);
     setCampaignRun(undefined);
@@ -841,6 +980,21 @@ export function ControlCenter() {
     } finally {
       if (previewRequestRef.current === requestId) setPreviewingMissionId(undefined);
     }
+  };
+
+  const selectActiveCampaignMission = () => {
+    if (!activeCampaignCase || runningRunId || campaignRunActive) return;
+    previewRequestRef.current += 1;
+    autoPreviewMissionIdRef.current = undefined;
+    setMissionPreview(undefined);
+    setPlanOverview(undefined);
+    setObservedVehicleId(undefined);
+    setTargetVehicleIds([]);
+    setCampaignPreview(undefined);
+    setCampaignRun(undefined);
+    setCampaignDockCase(activeCampaignCase);
+    setExecutionMode("SIMULATION");
+    setNotice(`Selected ${humanizeCampaignValue(activeCampaignCase.case_id)}`);
   };
 
   useEffect(() => {
@@ -920,15 +1074,14 @@ export function ControlCenter() {
   const resetSimulationPose = async () => {
     if (
       !allCommandTargetsAreFastSim
-      || simulationTargetVehicles.some((vehicle) => vehicle.state !== "DISCONNECTED")
       || runningRunId
+      || campaignRunActive
     ) return;
     const targets = simulationTargetVehicles;
-    setBusyAction("Reposition to home");
+    const actionName = campaignDockCase ? "Redo campaign setup" : "Reposition to home";
+    setBusyAction(actionName);
     try {
-      const results = await Promise.allSettled(
-        targets.map((vehicle) => api.resetSimulationPose(vehicle.id)),
-      );
+      await api.resetSimulationFleet(targets.map((vehicle) => vehicle.id));
       setPreflight(undefined);
       setHistoryByVehicle({});
       setTelemetryHistoryByVehicle({});
@@ -939,13 +1092,12 @@ export function ControlCenter() {
         setPlanOverview(refreshedPreview);
         if (activeMissionPreview) setMissionPreview(refreshedPreview);
       }
-      const failedCount = results.filter((result) => result.status === "rejected").length;
-      if (failedCount) {
-        throw new Error(`Reset failed for ${failedCount} of ${targets.length} targeted drones`);
-      }
-      setNotice(targets.length === 1
-        ? "Drone repositioned to configured home"
-        : `${targets.length} drones repositioned to configured home`);
+      if (campaignDockCase) setCampaignRun(undefined);
+      setNotice(campaignDockCase
+        ? "Campaign setup reset to its starting state"
+        : targets.length === 1
+          ? "Drone repositioned to configured home"
+          : `${targets.length} drones repositioned to configured home`);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Drone reset failed");
     } finally {
@@ -1143,6 +1295,24 @@ export function ControlCenter() {
     }
   };
 
+  const deleteRunFileMission = async (missionExecutionId: string) => {
+    setDeletingRunFileMissionId(missionExecutionId);
+    try {
+      await api.deleteRunFileMission(missionExecutionId);
+      setRunFileMissions((missions) => missions.filter(
+        (item) => item.missionExecutionId !== missionExecutionId,
+      ));
+      setRunHistory((history) => history.filter((run) => run.missionExecutionId !== missionExecutionId));
+      setNotice("Run files and archive folder deleted");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to delete run files";
+      setRunFilesError(message);
+      setNotice(message);
+    } finally {
+      setDeletingRunFileMissionId(undefined);
+    }
+  };
+
   const openReplay = async (runId: string) => {
     setBusyAction("Open replay");
     try {
@@ -1213,13 +1383,15 @@ export function ControlCenter() {
             model={rendererModel}
             plannedPath={plannedPath}
             homeBases={homeBases}
-            missionPreview={activeMissionPreview}
+            missionPreview={campaignScenePreview(activeMissionPreview, campaignRun)}
             historicalPath={historicalPath}
             selectedVehicleIds={effectiveTargetVehicleIds}
             onVehicleSelectionChange={changeVehicleTargetSelection}
-            onDisplayTiming={(event) => {
+            onDisplayTiming={campaignRunActive ? (event) => {
               void api.recordBrowserTiming(event).catch(() => undefined);
-            }}
+            } : undefined}
+            onSceneCapture={campaignRun?.status === "RUNNING" ? captureCampaignScene : undefined}
+            onSceneCaptureError={setNotice}
           />
         </section>
 
@@ -1243,17 +1415,39 @@ export function ControlCenter() {
               <EmptyMission state={serviceState} onRetry={() => void attachLocalService()} />
             ) : (
               <>
+                <div className="execution-switch" role="group" aria-label="Execution mode">
+                  <button type="button" className={executionMode === "SIMULATION" ? "is-selected" : ""} onClick={() => setExecutionMode("SIMULATION")}>Simulation</button>
+                  <button type="button" className={executionMode === "TWIN" ? "is-selected" : ""} disabled={!twinAvailable} title={!twinAvailable ? "Real vehicle adapter required" : undefined} onClick={() => setExecutionMode("TWIN")}>Digital twin</button>
+                </div>
+
                 <CampaignLab
                   api={api}
                   onNotice={setNotice}
                   onActiveCaseChange={handleActiveCampaignCaseChange}
                   onCampaignRunChange={handleCampaignRunChange}
                   onExecutionModeChange={handleCampaignExecutionModeChange}
+                  onSubmissionChange={handleCampaignSubmissionChange}
+                  onPlanningSubmissionChange={handleCampaignPlanningSubmissionChange}
                 />
-                <div className="execution-switch" role="group" aria-label="Execution mode">
-                  <button type="button" className={executionMode === "SIMULATION" ? "is-selected" : ""} onClick={() => setExecutionMode("SIMULATION")}>Simulation</button>
-                  <button type="button" className={executionMode === "TWIN" ? "is-selected" : ""} disabled={!twinAvailable} title={!twinAvailable ? "Real vehicle adapter required" : undefined} onClick={() => setExecutionMode("TWIN")}>Digital twin</button>
-                </div>
+                {activeCampaignCase ? (
+                  <div className="campaign-active-mission">
+                    <button
+                      type="button"
+                      className={campaignDockCase ? "mission-card is-selected" : "mission-card"}
+                      disabled={Boolean(runningRunId || campaignRunActive)}
+                      onClick={selectActiveCampaignMission}
+                    >
+                      <FileCode2 size={15} />
+                      <span>
+                        <strong>{humanizeCampaignValue(activeCampaignCase.case_id)}</strong>
+                        <small>{campaignMissionFilename(activeCampaignCase)}</small>
+                      </span>
+                      {campaignDockCase ? <Check size={13} /> : null}
+                    </button>
+                  </div>
+                ) : null}
+
+                <div className="mission-source-divider" role="separator" />
 
                 <div className="mission-upload">
                   <input
@@ -1339,6 +1533,8 @@ export function ControlCenter() {
           loading={runFilesLoading}
           error={runFilesError}
           onLoad={() => void loadRunFiles()}
+          onDelete={(mission) => void deleteRunFileMission(mission.missionExecutionId)}
+          deletingMissionId={deletingRunFileMissionId}
         />
 
         {allCommandTargetsAreFastSim ? (
@@ -1346,16 +1542,18 @@ export function ControlCenter() {
             <div className="mission-quick-pill home-quick-pill">
               <button
                 type="button"
-                aria-label={effectiveTargetVehicleIds.length === 0
-                  ? `Reposition all ${simulationTargetVehicles.length} ${simulationTargetVehicles.length === 1 ? "drone" : "drones"} to home`
-                  : simulationTargetVehicles.length === 1
-                    ? "Reposition drone to home"
-                    : `Reposition ${simulationTargetVehicles.length} selected drones to home`}
+                aria-label={campaignDockCase
+                  ? "Redo campaign setup"
+                  : effectiveTargetVehicleIds.length === 0
+                    ? `Reposition all ${simulationTargetVehicles.length} ${simulationTargetVehicles.length === 1 ? "drone" : "drones"} to home`
+                    : simulationTargetVehicles.length === 1
+                      ? "Reposition drone to home"
+                      : `Reposition ${simulationTargetVehicles.length} selected drones to home`}
                 disabled={simulationQuickActionsDisabled}
                 title={simulationQuickActionHint}
                 onClick={() => void resetSimulationPose()}
               >
-                {busyAction === "Reposition to home" ? <LoaderCircle className="spin" size={17} /> : <RotateCcw size={17} />}
+                {busyAction === (campaignDockCase ? "Redo campaign setup" : "Reposition to home") ? <LoaderCircle className="spin" size={17} /> : <RotateCcw size={17} />}
               </button>
             </div>
             <div className="battery-quick-control" ref={batteryControlRef}>
@@ -1461,6 +1659,7 @@ export function ControlCenter() {
         onAbort={() => setSafetyAction("abort")}
         onEmergency={() => setSafetyAction("emergency")}
         onOpenParameters={openParameters}
+        onDeleteRunHistory={(run) => void deleteRunFileMission(run.missionExecutionId)}
         onWriteParameter={writeParameter}
         onSnapshotParameters={snapshotParameters}
         onRestoreParameters={restoreParameters}
@@ -1861,6 +2060,7 @@ function EngineeringDrawer({
   onAbort,
   onEmergency,
   onOpenParameters,
+  onDeleteRunHistory,
   onWriteParameter,
   onSnapshotParameters,
   onRestoreParameters,
@@ -1895,6 +2095,7 @@ function EngineeringDrawer({
   onAbort: () => void;
   onEmergency: () => void;
   onOpenParameters: () => void;
+  onDeleteRunHistory: (run: RunHistoryView) => void;
   onWriteParameter: (parameter: ParameterView, value: number) => void;
   onSnapshotParameters: () => void;
   onRestoreParameters: () => void;
@@ -1980,6 +2181,14 @@ function EngineeringDrawer({
                 <div className="run-history-row" key={run.runId}>
                   <span><strong>{run.status}</strong><small>{run.missionId} · {run.runId.slice(0, 12)}…</small></span>
                   <button type="button" disabled={run.status === "INCOMPLETE" || Boolean(busyAction)} onClick={() => onOpenReplay(run.runId)}>Replay</button>
+                  <button
+                    type="button"
+                    className="run-history-delete"
+                    disabled={run.status === "INCOMPLETE" || Boolean(busyAction)}
+                    onClick={() => onDeleteRunHistory(run)}
+                    aria-label={`Delete ${run.missionId} files`}
+                    title={run.status === "INCOMPLETE" ? "A recording cannot be deleted" : "Delete run files and folder"}
+                  ><Trash2 size={13} /></button>
                 </div>
               ))}
               {replay ? (
@@ -2030,11 +2239,12 @@ export function Toast({ message, onClose }: { message: string; onClose: () => vo
     return () => window.clearTimeout(timeout);
   }, [failure, message, onClose]);
 
-  return (
+  return createPortal(
     <div className={`toast ${failure ? "is-failure" : ""} ${detail ? "has-detail" : ""}`} role={failure ? "alert" : "status"} aria-atomic="true">
       <span><strong>{title}</strong>{detail ? <small>{detail}</small> : null}</span>
       <button type="button" aria-label="Dismiss" onClick={onClose}><X size={16} /></button>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -2153,24 +2363,6 @@ export function LowBatterySimulationDialog({
 
 function sentenceCase(value: string) {
   return value.replaceAll("_", " ").replaceAll("-", " ").replace(/^./, (letter) => letter.toUpperCase());
-}
-
-function telemetrySample(vehicle?: VehicleView): TelemetrySample | undefined {
-  const data = vehicle?.telemetry;
-  if (!data) return undefined;
-  const time = data.provenance.replayTimeS
-    ?? data.provenance.simulationTimeS
-    ?? data.provenance.sourceTimeS
-    ?? data.provenance.receiveTimeS
-    ?? Date.now() / 1_000;
-  return {
-    t: time,
-    altitude: data.estimate?.z,
-    speed: data.velocity ? Math.hypot(data.velocity.x, data.velocity.y, data.velocity.z) : undefined,
-    battery: data.batteryPercent,
-    current: data.batteryCurrent,
-    localization: data.localizationPercent,
-  };
 }
 
 function vehicleException(vehicle: VehicleView) {

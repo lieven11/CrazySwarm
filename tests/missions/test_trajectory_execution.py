@@ -171,6 +171,11 @@ async def test_canonical_route_is_authoritative_continuous_and_clock_invariant(
     assert capture["terminal_state"] == "READY"
     assert capture["terminal_contact"] == "SIMULATED_GROUND_CONTACT"
     assert capture["terminal_speed_m_s"] <= 0.08
+    assert capture["target_center_horizontal_error_m"] <= 0.02
+    assert capture["pre_contact_vertical_speed_m_s"] <= 0.05
+    assert capture["contact_source_timestamp_s"] < capture["disarmed_source_timestamp_s"]
+    assert capture["post_contact_settling_s"] >= 0.10
+    assert capture["motors_cut_after_contact"] is True
     terminal_truth = capture["terminal_truth_position_m"]
     goal = capture["goal"]
     assert terminal_truth is not None

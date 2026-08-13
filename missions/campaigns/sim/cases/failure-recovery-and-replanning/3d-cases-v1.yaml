@@ -1,969 +1,6 @@
 schema_version: 1
 cases:
 - schema_version: 2
-  case_id: 3d.leader_follower_recovery.canonical_nominal
-  template_id: template.3d.leader_follower_recovery
-  cluster: FAILURE_RECOVERY_AND_REPLANNING
-  family: leader_follower_recovery
-  variation_name: canonical_nominal
-  parent_case_sha256: null
-  baseline_sha256: null
-  purpose: Qualify the bounded leader follower recovery behavior for 3 drone(s).
-  behavior_under_test: Checks bounded leader follower recovery detection, authority
-    handling, deterministic recovery, and retained failure evidence.
-  expected_outcome: The update or fault is accepted only with current authority and
-    complete acknowledgements; otherwise it is rejected deterministically and the
-    declared hold, abort, or landing fallback runs.
-  environment: SIMULATION
-  authorization: SOFTWARE_SIMULATION_ONLY
-  implementation_status: EXECUTABLE
-  implementation_milestone: null
-  drone_count: 3
-  drones:
-  - role_id: Alpha
-    start_region:
-      region_id: Alpha-start
-      frame: world
-      minimum_m:
-        x: -1.54
-        y: -0.04
-        z: 0.0
-      maximum_m:
-        x: -1.46
-        y: 0.04
-        z: 0.08
-    goal_sequence:
-    - region_id: Alpha-goal-1
-      frame: world
-      minimum_m:
-        x: 1.45
-        y: -0.05
-        z: 0.25
-      maximum_m:
-        x: 1.55
-        y: 0.05
-        z: 0.35
-    landing_region:
-      region_id: Alpha-landing
-      frame: world
-      minimum_m:
-        x: 1.46
-        y: -0.04
-        z: 0.0
-      maximum_m:
-        x: 1.54
-        y: 0.04
-        z: 0.08
-    initial_battery_percent: 100.0
-    minimum_reserve_battery_percent: 20.0
-    health: HEALTHY
-    priority: 100
-    roles:
-    - leader
-    required_capabilities:
-    - arming
-    - relative_positioning
-    - high_level_commands
-    - time_parameterized_trajectory
-    available_capabilities:
-    - arming
-    - relative_positioning
-    - high_level_commands
-    - time_parameterized_trajectory
-  - role_id: Beta
-    start_region:
-      region_id: Beta-start
-      frame: world
-      minimum_m:
-        x: -0.04
-        y: -1.54
-        z: 0.0
-      maximum_m:
-        x: 0.04
-        y: -1.46
-        z: 0.08
-    goal_sequence:
-    - region_id: Beta-goal-1
-      frame: world
-      minimum_m:
-        x: -0.05
-        y: 1.45
-        z: 0.25
-      maximum_m:
-        x: 0.05
-        y: 1.55
-        z: 0.35
-    landing_region:
-      region_id: Beta-landing
-      frame: world
-      minimum_m:
-        x: -0.04
-        y: 1.46
-        z: 0.0
-      maximum_m:
-        x: 0.04
-        y: 1.54
-        z: 0.08
-    initial_battery_percent: 100.0
-    minimum_reserve_battery_percent: 20.0
-    health: HEALTHY
-    priority: 100
-    roles:
-    - follower
-    required_capabilities:
-    - arming
-    - relative_positioning
-    - high_level_commands
-    - time_parameterized_trajectory
-    available_capabilities:
-    - arming
-    - relative_positioning
-    - high_level_commands
-    - time_parameterized_trajectory
-  - role_id: Gamma
-    start_region:
-      region_id: Gamma-start
-      frame: world
-      minimum_m:
-        x: -1.1
-        y: -1.1
-        z: 0.0
-      maximum_m:
-        x: -1.02
-        y: -1.02
-        z: 0.08
-    goal_sequence:
-    - region_id: Gamma-goal-1
-      frame: world
-      minimum_m:
-        x: 1.01
-        y: 1.01
-        z: 0.25
-      maximum_m:
-        x: 1.11
-        y: 1.11
-        z: 0.35
-    landing_region:
-      region_id: Gamma-landing
-      frame: world
-      minimum_m:
-        x: 1.02
-        y: 1.02
-        z: 0.0
-      maximum_m:
-        x: 1.1
-        y: 1.1
-        z: 0.08
-    initial_battery_percent: 100.0
-    minimum_reserve_battery_percent: 20.0
-    health: HEALTHY
-    priority: 100
-    roles:
-    - follower
-    required_capabilities:
-    - arming
-    - relative_positioning
-    - high_level_commands
-    - time_parameterized_trajectory
-    available_capabilities:
-    - arming
-    - relative_positioning
-    - high_level_commands
-    - time_parameterized_trajectory
-  hard_constraints:
-    flight_volume:
-      region_id: flight-volume
-      frame: world
-      minimum_m:
-        x: -1.8
-        y: -1.8
-        z: 0.0
-      maximum_m:
-        x: 1.8
-        y: 1.8
-        z: 1.0
-    warning_separation_m: 0.75
-    critical_separation_m: 0.5
-    position_uncertainty_m: 0.05
-    dynamics:
-      maximum_horizontal_speed_m_s: 0.5
-      maximum_vertical_speed_m_s: 0.3
-      maximum_acceleration_m_s2: 1.0
-      maximum_jerk_m_s3: 8.0
-      stop_speed_threshold_m_s: 0.02
-      unintended_stop_persistence_s: 0.2
-    deadline_s: 180.0
-    hover_allowed: true
-    maximum_hover_s: 60.0
-    vertical_layers_allowed: true
-    synchronized_launch_required: false
-    maximum_unrequired_airborne_wait_s: 2.0
-    maximum_equal_route_battery_spread_percent: 1.0
-    minimum_realtime_factor: 0.8
-    watchdog_guard_s: 2.0
-    observation_freshness_limit_s: 0.25
-    minimum_goal_update_interval_s: 0.5
-    planning_budget_s: 2.0
-    mode_comparison:
-      schema_version: 1
-      maximum_source_clock_target_error_difference_s: 0.1
-      maximum_truth_path_length_difference_m: 0.1
-      maximum_tracking_rms_difference_m: 0.02
-      maximum_minimum_separation_difference_m: 0.1
-  allowed_strategies:
-  - DIRECT
-  - GROUND_DELAY
-  - SPEED_RETIMING
-  - HORIZONTAL_DETOUR
-  - AIRBORNE_STAGING
-  - VERTICAL_LAYER
-  - COMBINED_TIMING_GEOMETRY
-  objective_order:
-  - PRIORITY_INVERSION
-  - STARVATION
-  - MISSION_COMPLETION_TIME_S
-  - MAXIMUM_WAIT_S
-  - TOTAL_ENERGY_PERCENT
-  - AIRBORNE_HOVER_TIME_S
-  - PATH_LENGTH_M
-  - ACCELERATION_M_S2
-  - JERK_M_S3
-  - SEPARATION_ROBUSTNESS_M
-  - BOUNDARY_ROBUSTNESS_M
-  expected_decisions:
-  - DIRECT
-  - GROUND_DELAY
-  - HORIZONTAL_DETOUR
-  - VERTICAL_LAYER
-  pass_fail_metrics:
-  - metric_id: minimum_truth_separation_m
-    comparator: GREATER_THAN_OR_EQUAL
-    threshold: 0.75
-    unit: m
-  - metric_id: maximum_tracking_rms_m
-    comparator: LESS_THAN_OR_EQUAL
-    threshold: 0.05
-    unit: m
-  - metric_id: maximum_tracking_error_m
-    comparator: LESS_THAN_OR_EQUAL
-    threshold: 0.1
-    unit: m
-  - metric_id: maximum_touchdown_horizontal_error_m
-    comparator: LESS_THAN_OR_EQUAL
-    threshold: 0.1
-    unit: m
-  - metric_id: maximum_touchdown_vertical_error_m
-    comparator: LESS_THAN_OR_EQUAL
-    threshold: 0.08
-    unit: m
-  - metric_id: maximum_terminal_speed_m_s
-    comparator: LESS_THAN_OR_EQUAL
-    threshold: 0.05
-    unit: m/s
-  execution_eligibility: BOTH
-  operator_observation_questions:
-  - Did displayed motion remain smooth without hiding delayed evidence?
-  - Did every role reach the declared goal and landing region?
-  - Did the selected strategy match the pre-play rationale?
-  difficulty: 8
-  prerequisites:
-  - 1d.takeoff_hover_land.canonical_nominal
-  claim_boundary: Bounded Fast Sim behavior for at most three drones; no physical-flight
-    claim.
-  named_variations:
-  - canonical_nominal
-  - compact
-  - wide
-  search:
-    implementation_id: bounded-joint-candidate-planner
-    implementation_version: 1.0.0
-    prediction_step_s: 0.02
-    maximum_candidate_count: 256
-    planning_budget_s: 5.0
-    lateral_offsets_m:
-    - 0.2
-    - -0.2
-    - 0.35
-    - -0.35
-    arc_radii_m:
-    - 0.2
-    - 0.35
-    vertical_offsets_m:
-    - 0.2
-    - -0.2
-    speed_factors:
-    - 0.8
-    - 1.2
-    delay_grid_s:
-    - 2.0
-    - 4.0
-    - 8.0
-    - 12.0
-    - 24.0
-    - 40.0
-  execution:
-    seed: 42
-    repetitions: 1
-    clock_modes:
-    - ACCELERATED
-    - REALTIME
-    backend_profile_id: fast-sim-v1
-    noise_latency_profile_id: nominal-v1
-    evidence_profile_id: complete-evidence-v1
-    configuration_sha256: '0000000000000000000000000000000000000000000000000000000000000000'
-    playback_buffer_s: 0.25
-    maximum_interpolation_gap_s: 0.2
-    maximum_extrapolation_s: 0.1
-  replanning_authority: ABORT_ONLY
-  field_classification:
-    hard_constraints: HARD_CONSTRAINT
-    allowed_strategies: HARD_CONSTRAINT
-    objective_order: OPTIMIZATION_PREFERENCE
-    search: EXECUTION_SETTING
-    execution: EXECUTION_SETTING
-- schema_version: 2
-  case_id: 3d.leader_follower_recovery.compact
-  template_id: template.3d.leader_follower_recovery
-  cluster: FAILURE_RECOVERY_AND_REPLANNING
-  family: leader_follower_recovery
-  variation_name: compact
-  parent_case_sha256: null
-  baseline_sha256: null
-  purpose: Qualify the bounded leader follower recovery behavior for 3 drone(s).
-  behavior_under_test: Checks bounded leader follower recovery detection, authority
-    handling, deterministic recovery, and retained failure evidence.
-  expected_outcome: The update or fault is accepted only with current authority and
-    complete acknowledgements; otherwise it is rejected deterministically and the
-    declared hold, abort, or landing fallback runs.
-  environment: SIMULATION
-  authorization: SOFTWARE_SIMULATION_ONLY
-  implementation_status: EXECUTABLE
-  implementation_milestone: null
-  drone_count: 3
-  drones:
-  - role_id: Alpha
-    start_region:
-      region_id: Alpha-start
-      frame: world
-      minimum_m:
-        x: -1.54
-        y: -0.04
-        z: 0.0
-      maximum_m:
-        x: -1.46
-        y: 0.04
-        z: 0.08
-    goal_sequence:
-    - region_id: Alpha-goal-1
-      frame: world
-      minimum_m:
-        x: 1.45
-        y: -0.05
-        z: 0.25
-      maximum_m:
-        x: 1.55
-        y: 0.05
-        z: 0.35
-    landing_region:
-      region_id: Alpha-landing
-      frame: world
-      minimum_m:
-        x: 1.46
-        y: -0.04
-        z: 0.0
-      maximum_m:
-        x: 1.54
-        y: 0.04
-        z: 0.08
-    initial_battery_percent: 100.0
-    minimum_reserve_battery_percent: 20.0
-    health: HEALTHY
-    priority: 100
-    roles:
-    - leader
-    required_capabilities:
-    - arming
-    - relative_positioning
-    - high_level_commands
-    - time_parameterized_trajectory
-    available_capabilities:
-    - arming
-    - relative_positioning
-    - high_level_commands
-    - time_parameterized_trajectory
-  - role_id: Beta
-    start_region:
-      region_id: Beta-start
-      frame: world
-      minimum_m:
-        x: -0.04
-        y: -1.54
-        z: 0.0
-      maximum_m:
-        x: 0.04
-        y: -1.46
-        z: 0.08
-    goal_sequence:
-    - region_id: Beta-goal-1
-      frame: world
-      minimum_m:
-        x: -0.05
-        y: 1.45
-        z: 0.25
-      maximum_m:
-        x: 0.05
-        y: 1.55
-        z: 0.35
-    landing_region:
-      region_id: Beta-landing
-      frame: world
-      minimum_m:
-        x: -0.04
-        y: 1.46
-        z: 0.0
-      maximum_m:
-        x: 0.04
-        y: 1.54
-        z: 0.08
-    initial_battery_percent: 100.0
-    minimum_reserve_battery_percent: 20.0
-    health: HEALTHY
-    priority: 100
-    roles:
-    - follower
-    required_capabilities:
-    - arming
-    - relative_positioning
-    - high_level_commands
-    - time_parameterized_trajectory
-    available_capabilities:
-    - arming
-    - relative_positioning
-    - high_level_commands
-    - time_parameterized_trajectory
-  - role_id: Gamma
-    start_region:
-      region_id: Gamma-start
-      frame: world
-      minimum_m:
-        x: -1.1
-        y: -1.1
-        z: 0.0
-      maximum_m:
-        x: -1.02
-        y: -1.02
-        z: 0.08
-    goal_sequence:
-    - region_id: Gamma-goal-1
-      frame: world
-      minimum_m:
-        x: 1.01
-        y: 1.01
-        z: 0.25
-      maximum_m:
-        x: 1.11
-        y: 1.11
-        z: 0.35
-    landing_region:
-      region_id: Gamma-landing
-      frame: world
-      minimum_m:
-        x: 1.02
-        y: 1.02
-        z: 0.0
-      maximum_m:
-        x: 1.1
-        y: 1.1
-        z: 0.08
-    initial_battery_percent: 100.0
-    minimum_reserve_battery_percent: 20.0
-    health: HEALTHY
-    priority: 100
-    roles:
-    - follower
-    required_capabilities:
-    - arming
-    - relative_positioning
-    - high_level_commands
-    - time_parameterized_trajectory
-    available_capabilities:
-    - arming
-    - relative_positioning
-    - high_level_commands
-    - time_parameterized_trajectory
-  hard_constraints:
-    flight_volume:
-      region_id: flight-volume
-      frame: world
-      minimum_m:
-        x: -1.6
-        y: -1.6
-        z: 0.0
-      maximum_m:
-        x: 1.6
-        y: 1.6
-        z: 0.7
-    warning_separation_m: 0.75
-    critical_separation_m: 0.5
-    position_uncertainty_m: 0.05
-    dynamics:
-      maximum_horizontal_speed_m_s: 0.5
-      maximum_vertical_speed_m_s: 0.3
-      maximum_acceleration_m_s2: 1.0
-      maximum_jerk_m_s3: 8.0
-      stop_speed_threshold_m_s: 0.02
-      unintended_stop_persistence_s: 0.2
-    deadline_s: 180.0
-    hover_allowed: true
-    maximum_hover_s: 60.0
-    vertical_layers_allowed: true
-    synchronized_launch_required: false
-    maximum_unrequired_airborne_wait_s: 2.0
-    maximum_equal_route_battery_spread_percent: 1.0
-    minimum_realtime_factor: 0.8
-    watchdog_guard_s: 2.0
-    observation_freshness_limit_s: 0.25
-    minimum_goal_update_interval_s: 0.5
-    planning_budget_s: 2.0
-    mode_comparison:
-      schema_version: 1
-      maximum_source_clock_target_error_difference_s: 0.1
-      maximum_truth_path_length_difference_m: 0.1
-      maximum_tracking_rms_difference_m: 0.02
-      maximum_minimum_separation_difference_m: 0.1
-  allowed_strategies:
-  - DIRECT
-  - GROUND_DELAY
-  - SPEED_RETIMING
-  - HORIZONTAL_DETOUR
-  - AIRBORNE_STAGING
-  - VERTICAL_LAYER
-  - COMBINED_TIMING_GEOMETRY
-  objective_order:
-  - PRIORITY_INVERSION
-  - STARVATION
-  - MISSION_COMPLETION_TIME_S
-  - MAXIMUM_WAIT_S
-  - TOTAL_ENERGY_PERCENT
-  - AIRBORNE_HOVER_TIME_S
-  - PATH_LENGTH_M
-  - ACCELERATION_M_S2
-  - JERK_M_S3
-  - SEPARATION_ROBUSTNESS_M
-  - BOUNDARY_ROBUSTNESS_M
-  expected_decisions:
-  - DIRECT
-  - GROUND_DELAY
-  - HORIZONTAL_DETOUR
-  - VERTICAL_LAYER
-  pass_fail_metrics:
-  - metric_id: minimum_truth_separation_m
-    comparator: GREATER_THAN_OR_EQUAL
-    threshold: 0.75
-    unit: m
-  - metric_id: maximum_tracking_rms_m
-    comparator: LESS_THAN_OR_EQUAL
-    threshold: 0.05
-    unit: m
-  - metric_id: maximum_tracking_error_m
-    comparator: LESS_THAN_OR_EQUAL
-    threshold: 0.1
-    unit: m
-  - metric_id: maximum_touchdown_horizontal_error_m
-    comparator: LESS_THAN_OR_EQUAL
-    threshold: 0.1
-    unit: m
-  - metric_id: maximum_touchdown_vertical_error_m
-    comparator: LESS_THAN_OR_EQUAL
-    threshold: 0.08
-    unit: m
-  - metric_id: maximum_terminal_speed_m_s
-    comparator: LESS_THAN_OR_EQUAL
-    threshold: 0.05
-    unit: m/s
-  execution_eligibility: BOTH
-  operator_observation_questions:
-  - Did displayed motion remain smooth without hiding delayed evidence?
-  - Did every role reach the declared goal and landing region?
-  - Did the selected strategy match the pre-play rationale?
-  difficulty: 9
-  prerequisites:
-  - 1d.takeoff_hover_land.canonical_nominal
-  claim_boundary: Bounded Fast Sim behavior for at most three drones; no physical-flight
-    claim.
-  named_variations:
-  - canonical_nominal
-  - compact
-  - wide
-  search:
-    implementation_id: bounded-joint-candidate-planner
-    implementation_version: 1.0.0
-    prediction_step_s: 0.02
-    maximum_candidate_count: 256
-    planning_budget_s: 5.0
-    lateral_offsets_m:
-    - 0.2
-    - -0.2
-    - 0.35
-    - -0.35
-    arc_radii_m:
-    - 0.2
-    - 0.35
-    vertical_offsets_m:
-    - 0.2
-    - -0.2
-    speed_factors:
-    - 0.8
-    - 1.2
-    delay_grid_s:
-    - 2.0
-    - 4.0
-    - 8.0
-    - 12.0
-    - 24.0
-    - 40.0
-  execution:
-    seed: 42
-    repetitions: 1
-    clock_modes:
-    - ACCELERATED
-    - REALTIME
-    backend_profile_id: fast-sim-v1
-    noise_latency_profile_id: nominal-v1
-    evidence_profile_id: complete-evidence-v1
-    configuration_sha256: '0000000000000000000000000000000000000000000000000000000000000000'
-    playback_buffer_s: 0.25
-    maximum_interpolation_gap_s: 0.2
-    maximum_extrapolation_s: 0.1
-  replanning_authority: ABORT_ONLY
-  field_classification:
-    hard_constraints: HARD_CONSTRAINT
-    allowed_strategies: HARD_CONSTRAINT
-    objective_order: OPTIMIZATION_PREFERENCE
-    search: EXECUTION_SETTING
-    execution: EXECUTION_SETTING
-- schema_version: 2
-  case_id: 3d.leader_follower_recovery.wide
-  template_id: template.3d.leader_follower_recovery
-  cluster: FAILURE_RECOVERY_AND_REPLANNING
-  family: leader_follower_recovery
-  variation_name: wide
-  parent_case_sha256: null
-  baseline_sha256: null
-  purpose: Qualify the bounded leader follower recovery behavior for 3 drone(s).
-  behavior_under_test: Checks bounded leader follower recovery detection, authority
-    handling, deterministic recovery, and retained failure evidence.
-  expected_outcome: The update or fault is accepted only with current authority and
-    complete acknowledgements; otherwise it is rejected deterministically and the
-    declared hold, abort, or landing fallback runs.
-  environment: SIMULATION
-  authorization: SOFTWARE_SIMULATION_ONLY
-  implementation_status: EXECUTABLE
-  implementation_milestone: null
-  drone_count: 3
-  drones:
-  - role_id: Alpha
-    start_region:
-      region_id: Alpha-start
-      frame: world
-      minimum_m:
-        x: -1.54
-        y: -0.04
-        z: 0.0
-      maximum_m:
-        x: -1.46
-        y: 0.04
-        z: 0.08
-    goal_sequence:
-    - region_id: Alpha-goal-1
-      frame: world
-      minimum_m:
-        x: 1.45
-        y: -0.05
-        z: 0.25
-      maximum_m:
-        x: 1.55
-        y: 0.05
-        z: 0.35
-    landing_region:
-      region_id: Alpha-landing
-      frame: world
-      minimum_m:
-        x: 1.46
-        y: -0.04
-        z: 0.0
-      maximum_m:
-        x: 1.54
-        y: 0.04
-        z: 0.08
-    initial_battery_percent: 100.0
-    minimum_reserve_battery_percent: 20.0
-    health: HEALTHY
-    priority: 100
-    roles:
-    - leader
-    required_capabilities:
-    - arming
-    - relative_positioning
-    - high_level_commands
-    - time_parameterized_trajectory
-    available_capabilities:
-    - arming
-    - relative_positioning
-    - high_level_commands
-    - time_parameterized_trajectory
-  - role_id: Beta
-    start_region:
-      region_id: Beta-start
-      frame: world
-      minimum_m:
-        x: -0.04
-        y: -1.54
-        z: 0.0
-      maximum_m:
-        x: 0.04
-        y: -1.46
-        z: 0.08
-    goal_sequence:
-    - region_id: Beta-goal-1
-      frame: world
-      minimum_m:
-        x: -0.05
-        y: 1.45
-        z: 0.25
-      maximum_m:
-        x: 0.05
-        y: 1.55
-        z: 0.35
-    landing_region:
-      region_id: Beta-landing
-      frame: world
-      minimum_m:
-        x: -0.04
-        y: 1.46
-        z: 0.0
-      maximum_m:
-        x: 0.04
-        y: 1.54
-        z: 0.08
-    initial_battery_percent: 100.0
-    minimum_reserve_battery_percent: 20.0
-    health: HEALTHY
-    priority: 100
-    roles:
-    - follower
-    required_capabilities:
-    - arming
-    - relative_positioning
-    - high_level_commands
-    - time_parameterized_trajectory
-    available_capabilities:
-    - arming
-    - relative_positioning
-    - high_level_commands
-    - time_parameterized_trajectory
-  - role_id: Gamma
-    start_region:
-      region_id: Gamma-start
-      frame: world
-      minimum_m:
-        x: -1.1
-        y: -1.1
-        z: 0.0
-      maximum_m:
-        x: -1.02
-        y: -1.02
-        z: 0.08
-    goal_sequence:
-    - region_id: Gamma-goal-1
-      frame: world
-      minimum_m:
-        x: 1.01
-        y: 1.01
-        z: 0.25
-      maximum_m:
-        x: 1.11
-        y: 1.11
-        z: 0.35
-    landing_region:
-      region_id: Gamma-landing
-      frame: world
-      minimum_m:
-        x: 1.02
-        y: 1.02
-        z: 0.0
-      maximum_m:
-        x: 1.1
-        y: 1.1
-        z: 0.08
-    initial_battery_percent: 100.0
-    minimum_reserve_battery_percent: 20.0
-    health: HEALTHY
-    priority: 100
-    roles:
-    - follower
-    required_capabilities:
-    - arming
-    - relative_positioning
-    - high_level_commands
-    - time_parameterized_trajectory
-    available_capabilities:
-    - arming
-    - relative_positioning
-    - high_level_commands
-    - time_parameterized_trajectory
-  hard_constraints:
-    flight_volume:
-      region_id: flight-volume
-      frame: world
-      minimum_m:
-        x: -1.8
-        y: -1.8
-        z: 0.0
-      maximum_m:
-        x: 1.8
-        y: 1.8
-        z: 1.0
-    warning_separation_m: 0.75
-    critical_separation_m: 0.5
-    position_uncertainty_m: 0.05
-    dynamics:
-      maximum_horizontal_speed_m_s: 0.5
-      maximum_vertical_speed_m_s: 0.3
-      maximum_acceleration_m_s2: 1.0
-      maximum_jerk_m_s3: 8.0
-      stop_speed_threshold_m_s: 0.02
-      unintended_stop_persistence_s: 0.2
-    deadline_s: 180.0
-    hover_allowed: true
-    maximum_hover_s: 60.0
-    vertical_layers_allowed: true
-    synchronized_launch_required: false
-    maximum_unrequired_airborne_wait_s: 2.0
-    maximum_equal_route_battery_spread_percent: 1.0
-    minimum_realtime_factor: 0.8
-    watchdog_guard_s: 2.0
-    observation_freshness_limit_s: 0.25
-    minimum_goal_update_interval_s: 0.5
-    planning_budget_s: 2.0
-    mode_comparison:
-      schema_version: 1
-      maximum_source_clock_target_error_difference_s: 0.1
-      maximum_truth_path_length_difference_m: 0.1
-      maximum_tracking_rms_difference_m: 0.02
-      maximum_minimum_separation_difference_m: 0.1
-  allowed_strategies:
-  - DIRECT
-  - GROUND_DELAY
-  - SPEED_RETIMING
-  - HORIZONTAL_DETOUR
-  - AIRBORNE_STAGING
-  - VERTICAL_LAYER
-  - COMBINED_TIMING_GEOMETRY
-  objective_order:
-  - PRIORITY_INVERSION
-  - STARVATION
-  - MISSION_COMPLETION_TIME_S
-  - MAXIMUM_WAIT_S
-  - TOTAL_ENERGY_PERCENT
-  - AIRBORNE_HOVER_TIME_S
-  - PATH_LENGTH_M
-  - ACCELERATION_M_S2
-  - JERK_M_S3
-  - SEPARATION_ROBUSTNESS_M
-  - BOUNDARY_ROBUSTNESS_M
-  expected_decisions:
-  - DIRECT
-  - GROUND_DELAY
-  - HORIZONTAL_DETOUR
-  - VERTICAL_LAYER
-  pass_fail_metrics:
-  - metric_id: minimum_truth_separation_m
-    comparator: GREATER_THAN_OR_EQUAL
-    threshold: 0.75
-    unit: m
-  - metric_id: maximum_tracking_rms_m
-    comparator: LESS_THAN_OR_EQUAL
-    threshold: 0.05
-    unit: m
-  - metric_id: maximum_tracking_error_m
-    comparator: LESS_THAN_OR_EQUAL
-    threshold: 0.1
-    unit: m
-  - metric_id: maximum_touchdown_horizontal_error_m
-    comparator: LESS_THAN_OR_EQUAL
-    threshold: 0.1
-    unit: m
-  - metric_id: maximum_touchdown_vertical_error_m
-    comparator: LESS_THAN_OR_EQUAL
-    threshold: 0.08
-    unit: m
-  - metric_id: maximum_terminal_speed_m_s
-    comparator: LESS_THAN_OR_EQUAL
-    threshold: 0.05
-    unit: m/s
-  execution_eligibility: BOTH
-  operator_observation_questions:
-  - Did displayed motion remain smooth without hiding delayed evidence?
-  - Did every role reach the declared goal and landing region?
-  - Did the selected strategy match the pre-play rationale?
-  difficulty: 8
-  prerequisites:
-  - 1d.takeoff_hover_land.canonical_nominal
-  claim_boundary: Bounded Fast Sim behavior for at most three drones; no physical-flight
-    claim.
-  named_variations:
-  - canonical_nominal
-  - compact
-  - wide
-  search:
-    implementation_id: bounded-joint-candidate-planner
-    implementation_version: 1.0.0
-    prediction_step_s: 0.02
-    maximum_candidate_count: 256
-    planning_budget_s: 5.0
-    lateral_offsets_m:
-    - 0.2
-    - -0.2
-    - 0.35
-    - -0.35
-    arc_radii_m:
-    - 0.2
-    - 0.35
-    vertical_offsets_m:
-    - 0.2
-    - -0.2
-    speed_factors:
-    - 0.8
-    - 1.2
-    delay_grid_s:
-    - 2.0
-    - 4.0
-    - 8.0
-    - 12.0
-    - 24.0
-    - 40.0
-  execution:
-    seed: 42
-    repetitions: 1
-    clock_modes:
-    - ACCELERATED
-    - REALTIME
-    backend_profile_id: fast-sim-v1
-    noise_latency_profile_id: nominal-v1
-    evidence_profile_id: complete-evidence-v1
-    configuration_sha256: '0000000000000000000000000000000000000000000000000000000000000000'
-    playback_buffer_s: 0.25
-    maximum_interpolation_gap_s: 0.2
-    maximum_extrapolation_s: 0.1
-  replanning_authority: ABORT_ONLY
-  field_classification:
-    hard_constraints: HARD_CONSTRAINT
-    allowed_strategies: HARD_CONSTRAINT
-    objective_order: OPTIMIZATION_PREFERENCE
-    search: EXECUTION_SETTING
-    execution: EXECUTION_SETTING
-- schema_version: 2
   case_id: 3d.cascading_replan.dynamic_nominal
   template_id: template.3d.cascading_replan
   cluster: FAILURE_RECOVERY_AND_REPLANNING
@@ -979,7 +16,7 @@ cases:
     declared hold, abort, or landing fallback runs.
   environment: SIMULATION
   authorization: SOFTWARE_SIMULATION_ONLY
-  implementation_status: EXECUTABLE
+  implementation_status: PLANNED_NOT_EXECUTABLE
   implementation_milestone: WP-34B
   drone_count: 3
   drones:
@@ -988,34 +25,44 @@ cases:
       region_id: Alpha-start
       frame: world
       minimum_m:
-        x: -1.54
+        x: -1.44
         y: -0.04
         z: 0.0
       maximum_m:
-        x: -1.46
+        x: -1.3599999999999999
         y: 0.04
         z: 0.08
     goal_sequence:
     - region_id: Alpha-goal-1
       frame: world
       minimum_m:
-        x: 1.45
+        x: -0.05
         y: -0.05
-        z: 0.25
+        z: 0.3
       maximum_m:
-        x: 1.55
+        x: 0.05
         y: 0.05
-        z: 0.35
+        z: 0.39999999999999997
+    - region_id: Alpha-goal-2
+      frame: world
+      minimum_m:
+        x: 0.5
+        y: -0.8
+        z: 0.3
+      maximum_m:
+        x: 0.6000000000000001
+        y: -0.7
+        z: 0.39999999999999997
     landing_region:
       region_id: Alpha-landing
       frame: world
       minimum_m:
-        x: 1.46
-        y: -0.04
+        x: 0.51
+        y: -0.79
         z: 0.0
       maximum_m:
-        x: 1.54
-        y: 0.04
+        x: 0.5900000000000001
+        y: -0.71
         z: 0.08
     initial_battery_percent: 100.0
     minimum_reserve_battery_percent: 20.0
@@ -1039,33 +86,43 @@ cases:
       frame: world
       minimum_m:
         x: -0.04
-        y: -1.54
+        y: -1.44
         z: 0.0
       maximum_m:
         x: 0.04
-        y: -1.46
+        y: -1.3599999999999999
         z: 0.08
     goal_sequence:
     - region_id: Beta-goal-1
       frame: world
       minimum_m:
         x: -0.05
-        y: 1.45
-        z: 0.25
+        y: -0.05
+        z: 0.3
       maximum_m:
         x: 0.05
-        y: 1.55
-        z: 0.35
+        y: 0.05
+        z: 0.39999999999999997
+    - region_id: Beta-goal-2
+      frame: world
+      minimum_m:
+        x: 0.7
+        y: -0.45
+        z: 0.4
+      maximum_m:
+        x: 0.8
+        y: -0.35000000000000003
+        z: 0.5
     landing_region:
       region_id: Beta-landing
       frame: world
       minimum_m:
-        x: -0.04
-        y: 1.46
+        x: 0.71
+        y: -0.44
         z: 0.0
       maximum_m:
-        x: 0.04
-        y: 1.54
+        x: 0.79
+        y: -0.36000000000000004
         z: 0.08
     initial_battery_percent: 100.0
     minimum_reserve_battery_percent: 20.0
@@ -1088,34 +145,44 @@ cases:
       region_id: Gamma-start
       frame: world
       minimum_m:
-        x: -1.1
-        y: -1.1
+        x: -1.24
+        y: -1.24
         z: 0.0
       maximum_m:
-        x: -1.02
-        y: -1.02
+        x: -1.16
+        y: -1.16
         z: 0.08
     goal_sequence:
     - region_id: Gamma-goal-1
       frame: world
       minimum_m:
-        x: 1.01
-        y: 1.01
-        z: 0.25
+        x: -0.05
+        y: -0.05
+        z: 0.3
       maximum_m:
-        x: 1.11
-        y: 1.11
-        z: 0.35
+        x: 0.05
+        y: 0.05
+        z: 0.39999999999999997
+    - region_id: Gamma-goal-2
+      frame: world
+      minimum_m:
+        x: 0.8999999999999999
+        y: -0.1
+        z: 0.3
+      maximum_m:
+        x: 1.0
+        y: 0.0
+        z: 0.39999999999999997
     landing_region:
       region_id: Gamma-landing
       frame: world
       minimum_m:
-        x: 1.02
-        y: 1.02
+        x: 0.9099999999999999
+        y: -0.09
         z: 0.0
       maximum_m:
-        x: 1.1
-        y: 1.1
+        x: 0.99
+        y: -0.010000000000000002
         z: 0.08
     initial_battery_percent: 100.0
     minimum_reserve_battery_percent: 20.0
@@ -1220,7 +287,7 @@ cases:
     comparator: LESS_THAN_OR_EQUAL
     threshold: 0.05
     unit: m/s
-  execution_eligibility: BOTH
+  execution_eligibility: STATIC_VALIDATE_ONLY
   operator_observation_questions:
   - Did displayed motion remain smooth without hiding delayed evidence?
   - Did every role reach the declared goal and landing region?
@@ -1273,6 +340,190 @@ cases:
     maximum_interpolation_gap_s: 0.2
     maximum_extrapolation_s: 0.1
   replanning_authority: AUTO_WITHIN_FROZEN_LIMITS
+  semantics:
+    contract_version: 1
+    curriculum_level: 5
+    learning_objective: Learn and verify the causal cascading replan behavior for
+      3 drone(s) in the dynamic nominal authored scenario.
+    difficulty_rationale: Difficulty reflects 3 active role(s) plus event authority,
+      safe fallback, and retained causal evidence.
+    route_intent_by_role:
+      Alpha:
+      - region_id: Alpha-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Alpha-goal-2
+        mode: CAPTURE
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      Beta:
+      - region_id: Beta-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Beta-goal-2
+        mode: CAPTURE
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      Gamma:
+      - region_id: Gamma-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Gamma-goal-2
+        mode: CAPTURE
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+    environment_constraints:
+      keep_out_regions: []
+      required_corridors: []
+    coordination_constraints:
+      synchronized_route_start_required: false
+      maximum_route_start_skew_s: 0.2
+      minimum_simultaneous_flight_s: 0.0
+      maximum_formation_error_m: null
+      formation_offsets_m: {}
+      formation_offsets_by_node_m: {}
+    scenario_events:
+    - event_id: cascading_replan-update-1
+      kind: GOAL_UPDATE
+      trigger_time_s: 3.0
+      role_id: Alpha
+      replacement_goal:
+        region_id: cascading_replan-replacement-1
+        frame: world
+        minimum_m:
+          x: 0.5
+          y: -0.8
+          z: 0.3
+        maximum_m:
+          x: 0.6000000000000001
+          y: -0.7
+          z: 0.39999999999999997
+      battery_percent: null
+      duration_s: null
+      source_id: campaign-scenario
+      sequence: 1
+      generation: 1
+      authenticated: true
+      acknowledgement_required: false
+      acknowledgement_received: true
+      update_identity: cascading_replan-update-identity-1
+      expected_disposition: ACCEPTED_UPDATE
+    - event_id: cascading_replan-update-2
+      kind: GOAL_UPDATE
+      trigger_time_s: 3.75
+      role_id: Beta
+      replacement_goal:
+        region_id: cascading_replan-replacement-2
+        frame: world
+        minimum_m:
+          x: 0.7
+          y: -0.45
+          z: 0.39999999999999997
+        maximum_m:
+          x: 0.8
+          y: -0.35000000000000003
+          z: 0.49999999999999994
+      battery_percent: null
+      duration_s: null
+      source_id: campaign-scenario
+      sequence: 2
+      generation: 2
+      authenticated: true
+      acknowledgement_required: false
+      acknowledgement_received: true
+      update_identity: cascading_replan-update-identity-2
+      expected_disposition: ACCEPTED_UPDATE
+    - event_id: cascading_replan-update-3
+      kind: GOAL_UPDATE
+      trigger_time_s: 4.5
+      role_id: Gamma
+      replacement_goal:
+        region_id: cascading_replan-replacement-3
+        frame: world
+        minimum_m:
+          x: 0.9
+          y: -0.10000000000000005
+          z: 0.3
+        maximum_m:
+          x: 1.0
+          y: -4.163336342344337e-17
+          z: 0.39999999999999997
+      battery_percent: null
+      duration_s: null
+      source_id: campaign-scenario
+      sequence: 3
+      generation: 3
+      authenticated: true
+      acknowledgement_required: false
+      acknowledgement_received: true
+      update_identity: cascading_replan-update-identity-3
+      expected_disposition: ACCEPTED_UPDATE
+    behavior_oracles:
+    - oracle_id: ordered-route-capture
+      kind: ROUTE_NODES_CAPTURED
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: null
+      unit: null
+      required: true
+    - oracle_id: no-undeclared-stop
+      kind: NO_UNDECLARED_STOP
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.0
+      unit: count
+      required: true
+    - oracle_id: offset-landing
+      kind: DISTINCT_START_AND_LANDING
+      evidence_source: AUTHORED_ROUTE
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.2
+      unit: m
+      required: true
+    - oracle_id: joint-separation
+      kind: CONFLICT_RESOLVED
+      evidence_source: PLANNER_PREDICTION
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.8
+      unit: m
+      required: true
+    - oracle_id: causal-event-outcome
+      kind: EVENT_HANDLED
+      evidence_source: EVENT_TRACE
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 1.0
+      unit: boolean
+      required: true
+    - oracle_id: accepted-event-goal-capture
+      kind: ACCEPTED_EVENT_GOALS_CAPTURED
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 1.0
+      unit: ratio
+      required: true
+    semantic_baseline_case_id: null
+    intended_delta: null
   field_classification:
     hard_constraints: HARD_CONSTRAINT
     allowed_strategies: HARD_CONSTRAINT
@@ -1295,7 +546,7 @@ cases:
     declared hold, abort, or landing fallback runs.
   environment: SIMULATION
   authorization: SOFTWARE_SIMULATION_ONLY
-  implementation_status: EXECUTABLE
+  implementation_status: PLANNED_NOT_EXECUTABLE
   implementation_milestone: WP-34B
   drone_count: 3
   drones:
@@ -1304,33 +555,33 @@ cases:
       region_id: Alpha-start
       frame: world
       minimum_m:
-        x: -1.54
+        x: -1.44
         y: -0.04
         z: 0.0
       maximum_m:
-        x: -1.46
+        x: -1.3599999999999999
         y: 0.04
         z: 0.08
     goal_sequence:
     - region_id: Alpha-goal-1
       frame: world
       minimum_m:
-        x: 1.45
+        x: 1.3499999999999999
         y: -0.05
-        z: 0.25
+        z: 0.3
       maximum_m:
-        x: 1.55
+        x: 1.45
         y: 0.05
-        z: 0.35
+        z: 0.39999999999999997
     landing_region:
       region_id: Alpha-landing
       frame: world
       minimum_m:
-        x: 1.46
+        x: 1.3599999999999999
         y: -0.04
         z: 0.0
       maximum_m:
-        x: 1.54
+        x: 1.44
         y: 0.04
         z: 0.08
     initial_battery_percent: 100.0
@@ -1355,33 +606,33 @@ cases:
       frame: world
       minimum_m:
         x: -0.04
-        y: -1.54
+        y: -1.44
         z: 0.0
       maximum_m:
         x: 0.04
-        y: -1.46
+        y: -1.3599999999999999
         z: 0.08
     goal_sequence:
     - region_id: Beta-goal-1
       frame: world
       minimum_m:
         x: -0.05
-        y: 1.45
-        z: 0.25
+        y: 1.3499999999999999
+        z: 0.3
       maximum_m:
         x: 0.05
-        y: 1.55
-        z: 0.35
+        y: 1.45
+        z: 0.39999999999999997
     landing_region:
       region_id: Beta-landing
       frame: world
       minimum_m:
         x: -0.04
-        y: 1.46
+        y: 1.3599999999999999
         z: 0.0
       maximum_m:
         x: 0.04
-        y: 1.54
+        y: 1.44
         z: 0.08
     initial_battery_percent: 100.0
     minimum_reserve_battery_percent: 20.0
@@ -1404,34 +655,34 @@ cases:
       region_id: Gamma-start
       frame: world
       minimum_m:
-        x: -1.1
-        y: -1.1
+        x: -1.24
+        y: -1.24
         z: 0.0
       maximum_m:
-        x: -1.02
-        y: -1.02
+        x: -1.16
+        y: -1.16
         z: 0.08
     goal_sequence:
     - region_id: Gamma-goal-1
       frame: world
       minimum_m:
-        x: 1.01
-        y: 1.01
-        z: 0.25
+        x: 1.15
+        y: 1.15
+        z: 0.3
       maximum_m:
-        x: 1.11
-        y: 1.11
-        z: 0.35
+        x: 1.25
+        y: 1.25
+        z: 0.39999999999999997
     landing_region:
       region_id: Gamma-landing
       frame: world
       minimum_m:
-        x: 1.02
-        y: 1.02
+        x: 1.16
+        y: 1.16
         z: 0.0
       maximum_m:
-        x: 1.1
-        y: 1.1
+        x: 1.24
+        y: 1.24
         z: 0.08
     initial_battery_percent: 100.0
     minimum_reserve_battery_percent: 20.0
@@ -1537,7 +788,7 @@ cases:
     comparator: LESS_THAN_OR_EQUAL
     threshold: 0.05
     unit: m/s
-  execution_eligibility: BOTH
+  execution_eligibility: STATIC_VALIDATE_ONLY
   operator_observation_questions:
   - Did displayed motion remain smooth without hiding delayed evidence?
   - Did every role reach the declared goal and landing region?
@@ -1590,6 +841,108 @@ cases:
     maximum_interpolation_gap_s: 0.2
     maximum_extrapolation_s: 0.1
   replanning_authority: AUTO_WITHIN_FROZEN_LIMITS
+  semantics:
+    contract_version: 1
+    curriculum_level: 5
+    learning_objective: Learn and verify the causal acknowledgement loss behavior
+      for 3 drone(s) in the dynamic nominal authored scenario.
+    difficulty_rationale: Difficulty reflects 3 active role(s) plus event authority,
+      safe fallback, and retained causal evidence.
+    route_intent_by_role:
+      Alpha:
+      - region_id: Alpha-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      Beta:
+      - region_id: Beta-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      Gamma:
+      - region_id: Gamma-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+    environment_constraints:
+      keep_out_regions: []
+      required_corridors: []
+    coordination_constraints:
+      synchronized_route_start_required: false
+      maximum_route_start_skew_s: 0.2
+      minimum_simultaneous_flight_s: 0.0
+      maximum_formation_error_m: null
+      formation_offsets_m: {}
+      formation_offsets_by_node_m: {}
+    scenario_events:
+    - event_id: acknowledgement_loss-event-1
+      kind: ACKNOWLEDGEMENT_LOSS
+      trigger_time_s: 4.0
+      role_id: Alpha
+      replacement_goal: null
+      battery_percent: null
+      duration_s: null
+      source_id: campaign-scenario
+      sequence: 1
+      generation: 1
+      authenticated: true
+      acknowledgement_required: true
+      acknowledgement_received: false
+      update_identity: null
+      expected_disposition: ZERO_PARTIAL_COMMIT
+    behavior_oracles:
+    - oracle_id: ordered-route-capture
+      kind: ROUTE_NODES_CAPTURED
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: null
+      unit: null
+      required: true
+    - oracle_id: no-undeclared-stop
+      kind: NO_UNDECLARED_STOP
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.0
+      unit: count
+      required: true
+    - oracle_id: offset-landing
+      kind: DISTINCT_START_AND_LANDING
+      evidence_source: AUTHORED_ROUTE
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.2
+      unit: m
+      required: true
+    - oracle_id: joint-separation
+      kind: CONFLICT_RESOLVED
+      evidence_source: PLANNER_PREDICTION
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.8
+      unit: m
+      required: true
+    - oracle_id: causal-event-outcome
+      kind: EVENT_HANDLED
+      evidence_source: EVENT_TRACE
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 1.0
+      unit: boolean
+      required: true
+    semantic_baseline_case_id: null
+    intended_delta: null
   field_classification:
     hard_constraints: HARD_CONSTRAINT
     allowed_strategies: HARD_CONSTRAINT
@@ -1612,7 +965,7 @@ cases:
     declared hold, abort, or landing fallback runs.
   environment: SIMULATION
   authorization: SOFTWARE_SIMULATION_ONLY
-  implementation_status: EXECUTABLE
+  implementation_status: PLANNED_NOT_EXECUTABLE
   implementation_milestone: WP-34B
   drone_count: 3
   drones:
@@ -1621,33 +974,33 @@ cases:
       region_id: Alpha-start
       frame: world
       minimum_m:
-        x: -1.54
+        x: -1.44
         y: -0.04
         z: 0.0
       maximum_m:
-        x: -1.46
+        x: -1.3599999999999999
         y: 0.04
         z: 0.08
     goal_sequence:
     - region_id: Alpha-goal-1
       frame: world
       minimum_m:
-        x: 1.45
+        x: 1.3499999999999999
         y: -0.05
-        z: 0.25
+        z: 0.3
       maximum_m:
-        x: 1.55
+        x: 1.45
         y: 0.05
-        z: 0.35
+        z: 0.39999999999999997
     landing_region:
       region_id: Alpha-landing
       frame: world
       minimum_m:
-        x: 1.46
+        x: 1.3599999999999999
         y: -0.04
         z: 0.0
       maximum_m:
-        x: 1.54
+        x: 1.44
         y: 0.04
         z: 0.08
     initial_battery_percent: 100.0
@@ -1672,33 +1025,33 @@ cases:
       frame: world
       minimum_m:
         x: -0.04
-        y: -1.54
+        y: -1.44
         z: 0.0
       maximum_m:
         x: 0.04
-        y: -1.46
+        y: -1.3599999999999999
         z: 0.08
     goal_sequence:
     - region_id: Beta-goal-1
       frame: world
       minimum_m:
         x: -0.05
-        y: 1.45
-        z: 0.25
+        y: 1.3499999999999999
+        z: 0.3
       maximum_m:
         x: 0.05
-        y: 1.55
-        z: 0.35
+        y: 1.45
+        z: 0.39999999999999997
     landing_region:
       region_id: Beta-landing
       frame: world
       minimum_m:
         x: -0.04
-        y: 1.46
+        y: 1.3599999999999999
         z: 0.0
       maximum_m:
         x: 0.04
-        y: 1.54
+        y: 1.44
         z: 0.08
     initial_battery_percent: 100.0
     minimum_reserve_battery_percent: 20.0
@@ -1721,34 +1074,34 @@ cases:
       region_id: Gamma-start
       frame: world
       minimum_m:
-        x: -1.1
-        y: -1.1
+        x: -1.24
+        y: -1.24
         z: 0.0
       maximum_m:
-        x: -1.02
-        y: -1.02
+        x: -1.16
+        y: -1.16
         z: 0.08
     goal_sequence:
     - region_id: Gamma-goal-1
       frame: world
       minimum_m:
-        x: 1.01
-        y: 1.01
-        z: 0.25
+        x: 1.15
+        y: 1.15
+        z: 0.3
       maximum_m:
-        x: 1.11
-        y: 1.11
-        z: 0.35
+        x: 1.25
+        y: 1.25
+        z: 0.39999999999999997
     landing_region:
       region_id: Gamma-landing
       frame: world
       minimum_m:
-        x: 1.02
-        y: 1.02
+        x: 1.16
+        y: 1.16
         z: 0.0
       maximum_m:
-        x: 1.1
-        y: 1.1
+        x: 1.24
+        y: 1.24
         z: 0.08
     initial_battery_percent: 100.0
     minimum_reserve_battery_percent: 20.0
@@ -1854,7 +1207,7 @@ cases:
     comparator: LESS_THAN_OR_EQUAL
     threshold: 0.05
     unit: m/s
-  execution_eligibility: BOTH
+  execution_eligibility: STATIC_VALIDATE_ONLY
   operator_observation_questions:
   - Did displayed motion remain smooth without hiding delayed evidence?
   - Did every role reach the declared goal and landing region?
@@ -1907,6 +1260,766 @@ cases:
     maximum_interpolation_gap_s: 0.2
     maximum_extrapolation_s: 0.1
   replanning_authority: AUTO_WITHIN_FROZEN_LIMITS
+  semantics:
+    contract_version: 1
+    curriculum_level: 5
+    learning_objective: Learn and verify the causal fleet abort fallback behavior
+      for 3 drone(s) in the dynamic nominal authored scenario.
+    difficulty_rationale: Difficulty reflects 3 active role(s) plus event authority,
+      safe fallback, and retained causal evidence.
+    route_intent_by_role:
+      Alpha:
+      - region_id: Alpha-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      Beta:
+      - region_id: Beta-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      Gamma:
+      - region_id: Gamma-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+    environment_constraints:
+      keep_out_regions: []
+      required_corridors: []
+    coordination_constraints:
+      synchronized_route_start_required: false
+      maximum_route_start_skew_s: 0.2
+      minimum_simultaneous_flight_s: 0.0
+      maximum_formation_error_m: null
+      formation_offsets_m: {}
+      formation_offsets_by_node_m: {}
+    scenario_events:
+    - event_id: fleet_abort_fallback-event-1
+      kind: ABORT_REQUEST
+      trigger_time_s: 4.0
+      role_id: Alpha
+      replacement_goal: null
+      battery_percent: null
+      duration_s: null
+      source_id: campaign-scenario
+      sequence: 1
+      generation: 1
+      authenticated: true
+      acknowledgement_required: false
+      acknowledgement_received: true
+      update_identity: null
+      expected_disposition: COORDINATED_ABORT
+    behavior_oracles:
+    - oracle_id: ordered-route-capture
+      kind: ROUTE_NODES_CAPTURED
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: null
+      unit: null
+      required: true
+    - oracle_id: no-undeclared-stop
+      kind: NO_UNDECLARED_STOP
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.0
+      unit: count
+      required: true
+    - oracle_id: offset-landing
+      kind: DISTINCT_START_AND_LANDING
+      evidence_source: AUTHORED_ROUTE
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.2
+      unit: m
+      required: true
+    - oracle_id: joint-separation
+      kind: CONFLICT_RESOLVED
+      evidence_source: PLANNER_PREDICTION
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.8
+      unit: m
+      required: true
+    - oracle_id: causal-event-outcome
+      kind: EVENT_HANDLED
+      evidence_source: EVENT_TRACE
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 1.0
+      unit: boolean
+      required: true
+    semantic_baseline_case_id: null
+    intended_delta: null
+  field_classification:
+    hard_constraints: HARD_CONSTRAINT
+    allowed_strategies: HARD_CONSTRAINT
+    objective_order: OPTIMIZATION_PREFERENCE
+    search: EXECUTION_SETTING
+    execution: EXECUTION_SETTING
+- schema_version: 2
+  case_id: 3d.leader_follower_recovery.dynamic_nominal
+  template_id: template.3d.leader_follower_recovery
+  cluster: FAILURE_RECOVERY_AND_REPLANNING
+  family: leader_follower_recovery
+  variation_name: dynamic_nominal
+  parent_case_sha256: null
+  baseline_sha256: null
+  purpose: Qualify the bounded leader follower recovery behavior for 3 drone(s).
+  behavior_under_test: Checks bounded leader follower recovery detection, authority
+    handling, deterministic recovery, and retained failure evidence.
+  expected_outcome: The update or fault is accepted only with current authority and
+    complete acknowledgements; otherwise it is rejected deterministically and the
+    declared hold, abort, or landing fallback runs.
+  environment: SIMULATION
+  authorization: SOFTWARE_SIMULATION_ONLY
+  implementation_status: PLANNED_NOT_EXECUTABLE
+  implementation_milestone: WP-38B
+  drone_count: 3
+  drones:
+  - role_id: Alpha
+    start_region:
+      region_id: Alpha-start
+      frame: world
+      minimum_m:
+        x: -1.04
+        y: -1.1600000000000001
+        z: 0.0
+      maximum_m:
+        x: -0.96
+        y: -1.08
+        z: 0.08
+    goal_sequence:
+    - region_id: Alpha-goal-1
+      frame: world
+      minimum_m:
+        x: -1.05
+        y: -1.1700000000000002
+        z: 0.25
+      maximum_m:
+        x: -0.95
+        y: -1.07
+        z: 0.35
+    - region_id: Alpha-goal-2
+      frame: world
+      minimum_m:
+        x: -0.3010046151701533
+        y: -0.5304173569058691
+        z: 0.45
+      maximum_m:
+        x: -0.20100461517015333
+        y: -0.43041735690586913
+        z: 0.55
+    - region_id: Alpha-goal-3
+      frame: world
+      minimum_m:
+        x: 0.3176955262170047
+        y: 0.1323044737829953
+        z: 0.6499999999999999
+      maximum_m:
+        x: 0.4176955262170047
+        y: 0.2323044737829953
+        z: 0.75
+    - region_id: Alpha-goal-4
+      frame: world
+      minimum_m:
+        x: 0.9804173569058692
+        y: -0.24899538482984673
+        z: 0.5
+      maximum_m:
+        x: 1.0804173569058693
+        y: -0.1489953848298467
+        z: 0.6000000000000001
+    - region_id: Alpha-goal-5
+      frame: world
+      minimum_m:
+        x: 1.47
+        y: 0.5499999999999999
+        z: 0.35000000000000003
+      maximum_m:
+        x: 1.57
+        y: 0.65
+        z: 0.45
+    landing_region:
+      region_id: Alpha-landing
+      frame: world
+      minimum_m:
+        x: 1.48
+        y: 0.5599999999999999
+        z: 0.0
+      maximum_m:
+        x: 1.56
+        y: 0.64
+        z: 0.08
+    initial_battery_percent: 100.0
+    minimum_reserve_battery_percent: 20.0
+    health: HEALTHY
+    priority: 100
+    roles:
+    - leader
+    required_capabilities:
+    - arming
+    - relative_positioning
+    - high_level_commands
+    - time_parameterized_trajectory
+    available_capabilities:
+    - arming
+    - relative_positioning
+    - high_level_commands
+    - time_parameterized_trajectory
+  - role_id: Beta
+    start_region:
+      region_id: Beta-start
+      frame: world
+      minimum_m:
+        x: -1.49
+        y: -0.37999999999999995
+        z: 0.0
+      maximum_m:
+        x: -1.41
+        y: -0.3
+        z: 0.08
+    goal_sequence:
+    - region_id: Beta-goal-1
+      frame: world
+      minimum_m:
+        x: -1.5
+        y: -0.38999999999999996
+        z: 0.25
+      maximum_m:
+        x: -1.4
+        y: -0.29
+        z: 0.35
+    - region_id: Beta-goal-2
+      frame: world
+      minimum_m:
+        x: -1.0152434820450025
+        y: 0.018001133888644147
+        z: 0.45
+      maximum_m:
+        x: -0.9152434820450024
+        y: 0.11800113388864415
+        z: 0.55
+    - region_id: Beta-goal-3
+      frame: world
+      minimum_m:
+        x: -0.5520458146424488
+        y: 0.36564971157455606
+        z: 0.6499999999999999
+      maximum_m:
+        x: -0.4520458146424488
+        y: 0.46564971157455604
+        z: 0.75
+    - region_id: Beta-goal-4
+      frame: world
+      minimum_m:
+        x: 0.08758377698277502
+        y: -0.36624809721515567
+        z: 0.5
+      maximum_m:
+        x: 0.187583776982775
+        y: -0.2662480972151557
+        z: 0.6000000000000001
+    - region_id: Beta-goal-5
+      frame: world
+      minimum_m:
+        x: 0.69
+        y: 0.09999999999999996
+        z: 0.35000000000000003
+      maximum_m:
+        x: 0.79
+        y: 0.19999999999999996
+        z: 0.45
+    landing_region:
+      region_id: Beta-landing
+      frame: world
+      minimum_m:
+        x: 0.7
+        y: 0.10999999999999996
+        z: 0.0
+      maximum_m:
+        x: 0.78
+        y: 0.18999999999999997
+        z: 0.08
+    initial_battery_percent: 100.0
+    minimum_reserve_battery_percent: 20.0
+    health: HEALTHY
+    priority: 100
+    roles:
+    - follower
+    required_capabilities:
+    - arming
+    - relative_positioning
+    - high_level_commands
+    - time_parameterized_trajectory
+    available_capabilities:
+    - arming
+    - relative_positioning
+    - high_level_commands
+    - time_parameterized_trajectory
+  - role_id: Gamma
+    start_region:
+      region_id: Gamma-start
+      frame: world
+      minimum_m:
+        x: -0.5900000000000001
+        y: -0.37999999999999995
+        z: 0.0
+      maximum_m:
+        x: -0.51
+        y: -0.3
+        z: 0.08
+    goal_sequence:
+    - region_id: Gamma-goal-1
+      frame: world
+      minimum_m:
+        x: -0.6000000000000001
+        y: -0.38999999999999996
+        z: 0.25
+      maximum_m:
+        x: -0.5
+        y: -0.29
+        z: 0.35
+    - region_id: Gamma-goal-2
+      frame: world
+      minimum_m:
+        x: -0.18375190278484432
+        y: 0.362416223017225
+        z: 0.45
+      maximum_m:
+        x: -0.08375190278484433
+        y: 0.46241622301722496
+        z: 0.55
+    - region_id: Gamma-goal-3
+      frame: world
+      minimum_m:
+        x: 0.08435028842544408
+        y: 1.0020458146424487
+        z: 0.6499999999999999
+      maximum_m:
+        x: 0.1843502884254441
+        y: 1.1020458146424488
+        z: 0.75
+    - region_id: Gamma-goal-4
+      frame: world
+      minimum_m:
+        x: 0.4319988661113559
+        y: 0.4652434820450024
+        z: 0.5
+      maximum_m:
+        x: 0.5319988661113559
+        y: 0.5652434820450024
+        z: 0.6000000000000001
+    - region_id: Gamma-goal-5
+      frame: world
+      minimum_m:
+        x: 0.69
+        y: 1.0
+        z: 0.35000000000000003
+      maximum_m:
+        x: 0.79
+        y: 1.1
+        z: 0.45
+    landing_region:
+      region_id: Gamma-landing
+      frame: world
+      minimum_m:
+        x: 0.7
+        y: 1.01
+        z: 0.0
+      maximum_m:
+        x: 0.78
+        y: 1.09
+        z: 0.08
+    initial_battery_percent: 100.0
+    minimum_reserve_battery_percent: 20.0
+    health: HEALTHY
+    priority: 100
+    roles:
+    - follower
+    required_capabilities:
+    - arming
+    - relative_positioning
+    - high_level_commands
+    - time_parameterized_trajectory
+    available_capabilities:
+    - arming
+    - relative_positioning
+    - high_level_commands
+    - time_parameterized_trajectory
+  hard_constraints:
+    flight_volume:
+      region_id: flight-volume
+      frame: world
+      minimum_m:
+        x: -1.8
+        y: -1.8
+        z: 0.0
+      maximum_m:
+        x: 1.8
+        y: 1.8
+        z: 1.0
+    warning_separation_m: 0.75
+    critical_separation_m: 0.5
+    position_uncertainty_m: 0.05
+    dynamics:
+      maximum_horizontal_speed_m_s: 0.5
+      maximum_vertical_speed_m_s: 0.3
+      maximum_acceleration_m_s2: 1.0
+      maximum_jerk_m_s3: 8.0
+      stop_speed_threshold_m_s: 0.02
+      unintended_stop_persistence_s: 0.2
+    deadline_s: 180.0
+    hover_allowed: true
+    maximum_hover_s: 60.0
+    vertical_layers_allowed: true
+    synchronized_launch_required: false
+    maximum_unrequired_airborne_wait_s: 2.0
+    maximum_equal_route_battery_spread_percent: 1.0
+    minimum_realtime_factor: 0.8
+    watchdog_guard_s: 2.0
+    observation_freshness_limit_s: 0.25
+    minimum_goal_update_interval_s: 0.5
+    planning_budget_s: 2.0
+    mode_comparison:
+      schema_version: 1
+      maximum_source_clock_target_error_difference_s: 0.1
+      maximum_truth_path_length_difference_m: 0.1
+      maximum_tracking_rms_difference_m: 0.02
+      maximum_minimum_separation_difference_m: 0.1
+  allowed_strategies:
+  - DIRECT
+  objective_order:
+  - PRIORITY_INVERSION
+  - STARVATION
+  - MISSION_COMPLETION_TIME_S
+  - MAXIMUM_WAIT_S
+  - TOTAL_ENERGY_PERCENT
+  - AIRBORNE_HOVER_TIME_S
+  - PATH_LENGTH_M
+  - ACCELERATION_M_S2
+  - JERK_M_S3
+  - SEPARATION_ROBUSTNESS_M
+  - BOUNDARY_ROBUSTNESS_M
+  expected_decisions:
+  - ATOMIC_BOUNDED_REPLAN
+  pass_fail_metrics:
+  - metric_id: minimum_truth_separation_m
+    comparator: GREATER_THAN_OR_EQUAL
+    threshold: 0.75
+    unit: m
+  - metric_id: maximum_tracking_rms_m
+    comparator: LESS_THAN_OR_EQUAL
+    threshold: 0.05
+    unit: m
+  - metric_id: maximum_tracking_error_m
+    comparator: LESS_THAN_OR_EQUAL
+    threshold: 0.1
+    unit: m
+  - metric_id: maximum_touchdown_horizontal_error_m
+    comparator: LESS_THAN_OR_EQUAL
+    threshold: 0.1
+    unit: m
+  - metric_id: maximum_touchdown_vertical_error_m
+    comparator: LESS_THAN_OR_EQUAL
+    threshold: 0.08
+    unit: m
+  - metric_id: maximum_terminal_speed_m_s
+    comparator: LESS_THAN_OR_EQUAL
+    threshold: 0.05
+    unit: m/s
+  execution_eligibility: STATIC_VALIDATE_ONLY
+  operator_observation_questions:
+  - Did displayed motion remain smooth without hiding delayed evidence?
+  - Did every role reach the declared goal and landing region?
+  - Did the selected strategy match the pre-play rationale?
+  difficulty: 8
+  prerequisites:
+  - 3d.formation_shape_transform.canonical_nominal
+  claim_boundary: Bounded Fast Sim behavior for at most three drones; no physical-flight
+    claim.
+  named_variations:
+  - dynamic_nominal
+  search:
+    implementation_id: bounded-joint-candidate-planner
+    implementation_version: 1.0.0
+    prediction_step_s: 0.02
+    maximum_candidate_count: 256
+    planning_budget_s: 5.0
+    lateral_offsets_m:
+    - 0.2
+    - -0.2
+    - 0.35
+    - -0.35
+    arc_radii_m:
+    - 0.2
+    - 0.35
+    vertical_offsets_m:
+    - 0.2
+    - -0.2
+    speed_factors:
+    - 0.8
+    - 1.2
+    delay_grid_s:
+    - 2.0
+    - 4.0
+    - 8.0
+    - 12.0
+    - 24.0
+    - 40.0
+  execution:
+    seed: 42
+    repetitions: 1
+    clock_modes:
+    - ACCELERATED
+    - REALTIME
+    backend_profile_id: fast-sim-v1
+    noise_latency_profile_id: nominal-v1
+    evidence_profile_id: complete-evidence-v1
+    configuration_sha256: '0000000000000000000000000000000000000000000000000000000000000000'
+    playback_buffer_s: 0.25
+    maximum_interpolation_gap_s: 0.2
+    maximum_extrapolation_s: 0.1
+  replanning_authority: ABORT_ONLY
+  semantics:
+    contract_version: 1
+    curriculum_level: 5
+    learning_objective: Learn and verify the causal leader follower recovery behavior
+      for 3 drone(s) in the dynamic nominal authored scenario.
+    difficulty_rationale: Difficulty reflects 3 active role(s) plus event authority,
+      safe fallback, and retained causal evidence.
+    route_intent_by_role:
+      Alpha:
+      - region_id: Alpha-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Alpha-goal-2
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Alpha-goal-3
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Alpha-goal-4
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Alpha-goal-5
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      Beta:
+      - region_id: Beta-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Beta-goal-2
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Beta-goal-3
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Beta-goal-4
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Beta-goal-5
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      Gamma:
+      - region_id: Gamma-goal-1
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Gamma-goal-2
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Gamma-goal-3
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Gamma-goal-4
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+      - region_id: Gamma-goal-5
+        mode: FLY_THROUGH
+        dwell_s: 0.0
+        capture_tolerance_m: 0.08
+    environment_constraints:
+      keep_out_regions: []
+      required_corridors: []
+    coordination_constraints:
+      synchronized_route_start_required: true
+      maximum_route_start_skew_s: 0.2
+      minimum_simultaneous_flight_s: 8.0
+      maximum_formation_error_m: 0.3
+      formation_offsets_m: {}
+      formation_offsets_by_node_m:
+        Alpha:
+        - x: 0.0
+          y: -0.5200000000000001
+          z: 0.0
+        - x: 0.1989953848298467
+          y: -0.4804173569058691
+          z: 0.0
+        - x: 0.3676955262170047
+          y: -0.36769552621700474
+          z: 1.1102230246251565e-16
+        - x: 0.4804173569058692
+          y: -0.19899538482984672
+          z: 0.0
+        - x: 0.52
+          y: 0.0
+          z: -5.551115123125783e-17
+        Beta:
+        - x: -0.44999999999999996
+          y: 0.26
+          z: 0.0
+        - x: -0.5152434820450025
+          y: 0.06800113388864415
+          z: 0.0
+        - x: -0.5020458146424488
+          y: -0.134350288425444
+          z: 1.1102230246251565e-16
+        - x: -0.412416223017225
+          y: -0.3162480972151557
+          z: 0.0
+        - x: -0.26
+          y: -0.45
+          z: -5.551115123125783e-17
+        Gamma:
+        - x: 0.44999999999999996
+          y: 0.26
+          z: 0.0
+        - x: 0.3162480972151557
+          y: 0.41241622301722497
+          z: 0.0
+        - x: 0.13435028842544408
+          y: 0.5020458146424487
+          z: 1.1102230246251565e-16
+        - x: -0.06800113388864415
+          y: 0.5152434820450024
+          z: 0.0
+        - x: -0.26
+          y: 0.45000000000000007
+          z: -5.551115123125783e-17
+    scenario_events:
+    - event_id: leader_follower_recovery-event-1
+      kind: VEHICLE_LOSS
+      trigger_time_s: 4.0
+      role_id: Alpha
+      replacement_goal: null
+      battery_percent: null
+      duration_s: null
+      source_id: campaign-scenario
+      sequence: 1
+      generation: 1
+      authenticated: true
+      acknowledgement_required: false
+      acknowledgement_received: true
+      update_identity: null
+      expected_disposition: SAFE_ROLE_RECOVERY
+    behavior_oracles:
+    - oracle_id: ordered-route-capture
+      kind: ROUTE_NODES_CAPTURED
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: null
+      unit: null
+      required: true
+    - oracle_id: no-undeclared-stop
+      kind: NO_UNDECLARED_STOP
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.0
+      unit: count
+      required: true
+    - oracle_id: altitude-layers
+      kind: ALTITUDE_TRANSITION
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 3.0
+      unit: count
+      required: true
+    - oracle_id: nonlinear-path
+      kind: CURVED_PATH
+      evidence_source: EXECUTION_TELEMETRY
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.1
+      unit: rad
+      required: true
+    - oracle_id: offset-landing
+      kind: DISTINCT_START_AND_LANDING
+      evidence_source: AUTHORED_ROUTE
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.2
+      unit: m
+      required: true
+    - oracle_id: transform-error
+      kind: FORMATION_ERROR
+      evidence_source: PLANNER_PREDICTION
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 0.3
+      unit: m
+      required: true
+    - oracle_id: transform-overlap
+      kind: MINIMUM_FLIGHT_OVERLAP
+      evidence_source: PLANNER_PREDICTION
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 8.0
+      unit: s
+      required: true
+    - oracle_id: causal-event-outcome
+      kind: EVENT_HANDLED
+      evidence_source: EVENT_TRACE
+      role_ids:
+      - Alpha
+      - Beta
+      - Gamma
+      threshold: 1.0
+      unit: boolean
+      required: true
+    semantic_baseline_case_id: null
+    intended_delta: null
   field_classification:
     hard_constraints: HARD_CONSTRAINT
     allowed_strategies: HARD_CONSTRAINT

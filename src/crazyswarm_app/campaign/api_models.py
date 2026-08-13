@@ -4,7 +4,16 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from crazyswarm_app.campaign.service import CampaignRunMode, ReviewDecision
+from crazyswarm_app.campaign.models import LifecycleState
+from crazyswarm_app.campaign.submissions import (
+    ExecutionCapabilityRequest,
+    PlanningCapabilityRequest,
+)
+from crazyswarm_app.campaign.service import (
+    CampaignRunMode,
+    ReviewDecision,
+    SnapshotAssessmentDisposition,
+)
 from crazyswarm_app.campaign.timing import TimingStage
 
 
@@ -17,12 +26,21 @@ class SetActiveCaseRequest(CampaignApiModel):
     reason: str = Field(min_length=1, max_length=1000)
 
 
+class SetLifecycleStateRequest(SetActiveCaseRequest):
+    state: LifecycleState
+
+
 class StaticValidateCaseRequest(CampaignApiModel):
     case_id: str = Field(min_length=1, max_length=96)
 
 
 class CampaignRunRequest(CampaignApiModel):
     mode: CampaignRunMode
+    submission_id: str | None = Field(default=None, min_length=1, max_length=96)
+    planning_submission_id: str | None = Field(default=None, min_length=1, max_length=96)
+    comparison_context_id: str | None = Field(default=None, min_length=1, max_length=96)
+    planning_capability_request: PlanningCapabilityRequest | None = None
+    execution_capability_request: ExecutionCapabilityRequest | None = None
 
 
 class ChildCaseRequest(CampaignApiModel):
@@ -32,6 +50,17 @@ class ChildCaseRequest(CampaignApiModel):
 
 class ReviewObservationRequest(CampaignApiModel):
     note: str = Field(min_length=1, max_length=2000)
+
+
+class SnapshotCommentRequest(CampaignApiModel):
+    note: str = Field(min_length=1, max_length=2000)
+
+
+class SnapshotAssessmentRequest(CampaignApiModel):
+    assessment: str = Field(min_length=1, max_length=4000)
+    disposition: SnapshotAssessmentDisposition
+    confidence: float = Field(ge=0.0, le=1.0)
+    evidence_refs: tuple[str, ...] = Field(default=(), max_length=32)
 
 
 class ReviewDecisionRequest(CampaignApiModel):

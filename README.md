@@ -8,10 +8,11 @@ software for Crazyflie-class vehicles.
 Planning is intentionally limited to two current documents:
 
 - [Completed work](docs/work-packages/COMPLETED.md) — finished, evidence-backed scope.
-- [Active and next work](docs/work-packages/ACTIVE.md) — no active software package;
-  externally gated work remains listed there.
+- [Active and next work](docs/work-packages/ACTIVE.md) — WP-35 through WP-39 repair the
+  generated catalog into a truth-gated executable one-, two-, and three-drone learning
+  curriculum; externally gated work remains listed there.
 
-WP-01 through WP-25 are implemented and reconciled in the completed-work ledger.
+WP-01 through WP-34 are implemented and reconciled in the completed-work ledger.
 NVIDIA/Isaac and physical-drone work are explicitly deferred; the WP-25 handoff does
 not enable or authorize either path.
 
@@ -24,7 +25,8 @@ not enable or authorize either path.
 - [Mission plan receipt v1](docs/reference/MISSION_PLAN_V1.md)
 - [Mission safety guide](docs/guides/MISSION_SAFETY_GUIDE.md)
 - [Long-range development guide](docs/project/DEVELOPMENT_GUIDE.md)
-- [Interface design](docs/project/DESIGN.md)
+- [UI design implementation guide](design.md)
+- [Detailed interface design](docs/project/DESIGN.md)
 - [Fast Simulator guide](docs/guides/FAST_SIMULATOR.md)
 
 ## Quick start

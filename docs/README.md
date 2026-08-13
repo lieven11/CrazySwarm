@@ -9,6 +9,7 @@ two authoritative ledgers: one for finished work and one for everything still op
 |---|---|
 | What is finished and frozen? | [`work-packages/COMPLETED.md`](work-packages/COMPLETED.md) |
 | What is active, next, or externally blocked? | [`work-packages/ACTIVE.md`](work-packages/ACTIVE.md) |
+| How will the placeholder campaign catalog become a real learning curriculum? | [`work-packages/ACTIVE.md`](work-packages/ACTIVE.md#wp-35--semantic-truth-gate-and-executable-case-contract) |
 | What belongs in a mission, planner, control center, or simulator? | [`system/README.md`](system/README.md) |
 | How do planner, fleet-policy, recovery, and Safety Kernel modules connect? | [`system/PLANNING_AND_RECOVERY_PLUGINS.md`](system/PLANNING_AND_RECOVERY_PLUGINS.md) |
 | What exactly is compiled and admitted before Play? | [`reference/MISSION_PLAN_V1.md`](reference/MISSION_PLAN_V1.md) |
@@ -30,6 +31,8 @@ two authoritative ledgers: one for finished work and one for everything still op
 | How should a mission be authored, reviewed, and operated safely? | [`guides/MISSION_SAFETY_GUIDE.md`](guides/MISSION_SAFETY_GUIDE.md) |
 | What is the product and how do I run it? | [`project/README.md`](project/README.md) |
 | What is the long-range development roadmap? | [`project/DEVELOPMENT_GUIDE.md`](project/DEVELOPMENT_GUIDE.md) |
+| Which durable workflow and operator requirements must future feature iterations reuse? | [`project/WORKFLOW_AND_REQUIREMENTS.md`](project/WORKFLOW_AND_REQUIREMENTS.md) |
+| Which design decisions must every UI implementation follow? | [`../design.md`](../design.md) |
 | What should the operator interface look like? | [`project/DESIGN.md`](project/DESIGN.md) |
 
 ## Directory structure

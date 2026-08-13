@@ -513,10 +513,18 @@ class EvidenceStore:
 
     def backfill_run_files(self) -> int:
         """Persist retained completed missions that predate the run-file archive."""
+        with self._artifact_lock:
+            archived = {
+                str(manifest["mission_execution_id"]): str(manifest.get("completed_at_utc") or "")
+                for manifest in self._read_run_file_manifests_locked()
+                if self._run_file_manifest_is_complete(manifest)
+            }
         with self._lock:
             groups = self._db.execute(
                 """
-                SELECT mission_execution_id, MIN(started_at_utc) AS mission_started_at_utc
+                SELECT mission_execution_id,
+                       MIN(started_at_utc) AS mission_started_at_utc,
+                       MAX(completed_at_utc) AS mission_completed_at_utc
                 FROM runs
                 GROUP BY mission_execution_id
                 HAVING SUM(CASE WHEN status IS NULL THEN 1 ELSE 0 END) = 0
@@ -525,14 +533,74 @@ class EvidenceStore:
                 """,
                 (self.keep_latest_missions,),
             ).fetchall()
-        for row in reversed(groups):
+        missing = [
+            row
+            for row in reversed(groups)
+            if archived.get(str(row["mission_execution_id"]))
+            != str(row["mission_completed_at_utc"] or "")
+        ]
+        for row in missing:
             self._materialize_mission(str(row["mission_execution_id"]))
-        return len(groups)
+        return len(missing)
 
     def list_run_file_missions(self, *, limit: int = 100) -> list[dict[str, Any]]:
         with self._artifact_lock:
             manifests = self._read_run_file_manifests_locked()
         return manifests[:limit]
+
+    def delete_run_file_mission(self, mission_execution_id: str) -> dict[str, Any]:
+        """Permanently remove a completed mission's evidence and archive folder."""
+        with self._artifact_lock:
+            archive_folder: Path | None = None
+            root = self.run_files_directory.resolve()
+            for manifest in self._read_run_file_manifests_locked():
+                if manifest.get("mission_execution_id") != mission_execution_id:
+                    continue
+                folder = Path(str(manifest["_folder"])).resolve()
+                if folder.parent != root:
+                    raise RuntimeError(
+                        f"refusing to delete run-file path outside archive: {folder}"
+                    )
+                archive_folder = folder
+                break
+
+            with self._lock:
+                rows = self._db.execute(
+                    """
+                    SELECT run_id, status
+                    FROM runs
+                    WHERE mission_execution_id = ?
+                    ORDER BY run_id
+                    """,
+                    (mission_execution_id,),
+                ).fetchall()
+                if not rows:
+                    raise KeyError(mission_execution_id)
+                active_run_ids = [str(row["run_id"]) for row in rows if row["status"] is None]
+                if active_run_ids:
+                    raise IncompleteRunError(mission_execution_id)
+
+                run_ids = [str(row["run_id"]) for row in rows]
+                with self._db:
+                    for run_id in run_ids:
+                        self._db.execute("DELETE FROM events WHERE run_id = ?", (run_id,))
+                    self._db.execute(
+                        "DELETE FROM execution_contexts WHERE mission_execution_id = ?",
+                        (mission_execution_id,),
+                    )
+                    self._db.execute(
+                        "DELETE FROM execution_annotations WHERE mission_execution_id = ?",
+                        (mission_execution_id,),
+                    )
+                    self._db.execute(
+                        "DELETE FROM runs WHERE mission_execution_id = ?",
+                        (mission_execution_id,),
+                    )
+
+            if archive_folder is not None:
+                shutil.rmtree(archive_folder)
+
+        return {"mission_execution_id": mission_execution_id, "deleted_run_ids": run_ids}
 
     def get_persisted_run_file(
         self,
@@ -869,6 +937,38 @@ class EvidenceStore:
             ),
             reverse=True,
         )
+
+    @staticmethod
+    def _run_file_manifest_is_complete(manifest: dict[str, Any]) -> bool:
+        """Check archive completeness without decoding or hashing its large payloads."""
+        if manifest.get("schema_version") != 2 or manifest.get("status") == "INCOMPLETE":
+            return False
+        folder_value = manifest.get("_folder")
+        if not isinstance(folder_value, str):
+            return False
+        folder = Path(folder_value).resolve()
+        for kind in ("artifact", "evaluation", "bundle"):
+            item = manifest.get(kind)
+            if not isinstance(item, dict):
+                return False
+            filename = item.get("filename")
+            size_bytes = item.get("size_bytes")
+            if (
+                not isinstance(filename, str)
+                or not filename
+                or Path(filename).name != filename
+                or not isinstance(size_bytes, int)
+                or isinstance(size_bytes, bool)
+                or size_bytes < 0
+            ):
+                return False
+            path = (folder / filename).resolve()
+            try:
+                if path.parent != folder or path.stat().st_size != size_bytes:
+                    return False
+            except OSError:
+                return False
+        return True
 
     @staticmethod
     def _read_manifest(folder: Path) -> dict[str, Any]:

@@ -13,9 +13,16 @@ from crazyswarm_app.campaign.models import (
     AuthorizationStatus,
     CampaignCase,
     EnvironmentKind,
+    ImplementationStatus,
     LifecycleRecord,
     LifecycleState,
     MigrationReceipt,
+)
+from crazyswarm_app.campaign.semantic_audit import (
+    CaseSemanticAudit,
+    SemanticAuditClassification,
+    audit_case,
+    audit_catalog,
 )
 from crazyswarm_app.domain.models import CoordinateFrame, Vector3
 from crazyswarm_app.domain.simulation import canonical_sha256
@@ -48,11 +55,13 @@ class CampaignCatalog:
             raise ValueError("campaign catalog roots must be unique")
         self.policy = policy or SafetyPolicy()
         self._entries: dict[str, CatalogEntry] = {}
+        self._semantic_audits: dict[str, CaseSemanticAudit] = {}
 
     def discover(self) -> tuple[CatalogEntry, ...]:
         existing_roots = tuple(root for root in self.roots if root.exists())
         if not existing_roots:
             self._entries = {}
+            self._semantic_audits = {}
             return ()
         entries: dict[str, CatalogEntry] = {}
         for root in sorted(existing_roots, key=lambda item: item.as_posix()):
@@ -71,11 +80,7 @@ class CampaignCatalog:
                     raise ValueError(f"unknown catalog file: {path}")
                 source = path.read_bytes()
                 raw = _load_manifest(path, source)
-                values = (
-                    raw.get("cases")
-                    if isinstance(raw, Mapping) and "cases" in raw
-                    else [raw]
-                )
+                values = raw.get("cases") if isinstance(raw, Mapping) and "cases" in raw else [raw]
                 if not isinstance(values, list):
                     raise ValueError(f"catalog cases must be a list: {path}")
                 for value in values:
@@ -84,6 +89,19 @@ class CampaignCatalog:
                     if case.case_id in entries:
                         raise ValueError(f"duplicate campaign case ID: {case.case_id}")
                     entries[case.case_id] = CatalogEntry(case, path, source)
+        semantic_audit = audit_catalog(entry.case for entry in entries.values())
+        self._semantic_audits = {item.case_id: item for item in semantic_audit.cases}
+        invalid = tuple(
+            item
+            for item in semantic_audit.cases
+            if item.classification is SemanticAuditClassification.PLACEHOLDER_QUARANTINED
+            and entries[item.case_id].case.implementation_status is ImplementationStatus.EXECUTABLE
+        )
+        if invalid:
+            details = "; ".join(
+                f"{item.case_id}: {','.join(item.invariant_failures)}" for item in invalid
+            )
+            raise ValueError(f"executable campaign semantic audit failed: {details}")
         self._entries = entries
         return self.entries()
 
@@ -92,6 +110,9 @@ class CampaignCatalog:
 
     def cases(self) -> tuple[CampaignCase, ...]:
         return tuple(entry.case for entry in self.entries())
+
+    def semantic_audits(self) -> tuple[CaseSemanticAudit, ...]:
+        return tuple(self._semantic_audits[key] for key in sorted(self._semantic_audits))
 
     def get(self, case_id: str) -> CampaignCase:
         try:
@@ -110,7 +131,17 @@ class CampaignCatalog:
             raise ValueError(f"duplicate campaign case ID: {case.case_id}")
         validate_case_against_policy(case, self.policy)
         entry = CatalogEntry(case=case, manifest_path=manifest_path, source_bytes=source_bytes)
+        semantic_audit = audit_case(case)
+        if (
+            semantic_audit.classification is SemanticAuditClassification.PLACEHOLDER_QUARANTINED
+            and case.implementation_status is ImplementationStatus.EXECUTABLE
+        ):
+            raise ValueError(
+                f"executable campaign semantic audit failed: {case.case_id}: "
+                f"{','.join(semantic_audit.invariant_failures)}"
+            )
         self._entries[case.case_id] = entry
+        self._semantic_audits[case.case_id] = semantic_audit
         return entry
 
     def hierarchy(
@@ -255,7 +286,11 @@ def _load_manifest(path: Path, source: bytes) -> Any:
     try:
         if path.suffix.lower() == ".json":
             return json.loads(source)
-        return yaml.safe_load(source)
+        # PyYAML's pure-Python SafeLoader dominates cold Campaign Lab startup for
+        # the generated catalog. CSafeLoader has the same safe YAML contract and
+        # is roughly an order of magnitude faster when libyaml is available.
+        safe_loader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+        return yaml.load(source, Loader=safe_loader)
     except (json.JSONDecodeError, yaml.YAMLError) as error:
         raise ValueError(f"invalid campaign manifest {path}: {error}") from error
 

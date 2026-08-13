@@ -216,9 +216,118 @@ export interface MissionOption {
 
 export type CampaignLifecycle = "DEFINED_NOT_RUN" | "READY" | "ACTIVE_DEVELOPMENT" | "BASELINED" | "PROMOTED" | "BLOCKED";
 
+export interface CampaignSubmissionView {
+  submission_id: string;
+  submission_sha256: string;
+  semantic_fingerprint_sha256: string;
+  submission_version: string;
+  display_name: string;
+  case_id: string;
+  case_sha256: string;
+  baseline_submission_id?: string;
+  baseline_submission_sha256?: string;
+  kind: "PLANNER_RETIMED_BASELINE" | "CONSTANT_PATH_SPEED" | "RAMPED_SEGMENT_SPEED" | "BOUNDED_VERTICAL_RATE" | "DURATION_SCALE" | "CORNER_TRANSITION" | "CONSTANT_ROTOR_SPEED";
+  owner: "PLANNER" | "TIME_PARAMETERIZER" | "TRAJECTORY_TRACKER" | "LOW_LEVEL_ACTUATOR";
+  status: "EXECUTABLE" | "PLANNED_NOT_EXECUTABLE";
+  run_eligible: boolean;
+  missing_prerequisites: string[];
+  comparison_case_ids: string[];
+  rationale: string;
+  parameters: {
+    target_path_speed_m_s?: number | null;
+    segment_target_speeds_m_s: number[];
+    target_vertical_rate_m_s?: number | null;
+    duration_scale?: number | null;
+    lookahead_time_s?: number | null;
+    entry_exit_ramp_s: number;
+    steady_window_tolerance_fraction: number;
+  };
+  feasibility?: {
+    minimum_path_speed_m_s: number;
+    maximum_path_speed_m_s: number;
+    limiting_segment_index: number;
+    maximum_horizontal_tangent_fraction: number;
+    maximum_vertical_tangent_fraction: number;
+    maximum_steady_window_curvature_m_inverse: number;
+    route_segment_lengths_m: number[];
+    climb_descent_segment_indices: number[];
+    excluded_phases: string[];
+    residual_gates: string[];
+  };
+  prerequisite_submission_ids: string[];
+  metric_ids: string[];
+  admission: {
+    causal_question: string;
+    baseline_limitation: string;
+    distinguishing_oracle: string;
+    reused_evidence: string[];
+    new_integration_gate: string;
+    learning_value: string;
+  };
+}
+
+export interface CampaignPlanningSubmissionView {
+  planning_submission_id: string;
+  planning_submission_sha256: string;
+  semantic_fingerprint_sha256: string;
+  submission_version: string;
+  display_name: string;
+  case_id: string;
+  case_sha256: string;
+  status: "EXECUTABLE" | "PLANNED_NOT_EXECUTABLE";
+  rationale: string;
+  experiment_id: string;
+  experiment_axis: "OBJECTIVE_ORDER" | "MANEUVER_DIMENSION" | "FALLBACK_POLICY" | "SCALAR_PARAMETER" | "CAPABILITY_BINDING";
+  axis_value: string;
+  layer: "P" | "R";
+  fallback_policy?: "SAFE_PREFIX" | "BOUNDED_HOLD" | "CONTROLLED_LAND" | "SAFE_OLD_EPOCH" | "COORDINATED_LAND" | "PROMOTE_SUCCESSOR" | null;
+  capability_id?: string | null;
+  support_reason: string;
+  strategy_authority: string[];
+  maneuver_dimensions: string[];
+  path_adherence: {
+    mode: "EXACT_ROUTE" | "HARD_TUBE" | "REQUIRED_REGIONS" | "SOFT_REFERENCE" | "GOAL_SEQUENCE_ONLY" | "ROUTE_CORRIDOR" | "AUTHORED_CENTERLINE";
+    maximum_centerline_deviation_m?: number;
+  };
+  clearance: {
+    nominal_vehicle_radius_m: number;
+    nominal_vehicle_half_height_m: number;
+    required_pairwise_center_separation_m: number;
+    required_solid_clearance_m: number;
+    uncertainty_allowance_m: number;
+  };
+  coordination: {
+    synchronized_launch_required: boolean;
+    synchronized_route_start_required: boolean;
+    minimum_simultaneous_flight_s: number;
+    maximum_release_delay_s: number;
+  };
+  objective: {
+    composition: "LEXICOGRAPHIC" | "WEIGHTED_SUM";
+    terms: Array<{ metric: string; weight?: number }>;
+    deterministic_tie_breaker: "CANDIDATE_SHA256";
+  };
+  feasibility_oracle_ids: string[];
+  admission: {
+    causal_question: string;
+    baseline_limitation: string;
+    principal_variable: string;
+    fixed_inputs: string[];
+    behavior_difference: string;
+    distinguishing_oracle: string;
+    reused_evidence: string[];
+    new_integration_gate: string;
+    backend_semantics: string;
+    safety_bounds: string;
+    operator_comparison: string;
+    learning_value: string;
+  };
+}
+
 export interface CampaignCaseView {
   case_id: string;
   case_sha256: string;
+  execution_semantics_sha256: string;
   cluster: "BASIC_FLIGHT_AND_ROUTE_FOLLOWING" | "GEOMETRIC_CONFLICT_RESOLUTION" | "CONSTRAINTS_AND_OPTIMIZATION" | "COORDINATION_AND_ALLOCATION" | "FAILURE_RECOVERY_AND_REPLANNING";
   family: string;
   variation_name: string;
@@ -237,11 +346,62 @@ export interface CampaignCaseView {
   operator_observation_questions: string[];
   difficulty: number;
   prerequisites: string[];
+  semantics?: {
+    curriculum_level: number;
+    learning_objective: string;
+    difficulty_rationale: string;
+    route_intent_by_role: Record<string, Array<{
+      region_id: string;
+      mode: "FLY_THROUGH" | "CAPTURE" | "CAPTURE_AND_HOLD" | "REVERSAL";
+      dwell_s: number;
+      capture_tolerance_m: number;
+    }>>;
+    scenario_events: Array<{
+      event_id: string;
+      kind: string;
+      trigger_time_s: number;
+      role_id?: string;
+      expected_disposition: string;
+    }>;
+    behavior_oracles: Array<{
+      oracle_id: string;
+      kind: string;
+      evidence_source: string;
+      threshold?: number;
+      unit?: string;
+    }>;
+  };
+  drones: Array<{
+    role_id: string;
+    start_region: { minimum_m: { x: number; y: number; z: number }; maximum_m: { x: number; y: number; z: number } };
+    goal_sequence: Array<{ region_id: string; minimum_m: { x: number; y: number; z: number }; maximum_m: { x: number; y: number; z: number } }>;
+    landing_region: { minimum_m: { x: number; y: number; z: number }; maximum_m: { x: number; y: number; z: number } };
+  }>;
+  semantic_audit: {
+    classification: "SEMANTICALLY_EXECUTABLE" | "INTENTIONAL_SHARED_BASELINE" | "PLACEHOLDER_QUARANTINED";
+    reason: string;
+  };
   execution: {
     seed: number;
     repetitions: number;
     backend_profile_id: string;
     configuration_sha256: string;
+  };
+  submissions?: CampaignSubmissionView[];
+  planning_submissions?: CampaignPlanningSubmissionView[];
+  submission_registry?: {
+    case_id: string;
+    expected_case_sha256: string;
+    baseline_only: boolean;
+    retain_existing_only: boolean;
+    baseline_only_rationale?: string | null;
+  };
+  variation_relationship?: {
+    family: string;
+    case_id: string;
+    variation_name: string;
+    relationship: "IMMUTABLE_CASE_VARIATION";
+    legacy_named_variations: string[];
   };
 }
 
@@ -271,14 +431,69 @@ export interface CampaignRunView extends CampaignRunSummary {
     planner_implementation_version: string;
     planner_settings_sha256: string;
     comparison_baseline_sha256?: string;
+    submission_id?: string;
+    submission_sha256?: string;
+    planning_submission_id?: string;
+    planning_submission_sha256?: string;
+    resolved_planning_package_sha256?: string;
   };
   requested_at_utc: string;
   started_at_utc?: string;
   finished_at_utc?: string;
+  mission_execution_id?: string;
+  artifact_set_sha256?: string;
+  analysis_sha256?: string;
 }
 
 export interface CampaignRunStartView extends CampaignRunSummary {
   accepted: true;
+}
+
+export interface CampaignSnapshotView {
+  snapshot_id: string;
+  run_id: string;
+  captured_at_utc: string;
+  content_type: "image/webp" | "image/jpeg";
+  filename: string;
+  size_bytes: number;
+  sha256: string;
+  width_px: number;
+  height_px: number;
+  case_id?: string;
+  case_sha256?: string;
+  plan_sha256?: string;
+  trajectory_set_sha256?: string;
+  review_frame?: {
+    source_timestamp_s: number;
+    source_clock_id: string;
+    source_clock_epoch: number;
+    source_sequence: number;
+    correlation_id: string;
+    estimate_source_timestamp_s: number;
+    truth_source_timestamp_s?: number;
+    desired_source_timestamp_s?: number;
+    playback_buffer_age_s: number;
+    interpolation_state: "EXACT" | "INTERPOLATED" | "FROZEN" | "UNAVAILABLE";
+    captured_at_wall_utc?: string;
+    source_rows?: Array<{
+      correlation_id: string;
+      source_sequence: number;
+      source_timestamp_s: number;
+      source_clock_id: string;
+      source_clock_epoch: number;
+    }>;
+    same_time_truth_estimate_error_m?: number;
+    buffer_induced_estimate_displacement_m?: number;
+  };
+  operator_comment?: string;
+  commented_at_utc?: string;
+  neutral_assessment?: string;
+  assessment_disposition?: "VALID" | "PARTLY_VALID" | "DISPLAY_EFFECT" | "NOT_SUPPORTED" | "NEEDS_MORE_EVIDENCE";
+  assessment_confidence?: number;
+  assessment_evidence_refs?: string[];
+  assessed_at_utc?: string;
+  image_available: boolean;
+  purged_at_utc?: string;
 }
 
 export interface CampaignWorkspaceView {
@@ -292,8 +507,14 @@ export interface CampaignWorkspaceView {
     planner_implementation_version: string;
     planner_settings_sha256: string;
     comparison_baseline_sha256?: string;
+    submission_id?: string;
+    submission_sha256?: string;
+    planning_submission_id?: string;
+    planning_submission_sha256?: string;
+    resolved_planning_package_sha256?: string;
   };
   runs: CampaignRunView[];
+  snapshots?: CampaignSnapshotView[];
   reviews: Array<{
     review_id: string;
     run_id: string;
@@ -301,11 +522,46 @@ export interface CampaignWorkspaceView {
     status: string;
     operator_questions: string[];
     operator_observations: string[];
+    baseline_comparison?: Record<string, string | number | boolean | null>;
+    cross_case_profile_comparison?: Record<string, string | number | boolean | null>;
     approval?: { decision: "APPROVE" | "REJECT" | "NEEDS_RERUN" };
     analysis: {
+      mission_execution_id: string;
       mission_outcome: string;
+      telemetry_row_count: number;
       minimum_truth_separation_m?: number;
+      planning_submission_id?: string;
+      planning_submission_sha256?: string;
+      resolved_planning_package_sha256?: string;
       primary_cause: { stage: string; confidence: number; reason: string };
+      landing?: Array<{
+        vehicle_id: string;
+        accepted_landing_center_m: { x: number; y: number; z: number };
+        planned_arrival_m?: { x: number; y: number; z: number };
+        planned_descent_m?: { x: number; y: number; z: number };
+        estimated_touchdown_m?: { x: number; y: number; z: number };
+        truth_touchdown_m?: { x: number; y: number; z: number };
+        displayed_goal_marker_m?: { x: number; y: number; z: number };
+        landing_goal_id?: string;
+        terminal_contact?: string;
+        pre_contact_vertical_speed_m_s?: number;
+        motors_cut_after_contact?: boolean;
+        coordinate_conversion_chain: string[];
+      }>;
+      vehicles?: Array<{
+        vehicle_id: string;
+        kinematics_gate_reconciliation?: {
+          raw_horizontal_speed_peak_m_s?: number;
+          raw_vertical_speed_peak_m_s?: number;
+          processed_horizontal_speed_peak_m_s?: number;
+          processed_vertical_speed_peak_m_s?: number;
+          maximum_horizontal_speed_m_s?: number;
+          maximum_vertical_speed_m_s?: number;
+          raw_gate_passed?: boolean;
+          processed_gate_passed?: boolean;
+          gate_disagreement: boolean;
+        };
+      }>;
     };
   }>;
 }
@@ -379,6 +635,7 @@ export interface MissionRunView {
 
 export interface RunHistoryView {
   runId: string;
+  missionExecutionId: string;
   missionId: string;
   vehicleId: string;
   status: "SUCCEEDED" | "ABORTED" | "FAILED" | "INCOMPLETE";

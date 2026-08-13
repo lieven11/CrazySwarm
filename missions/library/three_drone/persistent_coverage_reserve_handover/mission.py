@@ -10,8 +10,6 @@ EXPECTED_OUTCOME = (
     "Every task has one authoritative owner, assignments and leases remain unique, and all roles finish or enter their declared safe recovery state."
 )
 NAMED_VARIATIONS = (
-    "canonical_nominal",
-    "compact",
-    "wide",
+    "dynamic_nominal",
 )
 EXECUTES_ON_IMPORT = False

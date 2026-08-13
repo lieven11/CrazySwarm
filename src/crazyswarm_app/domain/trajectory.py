@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+from bisect import bisect_right
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Annotated, Literal, TypeAlias
@@ -216,12 +217,22 @@ def sample_trajectory(
     sample_time_s: float,
 ) -> TrajectorySetpoint:
     bounded_time_s = max(0.0, min(trajectory.duration_s, sample_time_s))
-    segment_index = 0
-    while (
-        segment_index + 1 < len(trajectory.points) - 1
-        and bounded_time_s > trajectory.points[segment_index + 1].time_from_start_s
-    ):
-        segment_index += 1
+    # Sampling is the planner's dominant inner loop.  A linear scan made one
+    # obstacle-conditioned in-flight candidate exceed its reaction budget even
+    # though the search itself was bounded.  The points are strictly ordered by
+    # contract, so binary lookup preserves the exact segment semantics.
+    segment_index = max(
+        0,
+        min(
+            len(trajectory.points) - 2,
+            bisect_right(
+                trajectory.points,
+                bounded_time_s,
+                key=lambda point: point.time_from_start_s,
+            )
+            - 1,
+        ),
+    )
     return sample_trajectory_segment(
         trajectory.points[segment_index],
         trajectory.points[segment_index + 1],

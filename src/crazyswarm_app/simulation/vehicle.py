@@ -26,6 +26,7 @@ from crazyswarm_app.domain.commands import (
     TakeoffCommand,
 )
 from crazyswarm_app.domain.errors import CrazySwarmError, ErrorCode
+from crazyswarm_app.domain.goals import LandingGoalRegion
 from crazyswarm_app.domain.models import (
     AuthorityClass,
     BackendRole,
@@ -263,6 +264,11 @@ class SimulatedVehicle(Vehicle):
         self._binding = None
         self._authority_transition_sequence = 0
         self._authority_transition_receipts.clear()
+        self.last_landing_evidence: dict[
+            str, str | float | bool | dict[str, float] | None
+        ] | None = None
+        self._landing_contact_source_timestamp_s: float | None = None
+        self._landing_pre_contact_vertical_speed_m_s: float | None = None
         self._last_published = self._build_telemetry()
 
     async def advance_idle(self, duration_s: float) -> None:
@@ -512,7 +518,12 @@ class SimulatedVehicle(Vehicle):
             self._require_state(VehicleState.FLYING)
             await self._hold(self.config.fixed_step_s)
         elif isinstance(payload, LandCommand):
-            await self._land(payload.duration_s, payload.target_height_m)
+            await self._land(
+                payload.duration_s,
+                payload.target_height_m,
+                payload.target_position_m,
+                payload.goal_region,
+            )
         elif isinstance(payload, AbortCommand):
             await self._abort(payload.reason)
         elif isinstance(payload, EmergencyStopCommand):
@@ -756,9 +767,21 @@ class SimulatedVehicle(Vehicle):
                         "trajectory horizontal speed exceeds simulator limit",
                     )
                 if abs(setpoint.velocity_m_s.z) > self.config.max_vertical_speed_m_s:
+                    observed_vertical_speed_m_s = abs(setpoint.velocity_m_s.z)
                     raise CrazySwarmError(
                         ErrorCode.INVALID_COMMAND,
-                        "trajectory vertical speed exceeds simulator limit",
+                        (
+                            f"trajectory vertical speed {observed_vertical_speed_m_s:.6f} m/s "
+                            "exceeds simulator limit "
+                            f"{self.config.max_vertical_speed_m_s:.6f} m/s"
+                        ),
+                        details={
+                            "observed_vertical_speed_m_s": observed_vertical_speed_m_s,
+                            "maximum_vertical_speed_m_s": self.config.max_vertical_speed_m_s,
+                            "segment_start_sequence": previous.sequence,
+                            "segment_end_sequence": current.sequence,
+                            "sample_time_s": sample_time_s,
+                        },
                     )
                 if _vector_length(setpoint.acceleration_m_s2) > self.config.max_acceleration_m_s2:
                     raise CrazySwarmError(
@@ -771,7 +794,13 @@ class SimulatedVehicle(Vehicle):
                         "trajectory yaw rate exceeds simulator limit",
                     )
 
-    async def _land(self, duration_s: float, target_height_m: float = 0.0) -> None:
+    async def _land(
+        self,
+        duration_s: float,
+        target_height_m: float = 0.0,
+        target_position_m: Vector3 | None = None,
+        goal_region: LandingGoalRegion | None = None,
+    ) -> None:
         if self._state not in {
             VehicleState.FLYING,
             VehicleState.TAKING_OFF,
@@ -780,17 +809,90 @@ class SimulatedVehicle(Vehicle):
         }:
             raise CrazySwarmError(ErrorCode.INVALID_STATE, "vehicle is not in a landable state")
         control_position = self._control_position()
-        target = Vector3(x=control_position.x, y=control_position.y, z=target_height_m)
+        target = target_position_m or Vector3(
+            x=control_position.x,
+            y=control_position.y,
+            z=target_height_m,
+        )
+        self.last_landing_evidence = None
+        self._landing_contact_source_timestamp_s = None
+        self._landing_pre_contact_vertical_speed_m_s = None
+        alignment_duration_s = max(
+            0.5,
+            1.5
+            * math.hypot(target.x - control_position.x, target.y - control_position.y)
+            / self.config.max_horizontal_speed_m_s,
+        )
+        await self._move_to(
+            Vector3(x=target.x, y=target.y, z=control_position.z),
+            self._control_yaw(),
+            alignment_duration_s,
+            VehicleState.LANDING,
+        )
+        alignment_completed_source_timestamp_s = self.clock.now_s
         await self._move_to(target, self._control_yaw(), duration_s, VehicleState.LANDING)
+
+        # The time-profile command can finish while the modeled rigid body still has
+        # a small tracking residual above the floor. Retain controller authority until
+        # actual simulated contact and a bounded low-speed settle are observed.
+        settle_limit_s = 2.0
+        contact_source_timestamp_s = self._landing_contact_source_timestamp_s
+        settled_s = (
+            max(0.0, self.clock.now_s - contact_source_timestamp_s)
+            if contact_source_timestamp_s is not None
+            else 0.0
+        )
+        elapsed_s = 0.0
+        while elapsed_s < settle_limit_s:
+            position = self.physics.state.position_m
+            speed = _vector_length(self.physics.state.velocity_m_s)
+            in_contact = position.z <= 0.001
+            if in_contact:
+                if contact_source_timestamp_s is None:
+                    contact_source_timestamp_s = (
+                        self._landing_contact_source_timestamp_s or self.clock.now_s
+                    )
+                settled_s = settled_s + self.config.fixed_step_s if speed <= 0.05 else 0.0
+                if settled_s >= 0.10:
+                    break
+            else:
+                settled_s = 0.0
+            motor_commands = self._motor_commands(
+                target_position_m=target,
+                target_velocity_m_s=Vector3(),
+                target_acceleration_world_m_s2=Vector3(),
+                target_yaw_rad=self._control_yaw(),
+            )
+            await self._step(self.config.fixed_step_s, motor_commands=motor_commands)
+            elapsed_s += self.config.fixed_step_s
+        if contact_source_timestamp_s is None or settled_s < 0.10:
+            raise CrazySwarmError(
+                ErrorCode.COMMAND_TIMEOUT,
+                "landing did not establish stable simulated ground contact",
+            )
+
+        pre_contact_vertical_speed_m_s = self._landing_pre_contact_vertical_speed_m_s
         self._armed = False
         self._cut_motors()
-        settle_limit_s = 2.0
-        settled_s = 0.0
-        while self.physics.state.position_m.z > 0.001 and settled_s < settle_limit_s:
-            await self._step(self.config.fixed_step_s, motor_commands=(0.0, 0.0, 0.0, 0.0))
-            settled_s += self.config.fixed_step_s
+        disarmed_source_timestamp_s = self.clock.now_s
         self._flying = False
         self._state = VehicleState.READY
+        self.last_landing_evidence = {
+            "target_position_m": target.model_dump(mode="json"),
+            "landing_goal_id": goal_region.goal_id if goal_region is not None else None,
+            "alignment_duration_s": alignment_duration_s,
+            "alignment_completed_source_timestamp_s": (
+                alignment_completed_source_timestamp_s
+            ),
+            "pre_contact_vertical_speed_m_s": pre_contact_vertical_speed_m_s,
+            "contact_source_timestamp_s": contact_source_timestamp_s,
+            "disarmed_source_timestamp_s": disarmed_source_timestamp_s,
+            "post_contact_settling_s": max(
+                0.0, disarmed_source_timestamp_s - contact_source_timestamp_s
+            ),
+            "motors_cut_after_contact": disarmed_source_timestamp_s
+            >= contact_source_timestamp_s,
+        }
         await self._publish()
 
     async def _abort(self, reason: str) -> None:
@@ -976,6 +1078,7 @@ class SimulatedVehicle(Vehicle):
             raise CrazySwarmError(ErrorCode.LINK_LOST, "simulated link disconnected")
 
         previous_position = self.physics.state.position_m
+        previous_velocity = self.physics.state.velocity_m_s
         configured_percent_per_s = self.config.battery_idle_drain_percent_s
         if self._flying:
             configured_percent_per_s += self.config.battery_flight_drain_percent_s
@@ -1011,6 +1114,16 @@ class SimulatedVehicle(Vehicle):
             additional_current_a=configured_current,
             actuator_health_scales=actuator_health_scales,
         )
+        if (
+            self._state is VehicleState.LANDING
+            and self._landing_contact_source_timestamp_s is None
+            and previous_position.z > 0.001
+            and self.physics.state.position_m.z <= 0.001
+        ):
+            self._landing_contact_source_timestamp_s = self.clock.now_s
+            self._landing_pre_contact_vertical_speed_m_s = (
+                abs(previous_velocity.z) if previous_velocity.z < 0.0 else 0.0
+            )
         if self.physics.state.battery_cutoff_active:
             cutoff_reason = self.physics.state.battery_cutoff_reason
             self._sync_physics_state()

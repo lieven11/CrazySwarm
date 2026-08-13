@@ -10,14 +10,6 @@ EXPECTED_OUTCOME = (
     "The joint planner selects a fully validated separation strategy, or blocks with an exact reason; an admitted run stays outside warning and critical separation limits."
 )
 NAMED_VARIATIONS = (
-    "compact_equal_priority",
     "nominal_equal_priority",
-    "wide_equal_priority",
-    "wide_alpha_priority",
-    "compact_no_hover",
-    "constrained_height",
-    "vertical_allowed",
-    "vertical_forbidden",
-    "latency_and_noise",
 )
 EXECUTES_ON_IMPORT = False

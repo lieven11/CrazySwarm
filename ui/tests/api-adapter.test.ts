@@ -226,6 +226,92 @@ describe("control API view adapter", () => {
     }));
   });
 
+  it("resets the selected simulator roster as one authoritative setup action", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ vehicle_ids: ["Alpha"] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    const api = new ControlApi({ endpoint: "/control-api", clientId: "control-center-ui" });
+
+    await api.resetSimulationFleet(["Alpha"]);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/control-api/api/v1/simulation/fleet/reset-poses",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ vehicle_ids: ["Alpha"] }),
+      }),
+    );
+  });
+
+  it("uploads an interpolated review frame with both exact source-row identities", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ snapshot_id: "snapshot-1" }), {
+        status: 201,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    const api = new ControlApi({ endpoint: "/control-api", clientId: "control-center-ui" });
+
+    await api.uploadCampaignSnapshot("run-1", {
+      blob: new Blob(["review"], { type: "image/webp" }),
+      widthPx: 960,
+      heightPx: 540,
+      reviewFrame: {
+        sourceTimestampS: 12.5,
+        sourceClockId: "fast-sim-Alpha",
+        sourceClockEpoch: 1,
+        sourceSequence: 624,
+        correlationId: "sample-624",
+        estimateSourceTimestampS: 12.5,
+        truthSourceTimestampS: 12.5,
+        playbackBufferAgeS: 0.25,
+        interpolationState: "INTERPOLATED",
+        sourceRows: [
+          {
+            correlationId: "sample-624",
+            sequence: 624,
+            sourceTimestampS: 12.48,
+            sourceClockId: "fast-sim-Alpha",
+            sourceClockEpoch: 1,
+          },
+          {
+            correlationId: "sample-625",
+            sequence: 625,
+            sourceTimestampS: 12.52,
+            sourceClockId: "fast-sim-Alpha",
+            sourceClockEpoch: 1,
+          },
+        ],
+        sameTimeTruthEstimateErrorM: 0.014,
+        bufferInducedEstimateDisplacementM: 0.031,
+      },
+    });
+
+    const [requestUrl] = fetchMock.mock.calls[0];
+    const url = new URL(String(requestUrl), "https://control.invalid");
+    expect(JSON.parse(url.searchParams.get("source_rows_json") ?? "null")).toEqual([
+      {
+        correlation_id: "sample-624",
+        source_sequence: 624,
+        source_timestamp_s: 12.48,
+        source_clock_id: "fast-sim-Alpha",
+        source_clock_epoch: 1,
+      },
+      {
+        correlation_id: "sample-625",
+        source_sequence: 625,
+        source_timestamp_s: 12.52,
+        source_clock_id: "fast-sim-Alpha",
+        source_clock_epoch: 1,
+      },
+    ]);
+    expect(url.searchParams.get("same_time_truth_estimate_error_m")).toBe("0.014");
+    expect(url.searchParams.get("buffer_induced_estimate_displacement_m")).toBe("0.031");
+  });
+
   it("maps only backend-authored telemetry CSV artifacts onto the control proxy", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([{
       run_id: "run-csv-1",
@@ -249,6 +335,7 @@ describe("control API view adapter", () => {
 
     await expect(api.runHistory()).resolves.toEqual([{
       runId: "run-csv-1",
+      missionExecutionId: "run-csv-1",
       missionId: "hover",
       vehicleId: "sim01",
       status: "SUCCEEDED",
@@ -730,5 +817,40 @@ describe("control API view adapter", () => {
       latest_deviation: { source_timestamp_s: 12, position_m: 0.04 },
     }]);
     expect(incomplete.twins[0].latestDeviation).toBeUndefined();
+  });
+
+  it("keeps execution profiles and planning contracts separate in preview and run requests", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async () => new Response(
+      JSON.stringify({ accepted: true, run_id: "campaign-run-1", mode: "AUTOMATED_ACCELERATED", status: "QUEUED" }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    ));
+    const api = new ControlApi({ endpoint: "/control-api", clientId: "control-center-ui" });
+
+    expect(api.campaignResolvedPackageUrl(
+      "constant_path_speed.nominal",
+      "constraint_directed.merge.flexible_geometry",
+    )).toBe(
+      "/control-api/api/v1/campaign/active/package?submission_id=constant_path_speed.nominal&planning_submission_id=constraint_directed.merge.flexible_geometry",
+    );
+
+    await api.previewActiveCampaign("constant_path_speed.nominal", "constraint_directed.merge.flexible_geometry");
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "/control-api/api/v1/campaign/active/preview?submission_id=constant_path_speed.nominal&planning_submission_id=constraint_directed.merge.flexible_geometry",
+    );
+
+    await api.runActiveCampaign(
+      "AUTOMATED_ACCELERATED",
+      "constant_path_speed.nominal",
+      "constraint_directed.merge.flexible_geometry",
+    );
+    expect(fetchMock.mock.calls[1][0]).toBe("/control-api/api/v1/campaign/runs");
+    expect(fetchMock.mock.calls[1][1]).toMatchObject({
+      method: "POST",
+      body: JSON.stringify({
+        mode: "AUTOMATED_ACCELERATED",
+        submission_id: "constant_path_speed.nominal",
+        planning_submission_id: "constraint_directed.merge.flexible_geometry",
+      }),
+    });
   });
 });

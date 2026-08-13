@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from campaign_case_specs import geometry
 
 from crazyswarm_app.campaign.models import CampaignCase
 
@@ -26,13 +27,14 @@ CLUSTER_SLUGS = {
 
 ONE_DRONE = (
     "takeoff_hover_land",
+    "point_to_point_relocation",
     "move_return",
+    "altitude_transition",
     "continuous_waypoint_sequence",
     "curved_route",
-    "altitude_transition",
+    "planar_shape_loop",
     "boundary_constrained_route",
     "static_multi_goal_sequence",
-    "failure_recovery",
 )
 TWO_DRONE = (
     "parallel_routes",
@@ -47,9 +49,6 @@ TWO_DRONE = (
     "leader_follower",
     "formation_spacing",
     "role_allocation",
-    "leader_loss",
-    "duplicate_assignment_rejection",
-    "coordination_failure",
 )
 THREE_DRONE = (
     "single_pair_conflict",
@@ -59,10 +58,8 @@ THREE_DRONE = (
     "unequal_priorities",
     "constrained_volume",
     "alternative_layers_detours",
+    "formation_shape_transform",
     "role_allocation",
-    "leader_follower_recovery",
-    "duplicate_assignment_rejection",
-    "persistent_coverage_reserve_handover",
 )
 
 DYNAMIC_CASES = (
@@ -86,6 +83,13 @@ DYNAMIC_CASES = (
     ),
     (1, "abort_and_land_goal_fallback", "WP-34A", "move_return", "ABORT_ONLY"),
     (
+        1,
+        "failure_recovery",
+        "WP-36B",
+        "continuous_waypoint_sequence",
+        "ABORT_ONLY",
+    ),
+    (
         2,
         "crossing_goal_change",
         "WP-34B",
@@ -106,6 +110,15 @@ DYNAMIC_CASES = (
         "perpendicular_crossing",
         "AUTO_WITHIN_FROZEN_LIMITS",
     ),
+    (2, "leader_loss", "WP-37B", "leader_follower", "ABORT_ONLY"),
+    (
+        2,
+        "duplicate_assignment_rejection",
+        "WP-37B",
+        "role_allocation",
+        "ABORT_ONLY",
+    ),
+    (2, "coordination_failure", "WP-37B", "formation_spacing", "ABORT_ONLY"),
     (
         3,
         "cascading_replan",
@@ -127,31 +140,34 @@ DYNAMIC_CASES = (
         "simultaneous_center_conflict",
         "AUTO_WITHIN_FROZEN_LIMITS",
     ),
+    (
+        3,
+        "duplicate_assignment_rejection",
+        "WP-38B",
+        "role_allocation",
+        "ABORT_ONLY",
+    ),
+    (
+        3,
+        "persistent_coverage_reserve_handover",
+        "WP-38B",
+        "formation_shape_transform",
+        "AUTO_WITHIN_FROZEN_LIMITS",
+    ),
+    (
+        3,
+        "leader_follower_recovery",
+        "WP-38B",
+        "formation_shape_transform",
+        "ABORT_ONLY",
+    ),
 )
 
 SPECIAL_VARIATIONS = {
-    "perpendicular_crossing": (
-        "compact_equal_priority",
-        "nominal_equal_priority",
-        "wide_equal_priority",
-        "wide_alpha_priority",
-        "compact_no_hover",
-        "constrained_height",
-        "vertical_allowed",
-        "vertical_forbidden",
-        "latency_and_noise",
-    ),
-    "simultaneous_center_conflict": (
-        "wide_priority_200_150_100",
-        "compact_equal_priority",
-        "nominal_equal_priority",
-        "wide_unequal_priority",
-        "compact_no_hover",
-        "constrained_height",
-        "vertical_allowed",
-        "vertical_forbidden",
-        "latency_and_noise",
-    ),
+    "altitude_transition": ("canonical_nominal", "wide"),
+    "planar_shape_loop": ("circle", "rounded_square", "figure_eight"),
+    "perpendicular_crossing": ("nominal_equal_priority",),
+    "simultaneous_center_conflict": ("wide_priority_200_150_100",),
 }
 
 
@@ -162,13 +178,14 @@ def main() -> int:
     cases = []
     for count, families in ((1, ONE_DRONE), (2, TWO_DRONE), (3, THREE_DRONE)):
         for family in families:
-            variations = SPECIAL_VARIATIONS.get(family, ("canonical_nominal", "compact", "wide"))
+            variations = SPECIAL_VARIATIONS.get(family, ("canonical_nominal",))
             _write_template(args.root, count, family, variations)
             for variation in variations:
                 cases.append(_case(count, family, variation, variations))
     for count, family, _, _, _ in DYNAMIC_CASES:
         _write_template(args.root, count, family, ("dynamic_nominal",))
     cases.extend(_dynamic_cases())
+    cases.append(_legacy_three_drone_multi_conflict())
     cases = [CampaignCase.model_validate(case).model_dump(mode="json") for case in cases]
     sim = args.root / "campaigns" / "sim" / "cases"
     for cluster in CLUSTER_ORDER:
@@ -178,10 +195,12 @@ def main() -> int:
                 for item in cases
                 if item["cluster"] == cluster and item["drone_count"] == count
             ]
+            path = sim / CLUSTER_SLUGS[cluster] / f"{count}d-cases-v1.yaml"
             if selected:
-                path = sim / CLUSTER_SLUGS[cluster] / f"{count}d-cases-v1.yaml"
                 path.parent.mkdir(parents=True, exist_ok=True)
                 _write_yaml(path, {"schema_version": 1, "cases": selected})
+            elif path.exists():
+                path.unlink()
 
     canonical = next(item for item in cases if item["case_id"] == "three_drone_multi_conflict")
     profiles = args.root / "campaigns" / "sim" / "profiles"
@@ -200,16 +219,20 @@ def main() -> int:
     real_cases = [
         _real_mirror(item)
         for item in cases
+        if item.get("semantics") is not None
+        if item["implementation_status"] == "EXECUTABLE"
         if item["variation_name"]
         in {"canonical_nominal", "nominal_equal_priority", "wide_priority_200_150_100"}
     ]
     real = args.root / "campaigns" / "real" / "authorized_cases"
     for cluster in CLUSTER_ORDER:
         selected = [item for item in real_cases if item["cluster"] == cluster]
+        path = real / CLUSTER_SLUGS[cluster] / "real-mirrors-v1.yaml"
         if selected:
-            path = real / CLUSTER_SLUGS[cluster] / "real-mirrors-v1.yaml"
             path.parent.mkdir(parents=True, exist_ok=True)
             _write_yaml(path, {"schema_version": 1, "cases": selected})
+        elif path.exists():
+            path.unlink()
     for directory in (
         args.root / "campaigns" / "sim" / "environments",
         args.root / "campaigns" / "sim" / "baselines",
@@ -222,15 +245,19 @@ def main() -> int:
 
 def _case(count: int, family: str, variation: str, variations: tuple[str, ...]) -> dict[str, Any]:
     volume = _volume(variation)
+    if family in {"constrained_border_height", "constrained_volume"}:
+        volume = (-1.8, -1.8, 0.0), (1.8, 1.8, 0.42)
     no_hover = "no_hover" in variation or family == "no_hover_crossing"
     vertical_allowed = (
-        "vertical_forbidden" not in variation and "constrained_height" not in variation
+        "vertical_forbidden" not in variation
+        and "constrained_height" not in variation
+        and family not in {"constrained_border_height", "constrained_volume"}
     )
     priority = "priority" in variation or family in {"unequal_priority", "unequal_priorities"}
-    drones = _drones(count, family, priority)
+    drones = _drones(count, family, priority, variation)
     case_id = f"{count}d.{family}.{variation}"
     if family == "simultaneous_center_conflict" and variation == "wide_priority_200_150_100":
-        case_id = "three_drone_multi_conflict"
+        case_id = "3d.simultaneous_center_conflict.joint_schedule_v2"
     metrics = _metrics(family)
     cluster = _cluster(family)
     strategies = ["DIRECT", "GROUND_DELAY", "SPEED_RETIMING", "HORIZONTAL_DETOUR"]
@@ -238,6 +265,15 @@ def _case(count: int, family: str, variation: str, variations: tuple[str, ...]) 
         strategies.append("AIRBORNE_STAGING")
     if vertical_allowed:
         strategies.extend(("VERTICAL_LAYER", "COMBINED_TIMING_GEOMETRY"))
+    behavior_family = _behavior_family(family)
+    if behavior_family in {
+        "parallel_routes",
+        "leader_follower",
+        "formation_spacing",
+        "formation_shape_transform",
+    }:
+        strategies = ["DIRECT"]
+    runtime_implemented = family not in {"overtake", "role_allocation"}
     return {
         "schema_version": 2,
         "case_id": case_id,
@@ -250,7 +286,9 @@ def _case(count: int, family: str, variation: str, variations: tuple[str, ...]) 
         "expected_outcome": _expected_outcome(cluster, family, variation),
         "environment": "SIMULATION",
         "authorization": "SOFTWARE_SIMULATION_ONLY",
-        "implementation_status": "EXECUTABLE",
+        "implementation_status": (
+            "EXECUTABLE" if runtime_implemented else "PLANNED_NOT_EXECUTABLE"
+        ),
         "drone_count": count,
         "drones": drones,
         "hard_constraints": {
@@ -270,7 +308,13 @@ def _case(count: int, family: str, variation: str, variations: tuple[str, ...]) 
             "hover_allowed": not no_hover,
             "maximum_hover_s": 0.0 if no_hover else 60.0,
             "vertical_layers_allowed": vertical_allowed,
-            "synchronized_launch_required": family in {"formation_spacing", "parallel_routes"},
+            "synchronized_launch_required": family
+            in {
+                "formation_spacing",
+                "formation_shape_transform",
+                "parallel_routes",
+                "leader_follower",
+            },
             "maximum_unrequired_airborne_wait_s": 2.0,
             "maximum_equal_route_battery_spread_percent": 1.0,
             "minimum_realtime_factor": 0.80,
@@ -295,7 +339,7 @@ def _case(count: int, family: str, variation: str, variations: tuple[str, ...]) 
         ],
         "expected_decisions": _expected(family, vertical_allowed),
         "pass_fail_metrics": metrics,
-        "execution_eligibility": "BOTH",
+        "execution_eligibility": "BOTH" if runtime_implemented else "STATIC_VALIDATE_ONLY",
         "operator_observation_questions": (
             "Did displayed motion remain smooth without hiding delayed evidence?",
             "Did every role reach the declared goal and landing region?",
@@ -334,37 +378,31 @@ def _case(count: int, family: str, variation: str, variations: tuple[str, ...]) 
             "maximum_extrapolation_s": 0.10,
         },
         "replanning_authority": "ABORT_ONLY",
+        "semantics": _semantics(count, family, variation, drones),
     }
 
 
-def _drones(count: int, family: str, priority: bool) -> list[dict[str, Any]]:
-    starts = (
-        (-1.50, 0.0, 0.04),
-        (0.0, -1.50, 0.04),
-        (-1.06, -1.06, 0.04),
-    )
-    goals = (
-        (1.50, 0.0, 0.30),
-        (0.0, 1.50, 0.30),
-        (1.06, 1.06, 0.30),
-    )
-    if family == "parallel_routes":
-        starts = ((-1.50, -0.50, 0.04), (-1.50, 0.50, 0.04), starts[2])
-        goals = ((1.50, -0.50, 0.30), (1.50, 0.50, 0.30), goals[2])
-    if family in {"head_on_conflict", "overtake"}:
-        starts = ((-1.50, 0.0, 0.04), (1.50, 0.0, 0.04), starts[2])
-        goals = ((1.50, 0.0, 0.30), (-1.50, 0.0, 0.30), goals[2])
+def _drones(count: int, family: str, priority: bool, variation: str) -> list[dict[str, Any]]:
     values = []
-    for index in range(count):
+    routes = geometry(count, family, variation)
+    if len(routes) != count:
+        raise ValueError(f"{count}d {family} authored {len(routes)} role routes")
+    for index, (start, route_goals, landing, _) in enumerate(routes):
         role = ("Alpha", "Beta", "Gamma")[index]
-        route_goals = [goals[index]]
-        if family == "static_multi_goal_sequence":
-            route_goals = [(-0.6, 0.3, 0.30), (0.0, -0.3, 0.45), (0.6, 0.3, 0.30)]
-        landing = (route_goals[-1][0], route_goals[-1][1], 0.04)
+        required = [
+            "arming",
+            "relative_positioning",
+            "high_level_commands",
+            "time_parameterized_trajectory",
+        ]
+        available = list(required)
+        if family == "role_allocation" and index == 0:
+            required.append("precision_positioning")
+            available.append("precision_positioning")
         values.append(
             {
                 "role_id": role,
-                "start_region": _point_region(f"{role}-start", starts[index], 0.04),
+                "start_region": _point_region(f"{role}-start", start, 0.04),
                 "goal_sequence": [
                     _point_region(f"{role}-goal-{goal_index + 1}", goal, 0.05)
                     for goal_index, goal in enumerate(route_goals)
@@ -375,21 +413,507 @@ def _drones(count: int, family: str, priority: bool) -> list[dict[str, Any]]:
                 "health": "HEALTHY",
                 "priority": (200 - index * 50) if priority else 100,
                 "roles": _roles(family, index),
-                "required_capabilities": [
-                    "arming",
-                    "relative_positioning",
-                    "high_level_commands",
-                    "time_parameterized_trajectory",
-                ],
-                "available_capabilities": [
-                    "arming",
-                    "relative_positioning",
-                    "high_level_commands",
-                    "time_parameterized_trajectory",
-                ],
+                "required_capabilities": required,
+                "available_capabilities": available,
             }
         )
     return values
+
+
+def _semantics(
+    count: int,
+    family: str,
+    variation: str,
+    drones: list[dict[str, Any]],
+) -> dict[str, Any]:
+    behavior_family = _behavior_family(family)
+    routes = geometry(count, family, variation)
+    route_intent = {}
+    for drone, (_, _, _, modes) in zip(drones, routes, strict=True):
+        route_intent[drone["role_id"]] = [
+            {
+                "region_id": goal["region_id"],
+                "mode": mode,
+                "dwell_s": (
+                    3.0
+                    if family == "takeoff_hover_land"
+                    else 1.0
+                    if mode == "CAPTURE_AND_HOLD"
+                    else 0.0
+                ),
+                "capture_tolerance_m": 0.08,
+            }
+            for goal, mode in zip(drone["goal_sequence"], modes, strict=True)
+        ]
+    roles = tuple(drone["role_id"] for drone in drones)
+    oracles = [
+        _oracle("ordered-route-capture", "ROUTE_NODES_CAPTURED", "EXECUTION_TELEMETRY", roles),
+        _oracle(
+            "no-undeclared-stop", "NO_UNDECLARED_STOP", "EXECUTION_TELEMETRY", roles, 0.0, "count"
+        ),
+    ]
+    if behavior_family == "takeoff_hover_land" or behavior_family == "static_multi_goal_sequence":
+        oracles.append(
+            _oracle("declared-hold", "HOLD_DURATION", "EXECUTION_TELEMETRY", roles, 0.15, "s")
+        )
+    if behavior_family == "altitude_transition" or behavior_family in {
+        "alternative_layers_detours",
+        "formation_shape_transform",
+    }:
+        oracles.append(
+            _oracle(
+                "altitude-layers", "ALTITUDE_TRANSITION", "EXECUTION_TELEMETRY", roles, 3.0, "count"
+            )
+        )
+    if behavior_family in {
+        "curved_route",
+        "continuous_waypoint_sequence",
+        "leader_follower",
+        "formation_spacing",
+        "formation_shape_transform",
+    }:
+        oracles.append(
+            _oracle("nonlinear-path", "CURVED_PATH", "EXECUTION_TELEMETRY", roles, 0.10, "rad")
+        )
+    if behavior_family == "planar_shape_loop" or family == "persistent_coverage_reserve_handover":
+        oracles.append(
+            _oracle("closed-shape", "CLOSED_SHAPE", "EXECUTION_TELEMETRY", roles, 0.10, "m")
+        )
+    if any(
+        drone["start_region"]["region_id"].replace("start", "landing")
+        != drone["landing_region"]["region_id"]
+        or _center(drone["start_region"])[:2] != _center(drone["landing_region"])[:2]
+        for drone in drones
+    ):
+        oracles.append(
+            _oracle(
+                "offset-landing", "DISTINCT_START_AND_LANDING", "AUTHORED_ROUTE", roles, 0.20, "m"
+            )
+        )
+    conflict_families = {
+        "head_on_conflict",
+        "perpendicular_crossing",
+        "merge",
+        "overtake",
+        "bottleneck",
+        "unequal_priority",
+        "constrained_border_height",
+        "no_hover_crossing",
+        "single_pair_conflict",
+        "simultaneous_center_conflict",
+        "unequal_priorities",
+        "constrained_volume",
+        "alternative_layers_detours",
+    }
+    if behavior_family in conflict_families or family in {
+        "crossing_goal_change",
+        "simultaneous_conflicting_updates",
+        "partial_replacement_failure",
+        "cascading_replan",
+        "acknowledgement_loss",
+        "fleet_abort_fallback",
+    }:
+        oracles.append(
+            _oracle("joint-separation", "CONFLICT_RESOLVED", "PLANNER_PREDICTION", roles, 0.80, "m")
+        )
+    if family == "boundary_constrained_route":
+        oracles.append(
+            _oracle(
+                "sampled-boundary-margin",
+                "BOUNDARY_MARGIN",
+                "EXECUTION_TELEMETRY",
+                roles,
+                0.10,
+                "m",
+            )
+        )
+    if family == "bottleneck":
+        oracles.append(
+            _oracle(
+                "configured-keep-out-avoidance",
+                "KEEP_OUT_AVOIDED",
+                "EXECUTION_TELEMETRY",
+                roles,
+                0.0,
+                "violations",
+            )
+        )
+    if family == "no_hover_crossing":
+        oracles.append(
+            _oracle(
+                "zero-airborne-hold",
+                "NO_AIRBORNE_HOLD",
+                "EXECUTION_TELEMETRY",
+                roles,
+                0.0,
+                "s",
+            )
+        )
+    if family in {"unequal_priority", "unequal_priorities"}:
+        oracles.append(
+            _oracle(
+                "priority-precedence",
+                "PRIORITY_PRECEDENCE",
+                "PLANNER_PREDICTION",
+                roles,
+                0.10,
+                "s",
+            )
+        )
+    if family in {"constrained_border_height", "constrained_volume"}:
+        oracles.append(
+            _oracle(
+                "vertical-constraint-enforced",
+                "CONSTRAINT_ENFORCED",
+                "PLANNER_PREDICTION",
+                roles,
+                1.0,
+                "boolean",
+            )
+        )
+    if family == "single_pair_conflict":
+        oracles.append(
+            _oracle(
+                "unaffected-gamma-delay",
+                "UNAFFECTED_ROLE_NONINTERFERENCE",
+                "PLANNER_PREDICTION",
+                ("Gamma",),
+                0.20,
+                "s",
+            )
+        )
+
+    coordination: dict[str, Any] = {
+        "synchronized_route_start_required": False,
+        "maximum_route_start_skew_s": 0.20,
+        "minimum_simultaneous_flight_s": 0.0,
+    }
+    if behavior_family == "parallel_routes":
+        coordination.update(
+            synchronized_route_start_required=True,
+            minimum_simultaneous_flight_s=8.0,
+        )
+        oracles.extend(
+            (
+                _oracle(
+                    "synchronized-start",
+                    "SYNCHRONIZED_ROUTE_START",
+                    "PLANNER_PREDICTION",
+                    roles,
+                    0.20,
+                    "s",
+                ),
+                _oracle(
+                    "overlapping-flight",
+                    "MINIMUM_FLIGHT_OVERLAP",
+                    "PLANNER_PREDICTION",
+                    roles,
+                    8.0,
+                    "s",
+                ),
+            )
+        )
+    if behavior_family in {"leader_follower", "formation_spacing"}:
+        offsets = (
+            {"Alpha": {"x": 0.0, "y": 0.0, "z": 0.0}, "Beta": {"x": 0.0, "y": 0.85, "z": 0.0}}
+            if behavior_family == "leader_follower"
+            else {
+                "Alpha": {"x": 0.0, "y": -0.50, "z": 0.0},
+                "Beta": {"x": 0.0, "y": 0.50, "z": 0.0},
+            }
+        )
+        coordination.update(
+            synchronized_route_start_required=True,
+            minimum_simultaneous_flight_s=6.0,
+            maximum_formation_error_m=0.18,
+            formation_offsets_m=offsets,
+        )
+        oracles.extend(
+            (
+                _oracle(
+                    "formation-error", "FORMATION_ERROR", "PLANNER_PREDICTION", roles, 0.18, "m"
+                ),
+                _oracle(
+                    "formation-overlap",
+                    "MINIMUM_FLIGHT_OVERLAP",
+                    "PLANNER_PREDICTION",
+                    roles,
+                    6.0,
+                    "s",
+                ),
+            )
+        )
+    if behavior_family == "formation_shape_transform":
+        offsets_by_role: dict[str, list[dict[str, float]]] = {role: [] for role in roles}
+        for goal_index in range(len(drones[0]["goal_sequence"])):
+            centers = [_center(drone["goal_sequence"][goal_index]) for drone in drones]
+            centroid = tuple(sum(point[axis] for point in centers) / count for axis in range(3))
+            for role, point in zip(roles, centers, strict=True):
+                offsets_by_role[role].append(
+                    {
+                        "x": point[0] - centroid[0],
+                        "y": point[1] - centroid[1],
+                        "z": point[2] - centroid[2],
+                    }
+                )
+        coordination.update(
+            synchronized_route_start_required=True,
+            minimum_simultaneous_flight_s=8.0,
+            maximum_formation_error_m=0.30,
+            formation_offsets_by_node_m=offsets_by_role,
+        )
+        oracles.extend(
+            (
+                _oracle(
+                    "transform-error", "FORMATION_ERROR", "PLANNER_PREDICTION", roles, 0.30, "m"
+                ),
+                _oracle(
+                    "transform-overlap",
+                    "MINIMUM_FLIGHT_OVERLAP",
+                    "PLANNER_PREDICTION",
+                    roles,
+                    8.0,
+                    "s",
+                ),
+            )
+        )
+
+    events = _scenario_events(count, family)
+    if events:
+        oracles.append(
+            _oracle("causal-event-outcome", "EVENT_HANDLED", "EVENT_TRACE", roles, 1.0, "boolean")
+        )
+    if any(event["expected_disposition"] == "ACCEPTED_UPDATE" for event in events):
+        oracles.append(
+            _oracle(
+                "accepted-event-goal-capture",
+                "ACCEPTED_EVENT_GOALS_CAPTURED",
+                "EXECUTION_TELEMETRY",
+                roles,
+                1.0,
+                "ratio",
+            )
+        )
+
+    environment: dict[str, list[dict[str, Any]]] = {
+        "keep_out_regions": [],
+        "required_corridors": [],
+    }
+    if family == "bottleneck":
+        environment["keep_out_regions"] = [
+            _region("bottleneck-north", (-0.45, 0.18, 0.0), (0.45, 1.70, 1.0)),
+            _region("bottleneck-south", (-0.45, -1.70, 0.0), (0.45, -0.18, 1.0)),
+        ]
+
+    baseline = None
+    delta = None
+    if family in {"unequal_priority", "no_hover_crossing", "constrained_border_height"}:
+        baseline = "2d.perpendicular_crossing.nominal_equal_priority"
+        delta = {
+            "unequal_priority": "Alpha has priority 200 while Beta has priority 100.",
+            "no_hover_crossing": (
+                "Airborne holding is forbidden; resolution must remain continuous or ground-first."
+            ),
+            "constrained_border_height": (
+                "The flight ceiling rejects vertical separation candidates."
+            ),
+        }[family]
+    if variation == "wide" and family == "altitude_transition":
+        baseline = "1d.altitude_transition.canonical_nominal"
+        delta = "The stress route uses a wider 0.20 m to 0.82 m altitude envelope."
+
+    return {
+        "contract_version": 1,
+        "curriculum_level": _curriculum_level(count, family),
+        "learning_objective": _learning_objective(count, family, variation),
+        "difficulty_rationale": _difficulty_rationale(count, family),
+        "route_intent_by_role": route_intent,
+        "environment_constraints": environment,
+        "coordination_constraints": coordination,
+        "scenario_events": events,
+        "behavior_oracles": oracles,
+        "semantic_baseline_case_id": baseline,
+        "intended_delta": delta,
+    }
+
+
+def _behavior_family(family: str) -> str:
+    return {
+        "leader_loss": "leader_follower",
+        "coordination_failure": "formation_spacing",
+        "leader_follower_recovery": "formation_shape_transform",
+    }.get(family, family)
+
+
+def _center(region: dict[str, Any]) -> tuple[float, float, float]:
+    low, high = region["minimum_m"], region["maximum_m"]
+    return (
+        (low["x"] + high["x"]) / 2.0,
+        (low["y"] + high["y"]) / 2.0,
+        (low["z"] + high["z"]) / 2.0,
+    )
+
+
+def _oracle(
+    oracle_id: str,
+    kind: str,
+    source: str,
+    roles: tuple[str, ...],
+    threshold: float | None = None,
+    unit: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "oracle_id": oracle_id,
+        "kind": kind,
+        "evidence_source": source,
+        "role_ids": roles,
+        "threshold": threshold,
+        "unit": unit,
+        "required": True,
+    }
+
+
+def _scenario_events(count: int, family: str) -> list[dict[str, Any]]:
+    goal_families = {
+        "moving_target": 3,
+        "mid_route_goal_replacement": 1,
+        "duplicate_stale_goal_update": 3,
+        "planning_budget_expiry": 1,
+        "blocked_replan": 1,
+        "operator_approval_goal_replacement": 2,
+        "abort_and_land_goal_fallback": 1,
+        "crossing_goal_change": 1,
+        "simultaneous_conflicting_updates": 2,
+        "partial_replacement_failure": 2,
+        "cascading_replan": 3,
+    }
+    if family in goal_families:
+        result = []
+        for index in range(goal_families[family]):
+            sequence = index + 1
+            generation = index + 1
+            update_identity = f"{family}-update-identity-{index + 1}"
+            expected = "ACCEPTED_UPDATE"
+            if family == "duplicate_stale_goal_update":
+                sequence = (2, 2, 1)[index]
+                generation = (2, 2, 1)[index]
+                update_identity = (
+                    f"{family}-accepted-update" if index < 2 else f"{family}-stale-update"
+                )
+                expected = ("ACCEPTED_UPDATE", "REJECTED_DUPLICATE", "REJECTED_STALE")[index]
+            elif family == "planning_budget_expiry":
+                expected = "BLOCKED_BUDGET"
+            elif family in {"blocked_replan", "abort_and_land_goal_fallback"}:
+                expected = "BLOCKED_INFEASIBLE"
+            elif family == "operator_approval_goal_replacement" and index == 0:
+                expected = "REJECTED_AUTHORITY"
+            elif family in {"simultaneous_conflicting_updates", "partial_replacement_failure"}:
+                expected = "ZERO_PARTIAL_COMMIT"
+            result.append(
+                {
+                    "event_id": f"{family}-update-{index + 1}",
+                    "kind": "GOAL_UPDATE",
+                    "trigger_time_s": 3.0 + index * 0.75,
+                    "role_id": ("Alpha", "Beta", "Gamma")[min(index, count - 1)],
+                    "replacement_goal": _point_region(
+                        f"{family}-replacement-{index + 1}",
+                        (0.55 + 0.20 * index, -0.75 + 0.35 * index, 0.35 + 0.10 * (index % 2)),
+                        0.05,
+                    ),
+                    "duration_s": 3.0 if family == "planning_budget_expiry" else None,
+                    "sequence": sequence,
+                    "generation": generation,
+                    "update_identity": update_identity,
+                    "authenticated": True,
+                    "acknowledgement_required": family
+                    in {"operator_approval_goal_replacement", "partial_replacement_failure"},
+                    "acknowledgement_received": not (
+                        (family == "operator_approval_goal_replacement" and index == 0)
+                        or (family == "partial_replacement_failure" and index == 1)
+                    ),
+                    "expected_disposition": expected,
+                }
+            )
+        if family == "abort_and_land_goal_fallback":
+            result.append(
+                {
+                    "event_id": f"{family}-abort",
+                    "kind": "ABORT_REQUEST",
+                    "trigger_time_s": 4.5,
+                    "role_id": "Alpha",
+                    "expected_disposition": "COORDINATED_ABORT",
+                }
+            )
+        return result
+    event_kind = {
+        "failure_recovery": "TELEMETRY_LOSS",
+        "leader_loss": "VEHICLE_LOSS",
+        "duplicate_assignment_rejection": "ASSIGNMENT_CONFLICT",
+        "coordination_failure": "ACKNOWLEDGEMENT_LOSS",
+        "persistent_coverage_reserve_handover": "BATTERY_DROP",
+        "leader_follower_recovery": "VEHICLE_LOSS",
+        "acknowledgement_loss": "ACKNOWLEDGEMENT_LOSS",
+        "fleet_abort_fallback": "ABORT_REQUEST",
+    }.get(family)
+    if event_kind is None:
+        return []
+    return [
+        {
+            "event_id": f"{family}-event-1",
+            "kind": event_kind,
+            "trigger_time_s": 4.0,
+            "role_id": "Alpha",
+            "battery_percent": 34.0 if event_kind == "BATTERY_DROP" else None,
+            "duration_s": 1.0 if event_kind == "TELEMETRY_LOSS" else None,
+            "acknowledgement_required": event_kind == "ACKNOWLEDGEMENT_LOSS",
+            "acknowledgement_received": event_kind != "ACKNOWLEDGEMENT_LOSS",
+            "expected_disposition": {
+                "TELEMETRY_LOSS": "SAFE_ROLE_RECOVERY",
+                "VEHICLE_LOSS": "SAFE_ROLE_RECOVERY",
+                "ASSIGNMENT_CONFLICT": "REJECTED_ASSIGNMENT_CONFLICT",
+                "ACKNOWLEDGEMENT_LOSS": "ZERO_PARTIAL_COMMIT",
+                "BATTERY_DROP": "RESERVE_HANDOVER",
+                "ABORT_REQUEST": "COORDINATED_ABORT",
+            }[event_kind],
+        }
+    ]
+
+
+def _learning_objective(count: int, family: str, variation: str) -> str:
+    return (
+        f"Learn and verify the causal {family.replace('_', ' ')} behavior for {count} "
+        f"drone(s) in the {variation.replace('_', ' ')} authored scenario."
+    )
+
+
+def _curriculum_level(count: int, family: str) -> int:
+    if family in {item[1] for item in DYNAMIC_CASES}:
+        return 5
+    levels = {
+        "takeoff_hover_land": 1,
+        "parallel_routes": 1,
+        "single_pair_conflict": 1,
+        "point_to_point_relocation": 2,
+        "move_return": 2,
+        "head_on_conflict": 2,
+        "perpendicular_crossing": 2,
+        "simultaneous_center_conflict": 2,
+        "altitude_transition": 3,
+        "continuous_waypoint_sequence": 3,
+        "merge": 3,
+        "overtake": 3,
+        "bottleneck": 3,
+    }
+    return levels.get(family, 4)
+
+
+def _difficulty_rationale(count: int, family: str) -> str:
+    dimension = "route geometry"
+    if family in {item[1] for item in DYNAMIC_CASES}:
+        dimension = "event authority, safe fallback, and retained causal evidence"
+    elif count > 1:
+        dimension = "time-aligned separation and joint coordination"
+    return f"Difficulty reflects {count} active role(s) plus {dimension}."
 
 
 def _dynamic_cases() -> list[dict[str, Any]]:
@@ -409,6 +933,11 @@ def _dynamic_cases() -> list[dict[str, Any]]:
         value.update(
             {
                 "implementation_milestone": milestone,
+                # The typed reducer and static route are useful qualification inputs,
+                # but they are not a live source-time event injection/cutover.  Keep
+                # the definition visible without granting execution authority.
+                "implementation_status": "PLANNED_NOT_EXECUTABLE",
+                "execution_eligibility": "STATIC_VALIDATE_ONLY",
                 "prerequisites": (prerequisite_id,),
                 "replanning_authority": authority,
                 "expected_decisions": _dynamic_expected_decisions(family),
@@ -416,6 +945,58 @@ def _dynamic_cases() -> list[dict[str, Any]]:
         )
         cases.append(value)
     return cases
+
+
+def _legacy_three_drone_multi_conflict() -> dict[str, Any]:
+    """Frozen qualified WP-33 baseline retained for historical evidence identity."""
+
+    variations = (
+        "wide_priority_200_150_100",
+        "compact_equal_priority",
+        "nominal_equal_priority",
+        "wide_unequal_priority",
+        "compact_no_hover",
+        "constrained_height",
+        "vertical_allowed",
+        "vertical_forbidden",
+        "latency_and_noise",
+    )
+    value = _case(3, "simultaneous_center_conflict", variations[0], variations)
+    value["case_id"] = "three_drone_multi_conflict"
+    value["drones"] = _legacy_default_drones()
+    value["prerequisites"] = ("1d.takeoff_hover_land.canonical_nominal",)
+    value.pop("semantics")
+    return value
+
+
+def _legacy_default_drones() -> list[dict[str, Any]]:
+    starts = ((-1.50, 0.0, 0.04), (0.0, -1.50, 0.04), (-1.06, -1.06, 0.04))
+    goals = ((1.50, 0.0, 0.30), (0.0, 1.50, 0.30), (1.06, 1.06, 0.30))
+    output = []
+    capabilities = [
+        "arming",
+        "relative_positioning",
+        "high_level_commands",
+        "time_parameterized_trajectory",
+    ]
+    for index, (start, goal) in enumerate(zip(starts, goals, strict=True)):
+        role = ("Alpha", "Beta", "Gamma")[index]
+        output.append(
+            {
+                "role_id": role,
+                "start_region": _point_region(f"{role}-start", start, 0.04),
+                "goal_sequence": [_point_region(f"{role}-goal-1", goal, 0.05)],
+                "landing_region": _point_region(f"{role}-landing", (goal[0], goal[1], 0.04), 0.04),
+                "initial_battery_percent": 100.0,
+                "minimum_reserve_battery_percent": 20.0,
+                "health": "HEALTHY",
+                "priority": 200 - index * 50,
+                "roles": ("active-route",),
+                "required_capabilities": capabilities,
+                "available_capabilities": capabilities,
+            }
+        )
+    return output
 
 
 def _dynamic_expected_decisions(family: str) -> tuple[str, ...]:
@@ -663,6 +1244,7 @@ def _cluster(family: str) -> str:
         "parallel_routes",
         "leader_follower",
         "formation_spacing",
+        "formation_shape_transform",
         "role_allocation",
         "duplicate_assignment_rejection",
         "persistent_coverage_reserve_handover",
@@ -696,9 +1278,39 @@ def _difficulty(count: int, cluster: str, family: str, variation: str) -> int:
 
 
 def _prerequisites(count: int, family: str) -> tuple[str, ...]:
-    if count == 1 or family in {"parallel_routes", "single_pair_conflict"}:
-        return ()
-    return ("1d.takeoff_hover_land.canonical_nominal",)
+    prerequisites = {
+        (1, "point_to_point_relocation"): "1d.takeoff_hover_land.canonical_nominal",
+        (1, "move_return"): "1d.takeoff_hover_land.canonical_nominal",
+        (1, "altitude_transition"): "1d.point_to_point_relocation.canonical_nominal",
+        (1, "continuous_waypoint_sequence"): "1d.point_to_point_relocation.canonical_nominal",
+        (1, "curved_route"): "1d.continuous_waypoint_sequence.canonical_nominal",
+        (1, "planar_shape_loop"): "1d.curved_route.canonical_nominal",
+        (1, "static_multi_goal_sequence"): "1d.continuous_waypoint_sequence.canonical_nominal",
+        (1, "boundary_constrained_route"): "1d.curved_route.canonical_nominal",
+        (2, "parallel_routes"): "1d.move_return.canonical_nominal",
+        (2, "head_on_conflict"): "2d.parallel_routes.canonical_nominal",
+        (2, "perpendicular_crossing"): "2d.parallel_routes.canonical_nominal",
+        (2, "merge"): "2d.perpendicular_crossing.nominal_equal_priority",
+        (2, "overtake"): "2d.head_on_conflict.canonical_nominal",
+        (2, "bottleneck"): "2d.merge.canonical_nominal",
+        (2, "unequal_priority"): "2d.perpendicular_crossing.nominal_equal_priority",
+        (2, "constrained_border_height"): "2d.perpendicular_crossing.nominal_equal_priority",
+        (2, "no_hover_crossing"): "2d.perpendicular_crossing.nominal_equal_priority",
+        (2, "leader_follower"): "1d.curved_route.canonical_nominal",
+        (2, "formation_spacing"): "2d.leader_follower.canonical_nominal",
+        (2, "role_allocation"): "1d.point_to_point_relocation.canonical_nominal",
+        (3, "single_pair_conflict"): "2d.perpendicular_crossing.nominal_equal_priority",
+        (3, "simultaneous_center_conflict"): "3d.single_pair_conflict.canonical_nominal",
+        (3, "merge"): "3d.simultaneous_center_conflict.joint_schedule_v2",
+        (3, "bottleneck"): "3d.merge.canonical_nominal",
+        (3, "unequal_priorities"): "3d.simultaneous_center_conflict.joint_schedule_v2",
+        (3, "constrained_volume"): "3d.simultaneous_center_conflict.joint_schedule_v2",
+        (3, "alternative_layers_detours"): "3d.constrained_volume.canonical_nominal",
+        (3, "formation_shape_transform"): "2d.formation_spacing.canonical_nominal",
+        (3, "role_allocation"): "2d.role_allocation.canonical_nominal",
+    }
+    prerequisite = prerequisites.get((count, family))
+    return () if prerequisite is None else (prerequisite,)
 
 
 def _write_template(root: Path, count: int, family: str, variations: tuple[str, ...]) -> None:

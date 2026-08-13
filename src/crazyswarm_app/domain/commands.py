@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import math
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Annotated, Literal, TypeAlias
 
 from pydantic import Field, model_validator
 
+from crazyswarm_app.domain.goals import LandingGoalRegion
 from crazyswarm_app.domain.models import (
     CommandSource,
     ContractModel,
@@ -13,6 +15,7 @@ from crazyswarm_app.domain.models import (
     Identifier,
     NonNegativeSeconds,
     OperatingMode,
+    Vector3,
 )
 from crazyswarm_app.domain.trajectory import SHA256_PATTERN, TimeParameterizedTrajectory
 
@@ -103,7 +106,25 @@ class StopAndHoldCommand(ContractModel):
 class LandCommand(ContractModel):
     kind: Literal[CommandKind.LAND] = CommandKind.LAND
     target_height_m: Annotated[float, Field(ge=0.0)] = 0.0
+    target_position_m: Vector3 | None = None
+    goal_region: LandingGoalRegion | None = None
     duration_s: Annotated[float, Field(gt=0.0)] = 2.0
+
+    @model_validator(mode="after")
+    def target_height_agrees(self) -> LandCommand:
+        if self.target_position_m is not None and not math.isclose(
+            self.target_position_m.z, self.target_height_m, abs_tol=1e-9
+        ):
+            raise ValueError("landing position z must match target_height_m")
+        if self.goal_region is not None:
+            if self.target_position_m is None:
+                raise ValueError("goal-bound landing requires an explicit target position")
+            goal_target = self.goal_region.landing_target_m
+            if not math.isclose(
+                self.target_position_m.x, goal_target.x, abs_tol=1e-9
+            ) or not math.isclose(self.target_position_m.y, goal_target.y, abs_tol=1e-9):
+                raise ValueError("landing command target does not match its immutable goal region")
+        return self
 
 
 class AbortCommand(ContractModel):

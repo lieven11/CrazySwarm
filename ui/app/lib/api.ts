@@ -1,10 +1,14 @@
 import { createEmptyDashboard } from "./empty";
+import { parseCampaignTelemetryCsv } from "./campaign-telemetry";
+import type { CampaignTelemetryChartView } from "./campaign-telemetry";
 import type {
   AuthorityClass,
   BackendRole,
   CampaignCatalogView,
+  CampaignLifecycle,
   CampaignRunMode,
   CampaignRunStartView,
+  CampaignSnapshotView,
   CampaignWorkspaceView,
   DashboardModel,
   DeckView,
@@ -180,6 +184,13 @@ export class ControlApi {
     await this.post<Record<string, unknown>>(
       `/api/v1/simulation/vehicles/${encodeURIComponent(vehicleId)}/clock`,
       { action: "reset_pose" },
+    );
+  }
+
+  async resetSimulationFleet(vehicleIds: string[]): Promise<void> {
+    await this.post<Record<string, unknown>>(
+      "/api/v1/simulation/fleet/reset-poses",
+      { vehicle_ids: vehicleIds },
     );
   }
 
@@ -378,6 +389,14 @@ export class ControlApi {
     return this.request<CampaignWorkspaceView>("/api/v1/campaign/state");
   }
 
+  campaignQualificationUrl(): string {
+    return `${this.credentials.endpoint}/api/v1/campaign/qualification/export`;
+  }
+
+  campaignConstraintQualificationUrl(): string {
+    return `${this.credentials.endpoint}/api/v1/campaign/qualification/constraint-directed`;
+  }
+
   async staticValidateCampaignCase(caseId: string): Promise<Record<string, unknown>> {
     return this.post("/api/v1/campaign/cases/static-validate", { case_id: caseId });
   }
@@ -386,16 +405,173 @@ export class ControlApi {
     return this.post("/api/v1/campaign/active", { case_id: caseId, reason });
   }
 
-  async previewActiveCampaign(): Promise<Record<string, unknown>> {
-    return this.request("/api/v1/campaign/active/preview");
+  async moveCampaignCaseToReview(caseId: string, reason: string): Promise<Record<string, unknown>> {
+    return this.post("/api/v1/campaign/cases/in-review", { case_id: caseId, reason });
   }
 
-  async runActiveCampaign(mode: CampaignRunMode): Promise<CampaignRunStartView> {
-    return this.post<CampaignRunStartView>("/api/v1/campaign/runs", { mode });
+  async setCampaignCaseLifecycle(
+    caseId: string,
+    state: CampaignLifecycle,
+    reason: string,
+  ): Promise<Record<string, unknown>> {
+    return this.post("/api/v1/campaign/cases/lifecycle", { case_id: caseId, state, reason });
+  }
+
+  async completeCampaignCase(caseId: string, reason: string): Promise<Record<string, unknown>> {
+    return this.post("/api/v1/campaign/cases/completed", { case_id: caseId, reason });
+  }
+
+  async previewActiveCampaign(
+    submissionId?: string,
+    planningSubmissionId?: string,
+  ): Promise<Record<string, unknown>> {
+    const query = new URLSearchParams();
+    if (submissionId) query.set("submission_id", submissionId);
+    if (planningSubmissionId) query.set("planning_submission_id", planningSubmissionId);
+    const suffix = query.size ? `?${query.toString()}` : "";
+    return this.request(`/api/v1/campaign/active/preview${suffix}`);
+  }
+
+  campaignResolvedPackageUrl(
+    submissionId?: string,
+    planningSubmissionId?: string,
+  ): string {
+    const query = new URLSearchParams();
+    if (submissionId) query.set("submission_id", submissionId);
+    if (planningSubmissionId) query.set("planning_submission_id", planningSubmissionId);
+    const suffix = query.size ? `?${query.toString()}` : "";
+    return `${this.credentials.endpoint}/api/v1/campaign/active/package${suffix}`;
+  }
+
+  async runActiveCampaign(
+    mode: CampaignRunMode,
+    submissionId?: string,
+    planningSubmissionId?: string,
+  ): Promise<CampaignRunStartView> {
+    return this.post<CampaignRunStartView>("/api/v1/campaign/runs", {
+      mode,
+      submission_id: submissionId,
+      planning_submission_id: planningSubmissionId,
+    });
   }
 
   async cancelCampaignRun(runId: string): Promise<void> {
     await this.post(`/api/v1/campaign/runs/${encodeURIComponent(runId)}/cancel`, {});
+  }
+
+  async deleteCampaignRun(runId: string): Promise<void> {
+    await this.request(`/api/v1/campaign/runs/${encodeURIComponent(runId)}`, { method: "DELETE" });
+  }
+
+  async uploadCampaignSnapshot(
+    runId: string,
+    capture: {
+      blob: Blob;
+      widthPx: number;
+      heightPx: number;
+      reviewFrame?: {
+        sourceTimestampS: number;
+        sourceClockId: string;
+        sourceClockEpoch: number;
+        sourceSequence: number;
+        correlationId: string;
+        estimateSourceTimestampS: number;
+        truthSourceTimestampS?: number;
+        desiredSourceTimestampS?: number;
+        playbackBufferAgeS: number;
+        interpolationState: "EXACT" | "INTERPOLATED" | "FROZEN" | "UNAVAILABLE";
+        sourceRows: Array<{
+          correlationId: string;
+          sequence: number;
+          sourceTimestampS: number;
+          sourceClockId: string;
+          sourceClockEpoch: number;
+        }>;
+        sameTimeTruthEstimateErrorM?: number;
+        bufferInducedEstimateDisplacementM: number;
+      };
+    },
+  ): Promise<CampaignSnapshotView> {
+    const query = new URLSearchParams({
+      width_px: String(capture.widthPx),
+      height_px: String(capture.heightPx),
+    });
+    if (capture.reviewFrame) {
+      query.set("source_timestamp_s", String(capture.reviewFrame.sourceTimestampS));
+      query.set("source_clock_id", capture.reviewFrame.sourceClockId);
+      query.set("source_clock_epoch", String(capture.reviewFrame.sourceClockEpoch));
+      query.set("source_sequence", String(capture.reviewFrame.sourceSequence));
+      query.set("correlation_id", capture.reviewFrame.correlationId);
+      query.set(
+        "estimate_source_timestamp_s",
+        String(capture.reviewFrame.estimateSourceTimestampS),
+      );
+      if (capture.reviewFrame.truthSourceTimestampS !== undefined) {
+        query.set("truth_source_timestamp_s", String(capture.reviewFrame.truthSourceTimestampS));
+      }
+      if (capture.reviewFrame.desiredSourceTimestampS !== undefined) {
+        query.set(
+          "desired_source_timestamp_s",
+          String(capture.reviewFrame.desiredSourceTimestampS),
+        );
+      }
+      query.set("playback_buffer_age_s", String(capture.reviewFrame.playbackBufferAgeS));
+      query.set("source_rows_json", JSON.stringify(capture.reviewFrame.sourceRows.map((row) => ({
+        correlation_id: row.correlationId,
+        source_sequence: row.sequence,
+        source_timestamp_s: row.sourceTimestampS,
+        source_clock_id: row.sourceClockId,
+        source_clock_epoch: row.sourceClockEpoch,
+      }))));
+      if (capture.reviewFrame.sameTimeTruthEstimateErrorM !== undefined) {
+        query.set(
+          "same_time_truth_estimate_error_m",
+          String(capture.reviewFrame.sameTimeTruthEstimateErrorM),
+        );
+      }
+      query.set(
+        "buffer_induced_estimate_displacement_m",
+        String(capture.reviewFrame.bufferInducedEstimateDisplacementM),
+      );
+      query.set("interpolation_state", capture.reviewFrame.interpolationState);
+    }
+    return this.request<CampaignSnapshotView>(
+      `/api/v1/campaign/runs/${encodeURIComponent(runId)}/snapshots?${query}`,
+      {
+        method: "POST",
+        body: capture.blob,
+        headers: { "Content-Type": capture.blob.type || "image/webp" },
+      },
+    );
+  }
+
+  campaignSnapshotImageUrl(snapshotId: string): string {
+    return `${this.credentials.endpoint}/api/v1/campaign/snapshots/${encodeURIComponent(snapshotId)}/image`;
+  }
+
+  async updateCampaignSnapshotComment(snapshotId: string, note: string): Promise<CampaignSnapshotView> {
+    return this.post<CampaignSnapshotView>(
+      `/api/v1/campaign/snapshots/${encodeURIComponent(snapshotId)}/comment`,
+      { note },
+    );
+  }
+
+  async updateCampaignSnapshotAssessment(
+    snapshotId: string,
+    assessment: string,
+    disposition: "VALID" | "PARTLY_VALID" | "DISPLAY_EFFECT" | "NOT_SUPPORTED" | "NEEDS_MORE_EVIDENCE",
+    confidence: number,
+    evidenceRefs: string[] = [],
+  ): Promise<CampaignSnapshotView> {
+    return this.post<CampaignSnapshotView>(
+      `/api/v1/campaign/snapshots/${encodeURIComponent(snapshotId)}/assessment`,
+      {
+        assessment,
+        disposition,
+        confidence,
+        evidence_refs: evidenceRefs,
+      },
+    );
   }
 
   async createCampaignChild(childCaseId: string, updates: Record<string, unknown>): Promise<Record<string, unknown>> {
@@ -404,6 +580,27 @@ export class ControlApi {
 
   async addCampaignObservation(reviewId: string, note: string): Promise<Record<string, unknown>> {
     return this.post(`/api/v1/campaign/reviews/${encodeURIComponent(reviewId)}/observations`, { note });
+  }
+
+  campaignTelemetryCsvUrl(missionExecutionId: string): string {
+    return `${this.credentials.endpoint}/api/v1/run-files/${encodeURIComponent(missionExecutionId)}/telemetry.csv`;
+  }
+
+  async campaignTelemetryCharts(missionExecutionId: string): Promise<CampaignTelemetryChartView> {
+    const response = await fetch(this.campaignTelemetryCsvUrl(missionExecutionId), {
+      headers: {
+        "X-Client-ID": this.credentials.clientId,
+        ...(this.credentials.token ? { "X-Local-Token": this.credentials.token } : {}),
+      },
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => null) as Record<string, unknown> | null;
+      const error = asRecord(body?.error);
+      const message = stringValue(error?.message, `Control API returned ${response.status}`);
+      throw new Error(formatControlError(message, asRecord(error?.details)));
+    }
+    return parseCampaignTelemetryCsv(await response.text());
   }
 
   async decideCampaignReview(
@@ -489,6 +686,7 @@ export class ControlApi {
         })[0];
       return [{
         runId: value.run_id,
+        missionExecutionId: stringValue(value.mission_execution_id, value.run_id),
         missionId: value.mission_id,
         vehicleId: value.vehicle_id,
         status,
@@ -534,6 +732,12 @@ export class ControlApi {
         sizeBytes: finiteNumber(artifact?.size_bytes),
         sha256: typeof artifact?.sha256 === "string" ? artifact.sha256 : undefined,
       }];
+    });
+  }
+
+  async deleteRunFileMission(missionExecutionId: string): Promise<void> {
+    await this.request(`/api/v1/run-files/${encodeURIComponent(missionExecutionId)}`, {
+      method: "DELETE",
     });
   }
 

@@ -1,0 +1,1538 @@
+{
+  "case_count": 54,
+  "cases": [
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "causal-event-outcome"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.abort_and_land_goal_fallback.dynamic_nominal",
+      "case_sha256": "47a6e0ddda8bfea35b2691d80320f0b7faf9b31a05e700fd2f028e66fc424bc9",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "e6cd6c6d061d0db95bfd5f9a158d974ec48d09ca40cdc3556f7308084a85c490"
+      ],
+      "execution_semantics_sha256": "74e589c7f0f67c257acef110c59b89be1b6aba17571b8f539534826110c93c36",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "b5d3e2ec3585684aff919db77b792deee1b5df74962e4ce27aa4c88c741d0bc9",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "16f48483d1d3e381563f0c3c11e44850ba9ee5bf124c60b8a2a21f3ec05549c6",
+      "schedule_sha256": "d7ffe9d42846cee3b3ffb2fd531d441a05da1e20d98eb7d0e50f2b7ade3ac245",
+      "selected_candidate_sha256": "da3a11ddd7dd46db49642cc460a640a3c6b6d2217fa6ec6b6939b343d0c41550",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "1da30323dd6b9f713bcddd4b6eb59c419664988998542de2c182b2061b499b25"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "altitude-layers",
+        "offset-landing"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.altitude_transition.canonical_nominal",
+      "case_sha256": "1a5690bb4ac98aa63cf7020e40ab8f83fc530bfcdeaf4075cb0ad31d4de1333b",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "d7b9827f275e5ec4b7b336f257ebbeca4d1d6f592c3dbb2268369c47ac747430"
+      ],
+      "execution_semantics_sha256": "13b02ee03ced3b7e4b1652ca34390d25f36b4a969720aaeb46cfcac3569f8ae8",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "bb8627f47d2fed0a36db00b4bd62a274f0bb43a49978ccd3fa4a3287a2576ea6",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "62ca8f0d70e7fc105e6ca74e4c06ab5fdf1c0f9806bcf865393ba9f422316f7e",
+      "schedule_sha256": "0694b6b1b824098a54542b647848c7050e25694b214953e45a8b2c8ee4e1d931",
+      "selected_candidate_sha256": "3382eeca0b417f20175e33c2ab9bc4d7b9d97b3fcf1669345947ea31989b6d7a",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "4f121248d23e520f6793c52fa6765e5e52a6ddf45f9feeccbc0d9862a756b789"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "altitude-layers",
+        "offset-landing"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.altitude_transition.wide",
+      "case_sha256": "c2a7c0950a22c12c7f93fb1b1699fc97e0caa88a5766a937cb79f43694cca6e3",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "e6affb4674d897a3b3600a606c3fe018a8aa79a26dca5ec5b0de72ef60b231da"
+      ],
+      "execution_semantics_sha256": "d3e75194d554ebb1a40083dc764f567b208bac9fcd953a36ae929f8c1240f777",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "a5eed7025d4ed9639c516b4b565a72694cbe521aca3e6eb2e1a2d0b4001a4a1b",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "3ea8bac64f55094753fde74329e75fd255d77b0038d9a64309dad8e80cc29eef",
+      "schedule_sha256": "3e13a182d76c1f04c3f06ea6b628158ed85b41eb35e1620694580b6323737f37",
+      "selected_candidate_sha256": "1d880055ae7e7735940e121de21882c42f7d8e5615096239e38b180b79a0026e",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "INTENTIONAL_SHARED_BASELINE",
+      "trajectory_set_sha256": "1fa468c27defe33f998b652dbfd3aed2a31cde7cbed50688075e0b17cc5d51d2"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "causal-event-outcome"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.blocked_replan.dynamic_nominal",
+      "case_sha256": "811b3b95754c4e57127170c54348a394f61525fd527c10819b30dff2f1a3d217",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "376795035ab5c3cef7dbef32f88c63b949b55bf07351698e613996cd77072025"
+      ],
+      "execution_semantics_sha256": "bd96b56430a594cacabb3c28478e994a3913ecb4372df8f21d2aaea4f2519569",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "2677a24ca3b136a717ec9d9b7cad7a76b340d0e0d0ad9367c79b36653b749f97",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "39d3eb78e6b013c780f4e79265e8b2ff855f28a36d52cf58f972265d7ded60e7",
+      "schedule_sha256": "cef201c3607b4620c904d317bbad1dcd3ef5cfcfc85b80282ecc2d1590bcad1f",
+      "selected_candidate_sha256": "da3a11ddd7dd46db49642cc460a640a3c6b6d2217fa6ec6b6939b343d0c41550",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "d60c687c241ee8886c478b4c86ad32114a96a51f8f7a7d7ef95f8c12b11df343"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "sampled-boundary-margin"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.boundary_constrained_route.canonical_nominal",
+      "case_sha256": "d33c452b854ed70a0d594ee68278d6f29952cd3bf6f95a05fba0ed1eda7a6004",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "f70d32f4f73f5227de276da8e3a258a3d95818fb50543d561aec279a67ca03ea"
+      ],
+      "execution_semantics_sha256": "d81d4930e07320d0227a693f75c7631ca1969df7937ca78dacc552e550542fed",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "14d6b44cca1c401e07639a1eeb44ad891a5dab155a7c6a93a852be24f04f4f34",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "5b4cab6d9bf6c53298b04b43d634f1246f785ff28c9d50e6a457d40d38b1f490",
+      "schedule_sha256": "8b8220f5eab773571d3853320586a57493909ea754eaa1660d9f97cad68a08f1",
+      "selected_candidate_sha256": "83b6c80e61b33c5d0624a46dcfb2e081af00ada2660ca17dbd2a902443fb2cae",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "cd3e34a7a44f5e556d9500f41fa3b002cee9123a1f6ccc8883e144eed70eeb54"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "nonlinear-path",
+        "offset-landing"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.continuous_waypoint_sequence.canonical_nominal",
+      "case_sha256": "5d087df1dbd703f1f72d7933609b1ecb755412d4a7ff4fb5f8ccd6b262490edd",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "89daad6c118307c03623e11ebcf6867b4606176bbb129df57179fe33347cb485"
+      ],
+      "execution_semantics_sha256": "a1f8a5eadae7c81ce4bd1f927c332fa886cf7edf0e1ead0a42ea0f3f728eb4d9",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "8435eac760a12c84c487df1435964d3908d77c7ff68942a912390fd315352693",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "a2912a4e3ddee87fe1cf80c913c529d04d7fcced3affb09ee80496afdb9dd4f1",
+      "schedule_sha256": "7dcc1278f008963b33fabfc94a47a49425458535b93026ef2554ad128ab632a3",
+      "selected_candidate_sha256": "45b5d56367e09c8ceadef100880c6238ed0bbeca15a28566c01a44050c832a30",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "51f8ef9380dbefbdd42d4fb897f4a2f39b148965dbed4d17d013d63f72ffdef9"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "nonlinear-path",
+        "offset-landing"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.curved_route.canonical_nominal",
+      "case_sha256": "0ced06fe8bede051d7ee8af6e2c54b424131c8e7cf08e00d576a3836b0487438",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "2817ae47a1aa6a3013b99a53731bd446a2057f075dd1f13ee5acc895f61a3d85"
+      ],
+      "execution_semantics_sha256": "147ea4603d6181d26618f9f64d5ea52615b9e6a371262a5824fc2e7c229181b8",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "1b5d95937bcffab46a23d843bf897932ef15cb4c0b70728df763662a84babab7",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "f17976f6142bff882b50965c590ec8bf682c53ea076254cdf314da28bc77645b",
+      "schedule_sha256": "5a602e220a2b4be6f98ab75585311fdd0e8a96851f82da2f07e08cbd483ca5d2",
+      "selected_candidate_sha256": "90e7df7b224973b437373b9faa3b031f394026048e892ae4548dc3c5ea7175c4",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "7a843984132f3f2faa984273b710f1822048cb58fdd88c98497058b4e3309031"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "causal-event-outcome",
+        "accepted-event-goal-capture"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.duplicate_stale_goal_update.dynamic_nominal",
+      "case_sha256": "6a2adec13a9de0676ecaf6adf84971377427dc9bdc04e2e0e08b69745ece62db",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "fb366cb6f72122aeaedb1e8ebb5fd1e4510ca52ad166a2cfd3538cf8f1dbed8c"
+      ],
+      "execution_semantics_sha256": "82a8f09542e7c54cd468072eab5e990dbfce2fa4f9adc53f5e89f6aae456237c",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "94a9243a937a7213bc2d168a0d98d3357bb36e46c40c4f016f42602ca4af1955",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "52b603d7435e1291c0a2d1cdd1820ca21ea1043ab48c1f30bd2ec0722735ffec",
+      "schedule_sha256": "e822f54e152bce1b99a838ddfe9585bd21bb93aedcceb41db3032aab36f25055",
+      "selected_candidate_sha256": "8c0bea52623cc6e04f6ead2f9209d0f789d82dffa38b2ccbd3d756d9e2df5f19",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "f45d02b2de5a0021927b7cc6f67beb62efb515670cac07adaba1ded0b250ce8b"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "causal-event-outcome"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.failure_recovery.dynamic_nominal",
+      "case_sha256": "fd29ed25660a76706222a45975ff4e821683b31fbfcbd8064c825647a34aae85",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "8ffebcf4b8a3bfdeae86e1d6f276f0220449dcb20374a204174b5b02afaa1792"
+      ],
+      "execution_semantics_sha256": "8b3fbeaac69183750b5fce16ffeba56c40c6691ffd5802592aec1096bb9f24a4",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "7e0fb49d532cf8b98dfc65fa70aea278d2bed8d78fe88e9ca50c13d533d178fe",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "87a5c942cfbfc558f2923377e390e8c9a94eb0ff963ccbd59b62a43e5df5d1ec",
+      "schedule_sha256": "55bad9725799e6956cb1f375188216aac40c99305d26ee6cef0b33f6f21a315b",
+      "selected_candidate_sha256": "45b5d56367e09c8ceadef100880c6238ed0bbeca15a28566c01a44050c832a30",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "1bc62dc4e701f96e727660e0bc4e94e7be9ca2907b37d5aa4220cb835dbe2f62"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "causal-event-outcome",
+        "accepted-event-goal-capture"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.mid_route_goal_replacement.dynamic_nominal",
+      "case_sha256": "474d3563dd12fad6fe0c2868d3e0b1f30f6392b5db9de40b755f963700fb2d1b",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "987ebcaffea7a7993ce7a318d743af8fa8916da36df057ce59422883e6ae6d1b"
+      ],
+      "execution_semantics_sha256": "20174fd4150dd43ee33907d82489d2466bb2bec004d1d2a1cda87a9757e586b0",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "0a37449ae33914a5016b32279e3e725e2955c32a51c49fb3c50ccd4ddfe9733c",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "337101a46d4528a0367ac085ea0e6121bc6f92d9231e86fce76bff128e726b62",
+      "schedule_sha256": "95e67f3822e0508da081ea1267041383596a8dc4d74d1ba9e519ffd4614eb977",
+      "selected_candidate_sha256": "f443cd1b86452f39f6eb1295e30ab6ad1828e7e5ac4439202df3da2333816578",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "8755c979b4ed5eae163bf48920ad5d04da4c970e9aba6df3b6c5a69946f9cb1e"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.move_return.canonical_nominal",
+      "case_sha256": "47a33916b1c6a27d415221958daf560018d13644fa234505e1b2fbae90382075",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "a97b8565079e7a7e20d72581b679e143738c50a63a8d5a582a7b335789185368"
+      ],
+      "execution_semantics_sha256": "a109d9c3af6cc948f80d5fc8388d1373806deecb0448ae5e31ae47d8d710dc40",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "a52e7535cd9ff7a3b8a083a06b149ce1dfc74cf15191ef21400ed5c35763b107",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "41b13109b78d07ce1d062ba0c77bc7dda8ff7c89d2e332886a8d43577c4080fd",
+      "schedule_sha256": "ae0536c3e1139b214b990ba23581a5ad99f4ca7237bfebae2b3303c791094b3b",
+      "selected_candidate_sha256": "da3a11ddd7dd46db49642cc460a640a3c6b6d2217fa6ec6b6939b343d0c41550",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "a4f59fc9082f3a3a0e941cb9c8326221f6332f26e4421e6cccb2c09bef7410ca"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "causal-event-outcome",
+        "accepted-event-goal-capture"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.moving_target.dynamic_nominal",
+      "case_sha256": "f8bd430f8d5dd8f36f0f763b1b4fbb5e08457f8ab9e9d51382f378dbe4593e96",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "05f35c8b86d7281026516ed37931a90313f846fad315706e362f5684801e7828"
+      ],
+      "execution_semantics_sha256": "f0a8385bda92690a82c80018e4a7d1ccefde36bccd0434bb6609dd5d14f80a50",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "befa614a433adb56a75e961bb4d75150ceeabb0a41f70191b4f1c020e4848e79",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "418119a767dfcf52456c90e2061a3a619bd9759dd1b82906c35780db90949cf8",
+      "schedule_sha256": "575b337303601bdb93478682eef3f6a77907ed95c0f195d4a85aad6e324e32f1",
+      "selected_candidate_sha256": "e7b34e2b48875f3a13fd94f224043fcd7c8fde37be62669b9a032c74afcf1e98",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "68c075f1afa53467413f37aa27e585d9eb2c81d7e2aa97e6bb516a48302fbf49"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "causal-event-outcome",
+        "accepted-event-goal-capture"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.operator_approval_goal_replacement.dynamic_nominal",
+      "case_sha256": "34a8f0ff6196719dcb10e56191644444d07f9432b64877c9501c23b62d57f964",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "9bf0f90faee777a3530938c9da713fc756b4034fcc73e625359a763756d4e827"
+      ],
+      "execution_semantics_sha256": "443f7404d00bed1ea751348d1d0d15cdc950abf49a3756bb627f86a254b15c81",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "b11eb1bf9b0b00af55e4912db132c369c556fd5c5df5e97d5edf7bb424d6d95b",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "ca4356f652c6008c18d3eaab623fd1c2a0152b9907818ba3174d170a62c27d58",
+      "schedule_sha256": "3e8d8c343897d90631bad40df927d41975ab79c2bfff57188ba734423a3f7750",
+      "selected_candidate_sha256": "8091d865236354641aa64b81b930bf60855332d69a26ff03ccf5018a4533d0b3",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "c2b5b8c13109590022d17be34cd9d76d78b48e43533b931e343c744a4a478a89"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "closed-shape",
+        "offset-landing"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.planar_shape_loop.circle",
+      "case_sha256": "63e950ef3d00b2f9085f889bac8ecc9bc657c98de2cf7f939f306b399e87b31c",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "2cc91c484b7ad9ead0f39e2ef3d82ec7c63d9e61cbb312f056c0cb4a4cb3268d"
+      ],
+      "execution_semantics_sha256": "d137d85cbac810f8f95aa2ba2434977a02700fe05f1a3ad95abc114c85a659a1",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "4d651cf2f72c1ff9ed2323ded89263178c602b6ed17cfc08a31b43b4f7d50e8e",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "992c7a7128e363f4dc4ae8a5ee290d0728afdea4de2d7bf6f35cf740f30cba08",
+      "schedule_sha256": "3fc8e22d7c6a2829586e992a59a47f86bd380a50258693faa1fbd634bf2736e6",
+      "selected_candidate_sha256": "fee1c8d1369929e79ca917b661f798fe0a76fe2feee5ce6475e8689f2ef1ce5d",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "0fbfaafaf597612ca972979d16d41871aea5f73ebf7f72184f33bce3109b803b"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "closed-shape",
+        "offset-landing"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.planar_shape_loop.figure_eight",
+      "case_sha256": "356723fbda7bd5f7ab8c6bdfce027437892e6ffcfafc6395f87e07ba8857e97e",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "fc546d1ce3e2cd273a0849ecb3ade0de5d1a1084e4055ce21c9ae461d6bfd266"
+      ],
+      "execution_semantics_sha256": "7230b20bffede18ba314f66f2d9e6ae40791f0d37752c9a8cde51e242e6b5d83",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "5401e73e8d6b87bafe87664d1c8065bab5643894d65d1e2179aa08cbd0878019",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "27917d1bf28dc9c76eac366dc91616d2aaa595da15665dd5e88b781609f7f983",
+      "schedule_sha256": "407f8660daba8eb536bc6d70b3956c4ee636199ba2930327c86d18c28cc007e4",
+      "selected_candidate_sha256": "6c2707db9c02395b7697c5346ebd1f9ddf3777979cddd373ca005ee2ecdf365a",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "ce2f2b6aba8f03c6da3182888f1a77fd5a292f04f45d347daf6b4eed4ac3c51a"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "closed-shape",
+        "offset-landing"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.planar_shape_loop.rounded_square",
+      "case_sha256": "cf2eaffc36c3fe70e9cbf16d701d9c655243af9cf6bc7307ca7263112f0a7ff1",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "e154d17b0ff63a21432a2af4e387765c4951339ab1195c1e1f480f98407849b0"
+      ],
+      "execution_semantics_sha256": "6032cd1216234e33fb28a11b6ef825566c1616ed752f41675d68957702062afb",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "425e427e2cf0e49ec8d397bda54a62458da93493442f9396a54fb50d0f86573b",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "b6deb7a227e90e4e05818eb558115c2853551a670237d9cf30e8d90a5c5bc1fc",
+      "schedule_sha256": "6c69a04091bb48ac7d0ba47a923ddac669bd39dcc1d1e65d3bf4a8b6aa467ab2",
+      "selected_candidate_sha256": "3ba908e9bad84fbe7dc8aad335278f05a335eabfd02bd3b881467a3a95454e5a",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "fd0ba6aad9386c1051ccdae4dbf77bb2cf6fb9660b4ae186faad34970b4e433e"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "causal-event-outcome"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.planning_budget_expiry.dynamic_nominal",
+      "case_sha256": "5d25b42b0e1371b916e47c01384acd9a9a8f69c3d3b8153e07df9fabcc575189",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "55282f3707c387369346c9993e9fa739ce68ec6d9c5444e1b089911844cdb176"
+      ],
+      "execution_semantics_sha256": "137bb60fb022819680ffe6230cdcb90d8a3b8ca91a42ee6d01a3756c6586b9e1",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "d082841427dbf8cac5478bb682f580baf9ac0ba4d1031eaeb3b22bfd6bfc96c2",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "cf35cbd4a7e87cf164328c6446a143e14a37682afe23adf8b4da64eb09ce8ed7",
+      "schedule_sha256": "f742f6f0f8048ff17c4881c68172152ea5b91b0d476d6916d6c10477a97c3c9e",
+      "selected_candidate_sha256": "da3a11ddd7dd46db49642cc460a640a3c6b6d2217fa6ec6b6939b343d0c41550",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "ccbda8e1537dde351077808d5b37e21046d7839360a40ffd912f1f7620b8f887"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.point_to_point_relocation.canonical_nominal",
+      "case_sha256": "9e466ca6bd43e2107aa97fe09520e2f2fc072e37ce4915b7bfd999f0fa314d6c",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "456c26a7c915af8d8531f092800b7f53eecebb32c422e3bcaa405dbc228ab096"
+      ],
+      "execution_semantics_sha256": "9a4626696755af3a25f7dad46251da68988542e6bb31453d800ef6a4c33f0e35",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "34ac2232a8f388de32811f1c37fe96285f9fe29393029eb8fa5e512fa019b754",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "b3515c1230429e083b4236def08df21e44834f3c87b6cab2a2334314daa9c4e8",
+      "schedule_sha256": "a0c65836f9187674f313c6b875f01ae242879c0171956a875585bd6fc212d7fb",
+      "selected_candidate_sha256": "dea25f6b48abca616b1c49abc65a509decb9dd7f15bf223de9cabcec4ab23431",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "e1b3723443417765525d46c2224fe4d4f4deb609f2c9026658b9a18201ed075f"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "declared-hold",
+        "offset-landing"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.static_multi_goal_sequence.canonical_nominal",
+      "case_sha256": "7ed3edb32498665c554054f2771420a83162ca67cad25acd54d778348acc2580",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "2a9350246048fd40934fab558bc1d7d5fe26c55f938c81005337a9169d8177e5"
+      ],
+      "execution_semantics_sha256": "6f7c775a1dc6ba927d86666d5888199ea9ef6fef7ade0a7452696513b42cab0a",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "298d8e5967d99036fbaa82ca71411c651affa1eeeb2fad669a68811e88002326",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "e560d9031bf38a2882b9d37118bca31afc7f928b067fbe57136f2a5f5a79f0b6",
+      "schedule_sha256": "b003f6205d69651d7a2361a4e6b01570608a71e8f11c8fd9664c62343e95df67",
+      "selected_candidate_sha256": "1190f623cc32925efaa462489f294c05af455236bc8b650788281e83d4868633",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "8456fb628ac6bea2d1ceafa771bc28a31358fe9cdfd473bc5cf59c868af9f848"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "declared-hold"
+      ],
+      "blocking_reason": null,
+      "case_id": "1d.takeoff_hover_land.canonical_nominal",
+      "case_sha256": "6606710c701f0277289b654f7a4cfa188759d0d26fe3b67233bb5e72e72bfc72",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "1468147c064fd3bfd41afe9694b81c236b3ec1cd8a297bb08ba1daae6dd17560"
+      ],
+      "execution_semantics_sha256": "3904c9641e75f9ba1ce45f9e038af95935073ca5801635763643d69341c06024",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "98629626d75cb5ba5fe474b7f65c48a41b8b4504378c8b46efcd3677d9ec38e7",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "1988fc278552b512d4390f89e65bb1694604e77b35801227aaf01d8441bcb836",
+      "schedule_sha256": "7ff3a23494b9f91b47132933e80f0f5aaf762a8886b3865ca6d4357de8864c5a",
+      "selected_candidate_sha256": "3905ab1f36d82edd739a8b0500f50283fc31e23fb3ab652f00ca144097ba52a1",
+      "selected_strategy": "DIRECT",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "fae890e87c8a508dc79af9f40a9c95b55b9b67e7e244f8478e3d85a5ba1b47ec"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation",
+        "configured-keep-out-avoidance"
+      ],
+      "blocking_reason": null,
+      "case_id": "2d.bottleneck.canonical_nominal",
+      "case_sha256": "7a26bbfc46dcae94a341fe84fe8e74b2366f7754aabe8278135534222edad425",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "a85f1b877de9d5ebe1091599d842f9204c037340d540f2ec35e57be6b99c149c",
+        "fa9c257e1db0cbbe9a5e6a5d7778052828611b3831918a0420fc568456d98d4d"
+      ],
+      "execution_semantics_sha256": "c6f7a2267bbbb255f2ebc5efaf4b5292edc57c2ba5e6ca58391b3aac51589225",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "b74e5e62af4304aa2c7fc0125507ac113f5769d2db6c07ff57d62eb49ce5e657",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "8c3e9ad204de5886d22c68de0a6eece01eb87775660f223192e86735f4c38101",
+      "schedule_sha256": "e49f61e9b8b1a30da2f494fc82a1dfa6d13fdcb6443b4a5b0cfd4761f19c8493",
+      "selected_candidate_sha256": "22fd540dc17af8a455274cada3ba626ae4752d014c29c4e533bcb98ea1d6a5c3",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "32fbd41736dd4b97b97ed5ddec7fbcee72b74c8118a3e648295697458ad81751"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation",
+        "vertical-constraint-enforced"
+      ],
+      "blocking_reason": null,
+      "case_id": "2d.constrained_border_height.canonical_nominal",
+      "case_sha256": "1bc4d919712807793b6944503eb09360dd91375476fe4fb6938fd24e940b7672",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "8a1f2eaaa8390ed3f36d2a331fc39132a7ed135d36c2478ddba6c90b9ce72611",
+        "b389d698a2bda5d9de7e4d2b3ff5e8054b829296f0cede5861e63bec0b3bd221"
+      ],
+      "execution_semantics_sha256": "3b13ee6fa6e0797dacc1e06f328f8d2d495bbdd9e7886e458f5cc42187491585",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "5d570b8e61a4dc4e388d9746bbc7bb52af1cae548a966915a23e7d3934d9869d",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "02ee9852125827843f2f05d2741ae52b78de0804f25319c1fc3c8abfd290aa52",
+      "schedule_sha256": "36f721c958e21978ba3ebb9440a38074df89c6d6701a76fc1dfccd520d6bc750",
+      "selected_candidate_sha256": "44089147b30295dce63481ae1f7eaf5969d3871b19c90efeaca1c254a72c1906",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "INTENTIONAL_SHARED_BASELINE",
+      "trajectory_set_sha256": "bd602fe9748abd56e0925ec4a776fc72f78d803e8b2fb51761d87113022741ab"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "nonlinear-path",
+        "offset-landing",
+        "formation-error",
+        "formation-overlap",
+        "causal-event-outcome"
+      ],
+      "blocking_reason": null,
+      "case_id": "2d.coordination_failure.dynamic_nominal",
+      "case_sha256": "241e12edcf47c4e66044defe630b0e9cbde8ea21c97a1039b553262d8b369ecf",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "b136da21735ebfc31195df0d62ce6c2b1ff74b9f6d3f202b257cdf4dcfa31e50",
+        "65f95b79bfd86c60473b6e150de9f090d51df8b6c89aff69c6d1a9a1f418992e"
+      ],
+      "execution_semantics_sha256": "4dc7f0b1bb45f15b8ca8b962723d38c4147f63a0312ea3f96ddc521ab34764d6",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "a0d9ee32516b3381f351a2481ff7777b8d8604d0f9e73ef978e130dff3ac8640",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "eed94f30b50ef38374f3edfb534bfe57184d82633f6357bb4675d67e4d967660",
+      "schedule_sha256": "aa25908b3e697e3b236110f57a71e08ff6b0d3ddeb978ad3c9eb418676e7a4ae",
+      "selected_candidate_sha256": "46228a79c81c39a2a4ff373eb4774d241f88c022e5ed63635bf8d6106b7bd307",
+      "selected_strategy": "DIRECT",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "8d8b8ec9703bb66045a75bad48f0f34088ac801b54332c92eba9bbbd30c6049b"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation",
+        "causal-event-outcome",
+        "accepted-event-goal-capture"
+      ],
+      "blocking_reason": null,
+      "case_id": "2d.crossing_goal_change.dynamic_nominal",
+      "case_sha256": "4f4610518135e756cfde2e27b0c1418473bffac9fcb5494e1844c300c2c4a75d",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "31fa914e38f76baed84a5e5bd65a84f9bc88ddef777e628b72b0755b15d83662",
+        "a28c98e0ec35a26a3744ec59e134bfec69dc1ae7cbca44230e0ad4788548914b"
+      ],
+      "execution_semantics_sha256": "e38188a9385da584234865a6a3ec5187ca24ff1a93ee539e9d2e253198a397c2",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "cfec4d320dd6d97b656f33d69962814d405a39c9714234d657374b998b8b0dbf",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "27b503f72de986ab83a45532da0a4f5a447acafe3232cfc43a5bcb0fec80704e",
+      "schedule_sha256": "54c57080078708206793f8d614105333eb5dd0b63dd75935bae9347199590d03",
+      "selected_candidate_sha256": "1b20773ac55432f0e3927fc1ee828dd6ad2dc7676a39100caa039c052ced77c2",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "f86be66375ab25bb7a7bdc74188c640e9a36f6db0dcd537ec104a643ff49b349"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "causal-event-outcome"
+      ],
+      "blocking_reason": null,
+      "case_id": "2d.duplicate_assignment_rejection.dynamic_nominal",
+      "case_sha256": "9381d922ec09fef67f7c944ef3accd6355e21c85fc799ba9b32b8b58599b54b3",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "c319c9867e329ad845fca118ec97d9bbc9df0236380b67b6b0a93e9ea1dd32ac",
+        "d6a54d0166d53c9212fa93af409d371b79377a8995663111d15aba7d188ed4c4"
+      ],
+      "execution_semantics_sha256": "29f22bffac5374f89b87f70638002cf0e36e3532649420e707da8ca88c8d044f",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "bdb1d7e0228b47b308f62541711f3a53305396d015132396acb6d50327c938a4",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "c3a99279d72b9300400f3c9cdbb2f3c330a63d8661c2b7835023dbd08e439693",
+      "schedule_sha256": "43d00d33433624d4d8ab3285e011d9509cb1473c7191a01c335177d6d7151d04",
+      "selected_candidate_sha256": "40e2c224fa1757039f0c5a52e51e524d3516820351aaec4d67f0addba2a2e42a",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "36cfc5e37959f13e621d7c85e48addb537f672fe01cba0cbeab37740aec8e1e5"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "nonlinear-path",
+        "offset-landing",
+        "formation-error",
+        "formation-overlap"
+      ],
+      "blocking_reason": null,
+      "case_id": "2d.formation_spacing.canonical_nominal",
+      "case_sha256": "a3c9b793ce76a8d16f4426b76dd0ea2d271c558736529b081ca9aa13521e4c81",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "ace5a0b7e3df7a0092181b2a6a12c85202c7a07c8d59a870c2301d41f7b94f12",
+        "9f5b0019a8fdb1531554cba6697522f6fcca19f27c3fb1480426cd02139a0406"
+      ],
+      "execution_semantics_sha256": "b306e157d2e07f4a9b4ae5a609599ee4a849477f314abdfd08f4cce849297800",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "78f690341263042b995b949bdb2f93052b3d29f478dee9cdb4d3c86a0de6b537",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "e1a3e9fa5f48b148ca199011e4d23c7b3cf52a41cf1eff0132bc78b174bd3409",
+      "schedule_sha256": "9a2c6e0888ee795125aeffb4e27d46dc51dd758aa6d148e480fcbd89e4aa0015",
+      "selected_candidate_sha256": "46228a79c81c39a2a4ff373eb4774d241f88c022e5ed63635bf8d6106b7bd307",
+      "selected_strategy": "DIRECT",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "5de0c9da00d88bcd1ad379e2fa1e8f807e7c45758109073bd5f415d8a13aea9f"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation"
+      ],
+      "blocking_reason": null,
+      "case_id": "2d.head_on_conflict.canonical_nominal",
+      "case_sha256": "3099fdec3eafd86551d81204af3dcaa93a9ae557ac96537364bef079067e3cd7",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "9403eb3ed4dbb8f755639139e9cef0a62642292cd7875bb22f45d80eb0065101",
+        "62fec7ac2613aa2a6a34e5cc69c5596a453210efb8428431917d66e7fa1f6112"
+      ],
+      "execution_semantics_sha256": "fc9cb6cbfe57f33acf955a66a8cc58a3a351c6ae9bd9faa73f0ad03651ac669a",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "04177386ddcc639c09889704dc0fe8e47f718d1a580cc608f78bb9a34ebc9247",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "d1cd0b3b6dc98a83be3fd81df5ebf90ff597ec78a4b79db979b8d66a2fe317bd",
+      "schedule_sha256": "5815d6b36796258620db4519b4ff0c8a50d255a407029a09cf4de1711d3cd094",
+      "selected_candidate_sha256": "735bfd03e71fe8a01a30fd7fc5ce87095761502d4f330250db0a69a5a698ca8a",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "9dc3794851416093db05e34cca2f3c35b84e4390a3e5ba17fed9c31f5e57fec3"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "nonlinear-path",
+        "offset-landing",
+        "formation-error",
+        "formation-overlap"
+      ],
+      "blocking_reason": null,
+      "case_id": "2d.leader_follower.canonical_nominal",
+      "case_sha256": "403b16e2fde356f2625315a64d92bcc59d5723493aadc655af6cff592deff8c0",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "6e3b816c72db2969c96bbd71a69e490feade4e10c36edec3f5f97d92c0c855f9",
+        "a44e49badb0b8074b4de7f67c676995ae24872da660c04c45c69d0aff405db3d"
+      ],
+      "execution_semantics_sha256": "62ed2067b6a4b22ccbd7a69f1982e05a376674941d1ad2c19c2380f4cf96aed0",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "2c8a89c57f3edc4fe07d7d55f3977716dc04c38d6660c8632a32a97b95793e95",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "fbfed727985577458e29ec596f1a84d86f4eb0816a388a2fae79eeaac3ee9e95",
+      "schedule_sha256": "fbacb0a1f2c9322dc85a72b2081e817ad9649f4c1aa9a02386c3628d85411aed",
+      "selected_candidate_sha256": "c53b8c8de6a174fd7fa833c93c10f6091fb6904cf79612fc638ab8de0c2d90e8",
+      "selected_strategy": "DIRECT",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "063301d3c406d6b230e88393ab44c4658fa3096ad31b4eb2302f3d69469fb017"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "nonlinear-path",
+        "offset-landing",
+        "formation-error",
+        "formation-overlap",
+        "causal-event-outcome"
+      ],
+      "blocking_reason": null,
+      "case_id": "2d.leader_loss.dynamic_nominal",
+      "case_sha256": "78fccc9fc6a56ee6528b5a238346252db682d2d4039d497433ce5e58810f5078",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "69eb46ee87d884489af9b4922581f49c91a52afa4612261375e102b19f282576",
+        "39206abf2bfd602b3ab627ca08cef475196da506df067467580d7d2cde76d710"
+      ],
+      "execution_semantics_sha256": "49c3fac92442021d3ddc689541a41260e0b9811af7cf4ffa84076cb79572b499",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "324da217220e1e8f19f26f8df3068eb7d984a7c70e69a57c758b1a19aa89a2ef",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "178effea34ab5de18ca54d597029d646a49b689d5411cf949c288e4c9236205e",
+      "schedule_sha256": "44a9ea6a6596b0ea996144a7a07cd1736ad5b30b19ff24960583cb4800b9962a",
+      "selected_candidate_sha256": "c53b8c8de6a174fd7fa833c93c10f6091fb6904cf79612fc638ab8de0c2d90e8",
+      "selected_strategy": "DIRECT",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "23e5d865789f21f760692a7cf4a1b64fcb51d4da077004b494d3e32c4417792a"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation"
+      ],
+      "blocking_reason": null,
+      "case_id": "2d.merge.canonical_nominal",
+      "case_sha256": "70b346469dac4fa40f99da5383cfac4f96d59a0f6d48015b9f548d341ec4e10c",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "dc0ee9d9ad3177b1bc40f7921f3e48fc01087640c9485d6d2c5fe505fd186b09",
+        "fe063a5519e17a25792dbca787f29b1d718b92bb5584e775398efaec71e36559"
+      ],
+      "execution_semantics_sha256": "e9a19f8e856a6c765994ffdaa8b90b819dad802729da6cffff37830dc9004f59",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "1202f801c21b6d4c4e1f5e42be5a9f6b657594452082c64c431822636dca1e12",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "3a71b8189969721bce86a98ba73b6727898a90bb70ea2e25e42dc896410fa62a",
+      "schedule_sha256": "477dacd35fb67a67c94ae57b5e2fbfe5ca6f187267ab1939366a22c014a84e34",
+      "selected_candidate_sha256": "fde71992c01895bb7504a6ee56d103c619aa2790562d4a976c3720f4f06bcb9c",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "05303f240334253b95376bb581f76df1ccf45fb081fa4e829054c9c8cef31b80"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation",
+        "zero-airborne-hold"
+      ],
+      "blocking_reason": null,
+      "case_id": "2d.no_hover_crossing.canonical_nominal",
+      "case_sha256": "d5c0d301e81351bace32b21f08981641dc6288e6607385c7ff1f9e7c89ce1248",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "b415a88c1ba6aeedf00302f96b92ab5a45b14d26ba2aac3d5145e87aa515ccb2",
+        "50c0966d091f845f4d4783454db864843e6b5df53a525b8c0c8d432c8d0986c1"
+      ],
+      "execution_semantics_sha256": "d36cfda294c6152c4e8347010dfb0ed591742b354fbbc51f7d26fed41797b6f8",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "19e8597c6658e9eeedf13a21b5c9d82e79d1f0ec8347e4137485fdb3a24f0fc7",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "b7fe81f92dc8e7982967135b08073d03a8733950ef1be42469eec6f76cec8fdf",
+      "schedule_sha256": "88141c39c02f11d74a3a32968370cd8857082351763999c5cd0460464cfb3e19",
+      "selected_candidate_sha256": "636ed8aa4f971c6ff1de7d51e37693118baa8b4992e04cc179c656243b86ec85",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "INTENTIONAL_SHARED_BASELINE",
+      "trajectory_set_sha256": "91b56070fcbff957a06ddaa4b29091b4fddc2878d0b9a7891daa8dbb329dddfd"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation"
+      ],
+      "blocking_reason": null,
+      "case_id": "2d.overtake.canonical_nominal",
+      "case_sha256": "817d4409558fec37bca32108f31dada98df5d1ad5cb933fdfd08cf000d48c54a",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "252132a76aa6eb981e6ce139ef5a59c41d8ae7514967293f3b9bab28cd1082ff",
+        "130cbe1c142b6a216252521fed4a9430fe644f1ff9280e78beda03ed247a7374"
+      ],
+      "execution_semantics_sha256": "979bcdac1e4a2ecadeb086989a09fc180ef958bb452c4429e75338afd308542a",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "9585c22ae3751eeb05ffc6482fa62cf908df6a8b0cc6bd6e25cb012510a08496",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "fa86e64238f833442488eec3cd17e7c742262724b4fdfbec761c6d90a1431774",
+      "schedule_sha256": "890825e11cdf7b5a3607c6ee11ce6d85f96c0dd4eb7b9ca4351ee16ce24df235",
+      "selected_candidate_sha256": "e2efbb3aeb728d4ccb3d2c09874d3a5b3f1656b03d8b846f5615e38b3a657afb",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "f7f0036d58c20cf95c2ae8cb2e78b67a1ffbef17f020bd9a7787035c845a5e7f"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "synchronized-start",
+        "overlapping-flight"
+      ],
+      "blocking_reason": null,
+      "case_id": "2d.parallel_routes.canonical_nominal",
+      "case_sha256": "7e20328d443d10bd4539f6230ae35e9daa15394b43319c2ac61fd4936c7fcdbc",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "07d2dad23cb496a241cdd3d292629727ba1da953bd28ed92aead05fc71995c8b",
+        "fa23ae2161fdf0448a9f8570b2d175cc46ee5071d5e779f899e4a22b109d6772"
+      ],
+      "execution_semantics_sha256": "b1617555ae0c8dbd06dc7498478605b7f944bb13f7ca5e52ec88138ef1d728ac",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "cb5b834e7a16e854f19d701a494217d21b7611c16880e555f87c575ec9318101",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "642f0a22c4166e1efccd5f6784db72021131ff894404dfaae38421b051fea018",
+      "schedule_sha256": "a1fa5122965fc7f86109e827257fc518e95d928b6ecba2c05691e7831c8c1e2a",
+      "selected_candidate_sha256": "17e49744f9f63a3fe852303a6d54d6a854e6e5574d87bce04ed63b24490e4c37",
+      "selected_strategy": "DIRECT",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "3036076e42d397a37e633a238ae9562a4c222ca166b54dcbf4fb7cee740cb803"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation",
+        "causal-event-outcome"
+      ],
+      "blocking_reason": null,
+      "case_id": "2d.partial_replacement_failure.dynamic_nominal",
+      "case_sha256": "f36b11d3664a5251effc67d37b76b8fa8e92e17e2549147806cb6c4d227df109",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "490a83be4026b47c3079b05826d5e47810a9bbb0b048bde8c4134617182ca98a",
+        "d396b88cb8f2360b311984cb625ba7631fe9fce0bfa1ac6cdef08784d6842a78"
+      ],
+      "execution_semantics_sha256": "4700242d76ee63d6d800a8868b91beee88235fba21e37929a594cb356c494b9c",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "7964fd7723631b03b22d6d01d281464e60d914b97d78e44ae037376ce634c570",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "3fe9576eee045379bfc7f048e94eeb76837997d405422777286c4614ef1375e9",
+      "schedule_sha256": "0d38adc5bf78ff9dd24b735af77cd395db7c8cda3fec3a098e0a7f462ea5d3f1",
+      "selected_candidate_sha256": "636ed8aa4f971c6ff1de7d51e37693118baa8b4992e04cc179c656243b86ec85",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "adebad6d8e2cc0442eb70643bb6e779078f0f7a1b22bb38744202426a5fe87cb"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation"
+      ],
+      "blocking_reason": null,
+      "case_id": "2d.perpendicular_crossing.nominal_equal_priority",
+      "case_sha256": "0d6c6fb34dca0aa109edfffce08b83fd3a519987fdcb3062b9139e1baa081730",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "26e3e2298aa16d339f91515eeec3111a46cf04775525a93f8339788d77d66679",
+        "1d85424a5d949dfc2b4acc7e50908f12072ef4c92684edc231754e6096e41dfd"
+      ],
+      "execution_semantics_sha256": "d9533e1025976281cdc1489386d72d08d1d6affa49276ce4f2cf74f97659664c",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "28c296c64c450d862139ab85e3f9a66ea92cabfed085968f2279f3282192e1c0",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "3ebc0c8dd3889c0c3814703dd6386a5b0afe520d09ff78dfc717363968701764",
+      "schedule_sha256": "62a72ede9aff376e8f54646a9f6217905fc7f514f7fa0caac8d8508fe2c1aafd",
+      "selected_candidate_sha256": "6d0d687e849a21a30b520d32bdb944d125baa9211cbe4d39c3bb092941fd514f",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "768f9a3aca1adc8f9da8a603277b953eafb33ef6a32e2cdb7320f0ccdc4d9918"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing"
+      ],
+      "blocking_reason": null,
+      "case_id": "2d.role_allocation.canonical_nominal",
+      "case_sha256": "20f2c866647aa36b669a85c64c7b2569d31e1d835d2819ac41165f32483ffc44",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "87f125d4f5cf78a0e2b5e736351f2cdb6db344aebc3c2929a734a66a14455bbe",
+        "882e889e31cf87161078cc13ffd82c75d2ba08905e72b8e43f6962a1a09c0168"
+      ],
+      "execution_semantics_sha256": "3df860906b462d1de387952dfc8a8f03b92cf4bd67f5490fea0ebc920b008617",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "f6b4f4cf58bf829aafaa6a2384caffc3d3e3ba44bb68af8a994bed6ed43c5905",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "ca9d2c7c9139365d473615a0430310f6975e06c12b573e19b1041fbb9022052a",
+      "schedule_sha256": "0dda3f8fa050636350db9ec76d8c28825d96c5f3eed073b6c964138d0fa5399a",
+      "selected_candidate_sha256": "40e2c224fa1757039f0c5a52e51e524d3516820351aaec4d67f0addba2a2e42a",
+      "selected_strategy": "SPEED_RETIMING",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "0f47e99c1a3a5205451647de2da7c9188c4a59e692890ce55dc27c3b3167a5e2"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation",
+        "causal-event-outcome"
+      ],
+      "blocking_reason": null,
+      "case_id": "2d.simultaneous_conflicting_updates.dynamic_nominal",
+      "case_sha256": "626cce30c93622f220979db02067d0698b7493a5b8b938fc1c99a409d089ac4d",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "74e3d46da7d15b32dc13608fbcb17e37cb1a7f23fc7fbc95fe74aa52f6cf21a4",
+        "dfa144a0fc09e755b00a5702bf423790b9e3d9ff35b655ee5903334d95989bc8"
+      ],
+      "execution_semantics_sha256": "2d8291e94a91858c68576147b3a57717b4ffadf9964ff466c0df52372d733816",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "d44244dd587366aa75652806394dfaa8645cef319daa1fbade0893b4433c5572",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "f602d8b1e455ca1cd54308d7d129b307f97946bf8c4630fa95ce9bbaa1497fce",
+      "schedule_sha256": "e3a3aab3d5a6cc6e1e4b9970400e873e1f317d535ea87d938e79de083d480503",
+      "selected_candidate_sha256": "636ed8aa4f971c6ff1de7d51e37693118baa8b4992e04cc179c656243b86ec85",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "88012ba5cbbee2ae964a9b693aded75ae7682a87d9153613be8308ac4fd7d275"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation",
+        "priority-precedence"
+      ],
+      "blocking_reason": null,
+      "case_id": "2d.unequal_priority.canonical_nominal",
+      "case_sha256": "0e4b2b5b0a71e2eda70209997b8531589c263e4bbaac5fe808243041f1af5997",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "f2c8d06477e29735eab8bb93566595b57fa27eb45b3409c36090b4d0949b5b43",
+        "bbf46f18a70e6f4178f852b02a2fd834e0c6e920a7efaa8be429c436ad28c9f2"
+      ],
+      "execution_semantics_sha256": "f9c524590c9af58e0dce81b89d71c5f9f7c4d0eeaaf886a95757adc948806e3e",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "5efea7b5a1e8cf06d5e021f47896061b3928e43f132e7ffedd99bf2d476abbbe",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "9b6720c1334f6671b42587d0050ce2ca210352d4f0e0c8ec3cf9888979f0ce76",
+      "schedule_sha256": "1621077eb28920e71303fdd7187310b03b1d512b1a30a2d1b827a3efe193db27",
+      "selected_candidate_sha256": "6d0d687e849a21a30b520d32bdb944d125baa9211cbe4d39c3bb092941fd514f",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "INTENTIONAL_SHARED_BASELINE",
+      "trajectory_set_sha256": "875a0ce1706bb761a6fae57937ea20aa88342f905c9b45cb4e08eb9288340599"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation",
+        "causal-event-outcome"
+      ],
+      "blocking_reason": null,
+      "case_id": "3d.acknowledgement_loss.dynamic_nominal",
+      "case_sha256": "70ed7ccdae9e327af2e46ed12a3922262964722585985d06305a9cdadd7782a0",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "f7c4fc28de6b201f42c178493bb4f5b695e0f32e2f82d5e524b061f3f9070dfa",
+        "38a34d748f4166f9b98e57c47ef4887dbaaaef4bcb9b7870453f75d7d81babca",
+        "fb945cf19ae9959b9444d4053c995fcd09dff128886808b13b0d77dee64692d0"
+      ],
+      "execution_semantics_sha256": "452b93ddbc588b9d832ae4d054c80eaea680b9a60bea015349e78862e9454ee4",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "f6d2d001e10f310d4db5f57f211a45cc44cbccbeb5c902f58307c0d867b79086",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "64a5a75f624ae9ea41982555ccc201bfcf449d7b2a9d07b248d5925ce2052ea2",
+      "schedule_sha256": "b939aaf8c52aa28329ec7cdf291617ffd34a5b1f2aa5632e1f9713ed46e44787",
+      "selected_candidate_sha256": "27160d0d0ad1bdf1c2ca986d336e2ff9d0ec0d7cf3b61cd80c17eb491493ecf9",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "6f119255ef5c31fda9fdf57c7122884cea5ee2444d48a8afb1df9b60fca076d8"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "altitude-layers",
+        "offset-landing",
+        "joint-separation"
+      ],
+      "blocking_reason": null,
+      "case_id": "3d.alternative_layers_detours.canonical_nominal",
+      "case_sha256": "c019057796345c7587fd5112fab191ec35b285e519de594da58a9bf11a2de408",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "9c826615b3726ca038d3d1891df269733e3e3aa357ddc19101754a6ec80acf65",
+        "1cf079900b7a2468b61ad14ac7ffc86a04e2d018102f73c988291f5f5452863d",
+        "bea4fe06e15ca69df4a0bafe21e5faebf26c53ffd31ed874042095c26486b5d0"
+      ],
+      "execution_semantics_sha256": "3f91c021b58d0429785ea4c39749b5824cc0cae294280069a2e7e24bf2c0e94f",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "3c50c1343314755055f3496c4debf84ea8d3482006c5338015d171816d60f62a",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "090c32c4e5427d5c3f6a3ca359c135d62c160c208c15bc7725f3816fd6024be7",
+      "schedule_sha256": "b3f6fc86a280abfe99b5b49cf92dd8a215f5e2a378b3699ec7f5f3ec211c9fce",
+      "selected_candidate_sha256": "38c24da0a8a9e6cb3f69b8617753731dd02d52e513b9c7f84137357af0eb4ecd",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "973428ef7ae1468737d1cbd1898c225911c109200b26b3ece8de0e194272bf15"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation",
+        "configured-keep-out-avoidance"
+      ],
+      "blocking_reason": null,
+      "case_id": "3d.bottleneck.canonical_nominal",
+      "case_sha256": "86b842d04b715046d9fd647266d2d297b284e65eb83bdd2979011e02164cdc4e",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "7e07c93c7e0ea56408972559b9427eb51fd750f554855c6f7158efeedf4085c6",
+        "c71bc8fc4b93fa9e8e09923a36248c96db3a33f4338f8893aa1bf74bce1cb86c",
+        "74eb63a2e6aa70f8151c0199a13b4cab34bf109603c78723bf88ad6f695bcf33"
+      ],
+      "execution_semantics_sha256": "bc791ff4ce3e200f9e715a862fc47a5640b992ea5b477618ad04d33393d8f1a0",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "d40d7d44e8650bdc5468043518ac672c5aeb19440bc554a2b1122485150e54d3",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "2ef302f161a8d16a1674fbe1e11c18eccea3f8560673f4cf10ad949d635ccb4e",
+      "schedule_sha256": "16add3a9454b08b5eccd8a7879bf43b64638a1234a576a658db1e7035fd8b979",
+      "selected_candidate_sha256": "589b01136bee0f4b8969c3fd47be789e236de7a6acd3bf264bf0ad9ee1d38c0a",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "84ad8d3ec9b847802d8a66cc731aa853946eac9d8472fa53e26d598733a6b6c0"
+    },
+    {
+      "accelerated_execution": "NOT_AUTHORIZED_FOR_QUARANTINED_DEFINITION",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation",
+        "causal-event-outcome",
+        "accepted-event-goal-capture"
+      ],
+      "blocking_reason": "no bounded generated candidate satisfies every hard constraint",
+      "case_id": "3d.cascading_replan.dynamic_nominal",
+      "case_sha256": "690859bca46281e687e7ed5af75b943f0fb3597a6c5c14aeac71aa1c0d02553c",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [],
+      "execution_semantics_sha256": "f0484b3bf5900bcee36cdb4cbcb5eeff6506d0efccad5128198a3475d5d93015",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "62fea9d4152ecbc065aed58a7c17bbff49f03ce119c1fc1c29e0578b740ab081",
+      "planning_status": "BLOCKED",
+      "realtime_execution": "NOT_AUTHORIZED_FOR_QUARANTINED_DEFINITION",
+      "scenario_trace_sha256": "0d438d5e96296eedd5597b18a6be11d93887b46e91b9d2ee924f7d8700224375",
+      "schedule_sha256": null,
+      "selected_candidate_sha256": null,
+      "selected_strategy": null,
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": null
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation",
+        "vertical-constraint-enforced"
+      ],
+      "blocking_reason": null,
+      "case_id": "3d.constrained_volume.canonical_nominal",
+      "case_sha256": "72d88991a23235143d387ef8cdbb6ac2f4ed97b944929eaa0c538a92c0596b17",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "4e3443bfef5c0bd6a5b58f89676367214accc5059c0d0c2aaa1d69c9a17d2013",
+        "0929d3d8ddc8dc6d431e396924d82d238db6375474892bc7b972e32482f9e86b",
+        "5ec476e3ff7546e1b630fd31b90ad340af14357909b9664f44ca0ecc123627f5"
+      ],
+      "execution_semantics_sha256": "58d607bfc83d40315689217374189e9004bfd1106389500ae697c259964c76f0",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "f5168b6763a52d878d667ad895eb76e05450b10a14bb1449380c76062817dcf0",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "9f7a073a97e44cb154bba0c22782ea00adcfc1fd936d7db3ba257fe6a21c2f36",
+      "schedule_sha256": "97501a99e0df3f8fee2a1dbaf125d94639cdc2054a32b1db23a6608c26fc63e1",
+      "selected_candidate_sha256": "61b80c8ad5a4fe5646be98471ebfc0c0d7570abf3f4ee3f61b95129117b234a2",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "fa2491db1702269dc61c7ef6633b28e4f6df7e3ca3f2b03d98b56e2b43364c9c"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "causal-event-outcome"
+      ],
+      "blocking_reason": null,
+      "case_id": "3d.duplicate_assignment_rejection.dynamic_nominal",
+      "case_sha256": "621e24fe08f4e6e3374ebdbe0f8d9427d018a7e2b8edcf7a5cbf7b5b73d0f2e9",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "99817c04f1af6b031764c13ce6d03e0f30724fc6a27b8c852b963803592f3790",
+        "c9053a3616d0e52629d96889b2aee4ffa6c4d2d8648e528f3a65218dc7cafd64",
+        "164fc941840add6bcedcfd0a9dfcb6142e213f6698815ff08179fcf1c08b52b9"
+      ],
+      "execution_semantics_sha256": "a8c3a2db73198d711756b28da0d7e45f77f901a525c6de1766170d55d4e9f0e1",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "919c0b5b30d9d5e54442b176c918c543beacc2088a8d1905f9c5e559a5fbf1f5",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "2034157b919d88b17c2a0a44ed893b221ee431c33ceb87af7cfe1ac81b816bc2",
+      "schedule_sha256": "1cf568384beac6678963f1500162ebabb4bec7a97feae2f3da5ce2b84be4ef99",
+      "selected_candidate_sha256": "b1b224fe9c72100c76fa1f7c1774f792c4d3c8f25941a1a9e24ec00977e97e3b",
+      "selected_strategy": "DIRECT",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "19006a785c1471f0af3fc9901ef67a73077522f3544e74af383932a9cf361bb0"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation",
+        "causal-event-outcome"
+      ],
+      "blocking_reason": null,
+      "case_id": "3d.fleet_abort_fallback.dynamic_nominal",
+      "case_sha256": "b7c1b9f07c9217bcc91da8c6ccc6690f46c165b7fd24f73c72d1db611d74c2f8",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "52f7ff265d383d2bb6b33056619386db60a63019aaefc83c5a58460313dcd58a",
+        "affeeb4b9468f3851cfc831af88a7edb0d1c388f239032cb9022b32efd30eb46",
+        "1ff3cbee18018880e92546280586e1cb948ed8713861c9f01d84cfb1609a715f"
+      ],
+      "execution_semantics_sha256": "e233b32397e066e26b6ffae7fc5577577605a92d8d9aa0b02048a160d64ba2bb",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "e55891e6a22f7b31b13810897d3455c23104422eb07fccba28642ba89f996ab0",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "2e34d4a59e031d5d1006570f9b0d559d2aa820c5c15c81b485a53c57576e9165",
+      "schedule_sha256": "0eef874c2a47e03d3759c04130e17fd2d9cfba16cfb5e1901d2f52c70d856bcd",
+      "selected_candidate_sha256": "27160d0d0ad1bdf1c2ca986d336e2ff9d0ec0d7cf3b61cd80c17eb491493ecf9",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "97defbb18f8e0824c32f80b9ef0571125c597a390796dc1c03b80b41bc021fa8"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "altitude-layers",
+        "nonlinear-path",
+        "offset-landing",
+        "transform-error",
+        "transform-overlap"
+      ],
+      "blocking_reason": null,
+      "case_id": "3d.formation_shape_transform.canonical_nominal",
+      "case_sha256": "7c816dddcdc55264c1a82c4b13a1f84130512bb27d641ec32b8598690578b609",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "f927f2437f881f970c9bb7bfa08be9b6f6b50b2eb9af9f1c8203fdd02ef8046a",
+        "32ddbe2d855ee84de88fc0303071ff44765a0e977968ef9c523688831430acf5",
+        "778b17338d4a1333566b1df7ee21a3b94d8431cf11da87b8f38a98ef81bfdd29"
+      ],
+      "execution_semantics_sha256": "4f637649c785c762a514bbad74b15e7dc973610d1dd42b0baeeadf900bbeedc5",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "dc3bd4502fd094cfeb621ee7b720138926d024590caa6d657ae7ba9d8d8cfa07",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "87953e7a31c96d079ecb29d747b388676d99a7ff32e59014bbb34a077a6b9699",
+      "schedule_sha256": "1a28abfc4865bd1e3b5ab48495c46decf8df571079a95ed0d4286b61852b0e2f",
+      "selected_candidate_sha256": "82d0e49064f5a90d8225bd451aa778c6fd8264f74c6b5e2c9cc69bd7e22e8328",
+      "selected_strategy": "DIRECT",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "1c1cbeefd4cc242f7262371b0438c5c05b66e9ab4f06b0a63cc2a7096fdbef13"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "altitude-layers",
+        "nonlinear-path",
+        "offset-landing",
+        "transform-error",
+        "transform-overlap",
+        "causal-event-outcome"
+      ],
+      "blocking_reason": null,
+      "case_id": "3d.leader_follower_recovery.dynamic_nominal",
+      "case_sha256": "6a8f1089ee132e1b95ac9ea8991a7e0523ffd3192c1cc338f2e3f6e96bff5540",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "9b8363c6aa1ca173303636fb6125b45611f6ad0ce86b1c8222b5e2ac9218d917",
+        "9ee65d0624901286288de68aaa54f93e97e8b7aeff93ec3ff5c8072c110d0417",
+        "12ac05799df2f27298dcdc387f2e8f7e5e8c9008a6e7ce7e587682fc6708bcda"
+      ],
+      "execution_semantics_sha256": "cc958d9cd7d712f1e12af90caa408906d1ffe6ac9c4db625b8d3a5689f030e12",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "fe05b78d3a59ab115d3bcbba88ad21d5fb6dfd54227a37551abb50f4a0c335ac",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "c35a19ca93be00ef03b185424147d467dc3b924e41a3eb11bf7bd8cd6e4a7488",
+      "schedule_sha256": "2c6ac5230e7301e7df43c28369f50016c10bb46e6a93cb4a41e175b2aaf9d160",
+      "selected_candidate_sha256": "82d0e49064f5a90d8225bd451aa778c6fd8264f74c6b5e2c9cc69bd7e22e8328",
+      "selected_strategy": "DIRECT",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "ba18a6682cc9cc6829350abb2f861f00d0dc046685b730fac37f7e78b518112f"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation"
+      ],
+      "blocking_reason": null,
+      "case_id": "3d.merge.canonical_nominal",
+      "case_sha256": "7cef344f644ea7737ecb3bc30dcafc19e863db57c2d4c8b8f306c516de249e0a",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "31182f63520d41b426180702af872d8d7d766eb6cb95daef932624e5d81e75b7",
+        "755cdc374864090dff0dceaf5c8c4b6e6b67e440cbee741ea4772cd19ed0852a",
+        "8f6c662e6f80b5458e8246c676e15509906cc6893b28bd47267298660937d7f1"
+      ],
+      "execution_semantics_sha256": "88475bc9d0ddcbd532819be7fe345d152fd043720cde9a13f2e68d82bc4d802d",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "179596d4c2d4d02f45725f0ec2dd1a043752a79f629ff5515646441c722aecb2",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "dd48dbdc13119b4027b41897bc321ece0a7de751388c8e2d0f319a53306684f7",
+      "schedule_sha256": "6d337d1eb5f5f9debcddb8a1c48edd6a38f4be534c455ebf6e885fce1e1bf59b",
+      "selected_candidate_sha256": "d8a6fb2b1aba30c1c35ff8794912b61b2f2f96c1f921fafbce7accf61ec6270c",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "2b0b983d7f800e7176eb566bd8ffe1de998e56a18886914bf8326e139fc40247"
+    },
+    {
+      "accelerated_execution": "NOT_AUTHORIZED_FOR_QUARANTINED_DEFINITION",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "closed-shape",
+        "offset-landing",
+        "causal-event-outcome"
+      ],
+      "blocking_reason": "no bounded generated candidate satisfies every hard constraint",
+      "case_id": "3d.persistent_coverage_reserve_handover.dynamic_nominal",
+      "case_sha256": "c8622989c20ed74bf469bc13f6c1f711b83ed57e319a15770c29542f719b5cf2",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [],
+      "execution_semantics_sha256": "edf593938fdc8e9df4a7a50972cd6847dc4cfd692a7097d82788e6e45157e5d0",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "a3afe36992ff273c57ee9698cf904e137b8acacfc2ff1255c58af731ce378be6",
+      "planning_status": "BLOCKED",
+      "realtime_execution": "NOT_AUTHORIZED_FOR_QUARANTINED_DEFINITION",
+      "scenario_trace_sha256": "705055e4fd0a6bca430eb6b5ccea429cf7c2f46bba4731118fa8e654a4f189ac",
+      "schedule_sha256": null,
+      "selected_candidate_sha256": null,
+      "selected_strategy": null,
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": null
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing"
+      ],
+      "blocking_reason": null,
+      "case_id": "3d.role_allocation.canonical_nominal",
+      "case_sha256": "5c84ee7332f354a677cfe959fd33b9fe55c2ca6693cd574db4d98c8d82943c9f",
+      "execution_eligibility": "STATIC_VALIDATE_ONLY",
+      "execution_program_sha256s": [
+        "a839f31db6e87f64f7de6e6210986d771f452c63d1f41442c88afadd810da090",
+        "917f05696d74ab5c1cea45276c6d0f46ca49f61f61437e80ec2ca66e9046a9b2",
+        "6eee374b6704017eea32bbfb9b6111574a30dff2293edf77c17637cb01366560"
+      ],
+      "execution_semantics_sha256": "0bd447aba045d1846c75f1551cf99c721b6904bd7f64d752a4968675235a5eb7",
+      "implementation_status": "PLANNED_NOT_EXECUTABLE",
+      "plan_sha256": "065490416715884259afa9cb3494ebe13123b3e2b516c757919208f3dad4c0d8",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "cb917f2dd3894166882fcd8da470cbee9e19e42dec4c184c4fc5da3caa81714f",
+      "schedule_sha256": "97f6abeeb8b5bc88309cc9e8b3df385c587ceb102d5a7908d2f4b91dd4a809e9",
+      "selected_candidate_sha256": "b1b224fe9c72100c76fa1f7c1774f792c4d3c8f25941a1a9e24ec00977e97e3b",
+      "selected_strategy": "DIRECT",
+      "semantic_classification": "PLACEHOLDER_QUARANTINED",
+      "trajectory_set_sha256": "f4b010052d16a89f24f7be99f06dac5074d2117a6d4dba44d07d88fa322bd854"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation"
+      ],
+      "blocking_reason": null,
+      "case_id": "3d.simultaneous_center_conflict.joint_schedule_v2",
+      "case_sha256": "0af5b0e3f217d5ffe67fe8ddc396c095e3978509e10463dc0b5a109c5ee07374",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "8abc7c8b15c4b42b4ffc1a2be65c29ef185b09494c8d69dc98b6e1bae8f58d50",
+        "1cfec6ad19115715c06a016e132f4490040f08470aae147fba1dae4bc7a8e3bc",
+        "0edd093ad88f06bb075ef034c880409fc8e66bb6adcd1a89a90318fedd06c6f0"
+      ],
+      "execution_semantics_sha256": "7703a2397bbec81d0603acb0647cf4329b74d6a0cafdffd22bc38a70cc2bd293",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "2d83a79d7c282e0e3808b172e1db5152e46587ed1fa3ff93217f6c79d074089e",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "7ed07018ce159c874f5fedcf21feab42584ba2cbf5d4d58ba072f699dc7a2351",
+      "schedule_sha256": "9eaf42ca6264f038c06da547b3927048c50701d0c6e2f15c7df9e1d04bebc169",
+      "selected_candidate_sha256": "27160d0d0ad1bdf1c2ca986d336e2ff9d0ec0d7cf3b61cd80c17eb491493ecf9",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "dc033d8b841dcf0b9cc64a40dd6e2fad033b4de7a602528ce30c47febec1c9fc"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation",
+        "unaffected-gamma-delay"
+      ],
+      "blocking_reason": null,
+      "case_id": "3d.single_pair_conflict.canonical_nominal",
+      "case_sha256": "c34f1d42427b323ba74fd6bda44d725c6a2867de2bd7d76c72509d93e82e6bc7",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "eec6fb1fe551d47627fec912fb559ef0165078f6e15ddfdcd7a0809105bfef3b",
+        "e77ef43d689abc14ca4fb3908f5f8a3e5c328e0eabbcb53165ba13e052912979",
+        "4b50143a60900ff33b6e34aae3f715aafcebf2a38254557216f323ea2a1ce267"
+      ],
+      "execution_semantics_sha256": "c23823e9fdb0e68a9d7d6325d9c285bfc000c7e3675f1a6d275934a42e982d72",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "1f13d3c016609151e47e44b58bed80da47cc643dfe3a0f567a5f40725203695d",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "349ec71d0b5aa282557290b3f3f9f1fc4319e10d95da16df514c39f9dca1db17",
+      "schedule_sha256": "800e3f018c8614e2d71a691115bae7dbfb4ba955cb668e2c96a4be44307043b6",
+      "selected_candidate_sha256": "226dd1ee0f857703e41056fa13210e1954026d2e98be6d98ecd58f04e19d4fb6",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "07320e7ab1a11bf2688d066a49a29174f3a9ae12e4440d4e74c61b8f09672121"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [
+        "ordered-route-capture",
+        "no-undeclared-stop",
+        "offset-landing",
+        "joint-separation",
+        "priority-precedence"
+      ],
+      "blocking_reason": null,
+      "case_id": "3d.unequal_priorities.canonical_nominal",
+      "case_sha256": "39dc9654ce510226dd0c30bf239ec0a5d852ac1ec02868211c907216e80de605",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "f9c0e1f241264630545bd4a5410d7157a8a75cbaa41fc70cb0740700ac3c5f2c",
+        "01fa706446a87c8cffc8991780254b82fb47b5dd58ff5d881d45842817cbec77",
+        "be9fd5c55f036da292b54b68d705622266f33af65a07f5599a6d9129c30b91a6"
+      ],
+      "execution_semantics_sha256": "6f325e8e1ca04ed2c62f39fef1fca93993d15fa5fb4f7a006ee00958680cfbe5",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "643fdecf6e184d3fc7ca8ad61b414f0f57351a1212a0a7096771b4d28fb620cb",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "76c122f909503921edc6aa0452488c180275ea7ea70a2802cb93561fabc23c59",
+      "schedule_sha256": "f117992fc635709ad8c5cc09412ea48dcf11463d3bed0d367e60f975b04cd9eb",
+      "selected_candidate_sha256": "27160d0d0ad1bdf1c2ca986d336e2ff9d0ec0d7cf3b61cd80c17eb491493ecf9",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "SEMANTICALLY_EXECUTABLE",
+      "trajectory_set_sha256": "4d559c421de947997e2c5d6f6c57ea7553b196aab87f16b6e816791bf80f392c"
+    },
+    {
+      "accelerated_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "behavior_oracle_ids": [],
+      "blocking_reason": null,
+      "case_id": "three_drone_multi_conflict",
+      "case_sha256": "3a41c886c64b5c1c73998164ae41b6a9a6ac1150911f5e7f126688f384b06c96",
+      "execution_eligibility": "BOTH",
+      "execution_program_sha256s": [
+        "bdcd35668dd25377a48cf59e1e8b1aaca7d657bdafe53a8988bd6ebed14900d3",
+        "6dc0f569a66831a447e9a3e677162563a0f80b0b37aefa366adc5807015afd6d",
+        "63514e77f8cf731b48cfa518eee61ec0bb63394063299d06c0a6fd2267ffd3a8"
+      ],
+      "execution_semantics_sha256": "89d32cf9277cb5a5c3e2369e92f198e61fab46e69b868620e470b3a6b1e1b155",
+      "implementation_status": "EXECUTABLE",
+      "plan_sha256": "93503623fbd8cbc546669f70fa5f696eb3cf4f02d3452286c12b4452c76c6fb7",
+      "planning_status": "READY",
+      "realtime_execution": "NOT_RUN_BY_STATIC_QUALIFIER",
+      "scenario_trace_sha256": "480902ba525042ef90402af657a97b076d28899f975460822a369e06e9363ba4",
+      "schedule_sha256": "94c03c08ae28d5db686248d51bf51e5a4162a21bde021ce2b70168fff61a4cea",
+      "selected_candidate_sha256": "1c5f0fe36492dfaefa80c5bbcbbe6edda264e713d26e14dbd818b01f3b26872d",
+      "selected_strategy": "GROUND_DELAY",
+      "semantic_classification": "INTENTIONAL_SHARED_BASELINE",
+      "trajectory_set_sha256": "fb43c6b09361cbf5d45555b78ddb0b1e1df664a87b91461868d6b0899e9db4e3"
+    }
+  ],
+  "claim_boundary": "All catalog definitions parse, receive a semantic classification, admit a bounded-plan result, and reduce their scenario contract. Every executable case also admits a plan, schedule, smooth trajectory set, and accepted execution program. Quarantined definitions may retain an explicit blocked plan and receive no runtime authority. Scenario reduction is not live source-time event injection. This artifact does not claim a Fast Sim run.",
+  "executable_case_count": 31,
+  "planned_blocked_case_count": 2,
+  "qualification_kind": "FAIL_CLOSED_STATIC_COMPILATION",
+  "qualification_sha256": "bda538c2b39dfa6ecb89d74c2bc6dafc0b73229c8cdae046d910da2c02bb2e81",
+  "quarantined_case_count": 23,
+  "schema_version": 1
+}

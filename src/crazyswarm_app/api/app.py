@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import secrets
 import time
 import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, TypeVar, cast
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Query, Request, WebSocket
@@ -41,6 +42,7 @@ from crazyswarm_app.api.models import (
     SelectVehicleRequest,
     SimulationClockAction,
     SimulationClockRequest,
+    SimulationFleetResetRequest,
     TakeoffRequest,
 )
 from crazyswarm_app.api.runtime import ApplicationRuntime
@@ -57,11 +59,25 @@ from crazyswarm_app.campaign.api_models import (
     ReviewDecisionRequest,
     ReviewObservationRequest,
     SetActiveCaseRequest,
+    SetLifecycleStateRequest,
+    SnapshotAssessmentRequest,
+    SnapshotCommentRequest,
     StaticValidateCaseRequest,
 )
 from crazyswarm_app.campaign.catalog import CampaignCatalog
 from crazyswarm_app.campaign.runtime_executor import FastSimCampaignExecutor
-from crazyswarm_app.campaign.service import CampaignService
+from crazyswarm_app.campaign.service import (
+    MAX_CAMPAIGN_SNAPSHOT_BYTES,
+    CampaignReviewFrame,
+    CampaignReviewSourceRow,
+    CampaignRunStatus,
+    CampaignService,
+)
+from crazyswarm_app.campaign.submissions import (
+    planning_submissions_for_case,
+    registry_row_for_case,
+    submissions_for_case,
+)
 from crazyswarm_app.campaign.timing import (
     BoundedTimingTrace,
     TimingStage,
@@ -118,6 +134,8 @@ from crazyswarm_app.simulation.faults import FaultWindow
 from crazyswarm_app.simulation.models import DEFAULT_FIDELITY_MANIFEST
 from crazyswarm_app.twin.models import TwinSessionConfig
 from crazyswarm_app.vehicles.providers import SoftwareBackendVehicleProvider
+
+MutationResultT = TypeVar("MutationResultT")
 
 LIVE_STATE_HISTORY_LIMIT = 10
 
@@ -264,11 +282,11 @@ def create_app(
         *,
         action: str,
         vehicle_id: str,
-        operation: Callable[[], Awaitable[Any]],
-    ) -> Any:
+        operation: Callable[[], Awaitable[MutationResultT]],
+    ) -> MutationResultT:
         fingerprint = await mutation_fingerprint(request)
 
-        async def audited_operation() -> Any:
+        async def audited_operation() -> MutationResultT:
             runtime.bridge.operator_action(
                 vehicle_id=vehicle_id,
                 client_id=context.client_id,
@@ -278,7 +296,7 @@ def create_app(
             return await operation()
 
         response, _ = await idempotency.execute(context, fingerprint, audited_operation)
-        return response
+        return cast(MutationResultT, response)
 
     async def schedule_mission(
         mission_id: str,
@@ -391,14 +409,65 @@ def create_app(
     @router.get("/campaign/cases")
     async def campaign_cases() -> dict[str, Any]:
         service = campaign_service()
+        cases = service.catalog.cases()
+        semantic_audits = {item.case_id: item for item in service.catalog.semantic_audits()}
+        submission_matrix = {case.case_id: submissions_for_case(case) for case in cases}
+        comparison_cases = {
+            submission.submission_id: tuple(
+                sorted(
+                    candidate_case_id
+                    for candidate_case_id, candidate_submissions in submission_matrix.items()
+                    if any(
+                        candidate.submission_id == submission.submission_id
+                        for candidate in candidate_submissions
+                    )
+                )
+            )
+            for submissions in submission_matrix.values()
+            for submission in submissions
+        }
         return {
             "cases": [
                 {
                     **case.model_dump(mode="json"),
                     "case_sha256": case.case_sha256,
+                    "execution_semantics_sha256": case.execution_semantics_sha256,
+                    "semantic_audit": semantic_audits[case.case_id].model_dump(mode="json"),
                     "lifecycle": service.state.lifecycle[case.case_id].state,
+                    "variation_relationship": {
+                        "family": case.family,
+                        "case_id": case.case_id,
+                        "variation_name": case.variation_name,
+                        "relationship": "IMMUTABLE_CASE_VARIATION",
+                        "legacy_named_variations": list(case.named_variations),
+                    },
+                    "submission_registry": registry_row_for_case(case).model_dump(mode="json"),
+                    "submissions": [
+                        submission.model_dump(mode="json")
+                        | {
+                            "submission_sha256": submission.profile_sha256,
+                            "semantic_fingerprint_sha256": (submission.semantic_fingerprint_sha256),
+                            "missing_prerequisites": list(
+                                service.missing_submission_prerequisites(case, submission)
+                            ),
+                            "run_eligible": (
+                                submission.status.value == "EXECUTABLE"
+                                and not service.missing_submission_prerequisites(case, submission)
+                            ),
+                            "comparison_case_ids": list(comparison_cases[submission.submission_id]),
+                        }
+                        for submission in submission_matrix[case.case_id]
+                    ],
+                    "planning_submissions": [
+                        submission.model_dump(mode="json")
+                        | {
+                            "planning_submission_sha256": (submission.planning_submission_sha256),
+                            "semantic_fingerprint_sha256": (submission.semantic_fingerprint_sha256),
+                        }
+                        for submission in planning_submissions_for_case(case)
+                    ],
                 }
-                for case in service.catalog.cases()
+                for case in cases
             ],
             "hierarchy": service.catalog.hierarchy(),
         }
@@ -406,6 +475,42 @@ def create_app(
     @router.get("/campaign/state")
     async def campaign_state() -> dict[str, Any]:
         return campaign_service().state.model_dump(mode="json")
+
+    @router.get("/campaign/qualification")
+    async def campaign_qualification() -> dict[str, Any]:
+        return _campaign_qualification_payload()
+
+    @router.get("/campaign/qualification/export")
+    async def export_campaign_qualification() -> JSONResponse:
+        return JSONResponse(
+            _campaign_qualification_payload(),
+            headers={
+                "Content-Disposition": (
+                    'attachment; filename="campaign-static-qualification-v2.json"'
+                )
+            },
+        )
+
+    @router.get("/campaign/qualification/constraint-directed")
+    async def campaign_constraint_directed_qualification() -> JSONResponse:
+        return JSONResponse(
+            content=_qualification_payload(
+                Path("missions/campaigns/sim/qualification/constraint-directed-planning-v1.json")
+            ),
+            headers={
+                "Content-Disposition": (
+                    'attachment; filename="constraint-directed-planning-v1.json"'
+                )
+            },
+        )
+
+    @router.get("/campaign/qualification/selective-submissions")
+    async def campaign_selective_submission_qualification() -> JSONResponse:
+        return JSONResponse(
+            content=_qualification_payload(
+                Path("missions/campaigns/sim/qualification/selective-submission-registry-v1.json")
+            )
+        )
 
     @router.post("/campaign/cases/static-validate")
     async def campaign_static_validate(
@@ -433,14 +538,90 @@ def create_app(
         )
         return lock.model_dump(mode="json")
 
+    @router.post("/campaign/cases/in-review")
+    async def campaign_move_to_review(
+        body: SetActiveCaseRequest,
+        context: OperatorContext = Depends(operator_context),
+    ) -> dict[str, Any]:
+        return (
+            campaign_service()
+            .move_to_review(
+                body.case_id,
+                actor_id=context.client_id,
+                reason=body.reason,
+            )
+            .model_dump(mode="json")
+        )
+
+    @router.post("/campaign/cases/lifecycle")
+    async def campaign_set_lifecycle(
+        body: SetLifecycleStateRequest,
+        context: OperatorContext = Depends(operator_context),
+    ) -> dict[str, Any]:
+        return (
+            campaign_service()
+            .set_lifecycle_state(
+                body.case_id,
+                body.state,
+                actor_id=context.client_id,
+                reason=body.reason,
+            )
+            .model_dump(mode="json")
+        )
+
+    @router.post("/campaign/cases/completed")
+    async def campaign_complete_case(
+        body: SetActiveCaseRequest,
+        context: OperatorContext = Depends(operator_context),
+    ) -> dict[str, Any]:
+        return (
+            campaign_service()
+            .complete_case(
+                body.case_id,
+                actor_id=context.client_id,
+                reason=body.reason,
+            )
+            .model_dump(mode="json")
+        )
+
     @router.get("/campaign/active/preview")
-    async def campaign_preview_active() -> dict[str, Any]:
-        plan, schedule, trajectories = campaign_service().preview_active()
+    async def campaign_preview_active(
+        submission_id: str | None = None,
+        planning_submission_id: str | None = None,
+    ) -> dict[str, Any]:
+        service = campaign_service()
+        package = service.resolved_active_package(
+            submission_id,
+            planning_submission_id,
+        )
+        plan, schedule, trajectories = service.preview_active(
+            submission_id,
+            planning_submission_id,
+        )
         return {
+            "resolved_package": package.model_dump(mode="json"),
             "plan": plan.model_dump(mode="json"),
             "schedule": schedule.model_dump(mode="json"),
             "trajectories": trajectories.model_dump(mode="json"),
         }
+
+    @router.get("/campaign/active/package")
+    async def campaign_download_active_package(
+        submission_id: str | None = None,
+        planning_submission_id: str | None = None,
+    ) -> JSONResponse:
+        package = campaign_service().resolved_active_package(
+            submission_id,
+            planning_submission_id,
+        )
+        return JSONResponse(
+            content=package.model_dump(mode="json"),
+            headers={
+                "Content-Disposition": (
+                    'attachment; filename="resolved-campaign-planning-package-v1.json"'
+                )
+            },
+        )
 
     @router.post("/campaign/active/child")
     async def campaign_create_child(body: ChildCaseRequest) -> dict[str, Any]:
@@ -464,6 +645,11 @@ def create_app(
                     await service.run_active(
                         body.mode,
                         idempotency_key=context.request_id,
+                        submission_id=body.submission_id,
+                        planning_submission_id=body.planning_submission_id,
+                        comparison_context_id=body.comparison_context_id,
+                        planning_capability_request=body.planning_capability_request,
+                        execution_capability_request=body.execution_capability_request,
                     )
                 except asyncio.CancelledError:
                     raise
@@ -503,12 +689,286 @@ def create_app(
     async def campaign_cancel_run(run_id: str) -> dict[str, Any]:
         return {"run_id": run_id, "cancellation_requested": campaign_service().cancel(run_id)}
 
+    @router.delete("/campaign/runs/{run_id}")
+    async def campaign_delete_run(
+        run_id: str,
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> dict[str, Any]:
+        async def operation() -> dict[str, Any]:
+            service = campaign_service()
+            try:
+                run = service.validate_run_deletion(run_id)
+            except KeyError as error:
+                raise CrazySwarmError(
+                    ErrorCode.INVALID_COMMAND,
+                    "campaign run not found",
+                    details={"run_id": run_id},
+                ) from error
+            except PermissionError as error:
+                raise CrazySwarmError(
+                    ErrorCode.INVALID_STATE,
+                    str(error),
+                    details={"run_id": run_id},
+                ) from error
+            except ValueError as error:
+                raise CrazySwarmError(
+                    ErrorCode.INVALID_STATE,
+                    str(error),
+                    details={"run_id": run_id},
+                ) from error
+
+            if run.mission_execution_id is not None:
+                try:
+                    await asyncio.to_thread(
+                        runtime.store.delete_run_file_mission,
+                        run.mission_execution_id,
+                    )
+                except KeyError:
+                    # The run-file archive may already have been removed from the
+                    # general Run Files UI. Campaign state can still be cleaned up.
+                    pass
+                except IncompleteRunError as error:
+                    raise CrazySwarmError(
+                        ErrorCode.INVALID_STATE,
+                        "cannot delete a campaign run while its CSV is being recorded",
+                        details={"run_id": run_id},
+                    ) from error
+
+            deleted = service.delete_run(run_id)
+            return {
+                "run_id": deleted.run_id,
+                "mission_execution_id": deleted.mission_execution_id,
+                "deleted": True,
+            }
+
+        return await mutate(
+            request,
+            context,
+            action="delete_campaign_run",
+            vehicle_id=run_id,
+            operation=operation,
+        )
+
+    @router.post("/campaign/runs/{run_id}/snapshots", status_code=201)
+    async def campaign_capture_snapshot(
+        run_id: str,
+        request: Request,
+        width_px: int = Query(..., ge=1, le=4096),
+        height_px: int = Query(..., ge=1, le=4096),
+        source_timestamp_s: float | None = Query(default=None, ge=0.0),
+        source_clock_id: str | None = Query(default=None, min_length=1, max_length=96),
+        source_clock_epoch: int | None = Query(default=None, ge=0),
+        source_sequence: int | None = Query(default=None, ge=0),
+        correlation_id: str | None = Query(default=None, min_length=1, max_length=96),
+        estimate_source_timestamp_s: float | None = Query(default=None, ge=0.0),
+        truth_source_timestamp_s: float | None = Query(default=None, ge=0.0),
+        desired_source_timestamp_s: float | None = Query(default=None, ge=0.0),
+        playback_buffer_age_s: float | None = Query(default=None, ge=0.0),
+        source_rows_json: str | None = Query(default=None, min_length=2, max_length=2048),
+        same_time_truth_estimate_error_m: float | None = Query(default=None, ge=0.0),
+        buffer_induced_estimate_displacement_m: float | None = Query(default=None, ge=0.0),
+        interpolation_state: Literal["EXACT", "INTERPOLATED", "FROZEN", "UNAVAILABLE"]
+        | None = Query(default=None),
+        context: OperatorContext = Depends(operator_context),
+    ) -> dict[str, Any]:
+        declared_size = request.headers.get("content-length")
+        if declared_size is not None and int(declared_size) > MAX_CAMPAIGN_SNAPSHOT_BYTES:
+            raise CrazySwarmError(
+                ErrorCode.INVALID_COMMAND,
+                f"campaign snapshots must be at most {MAX_CAMPAIGN_SNAPSHOT_BYTES} bytes",
+                details={"run_id": run_id},
+            )
+        content = await request.body()
+        content_type = request.headers.get("content-type", "").split(";", 1)[0].lower()
+        frame_values = (
+            source_timestamp_s,
+            source_clock_id,
+            source_clock_epoch,
+            source_sequence,
+            correlation_id,
+            estimate_source_timestamp_s,
+            playback_buffer_age_s,
+            source_rows_json,
+            interpolation_state,
+        )
+        if any(value is not None for value in frame_values) and not all(
+            value is not None for value in frame_values
+        ):
+            raise CrazySwarmError(
+                ErrorCode.INVALID_COMMAND,
+                "campaign snapshot review-frame identity is incomplete",
+                details={"run_id": run_id},
+            )
+        source_rows: tuple[CampaignReviewSourceRow, ...] = ()
+        if source_rows_json is not None:
+            try:
+                raw_source_rows = json.loads(source_rows_json)
+                if not isinstance(raw_source_rows, list):
+                    raise TypeError("source rows must be a list")
+                source_rows = tuple(
+                    CampaignReviewSourceRow.model_validate(item) for item in raw_source_rows
+                )
+            except (TypeError, ValueError) as error:
+                raise CrazySwarmError(
+                    ErrorCode.INVALID_COMMAND,
+                    "campaign snapshot source-row identity is invalid",
+                    details={"run_id": run_id},
+                ) from error
+        review_frame = (
+            CampaignReviewFrame(
+                source_timestamp_s=source_timestamp_s,
+                source_clock_id=source_clock_id,
+                source_clock_epoch=source_clock_epoch,
+                source_sequence=source_sequence,
+                correlation_id=correlation_id,
+                estimate_source_timestamp_s=estimate_source_timestamp_s,
+                truth_source_timestamp_s=truth_source_timestamp_s,
+                desired_source_timestamp_s=desired_source_timestamp_s,
+                playback_buffer_age_s=playback_buffer_age_s,
+                source_rows=source_rows,
+                same_time_truth_estimate_error_m=same_time_truth_estimate_error_m,
+                buffer_induced_estimate_displacement_m=(buffer_induced_estimate_displacement_m),
+                interpolation_state=interpolation_state,
+            )
+            if all(value is not None for value in frame_values)
+            else None
+        )
+
+        async def operation() -> dict[str, Any]:
+            try:
+                snapshot = campaign_service().add_snapshot(
+                    run_id,
+                    content=content,
+                    content_type=content_type,
+                    width_px=width_px,
+                    height_px=height_px,
+                    review_frame=review_frame,
+                )
+            except KeyError as error:
+                raise CrazySwarmError(
+                    ErrorCode.INVALID_COMMAND,
+                    "campaign run not found",
+                    details={"run_id": run_id},
+                ) from error
+            except ValueError as error:
+                raise CrazySwarmError(
+                    ErrorCode.INVALID_STATE,
+                    str(error),
+                    details={"run_id": run_id},
+                ) from error
+            return snapshot.model_dump(mode="json")
+
+        return await mutate(
+            request,
+            context,
+            action="capture_campaign_snapshot",
+            vehicle_id=run_id,
+            operation=operation,
+        )
+
+    @router.get("/campaign/snapshots/{snapshot_id}/image")
+    async def campaign_snapshot_image(snapshot_id: str) -> FileResponse:
+        try:
+            path, snapshot = campaign_service().snapshot_image_path(snapshot_id)
+        except (KeyError, FileNotFoundError) as error:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "code": "CAMPAIGN_SNAPSHOT_NOT_FOUND",
+                    "message": "campaign snapshot image is no longer available",
+                },
+            ) from error
+        return FileResponse(
+            path,
+            media_type=snapshot.content_type,
+            headers={
+                "Cache-Control": "private, max-age=31536000, immutable",
+                "ETag": f'"{snapshot.sha256}"',
+            },
+        )
+
+    @router.post("/campaign/snapshots/{snapshot_id}/comment")
+    async def campaign_snapshot_comment(
+        snapshot_id: str,
+        body: SnapshotCommentRequest,
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> dict[str, Any]:
+        async def operation() -> dict[str, Any]:
+            try:
+                snapshot = campaign_service().set_snapshot_comment(snapshot_id, body.note)
+            except KeyError as error:
+                raise CrazySwarmError(
+                    ErrorCode.INVALID_COMMAND,
+                    "campaign snapshot not found",
+                    details={"snapshot_id": snapshot_id},
+                ) from error
+            except ValueError as error:
+                raise CrazySwarmError(
+                    ErrorCode.INVALID_COMMAND,
+                    str(error),
+                    details={"snapshot_id": snapshot_id},
+                ) from error
+            return snapshot.model_dump(mode="json")
+
+        return await mutate(
+            request,
+            context,
+            action="comment_campaign_snapshot",
+            vehicle_id=snapshot_id,
+            operation=operation,
+        )
+
+    @router.post("/campaign/snapshots/{snapshot_id}/assessment")
+    async def campaign_snapshot_assessment(
+        snapshot_id: str,
+        body: SnapshotAssessmentRequest,
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> dict[str, Any]:
+        async def operation() -> dict[str, Any]:
+            try:
+                snapshot = campaign_service().set_snapshot_assessment(
+                    snapshot_id,
+                    assessment=body.assessment,
+                    disposition=body.disposition,
+                    confidence=body.confidence,
+                    evidence_refs=body.evidence_refs,
+                )
+            except KeyError as error:
+                raise CrazySwarmError(
+                    ErrorCode.INVALID_COMMAND,
+                    "campaign snapshot not found",
+                    details={"snapshot_id": snapshot_id},
+                ) from error
+            except ValueError as error:
+                raise CrazySwarmError(
+                    ErrorCode.INVALID_COMMAND,
+                    str(error),
+                    details={"snapshot_id": snapshot_id},
+                ) from error
+            return snapshot.model_dump(mode="json")
+
+        return await mutate(
+            request,
+            context,
+            action="assess_campaign_snapshot",
+            vehicle_id=snapshot_id,
+            operation=operation,
+        )
+
     @router.post("/campaign/reviews/{review_id}/observations")
     async def campaign_review_observation(
         review_id: str,
         body: ReviewObservationRequest,
+        context: OperatorContext = Depends(operator_context),
     ) -> dict[str, Any]:
-        return campaign_service().add_observation(review_id, body.note).model_dump(mode="json")
+        return (
+            campaign_service()
+            .add_observation(review_id, body.note, actor_id=context.client_id)
+            .model_dump(mode="json")
+        )
 
     @router.post("/campaign/reviews/{review_id}/decision")
     async def campaign_review_decision(
@@ -2060,6 +2520,67 @@ def create_app(
     async def twin_report(session_id: str) -> dict[str, Any]:
         return runtime.twins.report(session_id).model_dump(mode="json")
 
+    @router.post("/simulation/fleet/reset-poses")
+    async def reset_simulation_fleet(
+        body: SimulationFleetResetRequest,
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> Any:
+        async def operation() -> dict[str, Any]:
+            active_tasks = [
+                *runtime.mission_tasks.values(),
+                *runtime.fleet_tasks.values(),
+            ]
+            campaign_is_active = any(
+                run.status in {CampaignRunStatus.QUEUED, CampaignRunStatus.RUNNING}
+                for run in campaign_service().state.runs
+            )
+            if campaign_is_active or any(not task.done() for task in active_tasks):
+                raise CrazySwarmError(
+                    ErrorCode.INVALID_STATE,
+                    "stop the active mission before resetting the simulation fleet",
+                )
+            target_ids = set(body.vehicle_ids)
+            current_ids = runtime.active_vehicle_ids or set(runtime.vehicles)
+            affected_ids = current_ids | target_ids
+            for affected_id in sorted(affected_ids):
+                vehicle = _require_vehicle(runtime, affected_id)
+                if vehicle.backend_profile.role is not BackendRole.FAST_SIM:
+                    raise CrazySwarmError(
+                        ErrorCode.CAPABILITY_MISSING,
+                        "simulation fleet reset requires Fast Sim vehicles",
+                        details={"vehicle_id": affected_id},
+                    )
+
+            for affected_id in sorted(affected_ids):
+                controls = runtime.vehicles[affected_id].simulation_controls
+                if controls is None:
+                    raise CrazySwarmError(
+                        ErrorCode.CAPABILITY_MISSING,
+                        "simulation pose controls are unavailable",
+                        details={"vehicle_id": affected_id},
+                    )
+                await controls.reset_pose()
+                await runtime.supervisor.reconcile_terminal_adapter_state(affected_id)
+                if runtime.supervisor.session(affected_id).state is not VehicleState.DISCONNECTED:
+                    await runtime.supervisor.disconnect(affected_id)
+
+            runtime.active_vehicle_ids = target_ids
+            if runtime.selected_vehicle_id not in target_ids:
+                runtime.selected_vehicle_id = sorted(target_ids)[0]
+            return {
+                "vehicle_ids": sorted(target_ids),
+                "reset_scope": ["active_fleet", "pose", "motion", "estimator_state"],
+            }
+
+        return await mutate(
+            request,
+            context,
+            action="reset_simulation_fleet_poses",
+            vehicle_id=sorted(body.vehicle_ids)[0],
+            operation=operation,
+        )
+
     @router.post("/simulation/vehicles/{vehicle_id}/clock")
     async def simulation_clock(
         vehicle_id: str,
@@ -2209,6 +2730,39 @@ def create_app(
             limit=limit,
         )
         return [_run_file_mission_view(manifest) for manifest in manifests]
+
+    @router.delete("/run-files/{mission_execution_id}")
+    async def delete_run_file_mission(
+        mission_execution_id: str,
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> Any:
+        async def operation() -> dict[str, Any]:
+            try:
+                return await asyncio.to_thread(
+                    runtime.store.delete_run_file_mission,
+                    mission_execution_id,
+                )
+            except IncompleteRunError as error:
+                raise CrazySwarmError(
+                    ErrorCode.INVALID_STATE,
+                    "cannot delete a mission run file while it is being recorded",
+                    details={"mission_execution_id": mission_execution_id},
+                ) from error
+            except KeyError as error:
+                raise CrazySwarmError(
+                    ErrorCode.INVALID_COMMAND,
+                    "mission run file not found",
+                    details={"mission_execution_id": mission_execution_id},
+                ) from error
+
+        return await mutate(
+            request,
+            context,
+            action="delete_run_file_mission",
+            vehicle_id=mission_execution_id,
+            operation=operation,
+        )
 
     @router.get("/run-files/{mission_execution_id}/runs/{run_id}/telemetry.csv")
     async def persisted_telemetry_csv_export(
@@ -3133,6 +3687,21 @@ def _json_or_none(value: object) -> Any:
     import json
 
     return json.loads(str(value))
+
+
+def _campaign_qualification_payload() -> dict[str, Any]:
+    return _qualification_payload(
+        Path("missions/campaigns/sim/qualification/catalog-static-qualification-v2.json")
+    )
+
+
+def _qualification_payload(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="campaign qualification is unavailable")
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise HTTPException(status_code=500, detail="campaign qualification is invalid")
+    return value
 
 
 def _replay_view(clock: ReplayClock) -> dict[str, Any]:

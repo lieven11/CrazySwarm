@@ -2,6 +2,9 @@
 
 > Project design reference. Planning status is maintained separately in
 > [`../work-packages/ACTIVE.md`](../work-packages/ACTIVE.md).
+> The authoritative cross-feature implementation rules and decision tags are in
+> [`../../design.md`](../../design.md); this document provides the detailed product
+> and surface specification.
 
 Status: implementation baseline
 Date: 2026-08-06

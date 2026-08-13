@@ -9,6 +9,7 @@ import re
 import shutil
 import sys
 import tempfile
+from collections.abc import Awaitable, Callable
 from contextlib import suppress
 from dataclasses import dataclass
 from enum import StrEnum
@@ -26,6 +27,7 @@ from crazyswarm_app.domain.trajectory import (
     HoldExecutionOperation,
     LandExecutionOperation,
     TakeoffExecutionOperation,
+    TimeParameterizedTrajectory,
     TrajectoryExecutionOperation,
 )
 from crazyswarm_app.missions.base import Mission, MissionContext, MissionParameters
@@ -214,6 +216,10 @@ class ScriptMission(Mission[EmptyScriptParameters]):
 async def execute_accepted_program(
     record: MissionFileRecord,
     context: MissionContext,
+    *,
+    trajectory_executor: (
+        Callable[[MissionContext, TimeParameterizedTrajectory], Awaitable[None]] | None
+    ) = None,
 ) -> None:
     program = context.accepted_execution_program
     if program is None:
@@ -240,7 +246,10 @@ async def execute_accepted_program(
         elif isinstance(operation, HoldExecutionOperation):
             await context.hover(operation.ends_at_s - operation.starts_at_s)
         elif isinstance(operation, TrajectoryExecutionOperation):
-            await context.execute_trajectory(operation.trajectory)
+            if trajectory_executor is None:
+                await context.execute_trajectory(operation.trajectory)
+            else:
+                await trajectory_executor(context, operation.trajectory)
         elif isinstance(operation, LandExecutionOperation):
             if operation.goal_region is not None:
                 await context.capture_and_land(

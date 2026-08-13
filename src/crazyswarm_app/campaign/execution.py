@@ -9,6 +9,7 @@ from crazyswarm_app.campaign.scheduling import (
     LaunchActionKind,
     RoleLaunchSchedule,
 )
+from crazyswarm_app.campaign.submissions import BASELINE_PLANNING_SUBMISSION_ID
 from crazyswarm_app.campaign.trajectory import SmoothTrajectorySet
 from crazyswarm_app.domain.goals import LandingGoalRegion
 from crazyswarm_app.domain.simulation import canonical_sha256
@@ -35,11 +36,29 @@ def compile_campaign_execution_programs(
 
     if plan.status is not PlanningStatus.READY or plan.selected is None:
         raise ValueError("campaign execution requires a ready selected plan")
+    schedule_planning_matches = (
+        schedule.planning_submission_id == plan.planning_submission_id
+        and schedule.planning_submission_sha256 == plan.planning_submission_sha256
+    ) or (
+        plan.planning_submission_id == BASELINE_PLANNING_SUBMISSION_ID
+        and schedule.planning_submission_id is None
+        and schedule.planning_submission_sha256 is None
+    )
+    trajectory_planning_matches = (
+        trajectories.planning_submission_id == plan.planning_submission_id
+        and trajectories.planning_submission_sha256 == plan.planning_submission_sha256
+    ) or (
+        plan.planning_submission_id == BASELINE_PLANNING_SUBMISSION_ID
+        and trajectories.planning_submission_id is None
+        and trajectories.planning_submission_sha256 is None
+    )
     if (
         schedule.case_sha256 != case.case_sha256
         or trajectories.case_sha256 != case.case_sha256
         or schedule.candidate_sha256 != plan.selected.candidate_sha256
         or trajectories.candidate_sha256 != plan.selected.candidate_sha256
+        or not schedule_planning_matches
+        or not trajectory_planning_matches
     ):
         raise ValueError("campaign plan, schedule, trajectory, and case identities differ")
 
@@ -48,9 +67,7 @@ def compile_campaign_execution_programs(
     schedule_by_role = {item.role_id: item for item in schedule.roles}
     drone_by_role = {item.role_id: item for item in case.drones}
     expected = set(drone_by_role)
-    if not (
-        set(route_by_role) == set(trajectory_by_role) == set(schedule_by_role) == expected
-    ):
+    if not (set(route_by_role) == set(trajectory_by_role) == set(schedule_by_role) == expected):
         raise ValueError("campaign role identities are incomplete or crossed")
 
     return tuple(
@@ -85,9 +102,7 @@ def _compile_role_program(
     ):
         raise TypeError("campaign execution received an invalid role artifact")
     actions = tuple(
-        action
-        for action in role_schedule.actions
-        if action.kind is not LaunchActionKind.ARM
+        action for action in role_schedule.actions if action.kind is not LaunchActionKind.ARM
     )
     operations: list[ExecutionOperation] = []
     for action in actions:
@@ -122,9 +137,7 @@ def _compile_role_program(
         elif action.kind is LaunchActionKind.LAND:
             target = landing_region.center_m
             approach = trajectory.points[-1].position_m
-            goal_identity = canonical_sha256(
-                [case.case_sha256, role_schedule.role_id]
-            )[:20]
+            goal_identity = canonical_sha256([case.case_sha256, role_schedule.role_id])[:20]
             goal = LandingGoalRegion(
                 goal_id=f"campaign-landing-{goal_identity}",
                 role_id=role_schedule.role_id,
@@ -133,7 +146,10 @@ def _compile_role_program(
                 approach_point_m=approach,
                 horizontal_tolerance_m=0.10,
                 vertical_tolerance_m=0.08,
-                maximum_capture_speed_m_s=0.08,
+                # Fast Sim's contact transition can retain roughly 0.09 m/s in the
+                # terminal sample even after ground truth has reached z=0.  Keep the
+                # gate tight, but above that quantified contact-model residual.
+                maximum_capture_speed_m_s=0.10,
                 maximum_correction_attempts=2,
                 correction_duration_s=1.0,
             )

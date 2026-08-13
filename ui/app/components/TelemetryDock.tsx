@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Download, FileSpreadsheet, LoaderCircle, RefreshCw } from "lucide-react";
+import { ChevronDown, ChevronUp, Download, FileSpreadsheet, LoaderCircle, RefreshCw, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { DashboardModel, RangeRay, RunFileMissionView, TwinSessionView, Vec3, VehicleView } from "../lib/models";
 import { formatClockContext } from "./RoomScene";
@@ -12,9 +12,36 @@ export type TelemetrySample = {
   battery?: number;
   current?: number;
   localization?: number;
+  roll?: number;
+  pitch?: number;
+  yaw?: number;
+  accelerationX?: number;
+  accelerationY?: number;
+  accelerationZ?: number;
+  angularVelocityX?: number;
+  angularVelocityY?: number;
+  angularVelocityZ?: number;
+  motorM1?: number;
+  motorM2?: number;
+  motorM3?: number;
+  motorM4?: number;
 };
 
-type TrendMetric = "altitude" | "speed" | "battery" | "current";
+type TrendMetric = Exclude<keyof TelemetrySample, "t" | "localization">;
+type TrendGroup = "flight" | "attitude" | "acceleration" | "angularVelocity" | "motors";
+
+const TREND_GROUPS: readonly {
+  id: TrendGroup;
+  label: string;
+  title: string;
+  metrics: readonly TrendMetric[];
+}[] = [
+  { id: "flight", label: "Flight", title: "Flight essentials", metrics: ["altitude", "speed", "battery", "current"] },
+  { id: "attitude", label: "Attitude", title: "Roll, pitch, and yaw", metrics: ["roll", "pitch", "yaw"] },
+  { id: "acceleration", label: "Accel", title: "IMU acceleration", metrics: ["accelerationX", "accelerationY", "accelerationZ"] },
+  { id: "angularVelocity", label: "Gyro", title: "IMU angular velocity", metrics: ["angularVelocityX", "angularVelocityY", "angularVelocityZ"] },
+  { id: "motors", label: "Motors", title: "Individual motor output", metrics: ["motorM1", "motorM2", "motorM3", "motorM4"] },
+];
 
 export function RunFilesControl({
   missions = [],
@@ -22,12 +49,16 @@ export function RunFilesControl({
   loading = false,
   error,
   onLoad = () => undefined,
+  onDelete = () => undefined,
+  deletingMissionId,
 }: {
   missions?: RunFileMissionView[];
   loaded?: boolean;
   loading?: boolean;
   error?: string;
   onLoad?: () => void;
+  onDelete?: (mission: RunFileMissionView) => void;
+  deletingMissionId?: string;
 }) {
   return (
     <details
@@ -64,7 +95,12 @@ export function RunFilesControl({
           {missions.length ? (
             <div className="run-files-list" role="list" aria-label="Previous run CSV files">
               {missions.map((mission) => (
-                <RunFileMission key={mission.missionExecutionId} mission={mission} />
+                <RunFileMission
+                  key={mission.missionExecutionId}
+                  mission={mission}
+                  deleting={deletingMissionId === mission.missionExecutionId}
+                  onDelete={onDelete}
+                />
               ))}
             </div>
           ) : null}
@@ -93,6 +129,7 @@ export function FlightReadout({
   const [systemsOpen, setSystemsOpen] = useState(true);
   const data = vehicle?.telemetry;
   if (!vehicle || !data) return null;
+  const trendGroup = TREND_GROUPS.find((group) => group.metrics.includes(trendMetric)) ?? TREND_GROUPS[0];
 
   const speed = data.velocity ? vectorMagnitude(data.velocity) : undefined;
   const nearestRange = data.ranges
@@ -128,13 +165,35 @@ export function FlightReadout({
             batteryTone={batteryTone}
             rangeTone={rangeTone}
           />
-          <div className="trend-switch" role="group" aria-label="Trend metric">
-            {(["altitude", "speed", "battery", "current"] as const).map((metric) => (
-              <button key={metric} type="button" className={metric === trendMetric ? "is-active" : ""} onClick={() => setTrendMetric(metric)}>
-                {metric === "altitude" ? "Z" : sentenceCase(metric)}
-              </button>
-            ))}
-          </div>
+          <section className="trend-controls" aria-label="Telemetry history controls">
+            <div className="trend-groups" role="group" aria-label="Trend category">
+              {TREND_GROUPS.map((group) => (
+                <button
+                  key={group.id}
+                  type="button"
+                  className={group.id === trendGroup.id ? "is-active" : ""}
+                  aria-pressed={group.id === trendGroup.id}
+                  title={group.title}
+                  onClick={() => setTrendMetric(group.metrics[0])}
+                >
+                  {group.label}
+                </button>
+              ))}
+            </div>
+            <div className="trend-switch" role="group" aria-label={`${trendGroup.title} trend metric`} data-count={trendGroup.metrics.length}>
+              {trendGroup.metrics.map((metric) => (
+                <button
+                  key={metric}
+                  type="button"
+                  className={metric === trendMetric ? "is-active" : ""}
+                  aria-pressed={metric === trendMetric}
+                  onClick={() => setTrendMetric(metric)}
+                >
+                  {TREND_DEFINITIONS[metric].switchLabel}
+                </button>
+              ))}
+            </div>
+          </section>
           <TrendChart samples={samples} metric={trendMetric} source={vehicle.observationClass} />
 
           {hasSystemDetail(vehicle) ? (
@@ -243,7 +302,15 @@ export function FlightReadout({
   );
 }
 
-function RunFileMission({ mission }: { mission: RunFileMissionView }) {
+function RunFileMission({
+  mission,
+  deleting = false,
+  onDelete,
+}: {
+  mission: RunFileMissionView;
+  deleting?: boolean;
+  onDelete: (mission: RunFileMissionView) => void;
+}) {
   const sampleCount = `${mission.telemetryRowCount} ${mission.telemetryRowCount === 1 ? "sample" : "samples"}`;
   return (
     <article
@@ -266,6 +333,16 @@ function RunFileMission({ mission }: { mission: RunFileMissionView }) {
       ) : (
         <span className="run-file-download is-disabled" aria-hidden="true"><Download size={14} /></span>
       )}
+      <button
+        type="button"
+        className="run-file-delete"
+        disabled={mission.status === "INCOMPLETE" || deleting}
+        onClick={() => onDelete(mission)}
+        aria-label={`Delete ${mission.missionName} run files`}
+        title={mission.status === "INCOMPLETE" ? "A recording cannot be deleted" : "Delete mission files and folder"}
+      >
+        {deleting ? <LoaderCircle className="spin" size={14} /> : <Trash2 size={14} />}
+      </button>
       <span className="run-file-count">{mission.status === "INCOMPLETE" ? "Recording" : sampleCount}</span>
     </article>
   );
@@ -441,12 +518,59 @@ function TrendChart({ samples, metric, source }: { samples: TelemetrySample[]; m
   );
 }
 
-const TREND_DEFINITIONS: Record<TrendMetric, { label: string; unit: string; decimals: number }> = {
-  altitude: { label: "World Z", unit: "m", decimals: 2 },
-  speed: { label: "Speed", unit: "m/s", decimals: 2 },
-  battery: { label: "Battery", unit: "%", decimals: 0 },
-  current: { label: "Current", unit: "A", decimals: 2 },
+const TREND_DEFINITIONS: Record<TrendMetric, { label: string; switchLabel: string; unit: string; decimals: number }> = {
+  altitude: { label: "World Z", switchLabel: "Z", unit: "m", decimals: 2 },
+  speed: { label: "Speed", switchLabel: "Speed", unit: "m/s", decimals: 2 },
+  battery: { label: "Battery", switchLabel: "Battery", unit: "%", decimals: 0 },
+  current: { label: "Battery current", switchLabel: "Current", unit: "A", decimals: 2 },
+  roll: { label: "Roll", switchLabel: "Roll", unit: "°", decimals: 1 },
+  pitch: { label: "Pitch", switchLabel: "Pitch", unit: "°", decimals: 1 },
+  yaw: { label: "Yaw", switchLabel: "Yaw", unit: "°", decimals: 1 },
+  accelerationX: { label: "Acceleration X", switchLabel: "X", unit: "m/s²", decimals: 2 },
+  accelerationY: { label: "Acceleration Y", switchLabel: "Y", unit: "m/s²", decimals: 2 },
+  accelerationZ: { label: "Acceleration Z", switchLabel: "Z", unit: "m/s²", decimals: 2 },
+  angularVelocityX: { label: "Angular velocity X", switchLabel: "X", unit: "rad/s", decimals: 2 },
+  angularVelocityY: { label: "Angular velocity Y", switchLabel: "Y", unit: "rad/s", decimals: 2 },
+  angularVelocityZ: { label: "Angular velocity Z", switchLabel: "Z", unit: "rad/s", decimals: 2 },
+  motorM1: { label: "Motor M1 output", switchLabel: "M1", unit: "%", decimals: 0 },
+  motorM2: { label: "Motor M2 output", switchLabel: "M2", unit: "%", decimals: 0 },
+  motorM3: { label: "Motor M3 output", switchLabel: "M3", unit: "%", decimals: 0 },
+  motorM4: { label: "Motor M4 output", switchLabel: "M4", unit: "%", decimals: 0 },
 };
+
+export function telemetrySample(vehicle?: VehicleView): TelemetrySample | undefined {
+  const data = vehicle?.telemetry;
+  if (!data) return undefined;
+  const time = data.provenance.replayTimeS
+    ?? data.provenance.simulationTimeS
+    ?? data.provenance.sourceTimeS
+    ?? data.provenance.receiveTimeS
+    ?? Date.now() / 1_000;
+  const motors = new Map(data.motors?.readings.map((reading) => [reading.id, reading.commandPercent]));
+  return {
+    t: time,
+    altitude: data.estimate?.z,
+    speed: data.velocity ? vectorMagnitude(data.velocity) : undefined,
+    battery: data.batteryPercent,
+    current: data.batteryCurrent,
+    localization: data.localizationPercent,
+    roll: data.attitude ? toDegrees(data.attitude.rollRad) : undefined,
+    pitch: data.attitude ? toDegrees(data.attitude.pitchRad) : undefined,
+    yaw: data.attitude || data.yawRad !== undefined
+      ? toDegrees(data.attitude?.yawRad ?? data.yawRad!)
+      : undefined,
+    accelerationX: data.imu?.acceleration.x,
+    accelerationY: data.imu?.acceleration.y,
+    accelerationZ: data.imu?.acceleration.z,
+    angularVelocityX: data.imu?.angularVelocity.x,
+    angularVelocityY: data.imu?.angularVelocity.y,
+    angularVelocityZ: data.imu?.angularVelocity.z,
+    motorM1: motors.get("M1"),
+    motorM2: motors.get("M2"),
+    motorM3: motors.get("M3"),
+    motorM4: motors.get("M4"),
+  };
+}
 
 function hasSystemDetail(vehicle: VehicleView) {
   const data = vehicle.telemetry;

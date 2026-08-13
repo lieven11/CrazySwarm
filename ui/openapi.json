@@ -293,6 +293,186 @@
         }
       }
     },
+    "/api/v1/campaign/qualification": {
+      "get": {
+        "summary": "Campaign Qualification",
+        "operationId": "campaign_qualification_api_v1_campaign_qualification_get",
+        "parameters": [
+          {
+            "name": "X-Local-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Local-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Campaign Qualification Api V1 Campaign Qualification Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/campaign/qualification/export": {
+      "get": {
+        "summary": "Export Campaign Qualification",
+        "operationId": "export_campaign_qualification_api_v1_campaign_qualification_export_get",
+        "parameters": [
+          {
+            "name": "X-Local-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Local-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/campaign/qualification/constraint-directed": {
+      "get": {
+        "summary": "Campaign Constraint Directed Qualification",
+        "operationId": "campaign_constraint_directed_qualification_api_v1_campaign_qualification_constraint_directed_get",
+        "parameters": [
+          {
+            "name": "X-Local-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Local-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/campaign/qualification/selective-submissions": {
+      "get": {
+        "summary": "Campaign Selective Submission Qualification",
+        "operationId": "campaign_selective_submission_qualification_api_v1_campaign_qualification_selective_submissions_get",
+        "parameters": [
+          {
+            "name": "X-Local-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Local-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/campaign/cases/static-validate": {
       "post": {
         "summary": "Campaign Static Validate",
@@ -445,11 +625,271 @@
         }
       }
     },
+    "/api/v1/campaign/cases/in-review": {
+      "post": {
+        "summary": "Campaign Move To Review",
+        "operationId": "campaign_move_to_review_api_v1_campaign_cases_in_review_post",
+        "parameters": [
+          {
+            "name": "X-Local-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Local-Token"
+            }
+          },
+          {
+            "name": "X-Client-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "X-Client-Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetActiveCaseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Campaign Move To Review Api V1 Campaign Cases In Review Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/campaign/cases/lifecycle": {
+      "post": {
+        "summary": "Campaign Set Lifecycle",
+        "operationId": "campaign_set_lifecycle_api_v1_campaign_cases_lifecycle_post",
+        "parameters": [
+          {
+            "name": "X-Local-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Local-Token"
+            }
+          },
+          {
+            "name": "X-Client-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "X-Client-Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetLifecycleStateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Campaign Set Lifecycle Api V1 Campaign Cases Lifecycle Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/campaign/cases/completed": {
+      "post": {
+        "summary": "Campaign Complete Case",
+        "operationId": "campaign_complete_case_api_v1_campaign_cases_completed_post",
+        "parameters": [
+          {
+            "name": "X-Local-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Local-Token"
+            }
+          },
+          {
+            "name": "X-Client-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "X-Client-Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetActiveCaseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Campaign Complete Case Api V1 Campaign Cases Completed Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/campaign/active/preview": {
       "get": {
         "summary": "Campaign Preview Active",
         "operationId": "campaign_preview_active_api_v1_campaign_active_preview_get",
         "parameters": [
+          {
+            "name": "submission_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Submission Id"
+            }
+          },
+          {
+            "name": "planning_submission_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Planning Submission Id"
+            }
+          },
           {
             "name": "X-Local-Token",
             "in": "header",
@@ -477,6 +917,82 @@
                   "additionalProperties": true,
                   "title": "Response Campaign Preview Active Api V1 Campaign Active Preview Get"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/campaign/active/package": {
+      "get": {
+        "summary": "Campaign Download Active Package",
+        "operationId": "campaign_download_active_package_api_v1_campaign_active_package_get",
+        "parameters": [
+          {
+            "name": "submission_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Submission Id"
+            }
+          },
+          {
+            "name": "planning_submission_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Planning Submission Id"
+            }
+          },
+          {
+            "name": "X-Local-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Local-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },
@@ -684,6 +1200,630 @@
         }
       }
     },
+    "/api/v1/campaign/runs/{run_id}": {
+      "delete": {
+        "summary": "Campaign Delete Run",
+        "operationId": "campaign_delete_run_api_v1_campaign_runs__run_id__delete",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "X-Local-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Local-Token"
+            }
+          },
+          {
+            "name": "X-Client-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "X-Client-Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Campaign Delete Run Api V1 Campaign Runs  Run Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/campaign/runs/{run_id}/snapshots": {
+      "post": {
+        "summary": "Campaign Capture Snapshot",
+        "operationId": "campaign_capture_snapshot_api_v1_campaign_runs__run_id__snapshots_post",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "width_px",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 4096,
+              "minimum": 1,
+              "title": "Width Px"
+            }
+          },
+          {
+            "name": "height_px",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 4096,
+              "minimum": 1,
+              "title": "Height Px"
+            }
+          },
+          {
+            "name": "source_timestamp_s",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Timestamp S"
+            }
+          },
+          {
+            "name": "source_clock_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 96
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Clock Id"
+            }
+          },
+          {
+            "name": "source_clock_epoch",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Clock Epoch"
+            }
+          },
+          {
+            "name": "source_sequence",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Sequence"
+            }
+          },
+          {
+            "name": "correlation_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 96
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Correlation Id"
+            }
+          },
+          {
+            "name": "estimate_source_timestamp_s",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Estimate Source Timestamp S"
+            }
+          },
+          {
+            "name": "truth_source_timestamp_s",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Truth Source Timestamp S"
+            }
+          },
+          {
+            "name": "desired_source_timestamp_s",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Desired Source Timestamp S"
+            }
+          },
+          {
+            "name": "playback_buffer_age_s",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Playback Buffer Age S"
+            }
+          },
+          {
+            "name": "source_rows_json",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 2,
+                  "maxLength": 2048
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Rows Json"
+            }
+          },
+          {
+            "name": "same_time_truth_estimate_error_m",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Same Time Truth Estimate Error M"
+            }
+          },
+          {
+            "name": "buffer_induced_estimate_displacement_m",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Buffer Induced Estimate Displacement M"
+            }
+          },
+          {
+            "name": "interpolation_state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "EXACT",
+                    "INTERPOLATED",
+                    "FROZEN",
+                    "UNAVAILABLE"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Interpolation State"
+            }
+          },
+          {
+            "name": "X-Local-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Local-Token"
+            }
+          },
+          {
+            "name": "X-Client-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "X-Client-Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Campaign Capture Snapshot Api V1 Campaign Runs  Run Id  Snapshots Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/campaign/snapshots/{snapshot_id}/image": {
+      "get": {
+        "summary": "Campaign Snapshot Image",
+        "operationId": "campaign_snapshot_image_api_v1_campaign_snapshots__snapshot_id__image_get",
+        "parameters": [
+          {
+            "name": "snapshot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Snapshot Id"
+            }
+          },
+          {
+            "name": "X-Local-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Local-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/campaign/snapshots/{snapshot_id}/comment": {
+      "post": {
+        "summary": "Campaign Snapshot Comment",
+        "operationId": "campaign_snapshot_comment_api_v1_campaign_snapshots__snapshot_id__comment_post",
+        "parameters": [
+          {
+            "name": "snapshot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Snapshot Id"
+            }
+          },
+          {
+            "name": "X-Local-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Local-Token"
+            }
+          },
+          {
+            "name": "X-Client-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "X-Client-Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotCommentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Campaign Snapshot Comment Api V1 Campaign Snapshots  Snapshot Id  Comment Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/campaign/snapshots/{snapshot_id}/assessment": {
+      "post": {
+        "summary": "Campaign Snapshot Assessment",
+        "operationId": "campaign_snapshot_assessment_api_v1_campaign_snapshots__snapshot_id__assessment_post",
+        "parameters": [
+          {
+            "name": "snapshot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Snapshot Id"
+            }
+          },
+          {
+            "name": "X-Local-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Local-Token"
+            }
+          },
+          {
+            "name": "X-Client-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "X-Client-Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotAssessmentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Campaign Snapshot Assessment Api V1 Campaign Snapshots  Snapshot Id  Assessment Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/campaign/reviews/{review_id}/observations": {
       "post": {
         "summary": "Campaign Review Observation",
@@ -712,6 +1852,24 @@
                 }
               ],
               "title": "X-Local-Token"
+            }
+          },
+          {
+            "name": "X-Client-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "X-Client-Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Idempotency-Key"
             }
           }
         ],
@@ -5589,6 +6747,80 @@
         }
       }
     },
+    "/api/v1/simulation/fleet/reset-poses": {
+      "post": {
+        "summary": "Reset Simulation Fleet",
+        "operationId": "reset_simulation_fleet_api_v1_simulation_fleet_reset_poses_post",
+        "parameters": [
+          {
+            "name": "X-Local-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Local-Token"
+            }
+          },
+          {
+            "name": "X-Client-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "X-Client-Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationFleetResetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Reset Simulation Fleet Api V1 Simulation Fleet Reset Poses Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/simulation/vehicles/{vehicle_id}/clock": {
       "post": {
         "summary": "Simulation Clock",
@@ -5870,6 +7102,79 @@
               "application/json": {
                 "schema": {
                   "title": "Response Run Files Api V1 Run Files Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/run-files/{mission_execution_id}": {
+      "delete": {
+        "summary": "Delete Run File Mission",
+        "operationId": "delete_run_file_mission_api_v1_run_files__mission_execution_id__delete",
+        "parameters": [
+          {
+            "name": "mission_execution_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mission Execution Id"
+            }
+          },
+          {
+            "name": "X-Local-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Local-Token"
+            }
+          },
+          {
+            "name": "X-Client-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "X-Client-Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Delete Run File Mission Api V1 Run Files  Mission Execution Id  Delete"
                 }
               }
             }
@@ -6842,6 +8147,32 @@
         "properties": {
           "mode": {
             "$ref": "#/components/schemas/CampaignRunMode"
+          },
+          "submission_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 96,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submission Id"
+          },
+          "planning_submission_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 96,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planning Submission Id"
           }
         },
         "additionalProperties": false,
@@ -7363,6 +8694,18 @@
         ],
         "title": "InitialFleetRole"
       },
+      "LifecycleState": {
+        "type": "string",
+        "enum": [
+          "DEFINED_NOT_RUN",
+          "READY",
+          "ACTIVE_DEVELOPMENT",
+          "BASELINED",
+          "PROMOTED",
+          "BLOCKED"
+        ],
+        "title": "LifecycleState"
+      },
       "MissionExecutionMode": {
         "type": "string",
         "enum": [
@@ -7855,6 +9198,33 @@
         ],
         "title": "SetActiveCaseRequest"
       },
+      "SetLifecycleStateRequest": {
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Case Id"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Reason"
+          },
+          "state": {
+            "$ref": "#/components/schemas/LifecycleState"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "case_id",
+          "reason",
+          "state"
+        ],
+        "title": "SetLifecycleStateRequest"
+      },
       "SimulationClockAction": {
         "type": "string",
         "enum": [
@@ -7892,6 +9262,92 @@
           "action"
         ],
         "title": "SimulationClockRequest"
+      },
+      "SimulationFleetResetRequest": {
+        "properties": {
+          "vehicle_ids": {
+            "items": {
+              "type": "string",
+              "maxLength": 96,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$"
+            },
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 1,
+            "uniqueItems": true,
+            "title": "Vehicle Ids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "vehicle_ids"
+        ],
+        "title": "SimulationFleetResetRequest"
+      },
+      "SnapshotAssessmentDisposition": {
+        "type": "string",
+        "enum": [
+          "VALID",
+          "PARTLY_VALID",
+          "DISPLAY_EFFECT",
+          "NOT_SUPPORTED",
+          "NEEDS_MORE_EVIDENCE"
+        ],
+        "title": "SnapshotAssessmentDisposition"
+      },
+      "SnapshotAssessmentRequest": {
+        "properties": {
+          "assessment": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Assessment"
+          },
+          "disposition": {
+            "$ref": "#/components/schemas/SnapshotAssessmentDisposition"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 32,
+            "title": "Evidence Refs",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "assessment",
+          "disposition",
+          "confidence"
+        ],
+        "title": "SnapshotAssessmentRequest"
+      },
+      "SnapshotCommentRequest": {
+        "properties": {
+          "note": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "note"
+        ],
+        "title": "SnapshotCommentRequest"
       },
       "StaticValidateCaseRequest": {
         "properties": {

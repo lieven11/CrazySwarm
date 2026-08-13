@@ -4,7 +4,7 @@
 |---|---|
 | Document role | The only authoritative ledger for finished project work |
 | Status | `CURRENT` |
-| Last reconciled | 2026-08-09 |
+| Last reconciled | 2026-08-11 |
 | Active counterpart | [`ACTIVE.md`](ACTIVE.md) |
 | Default operator backend | `FAST_SIM` |
 | Physical flight authorized | No |
@@ -196,6 +196,219 @@ cancellation/restart, replay, and claim boundary is recorded in
   threshold remains unchanged. Repository Ruff and strict MyPy pass over 193 source/test
   files. Four canonical families reproduce twice under the new execution-authority and
   goal-landing outcome revision, with both earlier hash generations retained.
+
+## Implemented components from open WP-44 through WP-50
+
+WP-44 through WP-50 remain in [`ACTIVE.md`](ACTIVE.md) because their packet exit gates
+are not all closed. The following reusable components are complete within a narrower
+software boundary:
+
+- hash-bound, case-specific planning submissions and resolved packages, including
+  exact package/component/runtime authority-chain validation;
+- bounded static planning dispositions, continuous release candidates, admitted
+  timing/lateral/vertical generators, and independent piecewise-linear cylinder/AABB
+  feasibility certificates;
+- named AABB solids/passages, contradiction checks, scalar protected passage capacity,
+  and route-adherence checks;
+- a Fast-Sim execution head for accepted obstacle/passage changes on two or three
+  `AUTO_WITHIN_FROZEN_LIMITS` roles, with fresh observation, actual changed-world
+  planning, software-epoch commitment, replacement dispatch, and exact evaluator
+  identity evidence; and
+- a deterministic 19-row regression subset. Its accepted object-in-line row is backed
+  by a real changed-world proposal and per-role certificates; peer and negative rows
+  are labeled `COORDINATOR_TRANSACTION_ONLY`. The report SHA-256 is
+  `4f386eb18e5906cab5ad9ae74a1a823a54d300b581283386d0230723ead41d94`.
+
+These completed components do not close composite pose-aware geometry, topology,
+peer/uncertainty/goal-update runtime integration, backend-level distributed cutover,
+the required successor matrix, observed-realtime anchors, or dynamic replay UI. The
+packet-by-packet evidence and remaining gates are retained in
+[`WP44_50_IMPLEMENTATION_AUDIT_2026-08-11.md`](WP44_50_IMPLEMENTATION_AUDIT_2026-08-11.md).
+No physical, live-Isaac, damage/contact-dynamics, or perception claim is made.
+
+## WP-51 — Independent work-packet verification and truthful qualification
+
+**Status:** `COMPLETE`
+
+**Independent verification:** `IMPLEMENTATION_VERIFIED`.
+
+<!-- WP51-DESIGN-PAYLOAD-BEGIN -->
+
+**Objective:** make independent, bounded verification automatic whenever the operator
+explicitly asks Codex to create, structure, refine, implement, execute, complete,
+verify, qualify, or transition one or more work packets/work packages. Ordinary small
+tasks, explanations, status questions, and incidental mentions do not activate this
+protocol; an explicit work-packet request does, even when its implementation is small.
+
+**Dependencies:** the repository work-packet ledgers, durable requirements, Codex
+project instructions, project-scoped custom agents, and an available independent-agent
+slot. This packet does not depend on WP-44 through WP-50 implementation correctness.
+
+### Tasks
+
+- Add durable requirements that record the repeated WP-26–34, WP-40–43, and WP-44–50
+  failure modes: author confirmation bias, assertions that mirror implementation,
+  configured metadata presented as measured behavior, component/model tests presented
+  as runtime evidence, exact-case special casing presented as generalized capability,
+  documentation/status claims ahead of executable reality, and ambiguous dirty-tree
+  review scope.
+- Add a root `AGENTS.md` trigger. For a design-only request, create a
+  `DRAFT_UNVERIFIED` packet and perform only the design gate. For implementation of an
+  existing packet, require a recorded passing design gate first.
+- Add a project-scoped, read-only `work_packet_verifier` custom agent. It never edits,
+  never spawns another verifier for its own review, and owns finding severity and the
+  gate verdict. The author may fix a finding or submit contrary evidence, but may not
+  unilaterally dismiss a blocking finding.
+- At the design gate, give a fresh verifier the originating operator request, durable
+  requirements, exact delimited design-payload hash, and affected system boundaries.
+  Require it to challenge coverage, dependencies, invariants, non-goals, integration
+  points, feasible evidence, and counterexamples. Allow one author revision and one
+  focused recheck by the same verifier; no automatic third pass.
+- At the implementation gate, mark ordinary `Status` using the repository vocabulary
+  and set the separate `Independent verification` field to
+  `IMPLEMENTED_UNVERIFIED`. Give a different fresh verifier the original request,
+  accepted design hash, exact implementation payload manifest, tests/evidence, and
+  documentation claims. Allow one fix pass and one focused recheck by that verifier;
+  no automatic third pass.
+- For every core or generalized claim, require a chain from the real trigger and
+  production entry point through the resulting state/command change to a retained
+  observation and an independent oracle. Demonstrate at least one intended path and
+  one meaningful failure, perturbation, rename/reordering, child-case, or boundary
+  counterexample as applicable. An oracle derived from caller-supplied booleans,
+  asserted hashes, configured durations, the same implementation constant, or a test
+  that merely regenerates its own expected report is not independent.
+- Tag each claim separately by execution boundary (`MODEL_ONLY`, `COMPONENT`,
+  `INTEGRATION`, or `PRODUCTION_ENTRY`), environment (`NO_RUNTIME`, `FAST_SIM`,
+  `LIVE_ISAAC`, or `HARDWARE`), and clock evidence (`NOT_APPLICABLE`, `ACCELERATED`,
+  or `OBSERVED_REALTIME`). A reviewer pass is necessary but never substitutes for the
+  packet's declared qualification evidence, and a lower boundary/environment may not
+  close a higher claim.
+- Reconcile every `implemented`, `verified`, `qualified`, runtime, end-to-end, and
+  generalized-capability statement in `ACTIVE.md`, `COMPLETED.md`, qualification
+  reports, and operator documentation against that claim matrix before closeout. A
+  requirement-to-filename or requirement-to-test-name table is not sufficient.
+- Freeze a scoped review manifest before each gate. It records the base commit,
+  preimage hashes, changed/new/deleted file manifest, postimage hashes, and delimited
+  payload hash. Only a mechanical verification-record/status update and unchanged move
+  between ledgers may occur after verdict; any other substantive edit invalidates it.
+- If no independent verifier/configuration/slot is available, fail closed as
+  `REVIEW_BLOCKED` or `IMPLEMENTED_UNVERIFIED`. Do not substitute same-author review,
+  recursively delegate, or loop until a pass appears.
+- Add structural tests that parse the custom-agent TOML, verify required read-only and
+  no-recursion instructions, verify the `AGENTS.md` trigger and bounded two-gate rules,
+  and confirm the durable workflow/ledger records are present. Run patch-format and
+  focused release-artifact checks.
+
+**Non-goals:** exhaustive formal verification; replacing normal unit/integration/
+runtime tests; automatically creating user-owned chats; spawning one reviewer per
+packet when one related packet batch is the declared review unit; style-only review;
+or repeated reviewer loops. P2/residual limitations may be recorded without blocking
+rough integration acceptance; unresolved P0/P1 findings block the applicable gate.
+
+### Exit gate
+
+1. The project instructions activate only for explicit work-packet/package actions and
+   correctly stop design-only requests after independent design verification.
+2. A project-scoped verifier is parseable, read-only by default, non-delegating, and
+   required to return evidence-backed findings plus a gate verdict without editing.
+3. The accepted design and implementation reviews each have an exact scoped identity,
+   the original operator goal, claim-by-claim evidence boundaries, mandatory
+   sensitivity/counterexample checks, and no unresolved P0/P1 findings.
+4. One initial review plus at most one recheck is enforced per gate. The same verifier
+   performs a gate's recheck; a different fresh verifier performs implementation review.
+5. Documentation status is reconciled with executable reality, and `QUALIFIED` or
+   `COMPLETE` still requires the packet's declared evidence in addition to reviewer
+   acceptance.
+6. TOML parsing, structural regression, `git diff --check`, and the focused release
+   artifact tests pass; the final implementation-review record and residual limits are
+   retained before the packet moves to `COMPLETED.md`.
+
+<!-- WP51-DESIGN-PAYLOAD-END -->
+
+### Design verification record
+
+- Initial reviewer: `/root/wp51_plan_review` on 2026-08-11.
+- Initial verdict: `BLOCKED_WITH_FINDINGS` (five P1 findings and bounded P2
+  refinements); no implementation was started.
+- Frozen base: commit `4bec32a827785f5c25cb32a4f2084ced8045f3b3`.
+- Pre-review SHA-256: workflow
+  `cff1175322fb1c46f58b679c4dafab3db1da6969566060d333a600df0697588c`, active
+  ledger `48625d8364656ab00569fe071508cb3273ff0ceb605ec14ef51524f0b4892f7e`,
+  completed ledger `efa4c67bfa8b055ba3068295485149f2d96f0e5e77d7e069acfe3341aad81f13`;
+  `AGENTS.md` and `.codex/agents/work-packet-verifier.toml` were absent.
+- Focused recheck: `DESIGN_VERIFIED`; payload SHA-256
+  `bf834569c6765965de7deecbb88383a7b91bb599a59b6ed9fd65e48424546e47` matched,
+  all five P1 findings were resolved, and no P0/P1 finding remained.
+
+### Implementation claim and documentation reconciliation
+
+<!-- WP51-IMPLEMENTATION-EVIDENCE-BEGIN -->
+
+| Claim | Real trigger / entry and effect | Retained observation and independent oracle | Sensitivity / counterexample | Boundary / environment / clock | Documentation reconciliation |
+|---|---|---|---|---|---|
+| Explicit packet actions activate the project protocol while incidental mentions and ordinary small tasks do not. | A future Codex project session loads root `AGENTS.md`; its request classifier applies the exact trigger clause before packet work. | The release-artifact test checks the complete positive verb list and complete exclusions rather than isolated keywords. | The contract test fails if a verb is removed, an exclusion is removed, or the design-only stop is reversed. Fresh-session discovery was not observed in this already-running parent session and remains a declared residual limit. | `COMPONENT / NO_RUNTIME / NOT_APPLICABLE` | The claim is `configured`, not runtime-qualified or proof that every future Codex version loads the file. |
+| Packet design receives an independent, bounded gate before implementation. | WP-51 was drafted and hash-frozen before code; fresh verifier `/root/wp51_plan_review` owned severity and verdict. | The retained initial `BLOCKED_WITH_FINDINGS`, revised design hash, and same-reviewer `DESIGN_VERIFIED` recheck are independent of the author checks. | The initial design omitted reviewer authority, exact identity, recursion/unavailability behavior, strong oracles, and lifecycle separation; those defects blocked implementation. The structural test requires the design-only stop and exactly two no-third-pass clauses. | `INTEGRATION / NO_RUNTIME / NOT_APPLICABLE` | The design record names the reviewer, base/preimages, accepted hash, findings, and bounded recheck. |
+| Finished implementation receives a different independent gate and at most one correction/recheck. | Different fresh verifier `/root/wp51_impl_review` received the accepted design and scoped postimages after author checks. | Its initial `BLOCKED_WITH_FINDINGS` verdict identified the weak contract test and missing claim/reconciliation evidence; the final verdict is retained outside this immutable evidence block. | The weak test itself was a meaningful counterexample: deleting trigger verbs, reversing the design-only rule, removing the no-third-pass rule, or replacing requirement bodies could still pass. The corrected test asserts those exact semantics. | `INTEGRATION / NO_RUNTIME / NOT_APPLICABLE` | Until the retained recheck passes, canonical status remains `IMPLEMENTED` and independent verification remains `IMPLEMENTED_UNVERIFIED`. |
+| The custom verifier is read-only, non-delegating, evidence-led, and owns severity/verdict. | Project configuration `.codex/agents/work-packet-verifier.toml` supplies the verifier contract when the parent spawns that named agent. | `tomllib` parsing and exact instruction assertions independently check the schema, read-only sandbox, no-edit/no-spawn rules, reviewer authority, production-path/oracle chain, counterexample, and both verdict vocabularies. The two WP-51 reviewers made no repository edits. | Removing `sandbox_mode = "read-only"`, the no-spawn rule, reviewer authority, the production path, the independent oracle, a counterexample, or an exact verdict makes the focused test fail. | `COMPONENT / NO_RUNTIME / NOT_APPLICABLE` | This proves repository configuration and observed read-only review behavior, not fresh-session auto-discovery under resource exhaustion. |
+| Unavailability, recursion, review count, and post-verdict mutation fail closed. | Root instructions govern the author; the verifier instructions exempt its own review and forbid delegation. | Exact structural assertions cover unavailable agent/configuration/slot behavior, verifier exemption, two no-third-pass clauses, and verdict invalidation after substantive edits. | Removing either gate's bound, the fail-closed outcomes, the recursion prohibition, or invalidation clause makes the test fail. Deliberately exhausting all agent slots and editing after a pass were not performed; those remain policy-contract evidence rather than runtime observations. | `COMPONENT / NO_RUNTIME / NOT_APPLICABLE` | No claim of operational qualification is made for unforced resource-exhaustion or future-host behavior. |
+| WP-51 documentation states only what the reviewed artifacts demonstrate. | The author compared the WP-51 section, both ledgers, workflow requirements, root instructions, verifier configuration, and release-artifact test. | The exact design hash, scoped implementation manifest, focused checks, reviewer findings/verdict, and residual limits are retained with the packet. | A requirement-ID-only row, filename-only traceability, or unqualified `COMPLETE` wording is insufficient; the structural test requires substantive requirement clauses and this evidence block. | `INTEGRATION / NO_RUNTIME / NOT_APPLICABLE` | WP-51 does not silently upgrade or repair WP-44 through WP-50 runtime claims. Their documented mismatch is retained in the workflow learning table and remains owned by their concurrent audit. |
+
+Documentation reconciliation scope: WP-51 changes root `AGENTS.md`, the project verifier
+configuration, `WORKFLOW_AND_REQUIREMENTS.md`, this packet record, and the focused
+release-artifact test. `COMPLETED.md` receives only the unchanged packet move after a
+passing implementation verdict. WP-51 makes no `FAST_SIM`, realtime, live-Isaac,
+hardware, or product-runtime qualification claim. Fresh-session custom-agent discovery,
+forced concurrency exhaustion, and post-verdict invalidation were not executed; the
+repository contract and mutation-sensitive structural checks are the retained evidence
+for those policies.
+
+<!-- WP51-IMPLEMENTATION-EVIDENCE-END -->
+
+### Implementation verification record
+
+- Reviewer: different fresh verifier `/root/wp51_impl_review` on 2026-08-11.
+- Initial verdict: `BLOCKED_WITH_FINDINGS`. Two P1 findings identified a
+  mutation-insensitive structural test and a missing retained claim/documentation
+  reconciliation matrix. P2 limits covered manifest serialization and historical
+  evidence links. This record retains the sole allowed fix pass.
+- Accepted design SHA-256:
+  `bf834569c6765965de7deecbb88383a7b91bb599a59b6ed9fd65e48424546e47`.
+- Preimages at implementation start: workflow
+  `cff1175322fb1c46f58b679c4dafab3db1da6969566060d333a600df0697588c`;
+  release-artifact test
+  `3d4120f13406950a49deec8151d969822a026851cd3b8693148012b7378de4ab`;
+  root `AGENTS.md` and the verifier TOML absent.
+- Exact scope: add `AGENTS.md` and `.codex/agents/work-packet-verifier.toml`; modify
+  the existing workspace workflow file and `tests/test_release_artifacts.py`; add the
+  delimited WP-51 design, evidence, and mechanical verification records to
+  `ACTIVE.md`; delete nothing. `COMPLETED.md` is outside the reviewed payload until an
+  unchanged closeout move.
+- Reviewed payload postimages: `AGENTS.md`
+  `e8205deea12d12178e1be27a24655cac55e8c3f14e55eaa5429f670b51cfda6e`;
+  `.codex/agents/work-packet-verifier.toml`
+  `4af0e890f900dde08e69fa6ea52870bb97e9730ea40f9e2cca65ad6e13a40906`;
+  workflow `f3b6699e3e2e13940bcccb91759e2117e579680c43d14ed0de23001eba5cc1fc`;
+  release-artifact test
+  `995bf763b2c397e4ed7c4ebd0e958d067344928f57694da802deb4dabfd5656b`;
+  delimited implementation-evidence section
+  `c3e9a2a7f595973913f20a2a99d9a832cb434d0baba7d44f3306ddc7d2780dbb`.
+- Canonical manifest serialization is UTF-8, LF-terminated, one literal
+  `<label><space><sha256>` line in this order: `design-payload`, `AGENTS.md`,
+  `.codex/agents/work-packet-verifier.toml`,
+  `docs/project/WORKFLOW_AND_REQUIREMENTS.md`,
+  `tests/test_release_artifacts.py`, `implementation-evidence`. SHA-256 of those six
+  lines is `f432e37031dbaafee8e92cccbe9c596d1e1123c94834b19d7a1d854419ad9dea`.
+- Post-fix author checks: six focused release-artifact tests passed; focused Ruff and
+  scoped `git diff --check` passed.
+- Focused recheck: the same reviewer reproduced the accepted design and every postimage
+  hash, the delimited evidence hash, and the canonical aggregate manifest; six focused
+  pytest checks, Ruff, and scoped `git diff --check` passed. Both P1 findings and the
+  manifest-serialization P2 were resolved. Historical raw-chat linkage and
+  fresh-session discovery remain declared P2 provenance limits.
+- Implementation verdict: `IMPLEMENTATION_VERIFIED`. Only this record, verification
+  status, and the unchanged ledger move are mechanical closeout changes outside the
+  reviewed payload.
+
 
 ## Frozen guarantees
 

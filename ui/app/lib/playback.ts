@@ -11,16 +11,26 @@ export interface RawDisplaySample {
   sourceClockEpoch: number;
   receivedMonotonicS: number;
   position: PlaybackVector3;
+  truthPosition?: PlaybackVector3;
   orientation: PlaybackQuaternion;
 }
+
+export type DisplaySourceRow = Pick<
+  RawDisplaySample,
+  "correlationId" | "sequence" | "sourceTimestampS" | "sourceClockId" | "sourceClockEpoch"
+>;
 
 export interface RenderedDisplayState {
   sourceTimestampS: number;
   sourceClockId: string;
   sourceClockEpoch: number;
   position: PlaybackVector3;
+  truthPosition?: PlaybackVector3;
   orientation: PlaybackQuaternion;
   health: DisplayHealth;
+  interpolationState: "EXACT" | "INTERPOLATED" | "FROZEN";
+  sourceRows: DisplaySourceRow[];
+  bufferInducedEstimateDisplacementM: number;
   presentationOnly: true;
   rawEvidence: false;
 }
@@ -96,11 +106,18 @@ export class SourceTimePlaybackBuffer {
     }
   }
 
-  render(): RenderedDisplayState | undefined {
+  render(observedMonotonicS?: number): RenderedDisplayState | undefined {
     const latest = this.samples.at(-1);
     if (!latest) return undefined;
     const epoch = this.samples.filter((sample) => sameEpoch(sample, latest));
-    const targetSourceS = latest.sourceTimestampS - this.settings.playbackBufferS;
+    const receivedAgeS = observedMonotonicS === undefined
+      ? 0
+      : Math.max(0, observedMonotonicS - latest.receivedMonotonicS);
+    const playbackAdvanceS = Math.min(receivedAgeS, this.settings.maximumExtrapolationS);
+    const targetSourceS = Math.min(
+      latest.sourceTimestampS,
+      latest.sourceTimestampS - this.settings.playbackBufferS + playbackAdvanceS,
+    );
     const before = epoch.filter((sample) => sample.sourceTimestampS <= targetSourceS).at(-1);
     const after = epoch.find((sample) => sample.sourceTimestampS >= targetSourceS);
     if (!before || !after) return this.freeze("BUFFERING");
@@ -111,18 +128,26 @@ export class SourceTimePlaybackBuffer {
       this.samples = epoch.filter((sample) => sample.sourceTimestampS >= after.sourceTimestampS);
       return this.freeze("DISPLAY_DELAYED");
     }
-    if (latest.sourceTimestampS - targetSourceS < this.settings.playbackBufferS - 1e-9) {
-      return this.freeze("DISPLAY_DELAYED");
-    }
     const factor = gapS <= 0 ? 0 : (targetSourceS - before.sourceTimestampS) / gapS;
-    this.health = "CURRENT";
+    this.health = receivedAgeS > this.settings.maximumExtrapolationS
+      ? "DISPLAY_DELAYED"
+      : "CURRENT";
     this.lastValid = {
       sourceTimestampS: targetSourceS,
       sourceClockId: latest.sourceClockId,
       sourceClockEpoch: latest.sourceClockEpoch,
       position: lerpVector(before.position, after.position, factor),
+      truthPosition: before.truthPosition && after.truthPosition
+        ? lerpVector(before.truthPosition, after.truthPosition, factor)
+        : undefined,
       orientation: normalizedLerp(before.orientation, after.orientation, factor),
-      health: "CURRENT",
+      health: this.health,
+      interpolationState: gapS <= 0 || factor <= 0 || factor >= 1 ? "EXACT" : "INTERPOLATED",
+      sourceRows: sourceRowsForRender(before, after, factor),
+      bufferInducedEstimateDisplacementM: vectorDistance(
+        latest.position,
+        lerpVector(before.position, after.position, factor),
+      ),
       presentationOnly: true,
       rawEvidence: false,
     };
@@ -149,8 +174,23 @@ export class SourceTimePlaybackBuffer {
 
   private freeze(health: DisplayHealth): RenderedDisplayState | undefined {
     this.health = health;
-    return this.lastValid ? { ...this.lastValid, health } : undefined;
+    return this.lastValid ? { ...this.lastValid, health, interpolationState: "FROZEN" } : undefined;
   }
+}
+
+function sourceRowsForRender(
+  before: RawDisplaySample,
+  after: RawDisplaySample,
+  factor: number,
+): DisplaySourceRow[] {
+  const selected = factor <= 0 ? [before] : factor >= 1 ? [after] : [before, after];
+  return selected.map((sample) => ({
+    correlationId: sample.correlationId,
+    sequence: sample.sequence,
+    sourceTimestampS: sample.sourceTimestampS,
+    sourceClockId: sample.sourceClockId,
+    sourceClockEpoch: sample.sourceClockEpoch,
+  }));
 }
 
 function compareSample(left: RawDisplaySample, right: RawDisplaySample): number {
@@ -180,6 +220,10 @@ function lerpVector(left: PlaybackVector3, right: PlaybackVector3, factor: numbe
     y: left.y + (right.y - left.y) * factor,
     z: left.z + (right.z - left.z) * factor,
   };
+}
+
+function vectorDistance(left: PlaybackVector3, right: PlaybackVector3): number {
+  return Math.hypot(left.x - right.x, left.y - right.y, left.z - right.z);
 }
 
 function normalizedLerp(

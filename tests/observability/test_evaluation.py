@@ -14,7 +14,7 @@ from crazyswarm_app.observability.evaluation import (
     EvaluationStatus,
     evaluate_mission_execution,
 )
-from crazyswarm_app.observability.events import TelemetryPayload
+from crazyswarm_app.observability.events import EvidenceEvent, TelemetryPayload
 from crazyswarm_app.observability.storage import EvidenceStore
 from tests.observability.test_storage import recorded_mission
 
@@ -61,6 +61,76 @@ def execution_context(vehicle_ids: tuple[str, ...]) -> dict[str, Any]:
         "fleet_events": ([{"event_type": "MISSION_STARTED"}] if len(vehicle_ids) > 1 else []),
         "execution_result": {"status": "SUCCEEDED"},
     }
+
+
+@pytest.mark.parametrize(
+    "relative_path",
+    (
+        "20260811T155020Z_Campaign_1d.altitude_transition.canonical_nominal_"
+        "campaign-run-ea696b52d37c22c5a1f2/Campaign_1d.altitude_transition."
+        "canonical_nominal_campaign-run-ea696b52d37c22c5a1f2_execution-bundle-v1.json",
+        "20260811T161111Z_Campaign_1d.altitude_transition.wide_"
+        "campaign-run-c56e371bd418c389ef11/Campaign_1d.altitude_transition.wide_"
+        "campaign-run-c56e371bd418c389ef11_execution-bundle-v1.json",
+    ),
+)
+def test_retained_campaign_bundle_reconciles_accepted_authority(
+    relative_path: str,
+) -> None:
+    path = Path("run-files") / relative_path
+    bundle = json.loads(path.read_text(encoding="utf-8"))
+    runs = [
+        {
+            **run,
+            "snapshot_json": json.dumps(run["snapshot"]),
+            "result_json": json.dumps(run["result"]),
+        }
+        for run in bundle["runs"]
+    ]
+    evaluation = evaluate_mission_execution(
+        mission_execution_id=bundle["mission_execution_id"],
+        runs=runs,
+        events=[EvidenceEvent.model_validate(item) for item in bundle["events"]],
+        context=bundle["context"],
+    )
+
+    assert evaluation.status is EvaluationStatus.COMPLETE
+    assert evaluation.evidence.missing == ()
+    assert evaluation.vehicles[0].accepted_plan_identity_match is True
+    assert evaluation.vehicles[0].unintended_stop_count == 0
+
+
+def test_mismatched_accepted_authority_fails_evidence_completeness() -> None:
+    path = Path(
+        "run-files/20260811T155020Z_Campaign_1d.altitude_transition.canonical_nominal_"
+        "campaign-run-ea696b52d37c22c5a1f2/Campaign_1d.altitude_transition."
+        "canonical_nominal_campaign-run-ea696b52d37c22c5a1f2_execution-bundle-v1.json"
+    )
+    bundle = json.loads(path.read_text(encoding="utf-8"))
+    for event in bundle["events"]:
+        command = event.get("payload", {}).get("command", {})
+        payload = command.get("payload", {})
+        if payload.get("kind") == "execute_trajectory":
+            payload["accepted_plan_sha256"] = "0" * 64
+    runs = [
+        {
+            **run,
+            "snapshot_json": json.dumps(run["snapshot"]),
+            "result_json": json.dumps(run["result"]),
+        }
+        for run in bundle["runs"]
+    ]
+
+    evaluation = evaluate_mission_execution(
+        mission_execution_id=bundle["mission_execution_id"],
+        runs=runs,
+        events=[EvidenceEvent.model_validate(item) for item in bundle["events"]],
+        context=bundle["context"],
+    )
+
+    assert evaluation.vehicles[0].accepted_plan_identity_match is False
+    assert evaluation.status is EvaluationStatus.INCOMPLETE
+    assert "accepted_authority_identity" in evaluation.evidence.missing
 
 
 @pytest.mark.asyncio

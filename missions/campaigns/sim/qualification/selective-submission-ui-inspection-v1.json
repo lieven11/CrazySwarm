@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "inspection_id": "selective-submission-ui-inspection-v1",
+  "inspection_date": "2026-08-12",
+  "surface": "responsive source and exact immutable production release; live visual recheck pending",
+  "production_build": {
+    "release_name": "release-wp52-56-fix1-20260812",
+    "source_css_sha256": "291a76fb4191036cec85492f0a2b7f00969388c1da1f335ad95b2de1fda9f5ef",
+    "built_css_sha256": "4f18a02c900a228fa67778c794e738eb981670c8fca147d09dc49164dca95f55",
+    "responsive_rule": "@media (width<=900px)",
+    "published_current_pointer": true
+  },
+  "viewports": [
+    {
+      "width_px": 1440,
+      "height_px": 900,
+      "result": "INVALIDATED_STALE_RELEASE_OBSERVATION",
+      "observations": {
+        "case_first_left_navigation": true,
+        "submission_selector_below_case": true,
+        "rationale_and_evidence_in_right_detail": true,
+        "overlap": false,
+        "clipping": false,
+        "unintended_horizontal_scroll": false,
+        "dialog_within_dynamic_viewport": true
+      }
+    },
+    {
+      "width_px": 820,
+      "height_px": 900,
+      "result": "INVALIDATED_STALE_RELEASE_OBSERVATION",
+      "observations": {
+        "case_and_detail_reflow_to_one_column": true,
+        "long_labels_wrap": true,
+        "internal_vertical_scroll": true,
+        "overlap": false,
+        "clipping": false,
+        "unintended_horizontal_scroll": false,
+        "footer_actions_remain_visible": true
+      },
+      "fixed_during_inspection": "The campaign-specific responsive breakpoint was moved to 900 px and now expands the dialog, stacks navigation/detail, and wraps titles and dropdown labels."
+    }
+  ],
+  "interaction_results": {
+    "keyboard_arrow_and_enter_submission_selection": "INITIAL_REVIEWER_CONFIRMED_ON_STALE_RELEASE",
+    "selected_detail_focus_target_present": "SOURCE_AND_UNIT_TEST_ONLY",
+    "planned_not_executable_non_color_future_label": "SOURCE_AND_UNIT_TEST_ONLY",
+    "planned_not_executable_options_disabled": "SOURCE_AND_UNIT_TEST_ONLY",
+    "eligible_options_enabled": "SOURCE_AND_UNIT_TEST_ONLY",
+    "evidence_gate_visible_in_detail": "SOURCE_AND_UNIT_TEST_ONLY",
+    "learning_value_visible_in_detail": "SOURCE_AND_UNIT_TEST_ONLY"
+  },
+  "state_examples": {
+    "executable": "1d.continuous_waypoint_sequence.canonical_nominal:waypoint.centerline_first",
+    "safe_rejection": "2d.head_on_conflict.canonical_nominal:head_on.synchronized_vertical",
+    "baseline": "case_planning_authority"
+  },
+  "console_errors": null,
+  "console_warnings": null,
+  "claim_boundary": [
+    "COMPONENT",
+    "NO_RUNTIME",
+    "NOT_APPLICABLE"
+  ],
+  "visual_recheck_required": true,
+  "passed": false
+}

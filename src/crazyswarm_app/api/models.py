@@ -126,6 +126,10 @@ class SimulationClockRequest(ApiModel):
     battery_percent: float | None = Field(default=None, ge=0.0, le=100.0)
 
 
+class SimulationFleetResetRequest(ApiModel):
+    vehicle_ids: frozenset[Identifier] = Field(min_length=1, max_length=3)
+
+
 class FaultInjectionRequest(ApiModel):
     fault: FaultType
     start_s: float = Field(ge=0.0)

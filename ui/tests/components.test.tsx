@@ -1,12 +1,12 @@
 import axe from "axe-core";
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { deterministicDashboard } from "../app/lib/fixtures";
 import { FixtureGallery } from "../app/components/FixtureGallery";
-import { armActionEnabled, campaignDockModePresentation, ControlCenter, controlActionsEnabled, DeploymentSummary, LowBatterySimulationDialog, missionCompletionNotice, missionIdForRunningReference, missionPreviewHomeBases, MissionPlanReview, ModeBadge, SafetyDialog, simulationBatteryControlEnabled, simulationBatteryStartRisk, Toast, toggleVehicleSelection, TOAST_DURATION_MS, TOAST_FAILURE_DURATION_MS, vehiclesForTargetSelection, withObservationFocus, withVehicleTargetSelection } from "../app/components/ControlCenter";
+import { armActionEnabled, campaignDockModePresentation, campaignMissionFilename, campaignReferencePlan, campaignScenePreview, ControlCenter, controlActionsEnabled, DeploymentSummary, LowBatterySimulationDialog, missionCompletionNotice, missionIdForRunningReference, missionPreviewControlVehicles, missionPreviewHomeBases, missionSceneHomeBases, MissionPlanReview, ModeBadge, SafetyDialog, shouldDisplayHistoricalPath, simulationBatteryControlEnabled, simulationBatteryStartRisk, Toast, toggleVehicleSelection, TOAST_DURATION_MS, TOAST_FAILURE_DURATION_MS, vehiclesForTargetSelection, withObservationFocus, withVehicleTargetSelection } from "../app/components/ControlCenter";
 import { campaignMissionPreview } from "../app/lib/campaign-preview";
 import { formatClockContext } from "../app/components/RoomScene";
-import { FlightReadout, RunFilesControl } from "../app/components/TelemetryDock";
+import { FlightReadout, RunFilesControl, telemetrySample } from "../app/components/TelemetryDock";
 import type { CampaignCaseView, FleetSessionView, MissionPreview } from "../app/lib/models";
 
 describe("operator components", () => {
@@ -27,6 +27,12 @@ describe("operator components", () => {
       actionLabel: "realtime",
       buttonClassName: "",
     });
+  });
+
+  it("uses the runtime Python filename for the active campaign mission", () => {
+    expect(campaignMissionFilename({
+      case_id: "three_drone_multi_conflict",
+    } as CampaignCaseView)).toBe("campaign_three_drone_multi_conflict.py");
   });
 
   it("adapts a campaign plan into the shared mission preview scene", () => {
@@ -79,6 +85,26 @@ describe("operator components", () => {
       "move_relative",
       "land",
     ]);
+    expect(campaignReferencePlan(campaignCase, preview)).toBe(preview);
+    expect(shouldDisplayHistoricalPath(undefined, campaignCase, undefined)).toBe(false);
+    expect(shouldDisplayHistoricalPath(undefined, campaignCase, {
+      run_id: "campaign-run-1",
+      mode: "OPERATOR_OBSERVED_REALTIME",
+      status: "RUNNING",
+    })).toBe(true);
+    expect(shouldDisplayHistoricalPath(preview, undefined, undefined)).toBe(false);
+    expect(shouldDisplayHistoricalPath(preview, undefined, undefined, true)).toBe(true);
+    expect(shouldDisplayHistoricalPath(preview, campaignCase, {
+      run_id: "campaign-run-1",
+      mode: "OPERATOR_OBSERVED_REALTIME",
+      status: "SUCCEEDED",
+    }, true)).toBe(true);
+    expect(campaignScenePreview(preview, {
+      run_id: "campaign-run-1",
+      mode: "OPERATOR_OBSERVED_REALTIME",
+      status: "SUCCEEDED",
+    })).toBeUndefined();
+    expect(campaignScenePreview(preview, undefined)).toBe(preview);
   });
 
   it("dismisses status banners automatically after a few seconds", () => {
@@ -86,7 +112,9 @@ describe("operator components", () => {
     const close = vi.fn();
     const { unmount } = render(<Toast message="Mission succeeded" onClose={close} />);
 
-    expect(screen.getByRole("status")).toHaveTextContent("Mission succeeded");
+    const status = screen.getByRole("status");
+    expect(status).toHaveTextContent("Mission succeeded");
+    expect(status.parentElement).toBe(document.body);
     act(() => vi.advanceTimersByTime(TOAST_DURATION_MS - 1));
     expect(close).not.toHaveBeenCalled();
     act(() => vi.advanceTimersByTime(1));
@@ -354,6 +382,51 @@ describe("operator components", () => {
       number: 1,
       position: preview.vehicles[0]!.start,
     }]);
+    const retainedBases = [{
+      vehicleId: "sim01",
+      number: 1,
+      position: { x: 0.85, y: -0.35, z: 0 },
+    }];
+    expect(missionSceneHomeBases(undefined, retainedBases, undefined, undefined)).toBe(retainedBases);
+    expect(missionSceneHomeBases(preview, retainedBases, undefined, undefined)).toBe(retainedBases);
+  });
+
+  it("limits campaign setup controls to the newly selected mission roster", () => {
+    const alpha = {
+      ...structuredClone(deterministicDashboard.vehicles[0]!),
+      id: "Alpha",
+      name: "Alpha",
+      backendRole: "FAST_SIM" as const,
+      state: "DISCONNECTED",
+    };
+    const staleFromPreviousMission = {
+      ...structuredClone(alpha),
+      id: "Bravo",
+      name: "Bravo",
+    };
+    const preview: MissionPreview = {
+      missionId: "campaign:1d.altitude_transition.canonical_nominal",
+      sourceSha256: "campaign-source",
+      plan: {
+        id: "campaign-plan", sha256: "campaign-plan-hash", safetyCaseSha256: "safety-hash",
+        status: "APPROVED", objective: "Altitude transition", plugins: [], phases: [], routes: [], findings: [],
+      },
+      vehicles: [{
+        roleId: "Alpha",
+        vehicleId: "Alpha",
+        displayName: "Alpha",
+        initialRole: "ACTIVE",
+        home: { x: -1.2, y: 0, z: 0 },
+        start: { x: -1.2, y: 0, z: 0 },
+        existingVehicle: false,
+        backendRole: "FAST_SIM",
+        previewFidelity: "EXACT_ROLE",
+        plannedCommands: [],
+      }],
+    };
+
+    expect(missionPreviewControlVehicles(preview, [alpha, staleFromPreviousMission]))
+      .toEqual([expect.objectContaining({ id: "Alpha", state: "DISCONNECTED" })]);
   });
 
   it("keeps flight actions disabled without API, lease, and armed state", () => {
@@ -552,8 +625,8 @@ describe("operator components", () => {
         model={deterministicDashboard}
         vehicle={vehicle}
         samples={[
-          { t: 1, altitude: 0.2, speed: 0.1, battery: 100, localization: 99 },
-          { t: 2, altitude: 0.3, speed: 0, battery: 99.4, localization: 98 },
+          { t: 1, altitude: 0.2, speed: 0.1, battery: 100, localization: 99, roll: 2, pitch: -3, motorM1: 41, motorM4: 44 },
+          { t: 2, altitude: 0.3, speed: 0, battery: 99.4, localization: 98, roll: 4, pitch: -1, motorM1: 46, motorM4: 49 },
         ]}
         expanded
         onToggle={vi.fn()}
@@ -569,14 +642,61 @@ describe("operator components", () => {
     expect(screen.getByText("Systems").closest("details")).toHaveAttribute("open");
     expect(screen.getByRole("group", { name: "Attitude around all axes" })).toBeVisible();
     expect(screen.getByRole("group", { name: /Acceleration on X Y and Z axes/ })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Attitude" }));
+    fireEvent.click(screen.getByRole("button", { name: "Pitch" }));
+    expect(screen.getByRole("img", { name: /Pitch from -3.0 to -1.0 ° over 1 seconds/ })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Motors" }));
+    fireEvent.click(screen.getByRole("button", { name: "M4" }));
+    expect(screen.getByRole("img", { name: /Motor M4 output from 44 to 49 % over 1 seconds/ })).toBeVisible();
     fireEvent.click(screen.getByText("Evidence"));
     expect(screen.getByText("World volume")).toBeVisible();
     expect(screen.getByText("fixture-run")).toBeVisible();
   });
 
+  it("records attitude, IMU, and every motor in live telemetry history", () => {
+    const vehicle = structuredClone(deterministicDashboard.vehicles[0]!);
+    vehicle.telemetry = {
+      ...vehicle.telemetry!,
+      attitude: { rollRad: Math.PI / 6, pitchRad: -Math.PI / 4, yawRad: Math.PI / 2 },
+      imu: {
+        acceleration: { x: 1, y: -2, z: 3 },
+        angularVelocity: { x: .1, y: -.2, z: .3 },
+        provenance: vehicle.telemetry!.provenance,
+      },
+      motors: {
+        modelId: "crazyflie-6dof",
+        modelVersion: "2.0.0",
+        readings: [
+          { id: "M1", commandPercent: 41, thrustN: .1, currentA: .2 },
+          { id: "M2", commandPercent: 42, thrustN: .1, currentA: .2 },
+          { id: "M3", commandPercent: 43, thrustN: .1, currentA: .2 },
+          { id: "M4", commandPercent: 44, thrustN: .1, currentA: .2 },
+        ],
+      },
+    };
+
+    const sample = telemetrySample(vehicle);
+    expect(sample?.roll).toBeCloseTo(30);
+    expect(sample?.pitch).toBeCloseTo(-45);
+    expect(sample?.yaw).toBeCloseTo(90);
+    expect(sample).toEqual(expect.objectContaining({
+      accelerationX: 1,
+      accelerationY: -2,
+      accelerationZ: 3,
+      angularVelocityX: .1,
+      angularVelocityY: -.2,
+      angularVelocityZ: .3,
+      motorM1: 41,
+      motorM2: 42,
+      motorM3: 43,
+      motorM4: 44,
+    }));
+  });
+
   it("shows one non-expandable CSV download for each mission", () => {
     const loadRunFiles = vi.fn();
-    const props = { onLoad: loadRunFiles };
+    const deleteRunFiles = vi.fn();
+    const props = { onLoad: loadRunFiles, onDelete: deleteRunFiles };
     const { rerender } = render(<RunFilesControl {...props} />);
     const disclosure = screen.getAllByText("Run files")[0].closest("details");
     expect(disclosure).not.toBeNull();
@@ -613,6 +733,10 @@ describe("operator components", () => {
     const missionRow = screen.getByText("Crossing route separation").closest("article");
     expect(missionRow).not.toBeNull();
     expect(missionRow!.querySelector("details")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Delete Crossing route separation run files" }));
+    expect(deleteRunFiles).toHaveBeenCalledWith(expect.objectContaining({
+      missionExecutionId: "execution-complete",
+    }));
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
   });
 
@@ -664,6 +788,10 @@ describe("operator components", () => {
         limitations: ["not 6DOF"],
       });
       if (url.endsWith("/api/v1/twins")) return json([]);
+      if (url.endsWith("/api/v1/simulation/fleet/reset-poses")) return json({
+        vehicle_ids: ["sim01"],
+        reset_scope: ["active_fleet", "pose", "motion", "estimator_state"],
+      });
       if (url.endsWith("/api/v1/simulation/vehicles/sim01/clock")) {
         const body = JSON.parse(String(init?.body)) as { action: string; battery_percent?: number };
         if (body.action === "reset_pose") return json({
@@ -696,8 +824,8 @@ describe("operator components", () => {
     expect(screen.queryByText(/mission parameters/i)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Reposition drone to home" }));
     expect(await screen.findByText("Drone repositioned to configured home")).toBeVisible();
-    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/simulation/vehicles/sim01/clock"), expect.objectContaining({
-      body: JSON.stringify({ action: "reset_pose" }),
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/simulation/fleet/reset-poses"), expect.objectContaining({
+      body: JSON.stringify({ vehicle_ids: ["sim01"] }),
     }));
     fireEvent.click(screen.getByRole("button", { name: "Recharge battery to 100%" }));
     expect(await screen.findByText("Battery set to 100.0%")).toBeVisible();
@@ -715,6 +843,111 @@ describe("operator components", () => {
     fireEvent.click(engineering);
     expect(await screen.findByRole("heading", { name: "Engineering" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Recharge simulation" })).not.toBeInTheDocument();
+  });
+
+  it("keeps the active campaign mission visible and selectable after choosing a Python file", async () => {
+    window.localStorage.removeItem("crazyswarm.campaign-workspace.v1");
+    const json = (value: unknown) => new Response(JSON.stringify(value), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.endsWith("/api/v1/state")) return json({
+        mode: "SIM",
+        selected_vehicle_id: "sim01",
+        configured_flight_volume: null,
+        mission_runs: [],
+        vehicles: [],
+      });
+      if (url.endsWith("/api/v1/mission-files")) return json([{
+        mission_id: "manual-python",
+        mission_version: "manual-sha",
+        name: "Manual mission",
+        description: "manual.py",
+        source_kind: "UPLOADED_PYTHON",
+        source_filename: "manual.py",
+        source_sha256: "manual-sha",
+        package_schema_version: 2,
+        logical_roles: [],
+        planned_commands: [],
+      }]);
+      if (url.endsWith("/api/v1/mission-files/manual-python/preview")) return json({});
+      if (url.endsWith("/api/v1/simulation/world")) return json({
+        schema_version: 1,
+        world: { world_id: "room", width_m: 4, depth_m: 4, height_m: 2.5, obstacles: [] },
+        vehicles: [],
+      });
+      if (url.endsWith("/api/v1/simulation/fidelity")) return json({
+        manifest_id: "mission-kinematics-v1",
+        source_class: "SIMULATED_MODEL",
+        model: "mission kinematics",
+        modeled_outputs: ["position"],
+        omitted_outputs: [],
+        limitations: [],
+      });
+      if (url.endsWith("/api/v1/twins")) return json([]);
+      if (url.endsWith("/api/v1/campaign/cases")) return json({
+        cases: [{
+          case_id: "three_drone_multi_conflict",
+          case_sha256: "campaign-sha",
+          cluster: "GEOMETRIC_CONFLICT_RESOLUTION",
+          family: "simultaneous_center_conflict",
+          variation_name: "wide_priority_200_150_100",
+          purpose: "Qualify a three-drone conflict",
+          behavior_under_test: "Checks conflict resolution",
+          expected_outcome: "All drones land safely",
+          drone_count: 3,
+          environment: "SIMULATION",
+          authorization: "SOFTWARE_SIMULATION_ONLY",
+          implementation_status: "EXECUTABLE",
+          lifecycle: "ACTIVE_DEVELOPMENT",
+          allowed_strategies: ["GROUND_DELAY"],
+          objective_order: ["MISSION_COMPLETION_TIME_S"],
+          expected_decisions: ["GROUND_DELAY"],
+          execution_eligibility: "BOTH",
+          operator_observation_questions: [],
+          difficulty: 5,
+          prerequisites: [],
+          execution: {
+            seed: 42,
+            repetitions: 1,
+            backend_profile_id: "fast-sim-v1",
+            configuration_sha256: "0".repeat(64),
+          },
+        }],
+        hierarchy: {},
+      });
+      if (url.endsWith("/api/v1/campaign/state")) return json({
+        active_case_id: "three_drone_multi_conflict",
+        runs: [],
+        reviews: [],
+      });
+      if (url.endsWith("/api/v1/campaign/active/preview")) return json({});
+      throw new Error(`Unexpected request: ${url}`);
+    });
+
+    render(<ControlCenter />);
+    fireEvent.click(await screen.findByRole("button", { name: "Mission" }));
+    const campaignMission = await screen.findByRole("button", {
+      name: /Three drone multi conflict.*campaign_three_drone_multi_conflict\.py/i,
+    });
+    const simulation = screen.getByRole("button", { name: "Simulation" });
+    const executionSwitch = simulation.closest(".execution-switch");
+    expect(executionSwitch?.nextElementSibling).toContainElement(
+      screen.getByRole("button", { name: /Campaign laboratory/i }),
+    );
+    expect(campaignMission.parentElement?.nextElementSibling).toHaveAttribute("role", "separator");
+    expect(campaignMission).toHaveClass("is-selected");
+
+    const manualMission = screen.getByRole("button", { name: /Manual mission.*manual\.py/i });
+    fireEvent.click(manualMission);
+    await waitFor(() => expect(manualMission).toHaveClass("is-selected"));
+    expect(campaignMission).not.toHaveClass("is-selected");
+
+    fireEvent.click(campaignMission);
+    await waitFor(() => expect(campaignMission).toHaveClass("is-selected"));
+    expect(manualMission).not.toHaveClass("is-selected");
   });
 
   it("applies simulator quick actions to the selected subset or the whole scene", async () => {
@@ -825,7 +1058,7 @@ describe("operator components", () => {
         planned_commands: [],
       })),
     };
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
       const url = String(input);
       if (url.endsWith("/api/v1/state")) return json({
         mode: "SIM",
@@ -871,6 +1104,13 @@ describe("operator components", () => {
         limitations: [],
       });
       if (url.endsWith("/api/v1/twins")) return json([]);
+      if (url.endsWith("/api/v1/simulation/fleet/reset-poses")) {
+        const body = JSON.parse(String(init?.body)) as { vehicle_ids: string[] };
+        return json({
+          vehicle_ids: body.vehicle_ids,
+          reset_scope: ["active_fleet", "pose", "motion", "estimator_state"],
+        });
+      }
       if (previewVehicleIds.some((vehicleId) =>
         url.endsWith(`/api/v1/simulation/vehicles/${vehicleId}/clock`))) return json({});
       throw new Error(`Unexpected request: ${url}`);
@@ -881,20 +1121,21 @@ describe("operator components", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reposition all 3 drones to home" }));
     expect(await screen.findByText("3 drones repositioned to configured home")).toBeVisible();
 
-    const allResetUrls = fetchMock.mock.calls
-      .filter(([, init]) => String(init?.body).includes('"action":"reset_pose"'))
-      .map(([input]) => String(input));
-    expect(previewVehicleIds.every((vehicleId) =>
-      allResetUrls.some((url) => url.includes(`/${vehicleId}/clock`)))).toBe(true);
+    const resetBodies = fetchMock.mock.calls
+      .filter(([input]) => String(input).endsWith("/api/v1/simulation/fleet/reset-poses"))
+      .map(([, init]) => JSON.parse(String(init?.body)) as { vehicle_ids: string[] });
+    expect(resetBodies).toEqual([{ vehicle_ids: previewVehicleIds }]);
 
     fireEvent.click(screen.getByRole("button", { name: "Toggle Multi 2 selection" }));
     fireEvent.click(screen.getByRole("button", { name: "Reposition drone to home" }));
     expect(await screen.findByText("Drone repositioned to configured home")).toBeVisible();
-    const resetUrls = fetchMock.mock.calls
-      .filter(([, init]) => String(init?.body).includes('"action":"reset_pose"'))
-      .map(([input]) => String(input));
-    expect(resetUrls.filter((url) => url.includes("/multi-beta/clock"))).toHaveLength(2);
-    expect(resetUrls).toHaveLength(4);
+    const selectedResetBodies = fetchMock.mock.calls
+      .filter(([input]) => String(input).endsWith("/api/v1/simulation/fleet/reset-poses"))
+      .map(([, init]) => JSON.parse(String(init?.body)) as { vehicle_ids: string[] });
+    expect(selectedResetBodies).toEqual([
+      { vehicle_ids: previewVehicleIds },
+      { vehicle_ids: ["multi-beta"] },
+    ]);
   });
 
   it("auto-stages the selected two-drone mission in the scene", async () => {

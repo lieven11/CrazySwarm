@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "audit_id": "wp52-56-r5-predraft-v1",
+  "design_iteration": "R5_REVISED_DRAFT",
+  "initial_r5_payload_sha256": "904c7a0daabd28f072a814854c3725b37ab84b73bdd28e5fc8b6fe50c6c79ec4",
+  "base_commit": "4bec32a827785f5c25cb32a4f2084ced8045f3b3",
+  "proposal_source": {
+    "path": "missions/campaigns/sim/submissions/case-submissions-v1.yaml",
+    "sha256": "1f0bda6c2cdeee58ff6ad0f592af12736b3b851e499d2c461b98dab227ef8387"
+  },
+  "admission_source": {
+    "path": "missions/campaigns/sim/submissions/admission-records-v1.yaml",
+    "sha256": "f5304c3647fbf22dff34940a6acb34547721ba7c26ab937befb8ff046af8f79d"
+  },
+  "derivation": {
+    "all_proposal_keys": "load the exact proposal_source, concatenate case_id + '/' + submission_id, reject duplicates",
+    "visible_relation_keys": "all_proposal_keys minus collapse_keys",
+    "relation": "use the exact admission_source relation unless relation_overrides contains the key",
+    "comparison_context": "null unless overlap_capacity_context.keys contains the key",
+    "atomic_pair": "null unless synchronized_atomic_pairs contains the key",
+    "validation": "require 54 admission rows, 111 proposal keys, 29 collapse keys, 82 visible relation keys, 9 BASELINE_ONLY rows, 2 RETAIN_EXISTING_ONLY rows, and 5 retained altitude profiles"
+  },
+  "expected_counts": {
+    "admission_rows": 54,
+    "proposal_keys": 111,
+    "collapse_keys": 29,
+    "visible_relation_keys": 82,
+    "overlap_capacity_context_keys": 3,
+    "synchronized_atomic_pairs": 6,
+    "baseline_only_rows": 9,
+    "retain_existing_only_rows": 2,
+    "retained_altitude_profiles": 5
+  },
+  "collapse_keys": [
+    "1d.boundary_constrained_route.canonical_nominal/boundary.route_fidelity",
+    "1d.continuous_waypoint_sequence.canonical_nominal/waypoint.centerline_first",
+    "1d.curved_route.canonical_nominal/curve.centerline_fidelity",
+    "1d.move_return.canonical_nominal/turnaround.reversal_stop_first",
+    "1d.planar_shape_loop.circle/loop.radial_fidelity",
+    "1d.planar_shape_loop.figure_eight/loop.crossover_fidelity",
+    "1d.point_to_point_relocation.canonical_nominal/relocation.minimum_time",
+    "1d.point_to_point_relocation.canonical_nominal/relocation.energy_reserve",
+    "1d.static_multi_goal_sequence.canonical_nominal/goals.shortest_valid_capture",
+    "2d.bottleneck.canonical_nominal/bottleneck.fair_precedence",
+    "2d.constrained_border_height.canonical_nominal/constrained_height.timing_only",
+    "2d.formation_spacing.canonical_nominal/formation.spacing_fidelity",
+    "2d.formation_spacing.canonical_nominal/formation.centroid_smoothness",
+    "2d.head_on_conflict.canonical_nominal/head_on.earliest_safe_release",
+    "2d.leader_follower.canonical_nominal/leader_follower.rigid_offset",
+    "2d.leader_follower.canonical_nominal/leader_follower.elastic_smooth",
+    "2d.merge.canonical_nominal/merge.earliest_precedence",
+    "2d.parallel_routes.canonical_nominal/parallel.phase_locked",
+    "2d.parallel_routes.canonical_nominal/parallel.energy_balanced",
+    "2d.unequal_priority.canonical_nominal/priority.bounded_fairness",
+    "3d.constrained_volume.canonical_nominal/constrained.priority_order",
+    "3d.formation_shape_transform.canonical_nominal/formation.shape_fidelity",
+    "3d.formation_shape_transform.canonical_nominal/formation.centroid_smoothness",
+    "3d.formation_shape_transform.canonical_nominal/formation.energy_balance",
+    "3d.merge.canonical_nominal/merge.fifo_fair",
+    "3d.merge.canonical_nominal/merge.priority_precedence",
+    "3d.simultaneous_center_conflict.joint_schedule_v2/center.global_earliest_schedule",
+    "3d.unequal_priorities.canonical_nominal/priorities.bounded_fairness",
+    "3d.unequal_priorities.canonical_nominal/priorities.minimax_wait"
+  ],
+  "peer_collapse_targets": {
+    "2d.bottleneck.canonical_nominal/bottleneck.fair_precedence": "2d.bottleneck.canonical_nominal/bottleneck.earliest_safe_release",
+    "2d.unequal_priority.canonical_nominal/priority.bounded_fairness": "2d.unequal_priority.canonical_nominal/priority.strict_lexicographic",
+    "3d.constrained_volume.canonical_nominal/constrained.priority_order": "3d.constrained_volume.canonical_nominal/constrained.timing_makespan",
+    "3d.unequal_priorities.canonical_nominal/priorities.bounded_fairness": "3d.unequal_priorities.canonical_nominal/priorities.strict_lexicographic",
+    "3d.unequal_priorities.canonical_nominal/priorities.minimax_wait": "3d.unequal_priorities.canonical_nominal/priorities.strict_lexicographic"
+  },
+  "relation_overrides": {
+    "1d.continuous_waypoint_sequence.canonical_nominal/waypoint.smoothness_first": {
+      "layer": "E",
+      "axis": "CAPABILITY_BINDING",
+      "axis_value": "corner_transition_0_60s_at_0_08m_s",
+      "comparator": "BASELINE_EXECUTION_PROFILE(1d.continuous_waypoint_sequence.canonical_nominal)",
+      "relation": "MIN(DY_CURVATURE),MIN(SP_REFERENCE),MAX(TM_DURATION),PASS(SP_CAPTURE),ZERO(DS_UNINTENDED_STOP_COUNT)"
+    },
+    "1d.curved_route.canonical_nominal/curve.jerk_first": {
+      "layer": "E",
+      "axis": "SCALAR_PARAMETER",
+      "axis_value": "duration_scale_1_30",
+      "comparator": "BASELINE_EXECUTION_PROFILE(1d.curved_route.canonical_nominal)",
+      "relation": "MIN(DY_JERK),MAX(TM_DURATION),PASS(SP_RADIAL),PASS(SP_REFERENCE),PASS(SP_CAPTURE)"
+    },
+    "1d.planar_shape_loop.figure_eight/loop.curvature_continuity": {
+      "layer": "E",
+      "axis": "CAPABILITY_BINDING",
+      "axis_value": "corner_transition_0_60s_at_0_08m_s",
+      "comparator": "BASELINE_EXECUTION_PROFILE(1d.planar_shape_loop.figure_eight)",
+      "relation": "MIN(DY_CURVATURE),MIN(SP_REFERENCE),PASS(SP_CAPTURE),CAT(DS_TOPOLOGY=figure_eight),CAT(DS_LOBE_ORDER=authored)"
+    },
+    "2d.perpendicular_crossing.nominal_equal_priority/crossing.earliest_equal_release": {
+      "comparator": "BASELINE(2d.perpendicular_crossing.nominal_equal_priority,overlap-capacity-v1)",
+      "relation": "CAT(DS_MANEUVER=timing),MIN(SP_REFERENCE),PASS(TM_OVERLAP),PASS(SP_CLEARANCE)"
+    },
+    "3d.simultaneous_center_conflict.joint_schedule_v2/center.earliest_combined": {
+      "comparator": null,
+      "relation": "OPEN(INCONCLUSIVE_MISSING_FEASIBLE_WITNESS)",
+      "required_status": "PLANNED_NOT_EXECUTABLE"
+    },
+    "3d.simultaneous_center_conflict.joint_schedule_v2/center.robust_combined": {
+      "comparator": null,
+      "relation": "ARGMAX_BOUNDED(SP_CLEARANCE),PASS(TM_OVERLAP),SET(DS_ALL_ROLE_COMPLETION={Alpha,Beta,Gamma})"
+    }
+  },
+  "overlap_capacity_context": {
+    "context_id": "overlap-capacity-v1",
+    "canonical_json": "{\"minimum_simultaneous_flight_s\":2.0}",
+    "sha256": "5254a2e98af7599c2d81bdf4457d94f7b44768d267a4a51d374752651b445f63",
+    "keys": [
+      "2d.head_on_conflict.canonical_nominal/head_on.earliest_safe_release",
+      "2d.merge.canonical_nominal/merge.fair_release",
+      "2d.perpendicular_crossing.nominal_equal_priority/crossing.earliest_equal_release"
+    ]
+  },
+  "synchronized_atomic_pairs": [
+    {
+      "pair_id": "head_on.authority",
+      "keys": [
+        "2d.head_on_conflict.canonical_nominal/head_on.synchronized_lateral",
+        "2d.head_on_conflict.canonical_nominal/head_on.synchronized_vertical"
+      ]
+    },
+    {
+      "pair_id": "head_on.objective",
+      "keys": [
+        "2d.head_on_conflict.canonical_nominal/head_on.path_fidelity_combined",
+        "2d.head_on_conflict.canonical_nominal/head_on.robustness_combined"
+      ]
+    },
+    {
+      "pair_id": "merge.authority",
+      "keys": [
+        "2d.merge.canonical_nominal/merge.parallel_lanes",
+        "2d.merge.canonical_nominal/merge.vertical_stack"
+      ]
+    },
+    {
+      "pair_id": "crossing.authority",
+      "keys": [
+        "2d.perpendicular_crossing.nominal_equal_priority/crossing.synchronized_lateral",
+        "2d.perpendicular_crossing.nominal_equal_priority/crossing.synchronized_vertical"
+      ]
+    },
+    {
+      "pair_id": "merge3.authority",
+      "keys": [
+        "3d.merge.canonical_nominal/merge.parallel_capacity",
+        "3d.merge.canonical_nominal/merge.vertical_capacity"
+      ]
+    },
+    {
+      "pair_id": "center.authority",
+      "keys": [
+        "3d.simultaneous_center_conflict.joint_schedule_v2/center.synchronized_lateral",
+        "3d.simultaneous_center_conflict.joint_schedule_v2/center.synchronized_layers"
+      ]
+    }
+  ],
+  "synchronized_pair_fixed_inputs": {
+    "synchronized_route_start_required": true,
+    "maximum_route_start_skew_s": 0.2,
+    "minimum_simultaneous_flight_s": 2.0,
+    "qualification_semantics": "evaluate each pair atomically; qualify both directional relations or retain the pair as PLANNED_NOT_EXECUTABLE with exact independent disposition; no contextual baseline is constructed"
+  },
+  "prefreeze_witnesses": {
+    "1d.continuous_waypoint_sequence.canonical_nominal/waypoint.smoothness_first": {
+      "planning_status": "READY",
+      "baseline_max_curvature_1_m": 14214.724114485505,
+      "subject_max_curvature_1_m": 160.995,
+      "baseline_reference_error_m": 0.05151287712880875,
+      "subject_reference_error_m": 0.0037
+    },
+    "1d.curved_route.canonical_nominal/curve.jerk_first": {
+      "planning_status": "READY",
+      "baseline_duration_s": 16.062993878978638,
+      "subject_duration_s": 20.88189204267223,
+      "baseline_max_jerk_m_s3": 1.9979284112899076,
+      "subject_max_jerk_m_s3": 0.9110964272093369
+    },
+    "1d.planar_shape_loop.figure_eight/loop.curvature_continuity": {
+      "planning_status": "READY",
+      "baseline_max_curvature_1_m": 1050.0568912523079,
+      "subject_max_curvature_1_m": 128.704,
+      "baseline_reference_error_m": 0.07629210532315496,
+      "subject_reference_error_m": 0.0038
+    },
+    "synchronized_pairs": {
+      "claim": "no pair is claimed qualified by this prefreeze audit",
+      "exit": "the implementation either produces two accepted, independently certified peer artifacts and passes both directions atomically, or retains both peers as PLANNED_NOT_EXECUTABLE; missing implementation or timeout is not safe rejection"
+    }
+  },
+  "negative_checks": [
+    "a proposal key outside the exact source fails",
+    "a collapse key missing from the source fails",
+    "a peer-collapse target that is hidden, cross-case, or cross-experiment fails",
+    "an atomic pair with other than two unique same-experiment keys fails",
+    "a synchronized pair using a contextual baseline fails",
+    "a relation metric outside its row metric_ids fails",
+    "a context key outside the exact three-key set fails",
+    "a geometry capability whose output changes under collinear subdivision fails",
+    "budget exhaustion cannot satisfy REJECT"
+  ]
+}

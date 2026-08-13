@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import tomllib
 from pathlib import Path
 from typing import Any, cast
 
@@ -19,7 +20,11 @@ def load_json(relative_path: str) -> dict[str, Any]:
 
 
 def test_documentation_has_exactly_two_current_work_package_ledgers() -> None:
-    ledgers = sorted(path.name for path in (ROOT / "docs/work-packages").glob("*.md"))
+    ledgers = sorted(
+        path.name
+        for path in (ROOT / "docs/work-packages").glob("*.md")
+        if "authoritative ledger" in path.read_text(encoding="utf-8")
+    )
     assert ledgers == ["ACTIVE.md", "COMPLETED.md"]
     assert not (ROOT / "WorkPackets").exists()
     index = (ROOT / "docs/README.md").read_text(encoding="utf-8")
@@ -48,11 +53,17 @@ def test_documentation_has_exactly_two_current_work_package_ledgers() -> None:
     assert (ROOT / "scripts/generate_campaign_catalog.py").is_file()
     active = (ROOT / "docs/work-packages/ACTIVE.md").read_text(encoding="utf-8")
     completed = (ROOT / "docs/work-packages/COMPLETED.md").read_text(encoding="utf-8")
-    assert "NO_ACTIVE_SOFTWARE_PACKAGE" in active
-    assert "WP-01 through WP-34 are closed" in active
-    assert "Active package | None" in active
+    assert "WP-01 through WP-34 remain closed" in active
+    assert "WP-35 through WP-39" in active
+    assert "EXECUTION_SEMANTICS_BEFORE_CASE_COUNT" in active
+    assert "Semantic truth gate and executable-case contract" in active
+    assert "One-drone executable learning curriculum" in active
+    assert "Two-drone executable learning curriculum" in active
+    assert "Three-drone executable learning curriculum" in active
+    assert "Catalog cutover, learning surface, and full qualification" in active
+    assert "47 named Simulation mission families but only six distinct" in active
     assert "NVIDIA/Isaac installation" in active
-    assert "not authorized by the WP-19-through-WP-34 software sequence" in active
+    assert "not authorized by WP-35 through WP-39" in active
     assert "WP-18 — Persistent mission run files" in completed
     assert "WP-19 — Mission-execution evaluator and analysis baseline" in completed
     assert "WP-21 — Goal-region arrival and landing" in completed
@@ -63,6 +74,115 @@ def test_documentation_has_exactly_two_current_work_package_ledgers() -> None:
     assert "WP-26 — Evidence-correct analysis and timing" in completed
     assert "WP-32 — Campaign panel" in completed
     assert "WP-34 — Dynamic goals and online replanning" in completed
+
+
+def test_independent_work_packet_verification_is_project_scoped_and_bounded() -> None:
+    agents_text = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    agents_normalized = " ".join(agents_text.split())
+    assert (
+        "Apply this protocol only when the user explicitly asks to create, structure, "
+        "refine, implement, execute, complete, verify, qualify, or transition one or "
+        "more work packets/work packages."
+    ) in agents_normalized
+    assert (
+        "A mere mention, explanation, status question, ordinary numbered plan, or "
+        "unrelated small task does not activate it."
+    ) in agents_normalized
+    assert (
+        "If the request is design-only, stop after `DESIGN_VERIFIED`; do not "
+        "implement it."
+    ) in agents_normalized
+    assert (
+        "Do not implement a packet without a recorded `DESIGN_VERIFIED` result."
+    ) in agents_normalized
+    assert "Spawn a different fresh `work_packet_verifier` agent." in agents_normalized
+    assert agents_normalized.count("Do not start a third automatic pass.") == 2
+    assert (
+        "If the independent agent, configuration, or concurrency slot is unavailable, "
+        "fail closed as `REVIEW_BLOCKED` or `IMPLEMENTED_UNVERIFIED`"
+    ) in agents_normalized
+    assert (
+        "The `work_packet_verifier` itself is exempt from triggering this protocol "
+        "while reviewing and must not delegate another verifier."
+    ) in agents_normalized
+    assert (
+        "any substantive edit invalidates the verdict."
+    ) in agents_normalized
+    assert "(`REQ-WFL-013` through `REQ-WFL-027`)" in agents_normalized
+
+    verifier_path = ROOT / ".codex/agents/work-packet-verifier.toml"
+    verifier = tomllib.loads(verifier_path.read_text(encoding="utf-8"))
+    assert verifier["name"] == "work_packet_verifier"
+    assert verifier["sandbox_mode"] == "read-only"
+    assert verifier["description"]
+    instructions = " ".join(verifier["developer_instructions"].split())
+    for required in (
+        "Do not edit files, apply fixes, mutate lifecycle state, or broaden the review "
+        "scope.",
+        "Do not spawn, delegate to, or request another verifier.",
+        "You own finding severity and the verdict.",
+        "Return exactly DESIGN_VERIFIED or BLOCKED_WITH_FINDINGS.",
+        "Trace each core claim from its real trigger and production entry point through "
+        "the resulting state or command change to retained observation and an "
+        "independent oracle.",
+        "Require an intended path and a meaningful failure/counterexample",
+        "Return exactly IMPLEMENTATION_VERIFIED or BLOCKED_WITH_FINDINGS.",
+    ):
+        assert required in instructions
+
+    workflow = (ROOT / "docs/project/WORKFLOW_AND_REQUIREMENTS.md").read_text(
+        encoding="utf-8"
+    )
+    requirement_rows = {
+        columns[1].strip(" `"): " ".join(columns[2].split())
+        for line in workflow.splitlines()
+        if line.startswith("| `REQ-WFL-")
+        and len(columns := line.split("|")) >= 4
+    }
+    required_contracts = {
+        "REQ-WFL-013": "only when the operator explicitly asks to create, structure, "
+        "refine, implement, execute, complete, verify, qualify, or transition work "
+        "packets/work packages",
+        "REQ-WFL-014": "retain a delimited, hash-identified packet design containing "
+        "the originating operator request",
+        "REQ-WFL-015": "A fresh read-only verifier owns design finding severity",
+        "REQ-WFL-016": "a different fresh read-only verifier must compare the exact "
+        "implementation payload with the accepted design",
+        "REQ-WFL-017": "trace the real trigger and production entry point through the "
+        "resulting state/command change to a retained observation and an independent "
+        "oracle",
+        "REQ-WFL-018": "Tag claims separately by execution boundary",
+        "REQ-WFL-019": "Keep the repository's canonical packet `Status` separate from "
+        "`Independent verification`",
+        "REQ-WFL-020": "“The dirty diff” is not an identity",
+        "REQ-WFL-021": "Permit one initial review plus at most one recheck per gate",
+        "REQ-WFL-022": "reviewer thread/label, date, exact design and implementation "
+        "identities",
+        "REQ-WFL-023": "The implementer owns the executable test plan for every work packet",
+        "REQ-WFL-024": "Self-authored tests must observe behavior through the "
+        "boundary being claimed",
+        "REQ-WFL-025": "at least its intended path, a meaningful failure or "
+        "rejected-input case, and a generalization or boundary case",
+        "REQ-WFL-026": "run the smallest new test first, then affected component/integration tests",
+        "REQ-WFL-027": "re-audit the implementation against each packet separately",
+    }
+    assert requirement_rows.keys() >= required_contracts.keys()
+    for requirement_id, required_clause in required_contracts.items():
+        assert required_clause in requirement_rows[requirement_id]
+    assert "Independent work-packet verification protocol" in workflow
+    assert "Author-driven iterative work-packet implementation loop" in workflow
+    assert "Learnings from repeated work-packet reviews" in workflow
+
+    ledgers = "\n".join(
+        (ROOT / "docs/work-packages" / name).read_text(encoding="utf-8")
+        for name in ("ACTIVE.md", "COMPLETED.md")
+    )
+    assert (
+        "WP-51 — Independent work-packet verification and truthful qualification"
+        in ledgers
+    )
+    assert "<!-- WP51-IMPLEMENTATION-EVIDENCE-BEGIN -->" in ledgers
+    assert "Fresh-session discovery was not observed" in ledgers
 
 
 def test_canonical_scenario_manifest_freezes_valid_configuration_hashes() -> None:

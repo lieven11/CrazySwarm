@@ -1,0 +1,2248 @@
+{
+  "all_runs_and_oracles_passed": true,
+  "case_count": 31,
+  "claim_boundary": "Deterministic software behavior in isolated Fast Sim. This does not claim physical-flight, live-Isaac, perception, SLAM, or digital-twin qualification.",
+  "qualification_kind": "ISOLATED_FAST_SIM_RUNTIME",
+  "qualification_sha256": "6a8c9d87e1b08d6a86f00693bf4bee9fb6cd3e2bd7863655f047a2af981db378",
+  "requested_mode": "accelerated",
+  "run_count": 31,
+  "runs": [
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "cb762a5b1246cfa2dcb592338de01cb295b3f6414386054341fc13ed06eae930",
+      "artifact_set_sha256": "68b42a88989ce49e09fa9666fe8cb90d919041ec9b94f0dae2d3b7037e7a3e6b",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 4.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 4 of 4 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_z",
+            "campaign_case:goal_sequence"
+          ],
+          "kind": "ALTITUDE_TRANSITION",
+          "observed_value": 4.0,
+          "oracle_id": "altitude-layers",
+          "passed": true,
+          "reason": "Execution crossed 4 of 4 authored altitude levels.",
+          "threshold": 3.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.25,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.250 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        }
+      ],
+      "case_id": "1d.altitude_transition.canonical_nominal",
+      "case_sha256": "1a5690bb4ac98aa63cf7020e40ab8f83fc530bfcdeaf4075cb0ad31d4de1333b",
+      "mission_execution_id": "campaign-run-26f49387e7e7adf54bee",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "bb8627f47d2fed0a36db00b4bd62a274f0bb43a49978ccd3fa4a3287a2576ea6",
+      "review_sha256": "5e8519985b3f94c82de55cf2921379ca6a924965a7eee28d7b7eb42d0909ae87",
+      "run_id": "campaign-run-26f49387e7e7adf54bee",
+      "schedule_sha256": "0694b6b1b824098a54542b647848c7050e25694b214953e45a8b2c8ee4e1d931",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "4f121248d23e520f6793c52fa6765e5e52a6ddf45f9feeccbc0d9862a756b789"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "a3e0d64ff0c54ab1b2e66651f429fb94c6704ebfe44a873426dc95785a9a6102",
+      "artifact_set_sha256": "7ff0d2c1f8fc11f7c47b84cd58f82dcff8f9f6c990a66f4ed3ccd8450a53fd96",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 4.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 4 of 4 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_z",
+            "campaign_case:goal_sequence"
+          ],
+          "kind": "ALTITUDE_TRANSITION",
+          "observed_value": 4.0,
+          "oracle_id": "altitude-layers",
+          "passed": true,
+          "reason": "Execution crossed 4 of 4 authored altitude levels.",
+          "threshold": 3.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.25,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.250 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        }
+      ],
+      "case_id": "1d.altitude_transition.wide",
+      "case_sha256": "c2a7c0950a22c12c7f93fb1b1699fc97e0caa88a5766a937cb79f43694cca6e3",
+      "mission_execution_id": "campaign-run-35f4068d1a284d870ac8",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "a5eed7025d4ed9639c516b4b565a72694cbe521aca3e6eb2e1a2d0b4001a4a1b",
+      "review_sha256": "0ab8d6610eb3bf3bb5f53e4325e53e8b701a06fe8d2de8b3028b759ee877144f",
+      "run_id": "campaign-run-35f4068d1a284d870ac8",
+      "schedule_sha256": "3e13a182d76c1f04c3f06ea6b628158ed85b41eb35e1620694580b6323737f37",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "1fa468c27defe33f998b652dbfd3aed2a31cde7cbed50688075e0b17cc5d51d2"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "7b37fe59aa2bae1688d4e0a993ec731c10c72a892f160999120b32915376de33",
+      "artifact_set_sha256": "e8775c869ab8680e5c4e7dadb705de15c89f28be88dc14eab62f0f9f06d418ea",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 4.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 4 of 4 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.5622255950637913,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.562 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:flight_volume"
+          ],
+          "kind": "BOUNDARY_MARGIN",
+          "observed_value": 0.1006986909510339,
+          "oracle_id": "sampled-boundary-margin",
+          "passed": true,
+          "reason": "Minimum sampled airborne lateral/ceiling margin was 0.101 m.",
+          "threshold": 0.1,
+          "unit": "m"
+        }
+      ],
+      "case_id": "1d.boundary_constrained_route.canonical_nominal",
+      "case_sha256": "d33c452b854ed70a0d594ee68278d6f29952cd3bf6f95a05fba0ed1eda7a6004",
+      "mission_execution_id": "campaign-run-1ed27e3013a64ca7f92f",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "14d6b44cca1c401e07639a1eeb44ad891a5dab155a7c6a93a852be24f04f4f34",
+      "review_sha256": "1ea60c5423646259331753f5148f0852c24be7c7671a2f3140bda593845a6d31",
+      "run_id": "campaign-run-1ed27e3013a64ca7f92f",
+      "schedule_sha256": "8b8220f5eab773571d3853320586a57493909ea754eaa1660d9f97cad68a08f1",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "cd3e34a7a44f5e556d9500f41fa3b002cee9123a1f6ccc8883e144eed70eeb54"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "73d5e04b5498e377e7f8f537e1ba22779a91cb3c07e910d39aaba204b0b7469b",
+      "artifact_set_sha256": "7abc8e9a7f7fb15561b9bcbbdb65bd3fe675b198837333053ef0402f8acac91e",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 5.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 5 of 5 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_plan:selected_candidate.routes",
+            "telemetry.csv:tracking_error"
+          ],
+          "kind": "CURVED_PATH",
+          "observed_value": 5.699366779634094,
+          "oracle_id": "nonlinear-path",
+          "passed": true,
+          "reason": "The executed hash-bound route carries 5.699 rad integrated horizontal turn.",
+          "threshold": 0.1,
+          "unit": "rad"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.7,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.700 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        }
+      ],
+      "case_id": "1d.continuous_waypoint_sequence.canonical_nominal",
+      "case_sha256": "5d087df1dbd703f1f72d7933609b1ecb755412d4a7ff4fb5f8ccd6b262490edd",
+      "mission_execution_id": "campaign-run-9d48fac513e1bd4043ae",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "8435eac760a12c84c487df1435964d3908d77c7ff68942a912390fd315352693",
+      "review_sha256": "fe32378770cd387eb700b3e5ab5db87c6718967db650f3ec234870abaa6af709",
+      "run_id": "campaign-run-9d48fac513e1bd4043ae",
+      "schedule_sha256": "7dcc1278f008963b33fabfc94a47a49425458535b93026ef2554ad128ab632a3",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "51f8ef9380dbefbdd42d4fb897f4a2f39b148965dbed4d17d013d63f72ffdef9"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "8c9a8db7412111de91757210110d81476a3c58e6b99c0b8b2968649d2441da41",
+      "artifact_set_sha256": "f23cbbf81193716ce4198f5ad4ca53e4691762d655d73c65f078fad12d08cea7",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 6.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 6 of 6 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_plan:selected_candidate.routes",
+            "telemetry.csv:tracking_error"
+          ],
+          "kind": "CURVED_PATH",
+          "observed_value": 3.8710271346981995,
+          "oracle_id": "nonlinear-path",
+          "passed": true,
+          "reason": "The executed hash-bound route carries 3.871 rad integrated horizontal turn.",
+          "threshold": 0.1,
+          "unit": "rad"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.9154759474226504,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.915 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        }
+      ],
+      "case_id": "1d.curved_route.canonical_nominal",
+      "case_sha256": "0ced06fe8bede051d7ee8af6e2c54b424131c8e7cf08e00d576a3836b0487438",
+      "mission_execution_id": "campaign-run-d42eb76283d73a91ecbb",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "1b5d95937bcffab46a23d843bf897932ef15cb4c0b70728df763662a84babab7",
+      "review_sha256": "6e078c12580c0463d068e3b4d9bf1853e6031ce9b229bcb9e396768fd9f89b71",
+      "run_id": "campaign-run-d42eb76283d73a91ecbb",
+      "schedule_sha256": "5a602e220a2b4be6f98ab75585311fdd0e8a96851f82da2f07e08cbd483ca5d2",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "7a843984132f3f2faa984273b710f1822048cb58fdd88c98497058b4e3309031"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "e768124c6cbc4aa46f7aaeb0b4583dbb84b4eb6a069d031050ea8f67f0118f11",
+      "artifact_set_sha256": "36efab3bef8b763696996c967b59b596d2c0ae71dc6e49302481be76aea57b8f",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 2.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 2 of 2 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        }
+      ],
+      "case_id": "1d.move_return.canonical_nominal",
+      "case_sha256": "47a33916b1c6a27d415221958daf560018d13644fa234505e1b2fbae90382075",
+      "mission_execution_id": "campaign-run-765b7dc3973256e70043",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "a52e7535cd9ff7a3b8a083a06b149ce1dfc74cf15191ef21400ed5c35763b107",
+      "review_sha256": "e9f9b8cc065d6ee0ceeccdb9848578c76385eec6229d049754324a8a64889f55",
+      "run_id": "campaign-run-765b7dc3973256e70043",
+      "schedule_sha256": "ae0536c3e1139b214b990ba23581a5ad99f4ca7237bfebae2b3303c791094b3b",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "a4f59fc9082f3a3a0e941cb9c8326221f6332f26e4421e6cccb2c09bef7410ca"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "fd01a8a682d5fdcf19d8232e7b59990474f06dd6659a78fa45d614ba4ecaa32b",
+      "artifact_set_sha256": "3719f88844d3f03499cb50a18369a954fec03e18da6cd4376797be444415a887",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 10.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 10 of 10 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:goal_sequence",
+            "telemetry.csv:ordered_capture"
+          ],
+          "kind": "CLOSED_SHAPE",
+          "observed_value": 0.0,
+          "oracle_id": "closed-shape",
+          "passed": true,
+          "reason": "Minimum non-adjacent loop closure error was 0.000 m.",
+          "threshold": 0.1,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 1.9780040444852482,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 1.978 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        }
+      ],
+      "case_id": "1d.planar_shape_loop.circle",
+      "case_sha256": "63e950ef3d00b2f9085f889bac8ecc9bc657c98de2cf7f939f306b399e87b31c",
+      "mission_execution_id": "campaign-run-157b4470301d1332ed3b",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "4d651cf2f72c1ff9ed2323ded89263178c602b6ed17cfc08a31b43b4f7d50e8e",
+      "review_sha256": "f2a140ad3ba9f4aeb4f7ab5a7e4da8d6d3a5fd6d5a7c703a32de4b5cbdf4027b",
+      "run_id": "campaign-run-157b4470301d1332ed3b",
+      "schedule_sha256": "3fc8e22d7c6a2829586e992a59a47f86bd380a50258693faa1fbd634bf2736e6",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "0fbfaafaf597612ca972979d16d41871aea5f73ebf7f72184f33bce3109b803b"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "ec084f6bbb5eed7500c4f59bdfbe4ec2f80c8a4809fc239e6cca12ce0f4e5dca",
+      "artifact_set_sha256": "4e073f310df0a22a4770ba2cec8a5f11362333d88eccd88eb920d0a155ae8a4a",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 10.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 10 of 10 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:goal_sequence",
+            "telemetry.csv:ordered_capture"
+          ],
+          "kind": "CLOSED_SHAPE",
+          "observed_value": 0.0,
+          "oracle_id": "closed-shape",
+          "passed": true,
+          "reason": "Minimum non-adjacent loop closure error was 0.000 m.",
+          "threshold": 0.1,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 1.3892443989449805,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 1.389 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        }
+      ],
+      "case_id": "1d.planar_shape_loop.figure_eight",
+      "case_sha256": "356723fbda7bd5f7ab8c6bdfce027437892e6ffcfafc6395f87e07ba8857e97e",
+      "mission_execution_id": "campaign-run-18db78ffa6943c705771",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "5401e73e8d6b87bafe87664d1c8065bab5643894d65d1e2179aa08cbd0878019",
+      "review_sha256": "11081cb826b08e347d86c84d71c67ab92068c8564a1d342b048306ce85e46bb3",
+      "run_id": "campaign-run-18db78ffa6943c705771",
+      "schedule_sha256": "407f8660daba8eb536bc6d70b3956c4ee636199ba2930327c86d18c28cc007e4",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "ce2f2b6aba8f03c6da3182888f1a77fd5a292f04f45d347daf6b4eed4ac3c51a"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "da6ca2a630badb216546b7c8e4bf598ce7a4f514275805e22defc8317d59b3d3",
+      "artifact_set_sha256": "8380f33cc502bbe80e9a6818349cf34b50863308ee72f90310e6f3bc68a5fb6d",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 10.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 10 of 10 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:goal_sequence",
+            "telemetry.csv:ordered_capture"
+          ],
+          "kind": "CLOSED_SHAPE",
+          "observed_value": 0.0,
+          "oracle_id": "closed-shape",
+          "passed": true,
+          "reason": "Minimum non-adjacent loop closure error was 0.000 m.",
+          "threshold": 0.1,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.0838665984174707,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.084 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        }
+      ],
+      "case_id": "1d.planar_shape_loop.rounded_square",
+      "case_sha256": "cf2eaffc36c3fe70e9cbf16d701d9c655243af9cf6bc7307ca7263112f0a7ff1",
+      "mission_execution_id": "campaign-run-f0c3e3bd8af9873058e4",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "425e427e2cf0e49ec8d397bda54a62458da93493442f9396a54fb50d0f86573b",
+      "review_sha256": "e30505389f444c53c2bfa2f4d9662bc5b26bf9250553ff5d58aa8e9143b4a254",
+      "run_id": "campaign-run-f0c3e3bd8af9873058e4",
+      "schedule_sha256": "6c69a04091bb48ac7d0ba47a923ddac669bd39dcc1d1e65d3bf4a8b6aa467ab2",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "fd0ba6aad9386c1051ccdae4dbf77bb2cf6fb9660b4ae186faad34970b4e433e"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "ba51b2d9cd42ac81c35d354a010e1aa9ecfc92aa2a7ae4f75758f4bcb5d790d2",
+      "artifact_set_sha256": "0152e0c20b304518c1ac37d741757b7c641ca442e8ef036b21bfeb365667a79f",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 1.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 1 of 1 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.6627053911388696,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.663 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        }
+      ],
+      "case_id": "1d.point_to_point_relocation.canonical_nominal",
+      "case_sha256": "9e466ca6bd43e2107aa97fe09520e2f2fc072e37ce4915b7bfd999f0fa314d6c",
+      "mission_execution_id": "campaign-run-e93f44bafbf8de862158",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "34ac2232a8f388de32811f1c37fe96285f9fe29393029eb8fa5e512fa019b754",
+      "review_sha256": "0263ed8f6b5efe17648d47c9e7468d6e0994438abc4e585c7461397be23c0ead",
+      "run_id": "campaign-run-e93f44bafbf8de862158",
+      "schedule_sha256": "a0c65836f9187674f313c6b875f01ae242879c0171956a875585bd6fc212d7fb",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "e1b3723443417765525d46c2224fe4d4f4deb609f2c9026658b9a18201ed075f"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "01c198ff9af3665cf9881b215cd48630ab1b856bbad0da68a0a3faa1cacf6331",
+      "artifact_set_sha256": "fdb1758e80701a56ddb17789e3cae9652c00ceb2a0adb94b9c707591ba450932",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 3.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 3 of 3 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:source_timestamp_s",
+            "campaign_case:dwell_s"
+          ],
+          "kind": "HOLD_DURATION",
+          "observed_value": 0.0,
+          "oracle_id": "declared-hold",
+          "passed": true,
+          "reason": "Maximum declared-hold duration error was 0.000 s.",
+          "threshold": 0.15,
+          "unit": "s"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.05,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.050 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        }
+      ],
+      "case_id": "1d.static_multi_goal_sequence.canonical_nominal",
+      "case_sha256": "7ed3edb32498665c554054f2771420a83162ca67cad25acd54d778348acc2580",
+      "mission_execution_id": "campaign-run-7fbee6bdc6521060f6e0",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "298d8e5967d99036fbaa82ca71411c651affa1eeeb2fad669a68811e88002326",
+      "review_sha256": "6e031685ee29b0be6906efc0541b25db99b7d8f1563d39b1fb45141f35bcbb09",
+      "run_id": "campaign-run-7fbee6bdc6521060f6e0",
+      "schedule_sha256": "b003f6205d69651d7a2361a4e6b01570608a71e8f11c8fd9664c62343e95df67",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "8456fb628ac6bea2d1ceafa771bc28a31358fe9cdfd473bc5cf59c868af9f848"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "b645d5f3eea49122c33b18636b049eb47140db786c2b107f556c668d3ef12ec9",
+      "artifact_set_sha256": "50f75758c9cfd6f1d08149be01904432a7e9de5c10fbe8c13844521ca25d3168",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 1.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 1 of 1 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:source_timestamp_s",
+            "campaign_case:dwell_s"
+          ],
+          "kind": "HOLD_DURATION",
+          "observed_value": 0.009999999999999787,
+          "oracle_id": "declared-hold",
+          "passed": true,
+          "reason": "Maximum declared-hold duration error was 0.010 s.",
+          "threshold": 0.15,
+          "unit": "s"
+        }
+      ],
+      "case_id": "1d.takeoff_hover_land.canonical_nominal",
+      "case_sha256": "6606710c701f0277289b654f7a4cfa188759d0d26fe3b67233bb5e72e72bfc72",
+      "mission_execution_id": "campaign-run-76f0e52c70e44ec090e8",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "98629626d75cb5ba5fe474b7f65c48a41b8b4504378c8b46efcd3677d9ec38e7",
+      "review_sha256": "dbe02e0952cbee223df5ba9b9551a7d288a1fdd79f64830225cee33e5830382f",
+      "run_id": "campaign-run-76f0e52c70e44ec090e8",
+      "schedule_sha256": "7ff3a23494b9f91b47132933e80f0f5aaf762a8886b3865ca6d4357de8864c5a",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "fae890e87c8a508dc79af9f40a9c95b55b9b67e7e244f8478e3d85a5ba1b47ec"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "f126509738f9042b259ff552844d9d79a80d0673316434c4452914599a26794c",
+      "artifact_set_sha256": "caef2ac5d430ea6b08329d97bf62d8267a5fa0f5d4e5e68f7a23f3554ac33553",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 6.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 6 of 6 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.75,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.750 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:aligned_ground_truth"
+          ],
+          "kind": "CONFLICT_RESOLVED",
+          "observed_value": 1.0194847273389873,
+          "oracle_id": "joint-separation",
+          "passed": true,
+          "reason": "Minimum time-aligned truth separation was 1.019 m.",
+          "threshold": 0.8,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:environment_constraints.keep_out_regions"
+          ],
+          "kind": "KEEP_OUT_AVOIDED",
+          "observed_value": 0.0,
+          "oracle_id": "configured-keep-out-avoidance",
+          "passed": true,
+          "reason": "Observed 0 telemetry samples inside configured keep-out regions.",
+          "threshold": 0.0,
+          "unit": "violations"
+        }
+      ],
+      "case_id": "2d.bottleneck.canonical_nominal",
+      "case_sha256": "7a26bbfc46dcae94a341fe84fe8e74b2366f7754aabe8278135534222edad425",
+      "mission_execution_id": "campaign-run-e6df291316e63e017988",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "b74e5e62af4304aa2c7fc0125507ac113f5769d2db6c07ff57d62eb49ce5e657",
+      "review_sha256": "10830aa8c0216f0d9b7bd0afcc7d7197324598b69de6233e74faf66f2ec0c52a",
+      "run_id": "campaign-run-e6df291316e63e017988",
+      "schedule_sha256": "e49f61e9b8b1a30da2f494fc82a1dfa6d13fdcb6443b4a5b0cfd4761f19c8493",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "32fbd41736dd4b97b97ed5ddec7fbcee72b74c8118a3e648295697458ad81751"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "4ae373223f3f15d03b20ef8ca2cab84794ac3292c1b1d1f640134c3fd2542cbe",
+      "artifact_set_sha256": "d1c5dbd17f85c73843066f41145bd1bd72a73b013318ef39e7955f98b80b985b",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 2.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 2 of 2 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.8,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.800 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:aligned_ground_truth"
+          ],
+          "kind": "CONFLICT_RESOLVED",
+          "observed_value": 1.1814682589473406,
+          "oracle_id": "joint-separation",
+          "passed": true,
+          "reason": "Minimum time-aligned truth separation was 1.181 m.",
+          "threshold": 0.8,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:hard_constraints.vertical_layers_allowed",
+            "campaign_plan:selected_candidate.strategy"
+          ],
+          "kind": "CONSTRAINT_ENFORCED",
+          "observed_value": true,
+          "oracle_id": "vertical-constraint-enforced",
+          "passed": true,
+          "reason": "Vertical layers were forbidden and the selected strategy remained non-vertical.",
+          "threshold": 1.0,
+          "unit": "boolean"
+        }
+      ],
+      "case_id": "2d.constrained_border_height.canonical_nominal",
+      "case_sha256": "1bc4d919712807793b6944503eb09360dd91375476fe4fb6938fd24e940b7672",
+      "mission_execution_id": "campaign-run-c9a985e124d7e1e300e3",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "5d570b8e61a4dc4e388d9746bbc7bb52af1cae548a966915a23e7d3934d9869d",
+      "review_sha256": "4abec9957f3c94c848094d0a50dd52ce8a6f23487b85b7f48ecbc5e4b7c7c738",
+      "run_id": "campaign-run-c9a985e124d7e1e300e3",
+      "schedule_sha256": "36f721c958e21978ba3ebb9440a38074df89c6d6701a76fc1dfccd520d6bc750",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "bd602fe9748abd56e0925ec4a776fc72f78d803e8b2fb51761d87113022741ab"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "fc650a7e27f5c5d6c6d4a8e47f355238dbf7a1564fa7c95ead9767c4aa68ea20",
+      "artifact_set_sha256": "0f5c79fed1143ab0e89e32fcefeffcfff7af3a371d19dd1d30828819d4481a23",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 8.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 8 of 8 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_plan:selected_candidate.routes",
+            "telemetry.csv:tracking_error"
+          ],
+          "kind": "CURVED_PATH",
+          "observed_value": 1.8733245406049512,
+          "oracle_id": "nonlinear-path",
+          "passed": true,
+          "reason": "The executed hash-bound route carries 1.873 rad integrated horizontal turn.",
+          "threshold": 0.1,
+          "unit": "rad"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.5298221281347035,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.530 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "campaign_plan:formation_admission",
+            "telemetry.csv:tracking_error"
+          ],
+          "kind": "FORMATION_ERROR",
+          "observed_value": 0.03512718088552176,
+          "oracle_id": "formation-error",
+          "passed": true,
+          "reason": "Maximum role tracking error within the admitted formation was 0.035 m.",
+          "threshold": 0.18,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:source_timeline"
+          ],
+          "kind": "MINIMUM_FLIGHT_OVERLAP",
+          "observed_value": 23.46980443875393,
+          "oracle_id": "formation-overlap",
+          "passed": true,
+          "reason": "Observed simultaneous route-flight overlap was 23.470 s.",
+          "threshold": 6.0,
+          "unit": "s"
+        }
+      ],
+      "case_id": "2d.formation_spacing.canonical_nominal",
+      "case_sha256": "a3c9b793ce76a8d16f4426b76dd0ea2d271c558736529b081ca9aa13521e4c81",
+      "mission_execution_id": "campaign-run-ec9ce95f1594057161ec",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "78f690341263042b995b949bdb2f93052b3d29f478dee9cdb4d3c86a0de6b537",
+      "review_sha256": "1129f47ad3bce61118510d675141c6c8897a7052f62b48c93813b69bc0832a49",
+      "run_id": "campaign-run-ec9ce95f1594057161ec",
+      "schedule_sha256": "9a2c6e0888ee795125aeffb4e27d46dc51dd758aa6d148e480fcbd89e4aa0015",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "5de0c9da00d88bcd1ad379e2fa1e8f807e7c45758109073bd5f415d8a13aea9f"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "058e01eedb1109b0cb485d2d7fd18ef8aa3c31089634b4162ddb66c8fea49387",
+      "artifact_set_sha256": "b03a8ea8624016810276327256e574ad8a20b503312f2f767c99b8717ea7eea5",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 4.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 4 of 4 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.8,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.800 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:aligned_ground_truth"
+          ],
+          "kind": "CONFLICT_RESOLVED",
+          "observed_value": 0.9186246527571733,
+          "oracle_id": "joint-separation",
+          "passed": true,
+          "reason": "Minimum time-aligned truth separation was 0.919 m.",
+          "threshold": 0.8,
+          "unit": "m"
+        }
+      ],
+      "case_id": "2d.head_on_conflict.canonical_nominal",
+      "case_sha256": "3099fdec3eafd86551d81204af3dcaa93a9ae557ac96537364bef079067e3cd7",
+      "mission_execution_id": "campaign-run-68607b0bf007dbb6acdf",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "04177386ddcc639c09889704dc0fe8e47f718d1a580cc608f78bb9a34ebc9247",
+      "review_sha256": "6bd979fef0aad819a3a825406b21ff2caeb801697c6837bfc9b9e571ddef18c3",
+      "run_id": "campaign-run-68607b0bf007dbb6acdf",
+      "schedule_sha256": "5815d6b36796258620db4519b4ff0c8a50d255a407029a09cf4de1711d3cd094",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "9dc3794851416093db05e34cca2f3c35b84e4390a3e5ba17fed9c31f5e57fec3"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "dbb5121eab3f5de0f922538a9f0bfee6f786fbfb132d1dba8895836d249a4e5b",
+      "artifact_set_sha256": "e039b865ddd0563244670066462d6f7b2c49c7fae3716fa360aac5edefb8a4b8",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 12.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 12 of 12 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_plan:selected_candidate.routes",
+            "telemetry.csv:tracking_error"
+          ],
+          "kind": "CURVED_PATH",
+          "observed_value": 3.8710271346981995,
+          "oracle_id": "nonlinear-path",
+          "passed": true,
+          "reason": "The executed hash-bound route carries 3.871 rad integrated horizontal turn.",
+          "threshold": 0.1,
+          "unit": "rad"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.9154759474226504,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.915 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "campaign_plan:formation_admission",
+            "telemetry.csv:tracking_error"
+          ],
+          "kind": "FORMATION_ERROR",
+          "observed_value": 0.03675826633887034,
+          "oracle_id": "formation-error",
+          "passed": true,
+          "reason": "Maximum role tracking error within the admitted formation was 0.037 m.",
+          "threshold": 0.18,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:source_timeline"
+          ],
+          "kind": "MINIMUM_FLIGHT_OVERLAP",
+          "observed_value": 32.8345705812049,
+          "oracle_id": "formation-overlap",
+          "passed": true,
+          "reason": "Observed simultaneous route-flight overlap was 32.835 s.",
+          "threshold": 6.0,
+          "unit": "s"
+        }
+      ],
+      "case_id": "2d.leader_follower.canonical_nominal",
+      "case_sha256": "403b16e2fde356f2625315a64d92bcc59d5723493aadc655af6cff592deff8c0",
+      "mission_execution_id": "campaign-run-0c32817ca9b28d55f0dd",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "2c8a89c57f3edc4fe07d7d55f3977716dc04c38d6660c8632a32a97b95793e95",
+      "review_sha256": "f35766b87cca786a0e7e6b9edb61b1a7cd3074ab99abb90ed3637cc90df1dfdd",
+      "run_id": "campaign-run-0c32817ca9b28d55f0dd",
+      "schedule_sha256": "fbacb0a1f2c9322dc85a72b2081e817ad9649f4c1aa9a02386c3628d85411aed",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "063301d3c406d6b230e88393ab44c4658fa3096ad31b4eb2302f3d69469fb017"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "fa6fda650359313e4e8f3ea24c5d80d965985ac48f37146d92566f8af6bbaf10",
+      "artifact_set_sha256": "89b20cd69981dfc342e69eaaec7719e562886aa9cdd37a6afc591aa3d5a62793",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 6.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 6 of 6 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.7613402542968153,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.761 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:aligned_ground_truth"
+          ],
+          "kind": "CONFLICT_RESOLVED",
+          "observed_value": 0.8999074777942969,
+          "oracle_id": "joint-separation",
+          "passed": true,
+          "reason": "Minimum time-aligned truth separation was 0.900 m.",
+          "threshold": 0.8,
+          "unit": "m"
+        }
+      ],
+      "case_id": "2d.merge.canonical_nominal",
+      "case_sha256": "70b346469dac4fa40f99da5383cfac4f96d59a0f6d48015b9f548d341ec4e10c",
+      "mission_execution_id": "campaign-run-56553246541abbf614c0",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "1202f801c21b6d4c4e1f5e42be5a9f6b657594452082c64c431822636dca1e12",
+      "review_sha256": "11c3480903e6d283ec55be5c05c1c6b1f9673b0dd110664b7a2b0fc29584916c",
+      "run_id": "campaign-run-56553246541abbf614c0",
+      "schedule_sha256": "477dacd35fb67a67c94ae57b5e2fbfe5ca6f187267ab1939366a22c014a84e34",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "05303f240334253b95376bb581f76df1ccf45fb081fa4e829054c9c8cef31b80"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "9c916912b00e4ef64844b453385ac5064dd3500134daf544fa1d8080b12f36e3",
+      "artifact_set_sha256": "3f69cbd59a247980971902d2925c971223259b2ea92b8e1661876c2f3ffb9a6b",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 2.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 2 of 2 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.8,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.800 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:aligned_ground_truth"
+          ],
+          "kind": "CONFLICT_RESOLVED",
+          "observed_value": 1.1822917978425072,
+          "oracle_id": "joint-separation",
+          "passed": true,
+          "reason": "Minimum time-aligned truth separation was 1.182 m.",
+          "threshold": 0.8,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "campaign_schedule:roles.energy.airborne_hover_s"
+          ],
+          "kind": "NO_AIRBORNE_HOLD",
+          "observed_value": 0.0,
+          "oracle_id": "zero-airborne-hold",
+          "passed": true,
+          "reason": "The retained schedule assigned 0.000 s airborne hold.",
+          "threshold": 0.0,
+          "unit": "s"
+        }
+      ],
+      "case_id": "2d.no_hover_crossing.canonical_nominal",
+      "case_sha256": "d5c0d301e81351bace32b21f08981641dc6288e6607385c7ff1f9e7c89ce1248",
+      "mission_execution_id": "campaign-run-e78ef3a7cff071061075",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "19e8597c6658e9eeedf13a21b5c9d82e79d1f0ec8347e4137485fdb3a24f0fc7",
+      "review_sha256": "064d20afdd3b75244f6bf0e658fda0b795f6b2a2f6b3510e638e58417c2b15db",
+      "run_id": "campaign-run-e78ef3a7cff071061075",
+      "schedule_sha256": "88141c39c02f11d74a3a32968370cd8857082351763999c5cd0460464cfb3e19",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "91b56070fcbff957a06ddaa4b29091b4fddc2878d0b9a7891daa8dbb329dddfd"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "e325c8e3fbc6fc0090b947018a59b26c4e8874dd1fc9281510cd36b7b8cfe573",
+      "artifact_set_sha256": "ace0232f9beed64a098f5d339575c9a404e209f9fe53d72e518aab72ba3dbc69",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 2.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 2 of 2 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.8,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.800 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:route_start_source_s"
+          ],
+          "kind": "SYNCHRONIZED_ROUTE_START",
+          "observed_value": 0.0,
+          "oracle_id": "synchronized-start",
+          "passed": true,
+          "reason": "Observed fleet route-start skew was 0.000 s.",
+          "threshold": 0.2,
+          "unit": "s"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:source_timeline"
+          ],
+          "kind": "MINIMUM_FLIGHT_OVERLAP",
+          "observed_value": 10.52999999999997,
+          "oracle_id": "overlapping-flight",
+          "passed": true,
+          "reason": "Observed simultaneous route-flight overlap was 10.530 s.",
+          "threshold": 8.0,
+          "unit": "s"
+        }
+      ],
+      "case_id": "2d.parallel_routes.canonical_nominal",
+      "case_sha256": "7e20328d443d10bd4539f6230ae35e9daa15394b43319c2ac61fd4936c7fcdbc",
+      "mission_execution_id": "campaign-run-a04c5f36ce6d26c77ba9",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "cb5b834e7a16e854f19d701a494217d21b7611c16880e555f87c575ec9318101",
+      "review_sha256": "8eb9856e4670592daf514bc8a5f995743bd25d66d659c5558a8cec63fa1efcb1",
+      "run_id": "campaign-run-a04c5f36ce6d26c77ba9",
+      "schedule_sha256": "a1fa5122965fc7f86109e827257fc518e95d928b6ecba2c05691e7831c8c1e2a",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "3036076e42d397a37e633a238ae9562a4c222ca166b54dcbf4fb7cee740cb803"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "351180572fb29f2d24239b74038a74efebe85a758691aab92fa8f377bac5b38d",
+      "artifact_set_sha256": "287706c49f97d666028bd2bd2b417fc429734acf879eb7e0fb00f99e8f3a9506",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 2.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 2 of 2 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.8,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.800 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:aligned_ground_truth"
+          ],
+          "kind": "CONFLICT_RESOLVED",
+          "observed_value": 1.199821619175579,
+          "oracle_id": "joint-separation",
+          "passed": true,
+          "reason": "Minimum time-aligned truth separation was 1.200 m.",
+          "threshold": 0.8,
+          "unit": "m"
+        }
+      ],
+      "case_id": "2d.perpendicular_crossing.nominal_equal_priority",
+      "case_sha256": "0d6c6fb34dca0aa109edfffce08b83fd3a519987fdcb3062b9139e1baa081730",
+      "mission_execution_id": "campaign-run-7c144d1d11e154fc6eb3",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "28c296c64c450d862139ab85e3f9a66ea92cabfed085968f2279f3282192e1c0",
+      "review_sha256": "3a40961612c57dfd0665fc3dc894a4e76f25f4ae5a28715c82980b4125353083",
+      "run_id": "campaign-run-7c144d1d11e154fc6eb3",
+      "schedule_sha256": "62a72ede9aff376e8f54646a9f6217905fc7f514f7fa0caac8d8508fe2c1aafd",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "768f9a3aca1adc8f9da8a603277b953eafb33ef6a32e2cdb7320f0ccdc4d9918"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "fc71c789ae1a39b8136af7001163a47cc4d502c89dba5df4c080820ca1d4c793",
+      "artifact_set_sha256": "9b92c39f9bed7511afe128b0097f3fbd0bec611cae939ee04f65660e64df61aa",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 2.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 2 of 2 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.8,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.800 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:aligned_ground_truth"
+          ],
+          "kind": "CONFLICT_RESOLVED",
+          "observed_value": 1.199821619175579,
+          "oracle_id": "joint-separation",
+          "passed": true,
+          "reason": "Minimum time-aligned truth separation was 1.200 m.",
+          "threshold": 0.8,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:drones.priority",
+            "campaign_plan:selected_candidate.routes.route_start_s"
+          ],
+          "kind": "PRIORITY_PRECEDENCE",
+          "observed_value": 4.0,
+          "oracle_id": "priority-precedence",
+          "passed": true,
+          "reason": "Minimum source-time precedence gap from higher to lower priority was 4.000 s.",
+          "threshold": 0.1,
+          "unit": "s"
+        }
+      ],
+      "case_id": "2d.unequal_priority.canonical_nominal",
+      "case_sha256": "0e4b2b5b0a71e2eda70209997b8531589c263e4bbaac5fe808243041f1af5997",
+      "mission_execution_id": "campaign-run-689db3ebcceb26f8ed18",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "5efea7b5a1e8cf06d5e021f47896061b3928e43f132e7ffedd99bf2d476abbbe",
+      "review_sha256": "3e9d0b916beba3871afd65e1359acb4fb4d3ba290a05f54df5f733b6f77221cd",
+      "run_id": "campaign-run-689db3ebcceb26f8ed18",
+      "schedule_sha256": "1621077eb28920e71303fdd7187310b03b1d512b1a30a2d1b827a3efe193db27",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "875a0ce1706bb761a6fae57937ea20aa88342f905c9b45cb4e08eb9288340599"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "22dc0b6503b77490f5d3ff729fb166b5159327c0fba3433c51d61652686abbb1",
+      "artifact_set_sha256": "c7ac1eb69ab434f5e10ac8d8a46f70a9ac2d3334c2bc3af6891ec0e02aa6954e",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 9.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 9 of 9 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_z",
+            "campaign_case:goal_sequence"
+          ],
+          "kind": "ALTITUDE_TRANSITION",
+          "observed_value": 4.0,
+          "oracle_id": "altitude-layers",
+          "passed": true,
+          "reason": "Execution crossed 4 of 4 authored altitude levels.",
+          "threshold": 3.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.8,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.800 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:aligned_ground_truth"
+          ],
+          "kind": "CONFLICT_RESOLVED",
+          "observed_value": 1.2160069720049866,
+          "oracle_id": "joint-separation",
+          "passed": true,
+          "reason": "Minimum time-aligned truth separation was 1.216 m.",
+          "threshold": 0.8,
+          "unit": "m"
+        }
+      ],
+      "case_id": "3d.alternative_layers_detours.canonical_nominal",
+      "case_sha256": "c019057796345c7587fd5112fab191ec35b285e519de594da58a9bf11a2de408",
+      "mission_execution_id": "campaign-run-1938dfeb235cd0d51fb7",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "3c50c1343314755055f3496c4debf84ea8d3482006c5338015d171816d60f62a",
+      "review_sha256": "6e9ba81cd1d949ef18deaa03439d3c8eb518fe3056be007cc3cd07c53b708048",
+      "run_id": "campaign-run-1938dfeb235cd0d51fb7",
+      "schedule_sha256": "b3f6fc86a280abfe99b5b49cf92dd8a215f5e2a378b3699ec7f5f3ec211c9fce",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "973428ef7ae1468737d1cbd1898c225911c109200b26b3ece8de0e194272bf15"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "bedcbf7aaf52814b8c7f68a3f13c6229cabc7e72217c732fdb377dafffbcd761",
+      "artifact_set_sha256": "2edf275bb2faf310d3c13b670a598998ea18693397a7a9181adc486900475733",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 9.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 9 of 9 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.8,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.800 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:aligned_ground_truth"
+          ],
+          "kind": "CONFLICT_RESOLVED",
+          "observed_value": 1.0179083054258153,
+          "oracle_id": "joint-separation",
+          "passed": true,
+          "reason": "Minimum time-aligned truth separation was 1.018 m.",
+          "threshold": 0.8,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:environment_constraints.keep_out_regions"
+          ],
+          "kind": "KEEP_OUT_AVOIDED",
+          "observed_value": 0.0,
+          "oracle_id": "configured-keep-out-avoidance",
+          "passed": true,
+          "reason": "Observed 0 telemetry samples inside configured keep-out regions.",
+          "threshold": 0.0,
+          "unit": "violations"
+        }
+      ],
+      "case_id": "3d.bottleneck.canonical_nominal",
+      "case_sha256": "86b842d04b715046d9fd647266d2d297b284e65eb83bdd2979011e02164cdc4e",
+      "mission_execution_id": "campaign-run-bb304d9e26b2b0ff7f06",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "d40d7d44e8650bdc5468043518ac672c5aeb19440bc554a2b1122485150e54d3",
+      "review_sha256": "5712e98facc90bb78323dfe169f3358a879103b98bb4da296539dbe4dbcf1ae0",
+      "run_id": "campaign-run-bb304d9e26b2b0ff7f06",
+      "schedule_sha256": "16add3a9454b08b5eccd8a7879bf43b64638a1234a576a658db1e7035fd8b979",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "84ad8d3ec9b847802d8a66cc731aa853946eac9d8472fa53e26d598733a6b6c0"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "f6ebba10498530360d62878d20040539d9b4dcd6f154f0530f03c35f01ceb3c0",
+      "artifact_set_sha256": "f6c05ede27ec3883799842b6b5606693a80af2cca7d97bb20571d50fff412f0d",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 3.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 3 of 3 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.8,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.800 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:aligned_ground_truth"
+          ],
+          "kind": "CONFLICT_RESOLVED",
+          "observed_value": 1.2162918453958724,
+          "oracle_id": "joint-separation",
+          "passed": true,
+          "reason": "Minimum time-aligned truth separation was 1.216 m.",
+          "threshold": 0.8,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:hard_constraints.vertical_layers_allowed",
+            "campaign_plan:selected_candidate.strategy"
+          ],
+          "kind": "CONSTRAINT_ENFORCED",
+          "observed_value": true,
+          "oracle_id": "vertical-constraint-enforced",
+          "passed": true,
+          "reason": "Vertical layers were forbidden and the selected strategy remained non-vertical.",
+          "threshold": 1.0,
+          "unit": "boolean"
+        }
+      ],
+      "case_id": "3d.constrained_volume.canonical_nominal",
+      "case_sha256": "72d88991a23235143d387ef8cdbb6ac2f4ed97b944929eaa0c538a92c0596b17",
+      "mission_execution_id": "campaign-run-0be88030b7956d9c0a90",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "f5168b6763a52d878d667ad895eb76e05450b10a14bb1449380c76062817dcf0",
+      "review_sha256": "0a48997e391fac92df626f5aa25a2cbdcbd9cae1d2f5d0d79a46482022942b5e",
+      "run_id": "campaign-run-0be88030b7956d9c0a90",
+      "schedule_sha256": "97501a99e0df3f8fee2a1dbaf125d94639cdc2054a32b1db23a6608c26fc63e1",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "fa2491db1702269dc61c7ef6633b28e4f6df7e3ca3f2b03d98b56e2b43364c9c"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "930374a0fa39f0457464fa5dbb288da42ebd76a960d3b3efa6a5b793bfd8d3a0",
+      "artifact_set_sha256": "116fe08362bf9b49a7a2eabf98c341f6a372bc5a796025f46b3a89b9d3067206",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 15.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 15 of 15 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_z",
+            "campaign_case:goal_sequence"
+          ],
+          "kind": "ALTITUDE_TRANSITION",
+          "observed_value": 5.0,
+          "oracle_id": "altitude-layers",
+          "passed": true,
+          "reason": "Execution crossed 5 of 5 authored altitude levels.",
+          "threshold": 3.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_plan:selected_candidate.routes",
+            "telemetry.csv:tracking_error"
+          ],
+          "kind": "CURVED_PATH",
+          "observed_value": 4.395745355073858,
+          "oracle_id": "nonlinear-path",
+          "passed": true,
+          "reason": "The executed hash-bound route carries 4.396 rad integrated horizontal turn.",
+          "threshold": 0.1,
+          "unit": "rad"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 1.8963649437806005,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 1.896 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "campaign_plan:formation_admission",
+            "telemetry.csv:tracking_error"
+          ],
+          "kind": "FORMATION_ERROR",
+          "observed_value": 0.03465224359002365,
+          "oracle_id": "transform-error",
+          "passed": true,
+          "reason": "Maximum role tracking error within the admitted formation was 0.035 m.",
+          "threshold": 0.3,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:source_timeline"
+          ],
+          "kind": "MINIMUM_FLIGHT_OVERLAP",
+          "observed_value": 31.06631189495219,
+          "oracle_id": "transform-overlap",
+          "passed": true,
+          "reason": "Observed simultaneous route-flight overlap was 31.066 s.",
+          "threshold": 8.0,
+          "unit": "s"
+        }
+      ],
+      "case_id": "3d.formation_shape_transform.canonical_nominal",
+      "case_sha256": "7c816dddcdc55264c1a82c4b13a1f84130512bb27d641ec32b8598690578b609",
+      "mission_execution_id": "campaign-run-f6e5bfaeaa43322b5ae3",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "dc3bd4502fd094cfeb621ee7b720138926d024590caa6d657ae7ba9d8d8cfa07",
+      "review_sha256": "5f4793096b1d44120bf7e181a00f19e7994a3b81a538c75f511f72e8b2696fdc",
+      "run_id": "campaign-run-f6e5bfaeaa43322b5ae3",
+      "schedule_sha256": "1a28abfc4865bd1e3b5ab48495c46decf8df571079a95ed0d4286b61852b0e2f",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "1c1cbeefd4cc242f7262371b0438c5c05b66e9ab4f06b0a63cc2a7096fdbef13"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "871e0f8b8502e2b84bc7e268cc2c98a4a3bcbf485650fb9a3e724f28d5c7250f",
+      "artifact_set_sha256": "20f0bf7ac8679011be359eaa4f8bd524ce1a1cc881601d876d978a0aae9f67aa",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 9.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 9 of 9 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.8499999999999996,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.850 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:aligned_ground_truth"
+          ],
+          "kind": "CONFLICT_RESOLVED",
+          "observed_value": 1.0012692449822294,
+          "oracle_id": "joint-separation",
+          "passed": true,
+          "reason": "Minimum time-aligned truth separation was 1.001 m.",
+          "threshold": 0.8,
+          "unit": "m"
+        }
+      ],
+      "case_id": "3d.merge.canonical_nominal",
+      "case_sha256": "7cef344f644ea7737ecb3bc30dcafc19e863db57c2d4c8b8f306c516de249e0a",
+      "mission_execution_id": "campaign-run-26a9b57f95005324f75a",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "179596d4c2d4d02f45725f0ec2dd1a043752a79f629ff5515646441c722aecb2",
+      "review_sha256": "93479d45e0c19e3ae03efb94c2cb2fbfacd8d4f7052303b8b3aaaf51917a1003",
+      "run_id": "campaign-run-26a9b57f95005324f75a",
+      "schedule_sha256": "6d337d1eb5f5f9debcddb8a1c48edd6a38f4be534c455ebf6e885fce1e1bf59b",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "2b0b983d7f800e7176eb566bd8ffe1de998e56a18886914bf8326e139fc40247"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "1271ea870613c9452255d5f993581dfe47b331ba899d872d12e9f9606574f8b9",
+      "artifact_set_sha256": "8690d2d2dfd0cd5396ba2663750840ef3573ebc2f10ce4a545a56267b824bd0a",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 3.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 3 of 3 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.8,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.800 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:aligned_ground_truth"
+          ],
+          "kind": "CONFLICT_RESOLVED",
+          "observed_value": 1.2162918453958724,
+          "oracle_id": "joint-separation",
+          "passed": true,
+          "reason": "Minimum time-aligned truth separation was 1.216 m.",
+          "threshold": 0.8,
+          "unit": "m"
+        }
+      ],
+      "case_id": "3d.simultaneous_center_conflict.joint_schedule_v2",
+      "case_sha256": "0af5b0e3f217d5ffe67fe8ddc396c095e3978509e10463dc0b5a109c5ee07374",
+      "mission_execution_id": "campaign-run-7ca9bbad25b367ce19d0",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "2d83a79d7c282e0e3808b172e1db5152e46587ed1fa3ff93217f6c79d074089e",
+      "review_sha256": "9ef9015c79a25015a2cfd5cf32f594c8b9b6fdc23333b56a86e48053fcd3e342",
+      "run_id": "campaign-run-7ca9bbad25b367ce19d0",
+      "schedule_sha256": "9eaf42ca6264f038c06da547b3927048c50701d0c6e2f15c7df9e1d04bebc169",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "dc033d8b841dcf0b9cc64a40dd6e2fad033b4de7a602528ce30c47febec1c9fc"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "3042cc133291d832e014fcc71cf38ef8d3905dcd797a79608c9694ea328392a6",
+      "artifact_set_sha256": "ad6097cd557a0bdbe92d48313b42b8e8d2343006a1483b846a6925f5a9482498",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 4.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 4 of 4 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 0.640312423743285,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 0.640 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:aligned_ground_truth"
+          ],
+          "kind": "CONFLICT_RESOLVED",
+          "observed_value": 1.005251649460189,
+          "oracle_id": "joint-separation",
+          "passed": true,
+          "reason": "Minimum time-aligned truth separation was 1.005 m.",
+          "threshold": 0.8,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "campaign_plan:selected_candidate.routes.ground_wait_s",
+            "campaign_case:selective_conflict_roles"
+          ],
+          "kind": "UNAFFECTED_ROLE_NONINTERFERENCE",
+          "observed_value": 0.0,
+          "oracle_id": "unaffected-gamma-delay",
+          "passed": true,
+          "reason": "Maximum planner-imposed ground delay for unaffected roles was 0.000 s.",
+          "threshold": 0.2,
+          "unit": "s"
+        }
+      ],
+      "case_id": "3d.single_pair_conflict.canonical_nominal",
+      "case_sha256": "c34f1d42427b323ba74fd6bda44d725c6a2867de2bd7d76c72509d93e82e6bc7",
+      "mission_execution_id": "campaign-run-0b1a19f5560ae5c37b73",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "1f13d3c016609151e47e44b58bed80da47cc643dfe3a0f567a5f40725203695d",
+      "review_sha256": "8c532c0cc1c296098951ceddb30f3f318cb7ca61170849accf9ef26d1aa79276",
+      "run_id": "campaign-run-0b1a19f5560ae5c37b73",
+      "schedule_sha256": "800e3f018c8614e2d71a691115bae7dbfb4ba955cb668e2c96a4be44307043b6",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "07320e7ab1a11bf2688d066a49a29174f3a9ae12e4440d4e74c61b8f09672121"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "63b42de81a86ab9822df6bf732ded6938acfca7538c5b184ddb5ac875105e8a4",
+      "artifact_set_sha256": "9f869e61bfc6cd5ca7d0ad79c840ec48130518934bdd88a6ab781e932af1eca5",
+      "behavior_oracles": [
+        {
+          "evidence_references": [
+            "telemetry.csv:ground_truth_position",
+            "campaign_case:route_intent"
+          ],
+          "kind": "ROUTE_NODES_CAPTURED",
+          "observed_value": 3.0,
+          "oracle_id": "ordered-route-capture",
+          "passed": true,
+          "reason": "Captured 3 of 3 ordered authored route regions.",
+          "threshold": null,
+          "unit": null
+        },
+        {
+          "evidence_references": [
+            "campaign_trajectories:audits"
+          ],
+          "kind": "NO_UNDECLARED_STOP",
+          "observed_value": 0.0,
+          "oracle_id": "no-undeclared-stop",
+          "passed": true,
+          "reason": "Smooth-trajectory audit found 0 undeclared internal stops.",
+          "threshold": 0.0,
+          "unit": "count"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:start_region",
+            "campaign_case:landing_region"
+          ],
+          "kind": "DISTINCT_START_AND_LANDING",
+          "observed_value": 2.8,
+          "oracle_id": "offset-landing",
+          "passed": true,
+          "reason": "Minimum authored start-to-landing displacement was 2.800 m.",
+          "threshold": 0.2,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "telemetry.csv:aligned_ground_truth"
+          ],
+          "kind": "CONFLICT_RESOLVED",
+          "observed_value": 1.2162918453958724,
+          "oracle_id": "joint-separation",
+          "passed": true,
+          "reason": "Minimum time-aligned truth separation was 1.216 m.",
+          "threshold": 0.8,
+          "unit": "m"
+        },
+        {
+          "evidence_references": [
+            "campaign_case:drones.priority",
+            "campaign_plan:selected_candidate.routes.route_start_s"
+          ],
+          "kind": "PRIORITY_PRECEDENCE",
+          "observed_value": 20.0,
+          "oracle_id": "priority-precedence",
+          "passed": true,
+          "reason": "Minimum source-time precedence gap from higher to lower priority was 20.000 s.",
+          "threshold": 0.1,
+          "unit": "s"
+        }
+      ],
+      "case_id": "3d.unequal_priorities.canonical_nominal",
+      "case_sha256": "39dc9654ce510226dd0c30bf239ec0a5d852ac1ec02868211c907216e80de605",
+      "mission_execution_id": "campaign-run-bf837ebde5e500d9fff9",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "643fdecf6e184d3fc7ca8ad61b414f0f57351a1212a0a7096771b4d28fb620cb",
+      "review_sha256": "ee38612719779c571c64c3bd85b27743e24f6581a0464f469f78c68425b010b7",
+      "run_id": "campaign-run-bf837ebde5e500d9fff9",
+      "schedule_sha256": "f117992fc635709ad8c5cc09412ea48dcf11463d3bed0d367e60f975b04cd9eb",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "4d559c421de947997e2c5d6f6c57ea7553b196aab87f16b6e816791bf80f392c"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "analysis_sha256": "4810f27892a65790a3199040c4141ddbfbea85aa5bbbabee805f1059cac6a23e",
+      "artifact_set_sha256": "4265adf1d107452485c6ef2d6acc0e969f52ffb045d47d9d8a4321bd3c45a377",
+      "behavior_oracles": [],
+      "case_id": "three_drone_multi_conflict",
+      "case_sha256": "3a41c886c64b5c1c73998164ae41b6a9a6ac1150911f5e7f126688f384b06c96",
+      "mission_execution_id": "campaign-run-6a046f145c6328a8067c",
+      "mode": "AUTOMATED_ACCELERATED",
+      "mode_comparison": null,
+      "plan_sha256": "93503623fbd8cbc546669f70fa5f696eb3cf4f02d3452286c12b4452c76c6fb7",
+      "review_sha256": "ccaa67f79d7c3f9135bf7e428f25d8c1d5dc14a4c19e9d0bb31581569b5ac839",
+      "run_id": "campaign-run-6a046f145c6328a8067c",
+      "schedule_sha256": "94c03c08ae28d5db686248d51bf51e5a4162a21bde021ce2b70168fff61a4cea",
+      "status": "SUCCEEDED",
+      "trajectory_set_sha256": "fb43c6b09361cbf5d45555b78ddb0b1e1df664a87b91461868d6b0899e9db4e3"
+    }
+  ],
+  "schema_version": 1
+}

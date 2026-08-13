@@ -1,6 +1,8 @@
 .venv/
 .cache/
 /run-files/
+# Generated qualification capture exceeds GitHub's per-file size limit; retain it locally.
+/missions/campaigns/sim/qualification/selective-submission-runtime-v2.json
 __pycache__/
 *.py[cod]
 *.egg-info/

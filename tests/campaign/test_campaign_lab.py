@@ -3,15 +3,25 @@ from __future__ import annotations
 import csv
 import io
 import json
-from collections import Counter
 from pathlib import Path
 
 import pytest
 
-from crazyswarm_app.campaign.analyzer import AnalysisParameters, RootCauseStage, analyze_execution
+from crazyswarm_app.campaign.analyzer import (
+    AnalysisParameters,
+    RootCauseStage,
+    analyze_execution,
+    compare_execution_modes,
+)
 from crazyswarm_app.campaign.catalog import CampaignCatalog, migrate_case_bytes
 from crazyswarm_app.campaign.execution import compile_campaign_execution_programs
-from crazyswarm_app.campaign.models import LifecycleRecord, LifecycleState, Region3D
+from crazyswarm_app.campaign.models import (
+    LifecycleRecord,
+    LifecycleState,
+    PlannerStrategy,
+    Region3D,
+    RouteNodeMode,
+)
 from crazyswarm_app.campaign.planner import BoundedJointPlanner, PlanningStatus
 from crazyswarm_app.campaign.replanning import (
     BoundedGoalUpdateQueue,
@@ -23,7 +33,9 @@ from crazyswarm_app.campaign.replanning import (
     SingleDroneReplanner,
     atomic_fleet_replan,
 )
+from crazyswarm_app.campaign.scenario import compile_scenario_trace
 from crazyswarm_app.campaign.scheduling import build_ground_first_schedule
+from crazyswarm_app.campaign.semantic_audit import SemanticAuditClassification
 from crazyswarm_app.campaign.timing import BoundedTimingTrace, TimingStage, classify_timing_trace
 from crazyswarm_app.campaign.trajectory import generate_smooth_trajectories
 from crazyswarm_app.domain.models import Vector3
@@ -38,20 +50,43 @@ def catalog() -> CampaignCatalog:
     return value
 
 
-def test_wp33_catalog_is_complete_immutable_and_non_executing(catalog: CampaignCatalog) -> None:
+def test_successor_catalog_is_semantically_distinct_and_fail_closed(
+    catalog: CampaignCatalog,
+) -> None:
     cases = catalog.cases()
-    assert len(cases) >= 100
+    assert len(cases) == 54
     assert len({case.case_sha256 for case in cases}) == len(cases)
-    families = Counter((case.drone_count, case.family) for case in cases)
-    assert families[(1, "takeoff_hover_land")] >= 3
-    assert families[(2, "perpendicular_crossing")] >= 9
-    assert families[(3, "simultaneous_center_conflict")] >= 9
+    assert len({case.execution_semantics_sha256 for case in cases}) == len(cases)
+    assert {case.drone_count for case in cases} == {1, 2, 3}
     assert catalog.get("three_drone_multi_conflict").variation_name == ("wide_priority_200_150_100")
+    assert (
+        catalog.get("three_drone_multi_conflict").case_sha256
+        == "3a41c886c64b5c1c73998164ae41b6a9a6ac1150911f5e7f126688f384b06c96"
+    )
     assert all(case.drone_count <= 3 for case in cases)
     dynamic = [case for case in cases if case.implementation_milestone is not None]
-    assert len(dynamic) == 13
-    assert {case.implementation_milestone for case in dynamic} == {"WP-34A", "WP-34B"}
-    assert all(case.implementation_status.value == "EXECUTABLE" for case in dynamic)
+    assert len(dynamic) == 20
+    assert {case.implementation_milestone for case in dynamic} == {
+        "WP-34A",
+        "WP-34B",
+        "WP-36B",
+        "WP-37B",
+        "WP-38B",
+    }
+    assert all(case.implementation_status.value == "PLANNED_NOT_EXECUTABLE" for case in dynamic)
+    assert all(case.execution_eligibility.value == "STATIC_VALIDATE_ONLY" for case in dynamic)
+    assert all(compile_scenario_trace(case).all_expected_dispositions_observed for case in dynamic)
+    quarantined = {
+        item.case_id
+        for item in catalog.semantic_audits()
+        if item.classification is SemanticAuditClassification.PLACEHOLDER_QUARANTINED
+    }
+    assert quarantined == {
+        *(case.case_id for case in dynamic),
+        "2d.overtake.canonical_nominal",
+        "2d.role_allocation.canonical_nominal",
+        "3d.role_allocation.canonical_nominal",
+    }
 
     complete = CampaignCatalog(
         Path("missions/campaigns/sim/cases"),
@@ -64,6 +99,82 @@ def test_wp33_catalog_is_complete_immutable_and_non_executing(catalog: CampaignC
         for case in complete.cases()
         if case.environment.value == "REAL"
     )
+
+
+def test_semantic_fingerprint_ignores_prose_but_covers_route_modes(
+    catalog: CampaignCatalog,
+) -> None:
+    case = catalog.get("1d.continuous_waypoint_sequence.canonical_nominal")
+    prose = case.model_copy(update={"purpose": "Different operator-facing prose."})
+    assert prose.case_sha256 != case.case_sha256
+    assert prose.execution_semantics_sha256 == case.execution_semantics_sha256
+
+    semantics = case.semantics
+    assert semantics is not None
+    nodes = semantics.route_intent_by_role["Alpha"]
+    changed_node = nodes[0].model_copy(update={"mode": RouteNodeMode.CAPTURE})
+    changed_semantics = semantics.model_copy(
+        update={
+            "route_intent_by_role": {
+                **semantics.route_intent_by_role,
+                "Alpha": (changed_node, *nodes[1:]),
+            }
+        }
+    )
+    changed = case.model_copy(update={"semantics": changed_semantics})
+    assert changed.execution_semantics_sha256 != case.execution_semantics_sha256
+
+
+@pytest.mark.parametrize(
+    ("field", "unsupported"),
+    (("kind", "UNSUPPORTED_ORACLE"), ("mode", "UNSUPPORTED_ROUTE_MODE")),
+)
+def test_unsupported_semantic_behavior_fails_during_case_parsing(
+    catalog: CampaignCatalog,
+    field: str,
+    unsupported: str,
+) -> None:
+    case = catalog.get("1d.altitude_transition.canonical_nominal")
+    payload = case.model_dump(mode="json")
+    semantics = payload["semantics"]
+    assert isinstance(semantics, dict)
+    if field == "kind":
+        semantics["behavior_oracles"][0][field] = unsupported
+    else:
+        semantics["route_intent_by_role"]["Alpha"][0][field] = unsupported
+    with pytest.raises(ValueError, match=unsupported):
+        type(case).model_validate(payload)
+
+
+def test_static_qualification_manifest_binds_every_active_case(
+    catalog: CampaignCatalog,
+) -> None:
+    manifest = json.loads(
+        Path("missions/campaigns/sim/qualification/catalog-static-qualification-v2.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert manifest["qualification_kind"] == "FAIL_CLOSED_STATIC_COMPILATION"
+    assert manifest["case_count"] == len(catalog.cases())
+    assert manifest["executable_case_count"] == 31
+    assert manifest["quarantined_case_count"] == 23
+    assert manifest["planned_blocked_case_count"] == 2
+    rows = {row["case_id"]: row for row in manifest["cases"]}
+    assert set(rows) == {case.case_id for case in catalog.cases()}
+    for case in catalog.cases():
+        row = rows[case.case_id]
+        assert row["case_sha256"] == case.case_sha256
+        assert row["execution_semantics_sha256"] == case.execution_semantics_sha256
+        assert row["plan_sha256"]
+        if row["planning_status"] == "READY":
+            assert row["trajectory_set_sha256"]
+        else:
+            assert case.implementation_status.value == "PLANNED_NOT_EXECUTABLE"
+            assert row["trajectory_set_sha256"] is None
+        assert row["accelerated_execution"] in {
+            "NOT_RUN_BY_STATIC_QUALIFIER",
+            "NOT_AUTHORIZED_FOR_QUARANTINED_DEFINITION",
+        }
 
 
 def test_case_hash_migration_and_catalog_discovery_are_deterministic(
@@ -113,6 +224,34 @@ def test_lifecycle_is_separate_and_requires_evidence_for_baseline(catalog: Campa
     assert case.case_sha256 == record.case_sha256
 
 
+@pytest.mark.parametrize("source", list(LifecycleState))
+@pytest.mark.parametrize("target", list(LifecycleState))
+def test_operator_override_can_move_between_any_distinct_lifecycle_states(
+    catalog: CampaignCatalog,
+    source: LifecycleState,
+    target: LifecycleState,
+) -> None:
+    if source is target:
+        return
+    case = catalog.get("1d.takeoff_hover_land.canonical_nominal")
+    record = LifecycleRecord(
+        case_id=case.case_id,
+        case_sha256=case.case_sha256,
+        state=source,
+    )
+
+    changed = record.transition(
+        target,
+        actor_id="operator",
+        reason="explicit lifecycle correction",
+        require_qualification_evidence=False,
+    )
+
+    assert changed.state is target
+    assert changed.transitions[-1].previous_state is source
+    assert changed.transitions[-1].new_state is target
+
+
 def test_canonical_planner_uses_ground_first_and_smooth_c2(catalog: CampaignCatalog) -> None:
     case = catalog.get("three_drone_multi_conflict")
     first = BoundedJointPlanner().plan(case)
@@ -143,10 +282,60 @@ def test_canonical_planner_uses_ground_first_and_smooth_c2(catalog: CampaignCata
     )
     assert not isinstance(programs[0].operations[0], GroundWaitExecutionOperation)
     assert all(
-        isinstance(program.operations[0], GroundWaitExecutionOperation)
-        for program in programs[1:]
+        isinstance(program.operations[0], GroundWaitExecutionOperation) for program in programs[1:]
     )
     assert all(program.execution_timeout_s == schedule.wall_watchdog_s for program in programs)
+
+
+def test_planner_rejects_landing_on_a_waiting_vehicle_pad(catalog: CampaignCatalog) -> None:
+    """Ground delay must not make a route look safe by hiding a grounded peer."""
+
+    def region(region_id: str, x_m: float) -> Region3D:
+        return Region3D(
+            region_id=region_id,
+            minimum_m=Vector3(x=x_m - 0.02, y=-0.02, z=0.33),
+            maximum_m=Vector3(x=x_m + 0.02, y=0.02, z=0.37),
+        )
+
+    source = catalog.get("2d.bottleneck.canonical_nominal")
+    alpha, beta = source.drones
+    alpha_start = region("alpha-start", -0.40)
+    beta_start = region("beta-start", 0.40)
+    unsafe = source.model_copy(
+        update={
+            "case_id": "2d.bottleneck.occupied-pad-regression",
+            "semantics": None,
+            "drones": (
+                alpha.model_copy(
+                    update={
+                        "start_region": alpha_start,
+                        "goal_sequence": (region("alpha-mid", 0.0),),
+                        "landing_region": beta_start,
+                    }
+                ),
+                beta.model_copy(
+                    update={
+                        "start_region": beta_start,
+                        "goal_sequence": (region("beta-mid", 0.0),),
+                        "landing_region": alpha_start,
+                    }
+                ),
+            ),
+            "allowed_strategies": (PlannerStrategy.GROUND_DELAY,),
+        }
+    )
+
+    result = BoundedJointPlanner().plan(unsafe)
+
+    assert result.status is PlanningStatus.BLOCKED
+    assert result.selected is None
+    assert all(
+        candidate.predicted_minimum_separation_m is not None
+        and candidate.predicted_minimum_separation_m
+        < unsafe.hard_constraints.warning_separation_m
+        + unsafe.hard_constraints.position_uncertainty_m
+        for candidate in result.retained_candidates
+    )
 
 
 def test_offline_analyzer_uses_source_clock_and_classifies_watchdog(
@@ -178,6 +367,37 @@ def test_offline_analyzer_uses_source_clock_and_classifies_watchdog(
     assert all(
         item.acceleration_m_s2.peak == pytest.approx(0.0, abs=1e-8) for item in analysis.vehicles
     )
+
+    single_case = catalog.get("1d.takeoff_hover_land.canonical_nominal")
+    single_vehicle = analysis.vehicles[0].model_copy(
+        update={"source_clock_target_error_s": None}
+    )
+    single_mode = analysis.model_copy(
+        update={
+            "case_sha256": single_case.case_sha256,
+            "vehicles": (single_vehicle,),
+            "pair_separation": (),
+            "minimum_truth_separation_m": None,
+        }
+    )
+    not_applicable = compare_execution_modes(single_case, single_mode, single_mode)
+    assert not not_applicable.source_clock_target_error_gate_applicable
+    assert not not_applicable.minimum_separation_gate_applicable
+    assert not_applicable.source_clock_target_error_gate_passed
+    assert not_applicable.minimum_separation_gate_passed
+    assert not_applicable.all_gates_passed
+
+    asymmetric = single_mode.model_copy(
+        update={
+            "vehicles": (
+                single_vehicle.model_copy(update={"source_clock_target_error_s": 0.0}),
+            )
+        }
+    )
+    invalid = compare_execution_modes(single_case, single_mode, asymmetric)
+    assert invalid.source_clock_target_error_gate_applicable
+    assert not invalid.source_clock_target_error_gate_passed
+    assert not invalid.all_gates_passed
 
 
 def test_offline_analyzer_bounds_irregular_duplicate_missing_and_reordered_samples(

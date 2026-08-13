@@ -11,7 +11,6 @@ EXPECTED_OUTCOME = (
 )
 NAMED_VARIATIONS = (
     "canonical_nominal",
-    "compact",
     "wide",
 )
 EXECUTES_ON_IMPORT = False

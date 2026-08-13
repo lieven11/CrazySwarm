@@ -1,12 +1,120 @@
 // @vitest-environment node
 import { readFile } from "node:fs/promises";
-import { PerspectiveCamera } from "three";
+import { LineBasicMaterial, LineDashedMaterial, LineSegments, PerspectiveCamera, Vector3 } from "three";
 import { describe, expect, it } from "vitest";
-import { buildScene, disposeScene, frameSmoothingAlpha, syncDynamicScene, vehicleAtPointer, zoomOrbitRadius } from "../app/components/RoomScene";
+import { buildScene, disposeScene, encodeSceneSnapshotBlob, frameSmoothingAlpha, neutralSnapshotCamera, snapshotCaptureDimensions, sourceBufferedVehicles, syncDynamicScene, vehicleAtPointer, zoomOrbitRadius } from "../app/components/RoomScene";
 import { deterministicDashboard } from "../app/lib/fixtures";
 import type { RangeRay, Vec3, VehicleView } from "../app/lib/models";
+import { SourceTimePlaybackBuffer } from "../app/lib/playback";
+import { worldToScene } from "../app/lib/spatial";
 
 describe("3D renderer boundary", () => {
+  it("bounds operator-triggered scene snapshots without changing aspect ratio", () => {
+    expect(snapshotCaptureDimensions(2560, 1440)).toEqual({ width: 1920, height: 1080 });
+    expect(snapshotCaptureDimensions(640, 360)).toEqual({ width: 640, height: 360 });
+    expect(snapshotCaptureDimensions(0, 0)).toEqual({ width: 0, height: 0 });
+  });
+
+  it("re-encodes as JPEG when a browser substitutes PNG for requested WebP", async () => {
+    const requestedTypes: string[] = [];
+    const requestedQualities: number[] = [];
+    const blob = await encodeSceneSnapshotBlob(async (type, quality) => {
+      requestedTypes.push(type);
+      requestedQualities.push(quality);
+      return type === "image/webp"
+        ? new Blob(["browser png fallback"], { type: "image/png" })
+        : new Blob(["jpeg"], { type: "image/jpeg" });
+    });
+
+    expect(requestedTypes).toEqual(["image/webp", "image/jpeg"]);
+    expect(requestedQualities).toEqual([0.92, 0.94]);
+    expect(blob.type).toBe("image/jpeg");
+  });
+
+  it("keeps full-resolution captures below the upload limit with adaptive quality", async () => {
+    const requestedQualities: number[] = [];
+    const blob = await encodeSceneSnapshotBlob(async (type, quality) => {
+      requestedQualities.push(quality);
+      return new Blob(
+        [new Uint8Array(quality > 0.86 ? 960_000 : 700_000)],
+        { type },
+      );
+    });
+
+    expect(requestedQualities).toEqual([0.92, 0.86]);
+    expect(blob.size).toBe(700_000);
+    expect(blob.type).toBe("image/webp");
+  });
+
+  it("uses a fixed ceiling-corner camera that keeps the complete room in frame", () => {
+    const room = deterministicDashboard.room!;
+    const camera = neutralSnapshotCamera(room, 16 / 9);
+    const corners = [-1, 1].flatMap((xSign) => [-1, 1].flatMap((ySign) => [0, 1].map((zSign) => (
+      new Vector3(
+        xSign * room.widthM / 2,
+        zSign * room.heightM,
+        ySign * room.depthM / 2,
+      ).project(camera)
+    ))));
+
+    expect(camera.position.x).toBeGreaterThan(0);
+    expect(camera.position.y).toBeGreaterThan(room.heightM);
+    expect(camera.position.z).toBeGreaterThan(0);
+    for (const corner of corners) {
+      expect(Math.abs(corner.x)).toBeLessThanOrEqual(1);
+      expect(Math.abs(corner.y)).toBeLessThanOrEqual(1);
+      expect(corner.z).toBeGreaterThanOrEqual(-1);
+      expect(corner.z).toBeLessThanOrEqual(1);
+    }
+
+    const missionPoints = [
+      { x: -1.5, y: 0, z: 0.3 },
+      { x: 0.2, y: 0, z: 0.3 },
+      { x: 1.5, y: 0, z: 0.3 },
+    ];
+    const missionCamera = neutralSnapshotCamera(room, 16 / 9, missionPoints);
+    const missionDirection = missionCamera.getWorldDirection(new Vector3());
+    expect(missionDirection.x).toBeCloseTo(missionDirection.y);
+    expect(missionDirection.y).toBeCloseTo(missionDirection.z);
+    const projectedMission = missionPoints.map((value) => (
+      new Vector3(...worldToScene(value)).project(missionCamera)
+    ));
+    for (const point of projectedMission) {
+      expect(Math.abs(point.x)).toBeLessThan(0.9);
+      expect(Math.abs(point.y)).toBeLessThan(0.9);
+    }
+    const horizontalMissionSpan = Math.max(...projectedMission.map((point) => point.x))
+      - Math.min(...projectedMission.map((point) => point.x));
+    const roomFramedMission = missionPoints.map((value) => (
+      new Vector3(...worldToScene(value)).project(camera)
+    ));
+    const roomFramedSpan = Math.max(...roomFramedMission.map((point) => point.x))
+      - Math.min(...roomFramedMission.map((point) => point.x));
+    expect(horizontalMissionSpan).toBeGreaterThan(0.8);
+    expect(horizontalMissionSpan).toBeGreaterThan(roomFramedSpan * 1.5);
+  });
+
+  it("shows a disconnected simulator reset immediately instead of freezing its old estimate", () => {
+    const vehicle = structuredClone(deterministicDashboard.vehicles[0]!);
+    vehicle.state = "DISCONNECTED";
+    vehicle.telemetry!.estimate = { x: 0, y: 0, z: 0 };
+    vehicle.telemetry!.simulatedTruth = { x: 0, y: 0, z: 0 };
+    vehicle.telemetry!.provenance = {
+      ...vehicle.telemetry!.provenance,
+      simulationTimeS: 12,
+      sourceClockId: "fast-sim-reset",
+      sourceClockEpoch: 1,
+      sequence: 42,
+    };
+    const buffers = new Map([[vehicle.id, new SourceTimePlaybackBuffer()]]);
+
+    const display = sourceBufferedVehicles([vehicle], buffers);
+
+    expect(display.vehicles[0]!.telemetry!.estimate).toEqual({ x: 0, y: 0, z: 0 });
+    expect(display.vehicles[0]!.telemetry!.simulatedTruth).toEqual({ x: 0, y: 0, z: 0 });
+    expect(buffers.has(vehicle.id)).toBe(false);
+  });
+
   it("has no command or API side effects", async () => {
     const source = await readFile(new URL("../app/components/RoomScene.tsx", import.meta.url), "utf8");
     expect(source).not.toMatch(/ControlApi|fetch\(|\/api\/v1|emergency-stop|takeoff|land\(/);
@@ -67,7 +175,7 @@ describe("3D renderer boundary", () => {
     disposeScene(scene);
   });
 
-  it("keeps static room objects mounted while telemetry overlays update", () => {
+  it("keeps static and vehicle GPU objects mounted while telemetry overlays update", () => {
     const scene = buildScene(
       deterministicDashboard.room!,
       deterministicDashboard.vehicles,
@@ -90,13 +198,31 @@ describe("3D renderer boundary", () => {
     );
 
     expect(scene.children).toContain(homeBase);
-    expect(scene.children).not.toContain(oldVehicle);
+    expect(scene.children).toContain(oldVehicle);
     const updatedVehicle = scene.children.find(
       (object) => object.userData.visualRole === "received-estimate" && object.userData.sceneLayer === "dynamic",
     );
     expect(updatedVehicle).toBeDefined();
-    expect(updatedVehicle).not.toBe(oldVehicle);
+    expect(updatedVehicle).toBe(oldVehicle);
     expect(updatedVehicle!.position.toArray()).toEqual([0.7, 0.3, -0.4]);
+    disposeScene(scene);
+  });
+
+  it("keeps hidden evidence layers mounted for a snapshot render", () => {
+    const paths = [{ x: 0, y: 0, z: 0 }, { x: 0.2, y: 0, z: 0.3 }];
+    const scene = buildScene(
+      deterministicDashboard.room!,
+      deterministicDashboard.vehicles,
+      paths,
+      paths,
+      { sensors: false, trace: false, plan: false, truth: false },
+    );
+    const plan = scene.children.find((object) => object.userData.sceneLayer === "plan");
+    const trace = scene.children.find((object) => object.userData.sceneLayer === "trace");
+    const truth = scene.children.find((object) => object.userData.visualRole === "simulator-truth");
+    expect(plan).toMatchObject({ visible: false });
+    expect(trace).toMatchObject({ visible: false });
+    expect(truth).toMatchObject({ visible: false });
     disposeScene(scene);
   });
 
@@ -143,6 +269,40 @@ describe("3D renderer boundary", () => {
       "simulator-truth",
       "received-estimate",
     ]));
+    disposeScene(scene);
+  });
+
+  it("renders room and flight boundaries as solid blue lines distinct from the plan", () => {
+    const paths = [{ x: 0, y: 0, z: 0 }, { x: 0.2, y: 0, z: 0.3 }];
+    const room = {
+      ...deterministicDashboard.room!,
+      geofence: {
+        minimum: { x: -1.5, y: -1.5, z: 0 },
+        maximum: { x: 1.5, y: 1.5, z: 2 },
+      },
+    };
+    const scene = buildScene(
+      room,
+      deterministicDashboard.vehicles,
+      paths,
+      [],
+      { sensors: false, trace: false, plan: true, truth: false },
+    );
+    const roomBoundary = scene.children.find(
+      (object) => object.userData.visualRole === "room-boundary",
+    );
+    const flightBoundary = scene.children.find(
+      (object) => object.userData.visualRole === "flight-boundary",
+    );
+    const plan = scene.children.find((object) => object.userData.visualRole === "planned");
+
+    expect(roomBoundary).toBeDefined();
+    expect(flightBoundary).toBeDefined();
+    expect((roomBoundary as LineSegments).material).toBeInstanceOf(LineBasicMaterial);
+    expect((flightBoundary as LineSegments).material).toBeInstanceOf(LineBasicMaterial);
+    expect(((roomBoundary as LineSegments).material as LineBasicMaterial).color.getHex()).toBe(0x89cff0);
+    expect(((flightBoundary as LineSegments).material as LineBasicMaterial).color.getHex()).toBe(0x89cff0);
+    expect((plan as LineSegments).material).toBeInstanceOf(LineDashedMaterial);
     disposeScene(scene);
   });
 
@@ -275,6 +435,12 @@ describe("3D renderer boundary", () => {
     expect(frameSmoothingAlpha(0)).toBe(0);
     expect(frameSmoothingAlpha(16)).toBeGreaterThan(0);
     expect(frameSmoothingAlpha(16)).toBeLessThan(1);
+  });
+
+  it("limits browser timing traffic to active campaigns and keeps uploaded missions visible", async () => {
+    const control = await readFile(new URL("../app/components/ControlCenter.tsx", import.meta.url), "utf8");
+    expect(control).toContain("onDisplayTiming={campaignRunActive ?");
+    expect(control).toContain("!campaignRunActive && !runningRunId");
   });
 
   it("keeps the camera and pointer lifecycle stable while telemetry scenes update", async () => {

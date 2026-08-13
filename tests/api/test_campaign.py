@@ -1,13 +1,19 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 from fastapi.testclient import TestClient
 
 from crazyswarm_app.api.runtime import ApplicationRuntime
 from crazyswarm_app.campaign.catalog import CampaignCatalog
-from crazyswarm_app.campaign.service import CampaignRunStatus, CampaignService
+from crazyswarm_app.campaign.service import (
+    CampaignRunMode,
+    CampaignRunRecord,
+    CampaignRunStatus,
+    CampaignService,
+)
 from tests.api.conftest import auth_headers
 
 
@@ -104,6 +110,54 @@ def test_campaign_run_returns_immediate_tracked_acknowledgement(
     assert acknowledgement["status"] in {"QUEUED", "RUNNING", "SUCCEEDED"}
     workspace = client.get("/api/v1/campaign/state", headers=auth_headers()).json()
     assert any(run["run_id"] == acknowledgement["run_id"] for run in workspace["runs"])
+
+
+def test_campaign_selection_conflict_returns_actionable_invalid_state(
+    api_client: tuple[TestClient, ApplicationRuntime],
+    tmp_path: Path,
+) -> None:
+    client, _ = api_client
+    service = CampaignService(
+        catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
+        state_directory=tmp_path / "campaign-selection-conflict",
+    )
+    lock = service.set_active(
+        "1d.altitude_transition.wide",
+        actor_id="api-test",
+        reason="bind the running campaign",
+    )
+    service._state = service.state.model_copy(
+        update={
+            "runs": (
+                CampaignRunRecord(
+                    run_id="campaign-run-active",
+                    mode=CampaignRunMode.OPERATOR_OBSERVED_REALTIME,
+                    status=CampaignRunStatus.RUNNING,
+                    locked_inputs=lock,
+                    requested_at_utc=datetime.now(UTC),
+                    plan_sha256="1" * 64,
+                    schedule_sha256="2" * 64,
+                    trajectory_set_sha256="3" * 64,
+                ),
+            )
+        }
+    )
+    client.app.state.campaign_service = service
+
+    response = client.post(
+        "/api/v1/campaign/active",
+        headers=auth_headers("campaign-selection-conflict"),
+        json={
+            "case_id": "1d.continuous_waypoint_sequence.canonical_nominal",
+            "reason": "switch missions while the previous run is active",
+        },
+    )
+
+    assert response.status_code == 409
+    error = response.json()["error"]
+    assert error["code"] == "INVALID_STATE"
+    assert error["message"] == "stop the active campaign run before selecting another mission"
+    assert error["details"] == {"case_id": "1d.continuous_waypoint_sequence.canonical_nominal"}
 
 
 def test_altitude_submission_catalog_and_preview_are_hash_bound(

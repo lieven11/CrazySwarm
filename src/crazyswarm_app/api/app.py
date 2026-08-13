@@ -531,11 +531,30 @@ def create_app(
         body: SetActiveCaseRequest,
         context: OperatorContext = Depends(operator_context),
     ) -> dict[str, Any]:
-        lock = campaign_service().set_active(
-            body.case_id,
-            actor_id=context.client_id,
-            reason=body.reason,
-        )
+        try:
+            lock = campaign_service().set_active(
+                body.case_id,
+                actor_id=context.client_id,
+                reason=body.reason,
+            )
+        except KeyError as error:
+            raise CrazySwarmError(
+                ErrorCode.INVALID_COMMAND,
+                "campaign case not found",
+                details={"case_id": body.case_id},
+            ) from error
+        except PermissionError as error:
+            raise CrazySwarmError(
+                ErrorCode.MODE_NOT_AUTHORIZED,
+                str(error),
+                details={"case_id": body.case_id},
+            ) from error
+        except ValueError as error:
+            raise CrazySwarmError(
+                ErrorCode.INVALID_STATE,
+                str(error),
+                details={"case_id": body.case_id},
+            ) from error
         return lock.model_dump(mode="json")
 
     @router.post("/campaign/cases/in-review")

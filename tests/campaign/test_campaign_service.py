@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -9,13 +10,195 @@ import pytest
 from crazyswarm_app.campaign.catalog import CampaignCatalog
 from crazyswarm_app.campaign.models import LifecycleState
 from crazyswarm_app.campaign.service import (
+    CampaignExecutionRequest,
     CampaignRunMode,
     CampaignRunRecord,
     CampaignRunStatus,
     CampaignService,
     ReviewDecision,
+    RunArtifactSet,
     SnapshotAssessmentDisposition,
 )
+
+
+@pytest.mark.asyncio
+async def test_cancelled_execution_waiter_does_not_orphan_campaign_capacity(
+    tmp_path: Path,
+) -> None:
+    service = CampaignService(
+        catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
+        state_directory=tmp_path / "campaign",
+    )
+    await service._acquire_execution_slot("active-run")
+    waiting = asyncio.create_task(service._acquire_execution_slot("cancelled-waiter"))
+    await asyncio.sleep(0)
+
+    waiting.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await waiting
+    await service._release_execution_slot("active-run")
+    await asyncio.wait_for(service._acquire_execution_slot("next-run"), timeout=0.5)
+
+    assert service._active_execution_run_ids == {"next-run"}
+    await service._release_execution_slot("next-run")
+
+
+@pytest.mark.asyncio
+async def test_cancelled_queued_launch_becomes_terminal_and_releases_workflow(
+    tmp_path: Path,
+) -> None:
+    async def executor_unreachable(request: CampaignExecutionRequest) -> RunArtifactSet:
+        del request
+        raise AssertionError("queued launch must not reach the executor")
+
+    service = CampaignService(
+        catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
+        state_directory=tmp_path / "campaign",
+        executor=executor_unreachable,
+    )
+    service.set_active(
+        "1d.takeoff_hover_land.canonical_nominal",
+        actor_id="operator",
+        reason="exercise queued task cancellation",
+    )
+    await service._acquire_execution_slot("capacity-owner")
+    launch = asyncio.create_task(
+        service.run_active(
+            CampaignRunMode.AUTOMATED_ACCELERATED,
+            idempotency_key="cancelled-queued-launch",
+        )
+    )
+    await asyncio.sleep(0)
+    assert service.state.runs[-1].status is CampaignRunStatus.QUEUED
+
+    launch.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await launch
+
+    cancelled = service.state.runs[-1]
+    assert cancelled.status is CampaignRunStatus.CANCELLED_BEFORE_LAUNCH
+    assert cancelled.finished_at_utc is not None
+    assert cancelled.failure_reason == "campaign launch task was cancelled before execution"
+    service.set_active(
+        "1d.continuous_waypoint_sequence.canonical_nominal",
+        actor_id="operator",
+        reason="queued cancellation no longer blocks mission selection",
+    )
+    assert service.state.active_case_id == "1d.continuous_waypoint_sequence.canonical_nominal"
+    await service._release_execution_slot("capacity-owner")
+
+
+@pytest.mark.asyncio
+async def test_cancelled_running_task_becomes_terminal_and_releases_capacity(
+    tmp_path: Path,
+) -> None:
+    executor_started = asyncio.Event()
+    executor_release = asyncio.Event()
+
+    async def blocked_executor(request: CampaignExecutionRequest) -> RunArtifactSet:
+        del request
+        executor_started.set()
+        await executor_release.wait()
+        raise AssertionError("cancelled executor must not resume")
+
+    service = CampaignService(
+        catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
+        state_directory=tmp_path / "campaign",
+        executor=blocked_executor,
+    )
+    service.set_active(
+        "1d.takeoff_hover_land.canonical_nominal",
+        actor_id="operator",
+        reason="exercise running task cancellation",
+    )
+    launch = asyncio.create_task(
+        service.run_active(
+            CampaignRunMode.AUTOMATED_ACCELERATED,
+            idempotency_key="cancelled-running-launch",
+        )
+    )
+    await asyncio.wait_for(executor_started.wait(), timeout=1)
+
+    launch.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await launch
+
+    cancelled = service.state.runs[-1]
+    assert cancelled.status is CampaignRunStatus.FAILED
+    assert cancelled.finished_at_utc is not None
+    assert cancelled.failure_reason == (
+        "campaign execution task was cancelled; partial artifacts retained for review"
+    )
+    assert service._active_execution_run_ids == set()
+
+
+def test_cancelling_queued_run_immediately_releases_operator_workflow(
+    tmp_path: Path,
+) -> None:
+    service = CampaignService(
+        catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
+        state_directory=tmp_path / "campaign",
+    )
+    lock = service.set_active(
+        "1d.altitude_transition.canonical_nominal",
+        actor_id="operator",
+        reason="exercise queued cancellation",
+    )
+    queued = CampaignRunRecord(
+        run_id="campaign-run-queued",
+        mode=CampaignRunMode.AUTOMATED_ACCELERATED,
+        status=CampaignRunStatus.QUEUED,
+        locked_inputs=lock,
+        requested_at_utc=datetime.now(UTC),
+        plan_sha256="1" * 64,
+        schedule_sha256="2" * 64,
+        trajectory_set_sha256="3" * 64,
+    )
+    service._state = service.state.model_copy(update={"runs": (queued,)})
+
+    assert service.cancel(queued.run_id) is True
+    cancelled = service.state.runs[0]
+    assert cancelled.status is CampaignRunStatus.CANCELLED_BEFORE_LAUNCH
+    assert cancelled.finished_at_utc is not None
+
+
+@pytest.mark.asyncio
+async def test_prelaunch_failure_does_not_leave_run_queued(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def executor_unreachable(request: CampaignExecutionRequest) -> RunArtifactSet:
+        del request
+        raise AssertionError("executor must not be called after request construction fails")
+
+    service = CampaignService(
+        catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
+        state_directory=tmp_path / "campaign",
+        executor=executor_unreachable,
+    )
+    service.set_active(
+        "1d.takeoff_hover_land.canonical_nominal",
+        actor_id="operator",
+        reason="exercise prelaunch failure recording",
+    )
+
+    def reject_request(**_values: object) -> object:
+        raise ValueError("constructed request is invalid")
+
+    monkeypatch.setattr(
+        "crazyswarm_app.campaign.service.CampaignExecutionRequest",
+        reject_request,
+    )
+    with pytest.raises(ValueError, match="constructed request is invalid"):
+        await service.run_active(
+            CampaignRunMode.AUTOMATED_ACCELERATED,
+            idempotency_key="prelaunch-failure",
+        )
+
+    failed = service.state.runs[-1]
+    assert failed.status is CampaignRunStatus.FAILED
+    assert failed.failure_reason == "constructed request is invalid"
+    assert service._active_execution_run_ids == set()
 
 
 def test_selecting_another_case_keeps_only_one_case_in_progress(tmp_path: Path) -> None:

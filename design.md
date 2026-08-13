@@ -173,6 +173,12 @@ Apply `[CMP-01]` and `[CMP-02]`.
   for the current workflow.
 - Do not expose hashes or raw IDs in the default view. Provide a copy action when an
   identifier is genuinely useful.
+- In review surfaces, lead with the outcome and large evidence graphs. Keep provenance,
+  planning authority, hashes, and coordinate reconciliation in a closed evidence
+  disclosure.
+- Review graphs are direct inspection controls: each graph has a visible expand affordance,
+  a text alternative, keyboard operation, and expands in place without losing review
+  context.
 
 ### Empty, loading, and error states
 
@@ -318,4 +324,3 @@ New durable patterns must be added to this guide with a new or updated decision 
 One-off exceptions must be documented next to the implementation with the applicable
 tag and a concise reason. Safety, truth, or platform requirements may override a
 visual rule; aesthetic preference alone may not.
-

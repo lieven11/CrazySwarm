@@ -146,7 +146,7 @@ describe("3D renderer boundary", () => {
         ranges,
       } : undefined,
     }));
-    const longTrace: Vec3[] = Array.from({ length: 2_000 }, (_, index) => ({
+    const longTrace: Vec3[] = Array.from({ length: 3_600 }, (_, index) => ({
       x: -1.5 + index * 0.0015,
       y: Math.sin(index / 30) * 0.5,
       z: 0.3,

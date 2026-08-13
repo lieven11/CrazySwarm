@@ -426,7 +426,11 @@ class CampaignService:
         self.state_directory = state_directory
         self.executor = executor
         self.maximum_concurrency = maximum_concurrency
-        self._semaphore = asyncio.Semaphore(maximum_concurrency)
+        # Track execution ownership directly instead of relying on a bare
+        # semaphore permit.  A cancelled API task must not be able to orphan a
+        # permit and leave every later run permanently QUEUED.
+        self._execution_condition = asyncio.Condition()
+        self._active_execution_run_ids: set[str] = set()
         self._cancelled: set[str] = set()
         self._planner = BoundedJointPlanner()
         self.state_directory.mkdir(parents=True, exist_ok=True)
@@ -904,7 +908,22 @@ class CampaignService:
             }
         )
         self._persist()
-        async with self._semaphore:
+        try:
+            await self._acquire_execution_slot(run_id)
+        except asyncio.CancelledError:
+            current = next(item for item in self._state.runs if item.run_id == run_id)
+            if current.status is CampaignRunStatus.QUEUED:
+                self._update_run(
+                    current.model_copy(
+                        update={
+                            "status": CampaignRunStatus.CANCELLED_BEFORE_LAUNCH,
+                            "finished_at_utc": datetime.now(UTC),
+                            "failure_reason": "campaign launch task was cancelled before execution",
+                        }
+                    )
+                )
+            raise
+        try:
             if run_id in self._cancelled:
                 self._update_run(
                     record.model_copy(
@@ -954,6 +973,56 @@ class CampaignService:
                 raise ValueError("executor CSV bytes do not match the declared hash")
             review = self._intake(case, record, artifacts, plan)
             return review
+        except asyncio.CancelledError:
+            current = next(item for item in self._state.runs if item.run_id == run_id)
+            if current.status in {CampaignRunStatus.QUEUED, CampaignRunStatus.RUNNING}:
+                cancelled_before_launch = current.status is CampaignRunStatus.QUEUED
+                self._update_run(
+                    current.model_copy(
+                        update={
+                            "status": (
+                                CampaignRunStatus.CANCELLED_BEFORE_LAUNCH
+                                if cancelled_before_launch
+                                else CampaignRunStatus.FAILED
+                            ),
+                            "finished_at_utc": datetime.now(UTC),
+                            "failure_reason": (
+                                "campaign launch task was cancelled before execution"
+                                if cancelled_before_launch
+                                else "campaign execution task was cancelled; partial artifacts "
+                                "retained for review"
+                            ),
+                        }
+                    )
+                )
+            raise
+        except Exception as error:
+            current = next(item for item in self._state.runs if item.run_id == run_id)
+            if current.status in {CampaignRunStatus.QUEUED, CampaignRunStatus.RUNNING}:
+                self._update_run(
+                    current.model_copy(
+                        update={
+                            "status": CampaignRunStatus.FAILED,
+                            "finished_at_utc": datetime.now(UTC),
+                            "failure_reason": str(error),
+                        }
+                    )
+                )
+            raise
+        finally:
+            await self._release_execution_slot(run_id)
+
+    async def _acquire_execution_slot(self, run_id: str) -> None:
+        async with self._execution_condition:
+            await self._execution_condition.wait_for(
+                lambda: len(self._active_execution_run_ids) < self.maximum_concurrency
+            )
+            self._active_execution_run_ids.add(run_id)
+
+    async def _release_execution_slot(self, run_id: str) -> None:
+        async with self._execution_condition:
+            self._active_execution_run_ids.discard(run_id)
+            self._execution_condition.notify_all()
 
     def import_artifacts(
         self,
@@ -1032,6 +1101,23 @@ class CampaignService:
 
     def cancel(self, run_id: str) -> bool:
         self._cancelled.add(run_id)
+        queued = next(
+            (
+                item
+                for item in self._state.runs
+                if item.run_id == run_id and item.status is CampaignRunStatus.QUEUED
+            ),
+            None,
+        )
+        if queued is not None:
+            self._update_run(
+                queued.model_copy(
+                    update={
+                        "status": CampaignRunStatus.CANCELLED_BEFORE_LAUNCH,
+                        "finished_at_utc": datetime.now(UTC),
+                    }
+                )
+            )
         if self.executor is not None:
             request_cancel = getattr(self.executor, "request_cancel", None)
             if callable(request_cancel):

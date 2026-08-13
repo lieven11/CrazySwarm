@@ -292,7 +292,7 @@ describe("campaign laboratory", () => {
     })).toBe("Altitude transition · Accelerated · Needs rerun");
   });
 
-  it("lets the operator change directly between lifecycle states", async () => {
+  it("offers the four explicit workflow actions without a duplicate state picker", async () => {
     const value = campaignCase({ lifecycle: "ACTIVE_DEVELOPMENT" });
     const setCampaignCaseLifecycle = vi.fn(async () => ({}));
     const api = {
@@ -306,15 +306,113 @@ describe("campaign laboratory", () => {
 
     render(<CampaignLab api={api} onNotice={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: /Campaign laboratory/i }));
-    const state = await screen.findByRole("combobox", { name: "Mission state" });
+    const inactive = await screen.findByRole("button", { name: "Inactive" });
+    expect(screen.queryByRole("combobox", { name: "Mission state" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Check only" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Preview plan" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Qualification" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Constraint matrix" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Use mission" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Review" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Completed" })).toBeVisible();
+    fireEvent.click(inactive);
 
-    fireEvent.change(state, { target: { value: "PROMOTED" } });
+    await waitFor(() => expect(setCampaignCaseLifecycle).toHaveBeenCalledWith(
+      value.case_id,
+      "DEFINED_NOT_RUN",
+      "operator set mission to inactive",
+    ));
+  });
+
+  it("shows an in-progress mission as completed before its catalog refresh finishes", async () => {
+    const value = campaignCase({ lifecycle: "ACTIVE_DEVELOPMENT" });
+    const setCampaignCaseLifecycle = vi.fn(async () => ({}));
+    let catalogRequestCount = 0;
+    const api = {
+      campaignCatalog: vi.fn(() => {
+        catalogRequestCount += 1;
+        return catalogRequestCount === 1
+          ? Promise.resolve({ cases: [value], hierarchy: {} })
+          : new Promise<never>(() => {});
+      }),
+      campaignState: vi.fn(async () => ({ active_case_id: value.case_id, runs: [], reviews: [] })),
+      setCampaignCaseLifecycle,
+    } as unknown as ControlApi;
+
+    render(<CampaignLab api={api} onNotice={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: /Campaign laboratory/i }));
+
+    const completed = await screen.findByRole("button", { name: "Completed" });
+    expect(completed).toBeEnabled();
+    fireEvent.click(completed);
 
     await waitFor(() => expect(setCampaignCaseLifecycle).toHaveBeenCalledWith(
       value.case_id,
       "PROMOTED",
-      "operator changed case lifecycle to Completed",
+      "operator marked mission as completed",
     ));
+    await waitFor(() => expect(completed).toBeDisabled());
+    expect(completed).toHaveAttribute("aria-pressed", "true");
+    expect(document.querySelector(".campaign-case-detail .campaign-status")).toHaveTextContent("Completed");
+  });
+
+  it("blocks mission selection while another campaign run is active", async () => {
+    const selected = campaignCase({
+      case_id: "1d.continuous_waypoint_sequence.canonical_nominal",
+      family: "continuous_waypoint_sequence",
+    });
+    const active = campaignCase({
+      case_id: "1d.altitude_transition.wide",
+      case_sha256: "b".repeat(64),
+      family: "altitude_transition",
+      variation_name: "wide",
+      lifecycle: "ACTIVE_DEVELOPMENT",
+    });
+    window.localStorage.setItem("crazyswarm.campaign-workspace.v1", JSON.stringify({
+      selectedId: selected.case_id,
+    }));
+    const setActiveCampaignCase = vi.fn(async () => ({}));
+    const workspace: CampaignWorkspaceView = {
+      active_case_id: active.case_id,
+      runs: [{
+        run_id: "campaign-run-active",
+        mode: "OPERATOR_OBSERVED_REALTIME",
+        status: "RUNNING",
+        locked_inputs: {
+          case_id: active.case_id,
+          case_sha256: active.case_sha256,
+          seed: 42,
+          backend_profile_id: "fast-sim-v1",
+          configuration_sha256: "0".repeat(64),
+          planner_implementation_id: "bounded-joint-planner",
+          planner_implementation_version: "1.0.0",
+          planner_settings_sha256: "1".repeat(64),
+        },
+        requested_at_utc: "2026-08-13T15:00:00Z",
+      }],
+      reviews: [],
+    };
+    const api = {
+      campaignQualificationUrl: vi.fn(
+        () => "/control-api/api/v1/campaign/qualification/export",
+      ),
+      campaignCatalog: vi.fn(async () => ({ cases: [active, selected], hierarchy: {} })),
+      campaignState: vi.fn(async () => workspace),
+      setActiveCampaignCase,
+    } as unknown as ControlApi;
+
+    render(<CampaignLab api={api} onNotice={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: /Campaign laboratory/i }));
+
+    const useMission = await screen.findByRole("button", { name: "Use mission" });
+    expect(screen.getByText("Continuous waypoint sequence · Realtime · No review")).toBeVisible();
+    expect(useMission).toBeDisabled();
+    expect(useMission).toHaveAttribute(
+      "title",
+      "Stop the active campaign run before selecting another mission",
+    );
+    fireEvent.click(useMission);
+    expect(setActiveCampaignCase).not.toHaveBeenCalled();
   });
 
   it("keeps submission selection in the catalog hierarchy and its evidence in the detail pane", async () => {
@@ -702,7 +800,7 @@ describe("campaign laboratory", () => {
     expect(screen.queryByText("Previous implementation iterations")).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /Download telemetry CSV for run/i })).toHaveLength(2);
     expect(screen.getAllByRole("button", { name: /Delete run \d/i })).toHaveLength(2);
-    expect(screen.getByText("1,474")).toBeVisible();
+    expect(screen.getByText(/1,474 rows/)).toBeVisible();
     expect(await screen.findByText("Flight graphs")).toBeVisible();
     expect(screen.getByRole("img", { name: /Speed over 16.0 seconds/i })).toBeVisible();
     expect(screen.getByRole("img", { name: /World Z over 16.0 seconds/i })).toBeVisible();
@@ -710,14 +808,19 @@ describe("campaign laboratory", () => {
     expect(screen.getByRole("img", { name: /Attitude over 16.0 seconds/i })).toBeVisible();
     expect(screen.getByRole("img", { name: /Acceleration over 16.0 seconds/i })).toBeVisible();
     expect(screen.getByRole("img", { name: /Angular velocity over 16.0 seconds/i })).toBeVisible();
+    expect(screen.getByText(/Beta kinematics · GATE DISAGREEMENT/i)).not.toBeVisible();
+    fireEvent.click(screen.getByText("Evidence details"));
     expect(screen.getByText(/Beta kinematics · GATE DISAGREEMENT/i)).toBeVisible();
     expect(screen.getByText(/Beta role-relative landing target/i)).toBeVisible();
+    const speedGraph = screen.getByRole("button", { name: "Expand Speed graph" });
+    fireEvent.click(speedGraph);
+    expect(screen.getByRole("button", { name: "Collapse Speed graph" })).toHaveAttribute("aria-expanded", "true");
     expect(api.campaignTelemetryCharts).toHaveBeenCalledWith("campaign-run-2");
     expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Needs rerun" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Move to review" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Move to review" })).toHaveClass("campaign-action-review");
-    expect(screen.getByRole("button", { name: "Completed" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Review" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Review" })).toHaveClass("campaign-action-review");
+    expect(screen.getByRole("button", { name: "Completed" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Review snapshot 1 from run 2" }));
     expect(screen.getByRole("dialog", { name: /Aug 10/i })).toBeVisible();
     fireEvent.change(screen.getByRole("textbox", { name: "Snapshot comment" }), {
@@ -743,7 +846,7 @@ describe("campaign laboratory", () => {
       [],
     ));
     fireEvent.click(screen.getByRole("button", { name: "Close snapshot review" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Move to review" })).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Review" })).toBeEnabled());
 
     fireEvent.change(screen.getByRole("textbox", { name: "Operator comment for run 2" }), {
       target: { value: "Second run stayed smooth." },
@@ -765,7 +868,7 @@ describe("campaign laboratory", () => {
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     await waitFor(() => expect(api.deleteCampaignRun).toHaveBeenCalledWith("campaign-run-2"));
     await waitFor(() => expect(onCampaignRunChange).toHaveBeenCalledWith(workspace.runs[1]));
-    fireEvent.click(screen.getByRole("button", { name: "Move to review" }));
+    fireEvent.click(screen.getByRole("button", { name: "Review" }));
     await waitFor(() => expect(api.moveCampaignCaseToReview).toHaveBeenCalledWith(
       value.case_id,
       "operator moved case to review",

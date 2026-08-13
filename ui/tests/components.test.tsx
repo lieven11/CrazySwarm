@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { deterministicDashboard } from "../app/lib/fixtures";
 import { FixtureGallery } from "../app/components/FixtureGallery";
-import { armActionEnabled, campaignDockModePresentation, campaignMissionFilename, campaignReferencePlan, campaignScenePreview, ControlCenter, controlActionsEnabled, DeploymentSummary, LowBatterySimulationDialog, missionCompletionNotice, missionIdForRunningReference, missionPreviewControlVehicles, missionPreviewHomeBases, missionSceneHomeBases, MissionPlanReview, ModeBadge, SafetyDialog, shouldDisplayHistoricalPath, simulationBatteryControlEnabled, simulationBatteryStartRisk, Toast, toggleVehicleSelection, TOAST_DURATION_MS, TOAST_FAILURE_DURATION_MS, vehiclesForTargetSelection, withObservationFocus, withVehicleTargetSelection } from "../app/components/ControlCenter";
+import { appendObservedTracePoint, armActionEnabled, campaignDockModePresentation, campaignMissionFilename, campaignReferencePlan, campaignScenePreview, ControlCenter, controlActionsEnabled, DeploymentSummary, LowBatterySimulationDialog, missionCompletionNotice, missionIdForRunningReference, missionPreviewControlVehicles, missionPreviewHomeBases, missionSceneHomeBases, MissionPlanReview, ModeBadge, OBSERVED_TRACE_HISTORY_LIMIT, SafetyDialog, shouldDisplayHistoricalPath, simulationBatteryControlEnabled, simulationBatteryStartRisk, Toast, toggleVehicleSelection, TOAST_DURATION_MS, TOAST_FAILURE_DURATION_MS, vehiclesForTargetSelection, withObservationFocus, withVehicleTargetSelection } from "../app/components/ControlCenter";
 import { campaignMissionPreview } from "../app/lib/campaign-preview";
 import { formatClockContext } from "../app/components/RoomScene";
 import { FlightReadout, RunFilesControl, telemetrySample } from "../app/components/TelemetryDock";
@@ -27,6 +27,24 @@ describe("operator components", () => {
       actionLabel: "realtime",
       buttonClassName: "",
     });
+  });
+
+  it("retains six minutes of observed trace points in FIFO order", () => {
+    const points = Array.from({ length: OBSERVED_TRACE_HISTORY_LIMIT }, (_, index) => ({
+      x: index,
+      y: 0,
+      z: 0.3,
+    }));
+
+    const retained = appendObservedTracePoint(points, {
+      x: OBSERVED_TRACE_HISTORY_LIMIT,
+      y: 0,
+      z: 0.3,
+    });
+
+    expect(retained).toHaveLength(OBSERVED_TRACE_HISTORY_LIMIT);
+    expect(retained[0]?.x).toBe(1);
+    expect(retained.at(-1)?.x).toBe(OBSERVED_TRACE_HISTORY_LIMIT);
   });
 
   it("uses the runtime Python filename for the active campaign mission", () => {

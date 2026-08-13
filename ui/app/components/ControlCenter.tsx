@@ -72,9 +72,14 @@ type MaintenanceVehicle = Pick<
 
 const LOCAL_API = { endpoint: "/control-api", clientId: "control-center-ui" };
 const LIVE_UPDATE_PERIOD_MS = 100;
+export const OBSERVED_TRACE_HISTORY_LIMIT = 3_600;
 const BATTERY_LEVEL_PRESETS = [5, 10, 20, 50, 75, 100] as const;
 export const TOAST_DURATION_MS = 4_500;
 export const TOAST_FAILURE_DURATION_MS = 7_000;
+
+export function appendObservedTracePoint(points: Vec3[], point: Vec3): Vec3[] {
+  return [...points, point].slice(-OBSERVED_TRACE_HISTORY_LIMIT);
+}
 
 export function campaignDockModePresentation(mode: CampaignRunMode): {
   label: "Accelerated" | "Realtime";
@@ -590,7 +595,7 @@ export function ControlCenter() {
         }
         const previous = existing.points.at(-1);
         if (previous && previous.x === point.x && previous.y === point.y && previous.z === point.z) continue;
-        next[vehicle.id] = { runId, points: [...existing.points, point].slice(-500) };
+        next[vehicle.id] = { runId, points: appendObservedTracePoint(existing.points, point) };
         changed = true;
       }
       return changed ? next : current;

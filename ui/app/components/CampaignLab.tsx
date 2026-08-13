@@ -1,6 +1,6 @@
 "use client";
 
-import { Beaker, Check, ChevronDown, CircleAlert, Clock3, Copy, Download, FastForward, ImageIcon, ImageOff, LoaderCircle, Maximize2, Trash2, X } from "lucide-react";
+import { Beaker, Check, ChevronDown, CircleAlert, Clock3, Copy, Download, FastForward, ImageIcon, ImageOff, LoaderCircle, Maximize2, Minimize2, Trash2, X } from "lucide-react";
 import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { createPortal } from "react-dom";
@@ -40,15 +40,6 @@ const CAMPAIGN_WORKSPACE_TABS: ReadonlyArray<{ id: CampaignWorkspaceTab; label: 
   { id: "run", label: "Active run" },
   { id: "review", label: "Review" },
 ];
-const CAMPAIGN_LIFECYCLE_STATES: readonly CampaignLifecycle[] = [
-  "DEFINED_NOT_RUN",
-  "READY",
-  "ACTIVE_DEVELOPMENT",
-  "BASELINED",
-  "PROMOTED",
-  "BLOCKED",
-];
-
 export const MISSION_CLUSTERS: ReadonlyArray<{
   id: CampaignCaseView["cluster"];
   label: string;
@@ -388,6 +379,7 @@ function CampaignTelemetryPlots({
   state: CampaignTelemetryLoadState | undefined;
   runNumber: number;
 }) {
+  const [expandedChart, setExpandedChart] = useState<string>();
   if (!state) {
     return (
       <section className="campaign-telemetry-plots is-loading" aria-label={`Flight graphs for run ${runNumber}`}>
@@ -450,6 +442,9 @@ function CampaignTelemetryPlots({
               <span>{vehicle.sampleCount.toLocaleString()} rows</span>
             </header>
             <CampaignTelemetryMetricChart
+              chartId={`${vehicle.vehicleId}-speed`}
+              expanded={expandedChart === `${vehicle.vehicleId}-speed`}
+              onToggle={() => setExpandedChart((current) => current === `${vehicle.vehicleId}-speed` ? undefined : `${vehicle.vehicleId}-speed`)}
               title="Speed"
               source="Velocity magnitude"
               unit="m/s"
@@ -464,6 +459,9 @@ function CampaignTelemetryPlots({
               }]}
             />
             <CampaignTelemetryMetricChart
+              chartId={`${vehicle.vehicleId}-altitude`}
+              expanded={expandedChart === `${vehicle.vehicleId}-altitude`}
+              onToggle={() => setExpandedChart((current) => current === `${vehicle.vehicleId}-altitude` ? undefined : `${vehicle.vehicleId}-altitude`)}
               title="World Z"
               source={vehicle.altitudeSource}
               unit="m"
@@ -478,6 +476,9 @@ function CampaignTelemetryPlots({
               }]}
             />
             <CampaignTelemetryMetricChart
+              chartId={`${vehicle.vehicleId}-motors`}
+              expanded={expandedChart === `${vehicle.vehicleId}-motors`}
+              onToggle={() => setExpandedChart((current) => current === `${vehicle.vehicleId}-motors` ? undefined : `${vehicle.vehicleId}-motors`)}
               title="Motor output"
               source={vehicle.motorSource}
               unit="%"
@@ -492,6 +493,9 @@ function CampaignTelemetryPlots({
               }))}
             />
             <CampaignTelemetryMetricChart
+              chartId={`${vehicle.vehicleId}-attitude`}
+              expanded={expandedChart === `${vehicle.vehicleId}-attitude`}
+              onToggle={() => setExpandedChart((current) => current === `${vehicle.vehicleId}-attitude` ? undefined : `${vehicle.vehicleId}-attitude`)}
               title="Attitude"
               source="Roll / pitch / yaw"
               unit="°"
@@ -506,6 +510,9 @@ function CampaignTelemetryPlots({
               }))}
             />
             <CampaignTelemetryMetricChart
+              chartId={`${vehicle.vehicleId}-acceleration`}
+              expanded={expandedChart === `${vehicle.vehicleId}-acceleration`}
+              onToggle={() => setExpandedChart((current) => current === `${vehicle.vehicleId}-acceleration` ? undefined : `${vehicle.vehicleId}-acceleration`)}
               title="Acceleration"
               source="IMU body frame"
               unit="m/s²"
@@ -520,6 +527,9 @@ function CampaignTelemetryPlots({
               }))}
             />
             <CampaignTelemetryMetricChart
+              chartId={`${vehicle.vehicleId}-angular-velocity`}
+              expanded={expandedChart === `${vehicle.vehicleId}-angular-velocity`}
+              onToggle={() => setExpandedChart((current) => current === `${vehicle.vehicleId}-angular-velocity` ? undefined : `${vehicle.vehicleId}-angular-velocity`)}
               title="Angular velocity"
               source="IMU body frame"
               unit="rad/s"
@@ -541,6 +551,9 @@ function CampaignTelemetryPlots({
 }
 
 function CampaignTelemetryMetricChart({
+  chartId,
+  expanded,
+  onToggle,
   title,
   source,
   unit,
@@ -549,6 +562,9 @@ function CampaignTelemetryMetricChart({
   samples,
   lines,
 }: {
+  chartId: string;
+  expanded: boolean;
+  onToggle: () => void;
   title: string;
   source: string;
   unit: string;
@@ -567,13 +583,21 @@ function CampaignTelemetryMetricChart({
     ? "No data"
     : `${observedMinimum.toFixed(2)}–${observedMaximum.toFixed(2)} ${unit}`;
   return (
-    <figure className="campaign-telemetry-chart">
-      <figcaption>
-        <span><strong>{title}</strong><small>{source}</small></span>
-        <em>{range}</em>
-      </figcaption>
-      {values.length ? (
-        <>
+    <figure className={`campaign-telemetry-chart${expanded ? " is-expanded" : ""}`}>
+      <button
+        type="button"
+        aria-expanded={expanded}
+        aria-controls={`campaign-chart-${chartId}`}
+        aria-label={`${expanded ? "Collapse" : "Expand"} ${title} graph`}
+        onClick={onToggle}
+      >
+        <div className="campaign-chart-caption">
+          <span><strong>{title}</strong><small>{source}</small></span>
+          <span className="campaign-chart-range"><em>{range}</em>{expanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}</span>
+        </div>
+        <div id={`campaign-chart-${chartId}`}>
+          {values.length ? (
+            <>
           <svg viewBox="0 0 240 62" preserveAspectRatio="none" role="img" aria-label={`${title} over ${durationS.toFixed(1)} seconds; ${range}`}>
             <line className="grid-line" x1="0" x2="240" y1="8" y2="8" />
             <line className="grid-line" x1="0" x2="240" y1="30" y2="30" />
@@ -599,8 +623,10 @@ function CampaignTelemetryMetricChart({
               {lines.map((line) => <span key={line.id} className={line.className}>{line.label}</span>)}
             </div>
           ) : null}
-        </>
-      ) : <p>No recorded {title.toLowerCase()} values</p>}
+            </>
+          ) : <p>No recorded {title.toLowerCase()} values</p>}
+        </div>
+      </button>
     </figure>
   );
 }
@@ -1112,17 +1138,35 @@ export function CampaignLab({
     }
   };
 
-  const act = async (label: string, action: () => Promise<unknown>) => {
+  const act = async (
+    label: string,
+    action: () => Promise<unknown>,
+    reconcileConfirmedResult?: () => void,
+  ) => {
     setBusy(label);
     try {
       await action();
-      await refresh();
+      reconcileConfirmedResult?.();
+      try {
+        await refresh();
+      } finally {
+        reconcileConfirmedResult?.();
+      }
       onNotice(label);
     } catch (error) {
       onNotice(error instanceof Error ? error.message : `${label} failed`);
     } finally {
       setBusy(undefined);
     }
+  };
+
+  const reconcileLifecycle = (caseId: string, lifecycle: CampaignLifecycle) => {
+    setCatalog((current) => current ? {
+      ...current,
+      cases: current.cases.map((item) => (
+        item.case_id === caseId ? { ...item, lifecycle } : item
+      )),
+    } : current);
   };
 
   const copyCaseId = async (caseId: string) => {
@@ -1137,42 +1181,24 @@ export function CampaignLab({
 
   const footerActions = (
     <div className="campaign-actions">
-      <label className="campaign-lifecycle-picker">
-        <span>Mission state</span>
-        <select
-          aria-label="Mission state"
-          value={selected?.lifecycle ?? ""}
-          disabled={!selected || Boolean(busy)}
-          onChange={(event) => {
-            if (!selected) return;
-            const state = event.target.value as CampaignLifecycle;
-            void act(
-              `Mission state changed to ${lifecycleLabel(state)}`,
-              () => api.setCampaignCaseLifecycle(
-                selected.case_id,
-                state,
-                `operator changed case lifecycle to ${lifecycleLabel(state)}`,
-              ),
-            );
-          }}
-        >
-          {CAMPAIGN_LIFECYCLE_STATES.map((state) => (
-            <option key={state} value={state}>{lifecycleLabel(state)}</option>
-          ))}
-        </select>
-      </label>
       <button
-        className="campaign-action-validate"
+        className="campaign-action-inactive"
         type="button"
-        disabled={!selected || Boolean(busy)}
-        title="Optional: run planning checks without selecting this mission"
-        onClick={() => selected && void act("Mission checks complete", () => api.staticValidateCampaignCase(selected.case_id))}
-      >Check only</button>
+        aria-pressed={selected?.lifecycle === "DEFINED_NOT_RUN"}
+        disabled={!selected || selected.lifecycle === "DEFINED_NOT_RUN" || Boolean(busy)}
+        onClick={() => selected && void act(
+          "Mission set to inactive",
+          () => api.setCampaignCaseLifecycle(selected.case_id, "DEFINED_NOT_RUN", "operator set mission to inactive"),
+          () => reconcileLifecycle(selected.case_id, "DEFINED_NOT_RUN"),
+        )}
+      >Inactive</button>
       <button
         className="campaign-action-active"
         type="button"
-        disabled={!selected || selected.case_id === active?.case_id || selected.environment === "REAL" || selected.implementation_status !== "EXECUTABLE" || Boolean(busy)}
-        title="Checks the mission and selects it in one step"
+        disabled={!selected || selected.case_id === active?.case_id || selected.environment === "REAL" || selected.implementation_status !== "EXECUTABLE" || Boolean(activeCampaignRun) || Boolean(busy)}
+        title={activeCampaignRun
+          ? "Stop the active campaign run before selecting another mission"
+          : "Checks the mission and selects it in one step"}
         onClick={() => selected && void act("Mission selected and checks passed", () => api.setActiveCampaignCase(selected.case_id, "operator selected mission for development"))}
       >Use mission</button>
       <button
@@ -1181,21 +1207,22 @@ export function CampaignLab({
         disabled={!selected || selected.lifecycle === "BASELINED" || !workspace?.reviews.some((review) => review.case_id === selected.case_id) || unassessedSnapshotCount > 0 || Boolean(busy)}
         title={unassessedSnapshotCount ? `${unassessedSnapshotCount} retained snapshot${unassessedSnapshotCount === 1 ? " requires" : "s require"} a neutral assessment` : undefined}
         onClick={() => selected && void act("Mission case moved to review", () => api.moveCampaignCaseToReview(selected.case_id, "operator moved case to review"))}
-      >Move to review</button>
+      >Review</button>
       <button
         className="campaign-action-complete"
         type="button"
-        disabled={!selected || selected.lifecycle === "PROMOTED" || !workspace?.reviews.some((review) => review.case_id === selected.case_id && review.status === "SUCCEEDED") || unassessedSnapshotCount > 0 || Boolean(busy)}
-        title={unassessedSnapshotCount ? "Assess every retained snapshot before evidence purge and completion" : undefined}
-        onClick={() => selected && void act("Mission case completed", () => api.completeCampaignCase(selected.case_id, "operator confirmed review is complete"))}
+        aria-pressed={selected?.lifecycle === "PROMOTED"}
+        disabled={!selected || selected.lifecycle === "PROMOTED" || Boolean(busy)}
+        onClick={() => selected && void act(
+          "Mission case completed",
+          () => api.setCampaignCaseLifecycle(
+            selected.case_id,
+            "PROMOTED",
+            "operator marked mission as completed",
+          ),
+          () => reconcileLifecycle(selected.case_id, "PROMOTED"),
+        )}
       >Completed</button>
-      <button className="campaign-action-preview" type="button" disabled={!active || Boolean(busy)} onClick={() => void act("Plan preview ready", async () => {
-        setPreview(await api.previewActiveCampaign(
-          activeSubmission?.submission_id,
-          activePlanningSubmission?.planning_submission_id,
-        ));
-        setWorkspaceTab("run");
-      })}>Preview plan</button>
     </div>
   );
 
@@ -1227,26 +1254,6 @@ export function CampaignLab({
                 {value === "SIMULATION" ? "Simulation" : "Real"}
               </button>
             ))}
-          </div>
-          <div className="campaign-workspace-downloads" aria-label="Qualification downloads">
-            <a
-              className="campaign-qualification-download"
-              href={api.campaignQualificationUrl()}
-              download
-              title="Download the hash-bound static qualification manifest"
-            >
-              <Download size={14} /> Qualification
-            </a>
-            {typeof api.campaignConstraintQualificationUrl === "function" ? (
-              <a
-                className="campaign-qualification-download"
-                href={api.campaignConstraintQualificationUrl()}
-                download
-                title="Download the retained bottleneck, head-on, merge, geometry, and dynamic-replanning matrix"
-              >
-                <Download size={14} /> Constraint matrix
-              </a>
-            ) : null}
           </div>
           <button ref={closeButtonRef} className="campaign-workspace-close" type="button" aria-label="Close Campaign Laboratory" onClick={() => setOpen(false)}><X size={18} /></button>
         </header>
@@ -1539,14 +1546,11 @@ export function CampaignLab({
                       ?? (selectedRunEntry.run.status === "RUNNING" || selectedRunEntry.run.status === "QUEUED"
                         ? "This run is still in progress."
                         : "Evidence for this run is not available.")}</p>
-                    <div className="campaign-run-facts">
-                      <span><small>Mode</small><strong>{selectedRunEntry.run.mode === "AUTOMATED_ACCELERATED" ? "Accelerated" : "Realtime"}</strong></span>
-                      <span><small>CSV rows</small><strong>{selectedRunEntry.review?.analysis.telemetry_row_count?.toLocaleString() ?? "—"}</strong></span>
-                      <span><small>Finished</small><strong>{formatCampaignRunDate(selectedRunEntry.run.finished_at_utc)}</strong></span>
-                    </div>
-                    {selectedRunEntry.review ? (
-                      <EvidenceReconciliation analysis={selectedRunEntry.review.analysis} />
-                    ) : null}
+                    <p className="campaign-run-facts">
+                      {selectedRunEntry.run.mode === "AUTOMATED_ACCELERATED" ? "Accelerated" : "Realtime"}
+                      {` · ${selectedRunEntry.review?.analysis.telemetry_row_count?.toLocaleString() ?? "—"} rows`}
+                      {` · ${formatCampaignRunDate(selectedRunEntry.run.finished_at_utc)}`}
+                    </p>
                     <div className="campaign-review-detail-body">
                       {selectedMissionExecutionId ? (
                         <CampaignTelemetryPlots
@@ -1558,6 +1562,9 @@ export function CampaignLab({
                           <CircleAlert size={14} /> Flight graphs become available when the run telemetry CSV is retained.
                         </section>
                       )}
+                      {selectedRunEntry.review ? (
+                        <EvidenceReconciliation analysis={selectedRunEntry.review.analysis} />
+                      ) : null}
                       {selectedRunEntry.review ? (
                         <>
                           {selectedRunEntry.review.operator_observations.length ? (
@@ -1791,14 +1798,19 @@ function EvidenceReconciliation({ analysis }: { analysis: CampaignReviewAnalysis
     (vehicle) => vehicle.kinematics_gate_reconciliation,
   );
   return (
-    <section className="campaign-plan-preview" aria-label="Evidence reconciliation">
-      <header><span>EVIDENCE RECONCILIATION</span><strong>Raw + processed</strong></header>
-      {analysis.planning_submission_id ? (
-        <div>
-          <span>Accepted planning authority</span>
-          <p>{analysis.planning_submission_id} · submission {analysis.planning_submission_sha256?.slice(0, 12) ?? "—"} · package {analysis.resolved_planning_package_sha256?.slice(0, 12) ?? "—"}</p>
-        </div>
-      ) : null}
+    <details className="campaign-evidence-details">
+      <summary>
+        <span>Evidence details</span>
+        <strong>{kinematics.length + (analysis.landing?.length ?? 0)} checks</strong>
+        <ChevronDown size={14} aria-hidden="true" />
+      </summary>
+      <div>
+        {analysis.planning_submission_id ? (
+          <div>
+            <span>Planning authority</span>
+            <p>{analysis.planning_submission_id} · submission {analysis.planning_submission_sha256?.slice(0, 12) ?? "—"} · package {analysis.resolved_planning_package_sha256?.slice(0, 12) ?? "—"}</p>
+          </div>
+        ) : null}
       {kinematics.map((vehicle) => {
         const gate = vehicle.kinematics_gate_reconciliation!;
         return (
@@ -1819,7 +1831,8 @@ function EvidenceReconciliation({ analysis }: { analysis: CampaignReviewAnalysis
           <p>Coordinate chain: {landing.coordinate_conversion_chain.join(" → ")}{landing.terminal_contact ? ` · ${humanizeCampaignValue(landing.terminal_contact)}` : ""}{landing.motors_cut_after_contact === undefined ? "" : ` · motors ${landing.motors_cut_after_contact ? "cut after contact" : "not confirmed cut after contact"}`}</p>
         </div>
       ))}
-    </section>
+      </div>
+    </details>
   );
 }
 

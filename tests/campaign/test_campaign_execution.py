@@ -377,8 +377,12 @@ async def test_head_on_runtime_commits_object_conditioned_replacement_epoch(
     trace = artifacts.bundle["context"]["campaign_execution_head_trace"]
     assert trace["enabled"] is True
     assert trace["event_count"] == 1
-    assert len(trace["records"]) == 1
-    record = trace["records"][0]
+    assert trace["observation_count"] == 1
+    record = next(
+        item
+        for item in trace["records"]
+        if item.get("execution_disposition") == "DISPATCHED"
+    )
     assert record["disposition"] == "ACCEPTED"
     assert record["planning_latency_s"] <= case.hard_constraints.planning_budget_s
     assert set(record["replacement_trajectory_sha256_by_role"]) == {"Alpha", "Beta"}

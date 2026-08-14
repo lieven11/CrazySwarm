@@ -2,14 +2,14 @@
   "accepted_r7_design_payload_sha256": "4a394f58ecda69b07fce919c009e090aacb20a9ef65bd44a3a7b794fb16ad0a5",
   "claim_boundaries": {
     "fast_sim_accelerated": false,
-    "integration": true,
+    "integration": false,
     "observed_realtime": false,
     "production_entry_no_runtime": true,
     "rendered_ui": false
   },
   "current_audit": {
     "audit_id": "wp52-56-r6-complete-numerical-predraft-v1",
-    "audit_sha256": "8c6f888a6b099f8e3fda1c544ba8f69af8381214ade902697b75810b0fc9c504",
+    "audit_sha256": "06fc3facb740ac3962312c5462d9d92eda19783b8b3e74ab983bc1e26243ba83",
     "base_commit": "4bec32a827785f5c25cb32a4f2084ced8045f3b3",
     "capacity_context_prototypes": [
       {
@@ -143,12 +143,12 @@
               ]
             }
           ],
-          "observation_sha256": "4319de3623707c6f29bca3ef3f75fc018c0e1c564613b5c87d6b6d82d23dbaa9",
-          "plan_sha256": "50344fb7e11e4c966bfbd33847effb06150d88290dd1838aa64583e96e14f917",
+          "observation_sha256": "0ff807e7cb9ccc815704bb2365a1b37b8e80c9f6fd67d0634b45ad06003861e4",
+          "plan_sha256": "f7b17cd84b27b54ea6595c80d2c1f0e78b7ded6cb1af565a5b16e4f99cda05bb",
           "planning_submission_id": "case_planning_authority.overlap-capacity-v1",
           "planning_submission_sha256": "13baf6e48c6a6fd17dbaa01228058ef0d3d582aa5d7dd6cf52896a4f2fd3885a",
           "selected_candidate_sha256": "5509d0d08b0132d83bbb557355298cea08ac46be1ee54e449e62a7d34a1a71f0",
-          "trajectory_set_sha256": "f80165d190299c696b9b55b1040c5488b37d9a36e060b8eace9f20110567b98c",
+          "trajectory_set_sha256": "196df6162db684a8adf711fb8a5e32aa46e13ce86425292610a71ba479e0bc03",
           "trajectory_sha256_by_role": {
             "Alpha": "b510548d67f9d02a0efa3a34c834a5ba20b0c39367233faf9cda16cadfeb2894",
             "Beta": "2f59249a8721c3dcc6c20c4b689e3d79bd710a12f3d24810f0741378366a3301"
@@ -344,12 +344,12 @@
                       ]
                     }
                   ],
-                  "observation_sha256": "7babf22f32d3dfab29c0badb92f97a5f9969a921f7fda9a79094807f9fe9a2d4",
-                  "plan_sha256": "5ca0f1cd24ffebd5b0cd4dd5bb7fd51acfcb9cf6a714a8458b3f007936a1ad6d",
+                  "observation_sha256": "2e90e0e291fb9b592930bf69f5215ba4635309e6bf9ffac5f18406ca95066ff0",
+                  "plan_sha256": "f1b19d4803db944913d39e40e4b91072b96d878cec484f223b345ee61d46fe61",
                   "planning_submission_id": "head_on.earliest_safe_release.overlap-capacity-v1",
                   "planning_submission_sha256": "b90447a9c0e80bb1bf36f560f6f92f7ea5db93dde8f4a7c4710fc38a0ee8abd3",
                   "selected_candidate_sha256": "e9bf3f051214d148c9c1b4492a7b534a08fac13ccecb83969417111ff05cf799",
-                  "trajectory_set_sha256": "e88cf20504448a27b0dea5b1ae94966113c099c3034a3378bb8311bbc50a5eb5",
+                  "trajectory_set_sha256": "242309947d65b9ccb3e7c651fab254bac71ed72341dc91d148549908ddbf8ba8",
                   "trajectory_sha256_by_role": {
                     "Alpha": "9a28754dd1b3f8bf073b3693962453105c12979217e114fdee21bbc17e05054d",
                     "Beta": "c9da8ef0ba7621e688a9eee484a1976a80a713bda597f7ce53cc8bee0e34c37c"
@@ -540,12 +540,12 @@
                       ]
                     }
                   ],
-                  "observation_sha256": "d94623be7f13de4543f2674fc7aafe988d28c2897fa7e6af8ac631d356630739",
-                  "plan_sha256": "5ca0f1cd24ffebd5b0cd4dd5bb7fd51acfcb9cf6a714a8458b3f007936a1ad6d",
+                  "observation_sha256": "1f635c119b68101e63308e777b02892493926f2962090551e7a2bc28103f3a88",
+                  "plan_sha256": "f1b19d4803db944913d39e40e4b91072b96d878cec484f223b345ee61d46fe61",
                   "planning_submission_id": "head_on.earliest_safe_release.overlap-capacity-v1",
                   "planning_submission_sha256": "b90447a9c0e80bb1bf36f560f6f92f7ea5db93dde8f4a7c4710fc38a0ee8abd3",
                   "selected_candidate_sha256": "4b58f90649bf145d5226192d413fc03388b73510f6a159e1bdfea0743943626c",
-                  "trajectory_set_sha256": "88766448f2d44959f4dee6026a986b0ec69c38db11b01552e573bc4ed60b644e",
+                  "trajectory_set_sha256": "dc57eeeba419026a508baaee00eb11a9343d45815d2758cb9ddfeb1f806c9f6d",
                   "trajectory_sha256_by_role": {
                     "Alpha": "c00dfccd2c69038819eb8f900b8002d6ae35067ed36c284edf6fcb1360381a27",
                     "Beta": "141b4475a2f9a2f697dd11063929d37864145a88677943ee9d1538453a115663"
@@ -1523,12 +1523,12 @@
               ]
             }
           ],
-          "observation_sha256": "d94623be7f13de4543f2674fc7aafe988d28c2897fa7e6af8ac631d356630739",
-          "plan_sha256": "5ca0f1cd24ffebd5b0cd4dd5bb7fd51acfcb9cf6a714a8458b3f007936a1ad6d",
+          "observation_sha256": "1f635c119b68101e63308e777b02892493926f2962090551e7a2bc28103f3a88",
+          "plan_sha256": "f1b19d4803db944913d39e40e4b91072b96d878cec484f223b345ee61d46fe61",
           "planning_submission_id": "head_on.earliest_safe_release.overlap-capacity-v1",
           "planning_submission_sha256": "b90447a9c0e80bb1bf36f560f6f92f7ea5db93dde8f4a7c4710fc38a0ee8abd3",
           "selected_candidate_sha256": "4b58f90649bf145d5226192d413fc03388b73510f6a159e1bdfea0743943626c",
-          "trajectory_set_sha256": "88766448f2d44959f4dee6026a986b0ec69c38db11b01552e573bc4ed60b644e",
+          "trajectory_set_sha256": "dc57eeeba419026a508baaee00eb11a9343d45815d2758cb9ddfeb1f806c9f6d",
           "trajectory_sha256_by_role": {
             "Alpha": "c00dfccd2c69038819eb8f900b8002d6ae35067ed36c284edf6fcb1360381a27",
             "Beta": "141b4475a2f9a2f697dd11063929d37864145a88677943ee9d1538453a115663"
@@ -1662,12 +1662,12 @@
               ]
             }
           ],
-          "observation_sha256": "e37b4d3089421d6a59655d8fd96cb11059e3030580ed3c25501197f9f724e22f",
-          "plan_sha256": "46fd26ff06bd54a9dddba198ee5ed55fe6a8e4bc189e592f8408f920711b73a1",
+          "observation_sha256": "183339808869df207c419ac1afdcc3004535bceb71575f29d9faeed3c6007bfc",
+          "plan_sha256": "2154f384730d7c920507954ac90f2932d53e5324e7a966b98da57d8032ed5997",
           "planning_submission_id": "case_planning_authority.overlap-capacity-v1",
           "planning_submission_sha256": "1d316622e28f039962c17b4d852e5d81e9009cece81ec0f1e53f77ac594df819",
           "selected_candidate_sha256": "c888c25aa10b27ff3df4204fc1337a00a362e0cd89ac57a655c36d10ecd75e79",
-          "trajectory_set_sha256": "22fdb175172ff95d26200a321e6955eb3b7914aefd400469d24a6529aa74296e",
+          "trajectory_set_sha256": "52fc1b959949bb45cb9742fffdeeac95836d692041f32584502d1293f1874e40",
           "trajectory_sha256_by_role": {
             "Alpha": "251097b84b1be8e66631c778b8b9f866b3544677ec10bd21fe5b22b669ca46d6",
             "Beta": "730a31f350833d751af279a5f553977c9250a8ee7417a00334fb8f7650dac91d"
@@ -1834,12 +1834,12 @@
               ]
             }
           ],
-          "observation_sha256": "da02cf3bc5a2d7b3a6c70470b9065e0ef003ac5b8fc1835ebb2e5be35f95940a",
-          "plan_sha256": "b321d40ecd99a3c6c55eef027ac58ca6cb1eafa6a2b1a15c428bc82a505d9774",
+          "observation_sha256": "67ed4c6b6c66e77ce9d94a9498f3a8163601d837b5c40f0e9f1a467b4b4ba799",
+          "plan_sha256": "5620260bccea9e3113634c36169f0c57580e717c4c7b8de22439dfba331106d4",
           "planning_submission_id": "merge.fair_release.overlap-capacity-v1",
           "planning_submission_sha256": "7f2fd9ae61e52c205358df112a106e2d0c6c2cff197cf3a6d3bf5d59a1dd6a92",
           "selected_candidate_sha256": "1b626358c00eedaaa2b747df5b860fc2ff38880ec75a56c4c23255e9169a25d7",
-          "trajectory_set_sha256": "28f494d9349f077570f21e73419fea29fdffffe407e93bcdab14bd5112bbc78e",
+          "trajectory_set_sha256": "2b7e0a9fe41736c94a30fe64c8d73245ea26d3a214c49030b362178254c04078",
           "trajectory_sha256_by_role": {
             "Alpha": "b75a73b91c8f9037618268bc40c858cecedce577495570f6c4d44d06a13c1ac9",
             "Beta": "730a31f350833d751af279a5f553977c9250a8ee7417a00334fb8f7650dac91d"
@@ -1969,12 +1969,12 @@
               "value": 0.05732272946149841
             }
           ],
-          "observation_sha256": "e1978e1803fd2c718d482355227986ea2da7f80d5d65350b1b6da314e8e57437",
-          "plan_sha256": "a139497261dd3789609c7999ffb171500a0aa557bb035101bde218450cf705ff",
+          "observation_sha256": "83e3ef86325d682492d5b8edd0bcc6285c70a2e8dee387e1aa30dd6915ee56c8",
+          "plan_sha256": "b739b01b9ce3428b1539ceeed11a7c469383ca5abab1595fe76cd89f15430040",
           "planning_submission_id": "case_planning_authority.overlap-capacity-v1",
           "planning_submission_sha256": "80178e54b0be015f315d56bc643ec2d9d3b294645fc177b4f1e5c5806191084d",
           "selected_candidate_sha256": "bbb82ceb4ad8884c07605e475cd6b181c75eda5c6d3072b0a5f3f3fce8de86fc",
-          "trajectory_set_sha256": "fabc5c5e9d60673c6dae69b736a03ef00a2aec4da25596f5d40715380b77be2e",
+          "trajectory_set_sha256": "89b7d5371c8959c083c75dcca8d1ddf629393dad57c8f1f07975867d2c0035f1",
           "trajectory_sha256_by_role": {
             "Alpha": "b48665e2a159f60240b36f175ce96e93bd6ccda66e4a7c98e1af7e98a9cf245f",
             "Beta": "ddd4e2a30d92b990b493cfd7ce74bbd80ad990ba9ede95b8af919e8b395ef274"
@@ -2173,12 +2173,12 @@
                       "value": 6.308842337432452e-12
                     }
                   ],
-                  "observation_sha256": "fe402be29b6617d1492ef65d55be38ac2f4fc58241d65c4ecb4c08689d88e04a",
-                  "plan_sha256": "05a24f5943575a0733dce372b822009ea8d3b61ef37bf24239a6fc1db7cda94c",
+                  "observation_sha256": "29e4f06f4370cbeb549356979acd5c1d01d7249aee14c31ce7cd75af50727274",
+                  "plan_sha256": "59aa07e3bdcfbeb4eb8fc20a04721cc779a446d12b55147f17558c8795cefb19",
                   "planning_submission_id": "crossing.earliest_equal_release.overlap-capacity-v1",
                   "planning_submission_sha256": "127fb10f11f876da96893e4ff02986a497f442b07cde24dd64193c4eaabc11d8",
                   "selected_candidate_sha256": "0011698759a6e0d330b86d4cc67ddc32bef82dbc5fdfd985253168e8b33bdf18",
-                  "trajectory_set_sha256": "a6a6b68020d5c259115bda11c2d940893e9ba155153c3efdb362ad926ddd79b6",
+                  "trajectory_set_sha256": "97ef48b38bf21aff32598f2c655ba9a20335e73d3113ac71aeef2f3040a1e9c1",
                   "trajectory_sha256_by_role": {
                     "Alpha": "30e01e7b8c71be8964def76b83a6cfa1939c4152a7505ffe080eb40f453c4b9f",
                     "Beta": "7ba95e9ca8228827da9e2f2c105485e5321eafbc835726497bc990ee7a9de2c6"
@@ -2372,12 +2372,12 @@
                       "value": 6.308842337432452e-12
                     }
                   ],
-                  "observation_sha256": "e1254776b552b98c2024b9dff29e2c6f6be5aca6f9ad606fab89d323c7f0875e",
-                  "plan_sha256": "05a24f5943575a0733dce372b822009ea8d3b61ef37bf24239a6fc1db7cda94c",
+                  "observation_sha256": "be6e1b298e907f48eaf37f88444f92a9fbc8a98db69cedca0dda7bde93c650ea",
+                  "plan_sha256": "59aa07e3bdcfbeb4eb8fc20a04721cc779a446d12b55147f17558c8795cefb19",
                   "planning_submission_id": "crossing.earliest_equal_release.overlap-capacity-v1",
                   "planning_submission_sha256": "127fb10f11f876da96893e4ff02986a497f442b07cde24dd64193c4eaabc11d8",
                   "selected_candidate_sha256": "cbd3bc0dfea31532c5b8927aedb14248eb42ff1e41d24ffd86dd0b70289f98f1",
-                  "trajectory_set_sha256": "4af49e1270a9ee60652605d6497bc7b03affe5b42f54421c6f86635cb9374258",
+                  "trajectory_set_sha256": "59ea8c75263bf9d3bc84462877d8cc24fef360ba2bdc3f6f082e803ee1deb0bf",
                   "trajectory_sha256_by_role": {
                     "Alpha": "b48665e2a159f60240b36f175ce96e93bd6ccda66e4a7c98e1af7e98a9cf245f",
                     "Beta": "91a3cc6b2f4b87715a0b5bbdbd20bc91969a154f9d2128240cc27d96e249b135"
@@ -2678,12 +2678,12 @@
                       "value": 0.5999999999999999
                     }
                   ],
-                  "observation_sha256": "cc88b33a85b0a2b4bbcf54a69f5bb834eb4e0cf837383c06fbfbb3a76bff9174",
-                  "plan_sha256": "05a24f5943575a0733dce372b822009ea8d3b61ef37bf24239a6fc1db7cda94c",
+                  "observation_sha256": "77fda8215d716385fd4ab3e355803254c5164412fb185814fcd01e9972312260",
+                  "plan_sha256": "59aa07e3bdcfbeb4eb8fc20a04721cc779a446d12b55147f17558c8795cefb19",
                   "planning_submission_id": "crossing.earliest_equal_release.overlap-capacity-v1",
                   "planning_submission_sha256": "127fb10f11f876da96893e4ff02986a497f442b07cde24dd64193c4eaabc11d8",
                   "selected_candidate_sha256": "93cfd485edd89affcf654289da7da66b0aa495fa8b60a9868973e8a33dea3845",
-                  "trajectory_set_sha256": "980af02460a9f495a6efd3a913479c0b9b093e0853014965500d25c1d72e5217",
+                  "trajectory_set_sha256": "d8ccd7b1c1601e6ca64ecbabc3ef44a84ef059c9b26a63e1b3c2d234032e2a96",
                   "trajectory_sha256_by_role": {
                     "Alpha": "f4c3b8138d563da6fe73eddd685476fbd8a02c04fb9bf844608b55d71bd6ee15",
                     "Beta": "7ba95e9ca8228827da9e2f2c105485e5321eafbc835726497bc990ee7a9de2c6"
@@ -3149,12 +3149,12 @@
                       "value": 0.5999999999999999
                     }
                   ],
-                  "observation_sha256": "baee902e89c97cdfd0cc178f348c4b39244da3eb7572defadb313edb6955cc7c",
-                  "plan_sha256": "05a24f5943575a0733dce372b822009ea8d3b61ef37bf24239a6fc1db7cda94c",
+                  "observation_sha256": "26b0b6d73787960c75859ef69d9940c30e75fe5c6393baed2a990f69f52b39bf",
+                  "plan_sha256": "59aa07e3bdcfbeb4eb8fc20a04721cc779a446d12b55147f17558c8795cefb19",
                   "planning_submission_id": "crossing.earliest_equal_release.overlap-capacity-v1",
                   "planning_submission_sha256": "127fb10f11f876da96893e4ff02986a497f442b07cde24dd64193c4eaabc11d8",
                   "selected_candidate_sha256": "c1d6f631c5e6ac8ed4aea9f22cf00ae9c70221e7d6b30e1a099ab3ff3be0effa",
-                  "trajectory_set_sha256": "19c8d82570dcc01b5c2f31196f2cb5a0b7419fc1fb74c40c548bef8c3c96b14a",
+                  "trajectory_set_sha256": "d172584f08bb2a579c8e44cc0263d1c7be1991b789707188490167f2fd9542e4",
                   "trajectory_sha256_by_role": {
                     "Alpha": "b48665e2a159f60240b36f175ce96e93bd6ccda66e4a7c98e1af7e98a9cf245f",
                     "Beta": "865d06230819277c1ba5e61fed4a9e6d0d28eaa66c92d36eab5fa386425a7fb6"
@@ -3621,12 +3621,12 @@
               "value": 6.308842337432452e-12
             }
           ],
-          "observation_sha256": "e1254776b552b98c2024b9dff29e2c6f6be5aca6f9ad606fab89d323c7f0875e",
-          "plan_sha256": "05a24f5943575a0733dce372b822009ea8d3b61ef37bf24239a6fc1db7cda94c",
+          "observation_sha256": "be6e1b298e907f48eaf37f88444f92a9fbc8a98db69cedca0dda7bde93c650ea",
+          "plan_sha256": "59aa07e3bdcfbeb4eb8fc20a04721cc779a446d12b55147f17558c8795cefb19",
           "planning_submission_id": "crossing.earliest_equal_release.overlap-capacity-v1",
           "planning_submission_sha256": "127fb10f11f876da96893e4ff02986a497f442b07cde24dd64193c4eaabc11d8",
           "selected_candidate_sha256": "cbd3bc0dfea31532c5b8927aedb14248eb42ff1e41d24ffd86dd0b70289f98f1",
-          "trajectory_set_sha256": "4af49e1270a9ee60652605d6497bc7b03affe5b42f54421c6f86635cb9374258",
+          "trajectory_set_sha256": "59ea8c75263bf9d3bc84462877d8cc24fef360ba2bdc3f6f082e803ee1deb0bf",
           "trajectory_sha256_by_role": {
             "Alpha": "b48665e2a159f60240b36f175ce96e93bd6ccda66e4a7c98e1af7e98a9cf245f",
             "Beta": "91a3cc6b2f4b87715a0b5bbdbd20bc91969a154f9d2128240cc27d96e249b135"
@@ -10062,12 +10062,12 @@
                   ]
                 }
               ],
-              "observation_sha256": "7cd6ee4be59d3b97131aa23d43480ed1b39b49fc90024740388a1acf288cf0cc",
-              "plan_sha256": "3d4aab7598c5422c98c8c514c118c0f74c20cec2a357ceec333622ed8264fd5b",
+              "observation_sha256": "daf5d4b24270a5672d15c6024930714fc7edf4fc270947f6e9d6f14373e6e3e2",
+              "plan_sha256": "69b2999410fce0b98279dfbab7d8083762caaf03e4dea2ec43342cc2422a19e5",
               "planning_submission_id": "center.robust_combined.argmax_bounded_v1",
               "planning_submission_sha256": "a6f56955383004bb3e17df368f0a8c8aff662cddecb49448a89e0683b53b8461",
               "selected_candidate_sha256": "279c5a87f280268971403633ca8bd5f8ca543c222ec7ae2e31f82a7d87861507",
-              "trajectory_set_sha256": "10867ad536d1e3f80d381dedd6ae66cb63a010b3a269e5a4f85c5d0f2018055b",
+              "trajectory_set_sha256": "b3db07c48c6a18a7a680e8e2caf78bb701948eba14424269e0855166a7bd53e8",
               "trajectory_sha256_by_role": {
                 "Alpha": "20a0c3875dedbeabb09e2dae482c843da8b834094643a4f7830cf0377719f5c7",
                 "Beta": "d10b09c44b8ca4dc738e948e5f3c045e72868db437f418e38969aacf9489e7ed",
@@ -10333,12 +10333,12 @@
                   ]
                 }
               ],
-              "observation_sha256": "600735e7e267b3076ebd28967a648632021f9c71d20cd9064ac92702967a7e7a",
-              "plan_sha256": "3d4aab7598c5422c98c8c514c118c0f74c20cec2a357ceec333622ed8264fd5b",
+              "observation_sha256": "f6705d52c31e8f39f8b75f4eef05986f85202f55a1809b4e64ad15e998e95b4a",
+              "plan_sha256": "69b2999410fce0b98279dfbab7d8083762caaf03e4dea2ec43342cc2422a19e5",
               "planning_submission_id": "center.robust_combined.argmax_bounded_v1",
               "planning_submission_sha256": "a6f56955383004bb3e17df368f0a8c8aff662cddecb49448a89e0683b53b8461",
               "selected_candidate_sha256": "35b03e86bb9d515dd6735d534281f2adb07c0ba62c811ff867bb26c38bb4fd04",
-              "trajectory_set_sha256": "63b89fde039a9df270c53148a2f5144535fe0abc8c190dab9933623e0571d4d1",
+              "trajectory_set_sha256": "e3d3ef9bf3fb602034fa168461290698128fc19dcaef4bce81c0cd2b5b2a0f62",
               "trajectory_sha256_by_role": {
                 "Alpha": "bc9be72349321941b6bc535901550906f9d3be949590b157c200b52cf4cca24f",
                 "Beta": "df33f1710a9584e6672b817b5a57ae7fddc3ff0a70c38562f06ae1fbf8b3cd60",
@@ -10609,12 +10609,12 @@
                   ]
                 }
               ],
-              "observation_sha256": "3253e0c7b378b139aec8fcd4fb9761f5e382fbc8c745342fab92b656c1b8e114",
-              "plan_sha256": "3d4aab7598c5422c98c8c514c118c0f74c20cec2a357ceec333622ed8264fd5b",
+              "observation_sha256": "f67374a74bcd841128dea58ba9ae4101ecb3f060a6f736f7d0df2a8bec2da56e",
+              "plan_sha256": "69b2999410fce0b98279dfbab7d8083762caaf03e4dea2ec43342cc2422a19e5",
               "planning_submission_id": "center.robust_combined.argmax_bounded_v1",
               "planning_submission_sha256": "a6f56955383004bb3e17df368f0a8c8aff662cddecb49448a89e0683b53b8461",
               "selected_candidate_sha256": "ef70c42afb54c6a10974b18295c349b0b5645171a48e4de5c335150c2ab885cd",
-              "trajectory_set_sha256": "04fb26689bb02f4297639557d3f7abbc4d9ee7b98b8fba289a32f30f7aad2ad7",
+              "trajectory_set_sha256": "43bea22de931ef362c2bde8aaead775bb3e4f28d5555c429722a8c8684041da7",
               "trajectory_sha256_by_role": {
                 "Alpha": "e1115efaf667fdf2f70535738c76ccfb7e0f5e7c5794c4b9bf58f61ffc248549",
                 "Beta": "7ba95e9ca8228827da9e2f2c105485e5321eafbc835726497bc990ee7a9de2c6",
@@ -10885,12 +10885,12 @@
                   ]
                 }
               ],
-              "observation_sha256": "8ceaf0f2839f5153377baa1c6a41ea451e1a7714fc7d2807ed70ec5089825dc5",
-              "plan_sha256": "3d4aab7598c5422c98c8c514c118c0f74c20cec2a357ceec333622ed8264fd5b",
+              "observation_sha256": "025aa810336ddbf2a9aa5fac06a1d9e7dfd51b29496307c80a026c680d26aa47",
+              "plan_sha256": "69b2999410fce0b98279dfbab7d8083762caaf03e4dea2ec43342cc2422a19e5",
               "planning_submission_id": "center.robust_combined.argmax_bounded_v1",
               "planning_submission_sha256": "a6f56955383004bb3e17df368f0a8c8aff662cddecb49448a89e0683b53b8461",
               "selected_candidate_sha256": "61f6c36e0862f4bf1c1f3016020375cf117734ffd48015556837f48a24c335d4",
-              "trajectory_set_sha256": "41452cebae2f0102612799f19c3dd7e233c0b5577e21a20bb903ab6bed760e04",
+              "trajectory_set_sha256": "7df9703102eb84820a122d5292ba1c050ba39d28b5c4b74748b61a2e7fee1609",
               "trajectory_sha256_by_role": {
                 "Alpha": "45806718ca00b7da34fe7d06112f7d07a76e80d2e3901cfc2ae7f1a1a1b656c3",
                 "Beta": "7ba95e9ca8228827da9e2f2c105485e5321eafbc835726497bc990ee7a9de2c6",
@@ -11161,12 +11161,12 @@
                   ]
                 }
               ],
-              "observation_sha256": "01a4e10f6714fb5c2d9fd94f39b479d4a2ca8c17d917ea9109316b64d4165397",
-              "plan_sha256": "3d4aab7598c5422c98c8c514c118c0f74c20cec2a357ceec333622ed8264fd5b",
+              "observation_sha256": "9ecb108ee50732d295a6d27fe901bff93e7c448a30f9e412a6236c36adb347a3",
+              "plan_sha256": "69b2999410fce0b98279dfbab7d8083762caaf03e4dea2ec43342cc2422a19e5",
               "planning_submission_id": "center.robust_combined.argmax_bounded_v1",
               "planning_submission_sha256": "a6f56955383004bb3e17df368f0a8c8aff662cddecb49448a89e0683b53b8461",
               "selected_candidate_sha256": "08ef10cd30a72bdd0612c302f7d9446cf500c4a9e9b7e7e690dfa9f88af8b57a",
-              "trajectory_set_sha256": "43b6c0fec529dea88b043ca4fc4bcb51e929df7458b21f338e35562e1a50088f",
+              "trajectory_set_sha256": "4ad39b477ee07c93c2c56ddadbf3399fc6784160bc448abd6886f4b3eec0d296",
               "trajectory_sha256_by_role": {
                 "Alpha": "b48665e2a159f60240b36f175ce96e93bd6ccda66e4a7c98e1af7e98a9cf245f",
                 "Beta": "bb0ed37d3cbe0f75b16c64cb934097696762ae401f6f2024fc7bc52fb7e05971",
@@ -11437,12 +11437,12 @@
                   ]
                 }
               ],
-              "observation_sha256": "6954ca5c8b95ce6cc543049b7842495fbb8fb2b3e52c265ed442bc8551b2d164",
-              "plan_sha256": "3d4aab7598c5422c98c8c514c118c0f74c20cec2a357ceec333622ed8264fd5b",
+              "observation_sha256": "d2ba6a98ba2404f28d69198c3615f3d1dbde299db8bf5bd47e8abe455da11fde",
+              "plan_sha256": "69b2999410fce0b98279dfbab7d8083762caaf03e4dea2ec43342cc2422a19e5",
               "planning_submission_id": "center.robust_combined.argmax_bounded_v1",
               "planning_submission_sha256": "a6f56955383004bb3e17df368f0a8c8aff662cddecb49448a89e0683b53b8461",
               "selected_candidate_sha256": "2a5bbb0bed4b1a709da695cb4c7affab222f3b5bc2f9f65ac2a58c92006dc973",
-              "trajectory_set_sha256": "dc716802e554ff13dcd96cafaa7ffde4a6a6e82cf88dee917730f8f42e5499b9",
+              "trajectory_set_sha256": "c33f16d78f1f9f1e4e4574915d9a87ef99475479dd02d3b1a0c93df1a9842b13",
               "trajectory_sha256_by_role": {
                 "Alpha": "b48665e2a159f60240b36f175ce96e93bd6ccda66e4a7c98e1af7e98a9cf245f",
                 "Beta": "3f38c6739f85a34f64e53b5ed8dcf405e9914e7764fc25749e7a4b5a12de0cb4",
@@ -14330,7 +14330,7 @@
           "case_sha256": "5d087df1dbd703f1f72d7933609b1ecb755412d4a7ff4fb5f8ccd6b262490edd",
           "execution_profile_sha256": "65824e32a08743d315b456e3ef6143b421a09d1d9cd587d0b43cb9fbe6a3bf74",
           "execution_profile_submission_id": "planner_retained_baseline",
-          "feasibility_certificate_sha256": "759dda5ad68396315e864757b7a3700d2b3ed332f244cd457a3cedce237a4f39",
+          "feasibility_certificate_sha256": "12f94d6a24b1657718a4ff251e091dec4573397d1d1f76f01540326692c5ef5b",
           "independent_discrete_observation": {
             "DS_LOBE_ORDER": [
               "Alpha-goal-1",
@@ -14341,12 +14341,12 @@
             ],
             "DS_TOPOLOGY": "ordered_route",
             "DS_UNINTENDED_STOP_COUNT": 0,
-            "evidence_sha256": "85d8ea1ab695ae5edeb5c80dff7143abc78556d59d91abd81fefebf454585cdf",
+            "evidence_sha256": "31ec4635c389b6bfe149c733c10dbc9e05513c9f84729562ef6b6be7ff9d6809",
             "oracle_id": "independent-dense-ordered-route-and-stop-v1",
             "roles": [
               {
                 "complete_order": true,
-                "evidence_sha256": "01feae3379a989936f3876dae3c2d22ace1af58aea7931550133be7310097038",
+                "evidence_sha256": "3263fa46099b6e6cc5effa8148ff819bda59a1876644c1ac7a0aef4e256f19c1",
                 "expected_order": [
                   "Alpha-goal-1",
                   "Alpha-goal-2",
@@ -14366,7 +14366,7 @@
                 "repeated_checkpoint_visits": 1,
                 "role_id": "Alpha",
                 "sample_step_s": 0.01,
-                "samples_sha256": "a6d1fc7012f1a797df62fdee35b7c8478158172b15fea16652d147ea321aa9eb",
+                "samples_sha256": "0794f416309aed0e6154bff1f2d3ce2c41932c6b8de7b35a61be2307b1c53d64",
                 "stop_speed_threshold_m_s": 0.02,
                 "terminal_guard_s": 0.2,
                 "topology": "ordered_route",
@@ -14377,7 +14377,7 @@
             ]
           },
           "independent_sample_sha256_by_role": {
-            "Alpha": "a6d1fc7012f1a797df62fdee35b7c8478158172b15fea16652d147ea321aa9eb"
+            "Alpha": "0794f416309aed0e6154bff1f2d3ce2c41932c6b8de7b35a61be2307b1c53d64"
           },
           "metrics": [
             {
@@ -14403,24 +14403,24 @@
             },
             {
               "equality_tolerance": 0.0001,
-              "evidence_sha256": "37814ef48bc11ca8bb318548263b486a63017810912b895e1ef18fde8bc63b37",
+              "evidence_sha256": "cba121a77c4a3ac2a6715fd45c971c9905b8e27b024733b75d5d31a0d683f4f0",
               "metric_id": "SP_REFERENCE",
               "unit": "m",
-              "value": 0.05151287712880875
+              "value": 0.07892141984394405
             },
             {
               "equality_tolerance": 0.001,
-              "evidence_sha256": "02e89c0513e905265fe1fae7a1994d747e55e738af614f14caf089095f48bbb9",
+              "evidence_sha256": "98cf3d8e5ca833a6c85f0738518b96e450e901dd104d74b077512b197b9d241f",
               "metric_id": "DY_CURVATURE",
               "unit": "1/m",
-              "value": 14214.724114485505
+              "value": 26105.616510272077
             },
             {
               "equality_tolerance": 0.01,
-              "evidence_sha256": "128483830426ced93708510989e95e5b464359bfd5764a78ec06aecc78f9a702",
+              "evidence_sha256": "c9507bddf1805fa15524c62f081accb540702652e902e73ea87b6ed0b49484b9",
               "metric_id": "DY_JERK",
               "unit": "m/s^3",
-              "value": 2.095885176524664
+              "value": 1.9923328819222448
             },
             {
               "equality_tolerance": 0.0001,
@@ -14430,14 +14430,14 @@
               "value": 18.071153416213505
             }
           ],
-          "observation_sha256": "6384db38002ff1529c3979e31dd6907011827db36d955a88fc38e8892d5ed557",
-          "plan_sha256": "7625c07bb92b698e3865269856c4dfc60e4020eae8ebefd36377105de7c4876b",
+          "observation_sha256": "f38b3b1f0c2a839436dc6ba9968024698d78814adb6a7a1c68a7506e53528955",
+          "plan_sha256": "d7a5cfbca050cc453798beeecf1e35530901b96015513cdf7c173aae9d8d9933",
           "planning_submission_id": "case_planning_authority",
           "planning_submission_sha256": "7a2b23a572a5ef9a34898c3c717b2767a53c8e6c2b7d2882c9edf7d2cac53a8a",
-          "selected_candidate_sha256": "11a862b1a99baf11af3c20478664fbaf9d08533036118ac9cf5e8cb05e6846db",
-          "trajectory_set_sha256": "dec03e39a8ff7ada00244f965cfdd1e78d4ef63eeafb48da6a842adbae0c2ce4",
+          "selected_candidate_sha256": "402055bd5e57c5b15eda8ab1991acebcb4339983f99e0ec02406328e1b6859b7",
+          "trajectory_set_sha256": "76e7e2a660c31c38dbacfcf0e06361ccc56bf3f3cd748875ab5b96d03c4d117b",
           "trajectory_sha256_by_role": {
-            "Alpha": "20f4188b9e08711195c3cd87397bdd0d10780184d65c665559103090131f8c90"
+            "Alpha": "9efe8ae755c5430720bbae9e10318887a57870e6e46c84ac27f1defee653bb47"
           }
         },
         "counterexamples": {
@@ -14557,12 +14557,12 @@
           "passed": true
         },
         "subject": {
-          "capability_resolution_sha256": "4ce0c5dae4fc1911762c70b3572fa55f942c1f63173cce30087620a216fbe327",
+          "capability_resolution_sha256": "ee34ecd6e1b603be1f0a58faed94369013e6f7a41a61bac18db5c8992d82c561",
           "case_id": "1d.continuous_waypoint_sequence.canonical_nominal",
           "case_sha256": "5d087df1dbd703f1f72d7933609b1ecb755412d4a7ff4fb5f8ccd6b262490edd",
           "execution_profile_sha256": "2a7d65cec5fbee33a13164c28e7d7c2edd029f4f9f19cad303a69095edf45152",
           "execution_profile_submission_id": "core.corner_transition",
-          "feasibility_certificate_sha256": "fceeefd45d99ca2731aabb50b9a82be4551a4e8dfc66e6e1361359b659a477ed",
+          "feasibility_certificate_sha256": "882504d126e7301db9c0a6b1a8ff74239d1c649503256d5dc4d45401fc0fbda1",
           "independent_discrete_observation": {
             "DS_LOBE_ORDER": [
               "Alpha-goal-1",
@@ -14662,12 +14662,12 @@
               "value": 57.672354425667216
             }
           ],
-          "observation_sha256": "191e39245b28ca4bf84d76a55c39a634aaa705b63482e60cdedf8896b83bf1f0",
-          "plan_sha256": "55e6069df919aa2176b1bdecb2959ac87e415e745463371c570d5572de2f7973",
+          "observation_sha256": "fb68ccf8f090093598375fc6d28d2d8b295609ddfa9b42b1ae87e51ea58f1556",
+          "plan_sha256": "fa8227bc90056c0ad4a2b36aa2cb151d34d37cb6932ed4e6c1dd8dedd04632ea",
           "planning_submission_id": "case_planning_authority",
           "planning_submission_sha256": "c2b1313f535efd20fe6e2943fbbe6af29674c44c9d576dd469134744ec17d389",
-          "selected_candidate_sha256": "5eea1960b52545b72663343b6b733b78adc7ca58c7a1dfb7c9a9a9055af40634",
-          "trajectory_set_sha256": "4a8ff38f2da652b9453ea85633a41a55b11024d30a35f7ee2a3ed39f09cf7e74",
+          "selected_candidate_sha256": "7a2c21e547977ff7d0f7bfe3c847a6ef5b34896d013033865d786b0ad26def07",
+          "trajectory_set_sha256": "3d36977ba02b1c870c606f7745124ddcd05cd3b1ee3b49379dcedace23c106f1",
           "trajectory_sha256_by_role": {
             "Alpha": "3e4a71e23810a3048ac8327e71b73560136e5a6f6769c6e0ab0c5cdb3fac4e4c"
           }
@@ -14682,7 +14682,7 @@
           "case_sha256": "356723fbda7bd5f7ab8c6bdfce027437892e6ffcfafc6395f87e07ba8857e97e",
           "execution_profile_sha256": "aa262a6f91b83432947e873740278ca12447295219bc86d4bae022f3adb629e7",
           "execution_profile_submission_id": "planner_retained_baseline",
-          "feasibility_certificate_sha256": "b2d5ed4fee98dbd84bb581cc2955f602efce0e0865a5d27fb080c358c0e156c3",
+          "feasibility_certificate_sha256": "4fcfdfc98424ef028d070aa36c6b0fae8e6c5fbaa00028c506ae4e6b29ffdded",
           "independent_discrete_observation": {
             "DS_LOBE_ORDER": [
               "Alpha-goal-1",
@@ -14698,12 +14698,12 @@
             ],
             "DS_TOPOLOGY": "figure_eight",
             "DS_UNINTENDED_STOP_COUNT": 0,
-            "evidence_sha256": "19a62085067270b2510d9347054dec68b50335589303908c3e1bf7e065a689ed",
+            "evidence_sha256": "37d3acd8b1d1298e2ad1301b07f07e27f43cafe0a82a9c0ec2af23e243b2fe30",
             "oracle_id": "independent-dense-ordered-route-and-stop-v1",
             "roles": [
               {
                 "complete_order": true,
-                "evidence_sha256": "47052d8770d86331e98f49ad43bf3bdd0ee227a3ac00870b6d11e70b6f3db4ca",
+                "evidence_sha256": "02292024381f4592c03b82ac61aedb113ac4367cf7d67a2215ae3e59535b4905",
                 "expected_order": [
                   "Alpha-goal-1",
                   "Alpha-goal-2",
@@ -14733,7 +14733,7 @@
                 "repeated_checkpoint_visits": 3,
                 "role_id": "Alpha",
                 "sample_step_s": 0.01,
-                "samples_sha256": "7946bd9dd2d0fa00cd66e4868ad237b2cfe3060dc4e02f8467f6daebe805f34e",
+                "samples_sha256": "0cf25a0406b0deb76c9eb0c732480544799b60c4cfa457fcfb4d97aeda482ace",
                 "stop_speed_threshold_m_s": 0.02,
                 "terminal_guard_s": 0.2,
                 "topology": "figure_eight",
@@ -14744,7 +14744,7 @@
             ]
           },
           "independent_sample_sha256_by_role": {
-            "Alpha": "7946bd9dd2d0fa00cd66e4868ad237b2cfe3060dc4e02f8467f6daebe805f34e"
+            "Alpha": "0cf25a0406b0deb76c9eb0c732480544799b60c4cfa457fcfb4d97aeda482ace"
           },
           "metrics": [
             {
@@ -14756,24 +14756,24 @@
             },
             {
               "equality_tolerance": 0.0001,
-              "evidence_sha256": "9ff089ef6144cdb01df4fd95abeaa0372f858b1b2797a28984e2784d7f4e1a56",
+              "evidence_sha256": "983587d18efe1ac6f701c95238142d4ae3b500657600c7f8acb6692dcca5cc39",
               "metric_id": "SP_REFERENCE",
               "unit": "m",
-              "value": 0.07629210532315496
+              "value": 0.11047391308130254
             },
             {
               "equality_tolerance": 0.001,
-              "evidence_sha256": "fa31303dd9b401a8c0a203c83ffe01a67eb22e1e4df5898ed2b110e7d3986be5",
+              "evidence_sha256": "a4924bc9be589f3fc691c561f432a9e7d63bb6a44391b08a1ddac76f43809fd6",
               "metric_id": "DY_CURVATURE",
               "unit": "1/m",
-              "value": 1050.0568912523079
+              "value": 1992.5635357076312
             },
             {
               "equality_tolerance": 0.01,
-              "evidence_sha256": "3da9bdd1521444ca95481cb4ed5e59ad10a5495a5ef9971feca979aa473d2beb",
+              "evidence_sha256": "c79d6685339af30fe50d0d375c86bb4c14142f672e4c6248e26aa1194a1968a1",
               "metric_id": "DY_JERK",
               "unit": "m/s^3",
-              "value": 1.9910833735605507
+              "value": 1.8870675218996176
             },
             {
               "equality_tolerance": null,
@@ -14801,14 +14801,14 @@
               ]
             }
           ],
-          "observation_sha256": "f36adf8197b616d0c391ab1b8e34e39f5e738db98131a9eeaa1b48da6909348e",
-          "plan_sha256": "4e3eb66c0710c4a8e9ade6c56731b8ba256b608a8cc1ae0125da769502296bbb",
+          "observation_sha256": "a46c37123802472f840e075f973129eb2da78493226d83c666111bc3661c9ba8",
+          "plan_sha256": "e78d1270865c37a6a05996387df2c86c435d2fd509bd8d9c173931b1586cc74f",
           "planning_submission_id": "case_planning_authority",
           "planning_submission_sha256": "6397fb610efe64f490ebf84b4b4314a2aecb4848b80e3ab21ef77fdf241b0134",
-          "selected_candidate_sha256": "3838c4df496d97ce63caaa333b9cbef42e222dfa9b1338ca3d4775d47ccd1b7f",
-          "trajectory_set_sha256": "5018ce0ad02b76d568b38c3c933350ac6a65a69eb027ed1133540973fe43f1e8",
+          "selected_candidate_sha256": "4e651161ff700c1407c3b5dc1dd5602f059978bb0108b965e5048cdd4c8542c3",
+          "trajectory_set_sha256": "3ad563d2c323a5fb5e10b60603e6ac25ac142905efcc3f34504500910449f3cb",
           "trajectory_sha256_by_role": {
-            "Alpha": "c05012e11eed1e7f2d2e48af9a3bfd94913f376b5dc90817dbbb7ed2c13143de"
+            "Alpha": "bb38fa3003aa53da4d2211833d11fe5933824c2043e0825ac85a635d9306102f"
           }
         },
         "counterexamples": {
@@ -14973,12 +14973,12 @@
           "passed": true
         },
         "subject": {
-          "capability_resolution_sha256": "0134ea312d4bdac0fffa562de6720a4b5e2accc78338cd5d0b23089b24352674",
+          "capability_resolution_sha256": "e6206f2337bb7bb6c9ac58409e3dcc3b1828ee3f512a59a43577c2d8308cafe3",
           "case_id": "1d.planar_shape_loop.figure_eight",
           "case_sha256": "356723fbda7bd5f7ab8c6bdfce027437892e6ffcfafc6395f87e07ba8857e97e",
           "execution_profile_sha256": "8301ebc18f7711b3853bf3a3b52f4ae72f1d498ee0fd1167b08548affafb0cc2",
           "execution_profile_submission_id": "core.corner_transition",
-          "feasibility_certificate_sha256": "f5dcd07d64b85909862588d54d610cb0c3063f4e2daa82e917a056e4c93d132e",
+          "feasibility_certificate_sha256": "5c34a67a4310934396b0c03f57af70b4b4cc583b2b0775b647a23ef1f5c54905",
           "independent_discrete_observation": {
             "DS_LOBE_ORDER": [
               "Alpha-goal-1",
@@ -15097,12 +15097,12 @@
               ]
             }
           ],
-          "observation_sha256": "9a5453e569c3f7ad3e9f543cf5572f2a60d18a9a359bf18102a9eacdc28bc721",
-          "plan_sha256": "b9f37f230c0ff71e5a74cd6bf81d1fbc42235022e951b078a72b3af1a26bc094",
+          "observation_sha256": "8b25b33c983565e31da7b66b7379dadad684b8a958f1dc7c164344c75a16a391",
+          "plan_sha256": "5386daf4cfcd026325abe673c295c05ad5ec78a16777f792cf1a66b7afa30caf",
           "planning_submission_id": "case_planning_authority",
           "planning_submission_sha256": "7019d0b89f61f8fe55a8aea586938c390600bf7dbffb25e784f04d6354e872d8",
-          "selected_candidate_sha256": "1ad9f499da54756c7cd51f9461e200d361adacc09df15f2708b33cf58b30fcfc",
-          "trajectory_set_sha256": "237b2930b6198d03450db5e2c62f2568b2c368bbd72a407165e40d43d5b111b8",
+          "selected_candidate_sha256": "b069d0b695cdb20abd813e9964cbd0b2bb1f297a8dbb43d6ea594806da73d1b8",
+          "trajectory_set_sha256": "896472212d30e4d733e643c4b3494b10622eda6ef721bee045ab5231080a18b8",
           "trajectory_sha256_by_role": {
             "Alpha": "cee64494737369e11ccae9d6588390d9ad8fa44a5389faa893ce1678620fe6ee"
           }
@@ -15117,7 +15117,7 @@
           "case_sha256": "0ced06fe8bede051d7ee8af6e2c54b424131c8e7cf08e00d576a3836b0487438",
           "execution_profile_sha256": "6d8315e332769011757c80cb384cb3862c03efd988eb6b5915e6f942322094e1",
           "execution_profile_submission_id": "planner_retained_baseline",
-          "feasibility_certificate_sha256": "9cd801c18df2a1d107ec9085ad6a3fe5dd4b0e9691111d5b05a0d06825ea0052",
+          "feasibility_certificate_sha256": "ff4adba51121e9f054b6380432e16cbf6cd5bd835ecd6cf539aaf889e19fbd0e",
           "independent_discrete_observation": {
             "DS_LOBE_ORDER": [
               "Alpha-goal-1",
@@ -15129,12 +15129,12 @@
             ],
             "DS_TOPOLOGY": "ordered_route",
             "DS_UNINTENDED_STOP_COUNT": 0,
-            "evidence_sha256": "71dcba16c7a9812ca4c11d8679d8baac2af33a5e3c7f9aebb6014c44b387c5fb",
+            "evidence_sha256": "15ff9c46a0f36edff704a70ee0e0a75bd3e1ff71abe64dc3880f56dd606498a6",
             "oracle_id": "independent-dense-ordered-route-and-stop-v1",
             "roles": [
               {
                 "complete_order": true,
-                "evidence_sha256": "bf8ce58d626e6bc3a17bbd0e8ebd8b97cf4bc6f3ec1c7e41706d85332af8e193",
+                "evidence_sha256": "59a74ebebbbe1188443f7d3d8aeac63411ad9fe30dea61c0efdea94908505737",
                 "expected_order": [
                   "Alpha-goal-1",
                   "Alpha-goal-2",
@@ -15156,7 +15156,7 @@
                 "repeated_checkpoint_visits": 1,
                 "role_id": "Alpha",
                 "sample_step_s": 0.01,
-                "samples_sha256": "fc014f2cbb22ed8d1e87209471add78111f999f3506bf21ddc64ac8847bb97e9",
+                "samples_sha256": "375bc308d4847e648798c0a5bde1b12418c376cabfc99b52348ee9d559707ad5",
                 "stop_speed_threshold_m_s": 0.02,
                 "terminal_guard_s": 0.2,
                 "topology": "ordered_route",
@@ -15167,22 +15167,22 @@
             ]
           },
           "independent_sample_sha256_by_role": {
-            "Alpha": "fc014f2cbb22ed8d1e87209471add78111f999f3506bf21ddc64ac8847bb97e9"
+            "Alpha": "375bc308d4847e648798c0a5bde1b12418c376cabfc99b52348ee9d559707ad5"
           },
           "metrics": [
             {
               "equality_tolerance": 0.0001,
-              "evidence_sha256": "73324f1c40e13559a2eb44298ca55930f5bd2129f7a362fee750af163616ded0",
+              "evidence_sha256": "85d3f9e411118f2582deef12ed502a7387b292f0fcf2f1bcc75c6fdef7aef835",
               "metric_id": "SP_RADIAL",
               "unit": "m",
-              "value": 0.050335579078420324
+              "value": 0.08330812207632984
             },
             {
               "equality_tolerance": 0.0001,
-              "evidence_sha256": "a9e8db873d240b38e0d49e0654ff9bd0bbd42371eb314f4759f9f8f28530c31c",
+              "evidence_sha256": "f2e9dc0224bd480fed8dcf67f4c03a673feb1d52d79294720c8eec6ef456bfe5",
               "metric_id": "SP_REFERENCE",
               "unit": "m",
-              "value": 0.050335579078420324
+              "value": 0.08330812207632984
             },
             {
               "equality_tolerance": 0.0001,
@@ -15193,17 +15193,17 @@
             },
             {
               "equality_tolerance": 0.001,
-              "evidence_sha256": "1dfa7991adb8d9e5faed791d87456c8c608b25c016bfd5e4dfa15b99cc826e04",
+              "evidence_sha256": "03f7dc2cd489669f752f86283cb31063e7e6c2ab68c9127e19244a67dda081c4",
               "metric_id": "DY_CURVATURE",
               "unit": "1/m",
-              "value": 477.95742871713253
+              "value": 1006.4484796476872
             },
             {
               "equality_tolerance": 0.01,
-              "evidence_sha256": "4619548e144a8b75d90b453d8667ffeae6e5bdc750a248e3e13dba7560c0892a",
+              "evidence_sha256": "6bc382f01f419664a7a3535edfb6424a427eceafc9b97ba1cdd4e61db3f632e6",
               "metric_id": "DY_JERK",
               "unit": "m/s^3",
-              "value": 1.9979284112899076
+              "value": 1.715067334294951
             },
             {
               "equality_tolerance": 0.0001,
@@ -15213,14 +15213,14 @@
               "value": 16.062993878978638
             }
           ],
-          "observation_sha256": "73dcfb4c9fc52f8ab75129326e48ca12c39c5d68d3adfb8072cb503b32184159",
-          "plan_sha256": "7fd4f40b5d0ab225016fdb9d42497621422e977a3914bb53d3609651d5ea8f75",
+          "observation_sha256": "35b6dc6de6dd84f7dbf9744d2b124b5fd37b9411fc60b1070dd4dcea97a54aa5",
+          "plan_sha256": "54e96dac79d89dc007bfeb70050bab574e33b26776d102c35d05fd0593765c72",
           "planning_submission_id": "case_planning_authority",
           "planning_submission_sha256": "d40513a98491aae29b6a80d03d2de5c8dfaa364962ebc654cd67451aa8ae92f3",
-          "selected_candidate_sha256": "40357343e81da6ff00e7cfb26b519ad017304d6667d1880b03a1c6aa0237b79f",
-          "trajectory_set_sha256": "fc0eb0b03393f04e1cc00ad1e12b36bc74184e7ac517327043a2375a00dab618",
+          "selected_candidate_sha256": "27d98b0731f3160b6b22ea594c0d63bf2f1a20ec881bd65b3bf483fd4c7a8e9e",
+          "trajectory_set_sha256": "ff094874c1411b05e8aeb68f598080c5e80a756eafc27689035c18c25415021b",
           "trajectory_sha256_by_role": {
-            "Alpha": "adf0ebd361abbccf1cea288c5ab3f4998ce123e5cd610108f9862810721ef558"
+            "Alpha": "8a2a8bc27ffbea0b41b70e24be20541b0c277c828a3e4c20ba2cf2b43683d607"
           }
         },
         "proposal_key": "1d.curved_route.canonical_nominal/curve.jerk_first",
@@ -15240,7 +15240,7 @@
           "case_sha256": "0ced06fe8bede051d7ee8af6e2c54b424131c8e7cf08e00d576a3836b0487438",
           "execution_profile_sha256": "8d95ad2dd5cd321ac9f349039281edbd89ef2ab64cddcaed3eca905e241f252f",
           "execution_profile_submission_id": "curve.jerk_first",
-          "feasibility_certificate_sha256": "1319520fd114e4d6d1f6c1a0d03c89f371905491d40b02c30477f5066d6e33fb",
+          "feasibility_certificate_sha256": "db3ab909e80a7be70c301e9a91ddd857e0fddceb1bc19c7a1b093784c9f585f1",
           "independent_discrete_observation": {
             "DS_LOBE_ORDER": [
               "Alpha-goal-1",
@@ -15252,12 +15252,12 @@
             ],
             "DS_TOPOLOGY": "ordered_route",
             "DS_UNINTENDED_STOP_COUNT": 0,
-            "evidence_sha256": "933c40771529b4e38c5440e7cd78787f40a6947de5a83eb2009ef905c8787bb4",
+            "evidence_sha256": "d55d56e9b30aabe86f6aa085e081210e36bbe7a4db7f4783d0eba539726f3db0",
             "oracle_id": "independent-dense-ordered-route-and-stop-v1",
             "roles": [
               {
                 "complete_order": true,
-                "evidence_sha256": "702f21e03ceb7bab19bf574c936791571fccc29d322b49f9d38e63044770d1fe",
+                "evidence_sha256": "e1e197e8bc1227f619b7d242012bb3d63c00240cca9ae34d2ed606e43e6a953d",
                 "expected_order": [
                   "Alpha-goal-1",
                   "Alpha-goal-2",
@@ -15279,7 +15279,7 @@
                 "repeated_checkpoint_visits": 1,
                 "role_id": "Alpha",
                 "sample_step_s": 0.01,
-                "samples_sha256": "b6c03ad6d1bcd6edb79a7d9f7da3c275be4ef4ae0e06b9b8ae3ab9f6526dc337",
+                "samples_sha256": "f1a037a7a6ebd2ec0ffe236d5f5bc8784d783c9948f7a9da4e65abcf985f685a",
                 "stop_speed_threshold_m_s": 0.02,
                 "terminal_guard_s": 0.2,
                 "topology": "ordered_route",
@@ -15290,22 +15290,22 @@
             ]
           },
           "independent_sample_sha256_by_role": {
-            "Alpha": "b6c03ad6d1bcd6edb79a7d9f7da3c275be4ef4ae0e06b9b8ae3ab9f6526dc337"
+            "Alpha": "f1a037a7a6ebd2ec0ffe236d5f5bc8784d783c9948f7a9da4e65abcf985f685a"
           },
           "metrics": [
             {
               "equality_tolerance": 0.0001,
-              "evidence_sha256": "29a35447c516ef6e48560eea3c5d1907db5a4ef61309cb9e5b7ddcac363c4d14",
+              "evidence_sha256": "ce902b86ce0f6de9fbe20e6fe8fe4c8f35e5d89e525dc53cdeda7aba32a6286c",
               "metric_id": "SP_RADIAL",
               "unit": "m",
-              "value": 0.050335904757015555
+              "value": 0.083307858533799
             },
             {
               "equality_tolerance": 0.0001,
-              "evidence_sha256": "e107db87093f558c3035584bec598e31f0eeb7fc9a7fbeb6833e573f9a2efea6",
+              "evidence_sha256": "e86180a4b5e6144deb6bd26ebc3739d863db7a4a2ce362eb24ef9543be3bea8e",
               "metric_id": "SP_REFERENCE",
               "unit": "m",
-              "value": 0.050335904757015555
+              "value": 0.083307858533799
             },
             {
               "equality_tolerance": 0.0001,
@@ -15316,17 +15316,17 @@
             },
             {
               "equality_tolerance": 0.001,
-              "evidence_sha256": "fac005cf9063f447376ca5b7cec2b770806f96b0cbbac5e0e6b1ea0b4c806495",
+              "evidence_sha256": "fcebafd4f334d7b072965147f302eff322683ee84f3494eee4951a1f007b4e3f",
               "metric_id": "DY_CURVATURE",
               "unit": "1/m",
-              "value": 2016.8789039707056
+              "value": 4247.8193390755705
             },
             {
               "equality_tolerance": 0.01,
-              "evidence_sha256": "700585d8c2c155b649bf79f35504f91c7391922a7c02fba30fcdfe1521dc6ff5",
+              "evidence_sha256": "b4c5eb5a444b05a1808e7c4aeff58d5b58b6483aaccbfb999f2a383ea0d3a10b",
               "metric_id": "DY_JERK",
               "unit": "m/s^3",
-              "value": 0.9110964272093369
+              "value": 0.7820439519933216
             },
             {
               "equality_tolerance": 0.0001,
@@ -15336,14 +15336,14 @@
               "value": 20.88189204267223
             }
           ],
-          "observation_sha256": "71a08438bc978946d575ccef320a4bba06ace38e7bf308f5e5964bb5061036e2",
-          "plan_sha256": "c9403661871bd877763e37032c355108efbfcd6a1a74cd44fb8bbc4e0bebe8e4",
+          "observation_sha256": "4adfb7cb0626fb1586d98c34894c173af7c855b97dba1ceccc28e064a19d125c",
+          "plan_sha256": "083f09699c0c70d829de94a446c9dd4bd0ebcf472568c5b5d504380d786d4ae1",
           "planning_submission_id": "case_planning_authority",
           "planning_submission_sha256": "1f710e61c9096c5ab7a3df5e750426995c62803d82145d142e651810747aeabd",
-          "selected_candidate_sha256": "53e2eb080416114192cb358d8b79579586ddaf061ae9b91688d4b900e009455d",
-          "trajectory_set_sha256": "777237cefbc1dbcfe8d43d6bcbd1f31d9ca99ceb93dfc97ec1c084af6c11ee72",
+          "selected_candidate_sha256": "f6ba47ea148f98f50578af3c7176c45adce2f6124ad872027ed9054a10381cf3",
+          "trajectory_set_sha256": "ae4e0be6b2f45a210742eeef54a90ef3a1fa497a7988d6fc21e2d49641e3e019",
           "trajectory_sha256_by_role": {
-            "Alpha": "60d026746a71a57cc98e7a1cd1c28ba5b30756c2da95b3d91c27642f76ce1569"
+            "Alpha": "b3460ac94000b6769e1ad9ca3510a92dd5e3f745283c8c9568f04440ea61b714"
           }
         }
       }
@@ -15358,7 +15358,7 @@
     },
     "schema_version": 1,
     "source_identities": {
-      "case_submission_registry_sha256": "cf33e62d289e8dc8cfde806a545beeb1aacc0a60f05621144fbeb22bf25509bf",
+      "case_submission_registry_sha256": "79c5da85a08ccfe38b9193fc6a0b81788ffb4bd602e6d3213d80de8eb1802deb",
       "case_tree": [
         [
           "1d.abort_and_land_goal_fallback.dynamic_nominal",
@@ -15407,6 +15407,10 @@
         [
           "1d.moving_target.dynamic_nominal",
           "f8bd430f8d5dd8f36f0f763b1b4fbb5e08457f8ab9e9d51382f378dbe4593e96"
+        ],
+        [
+          "1d.online_obstacle_replan.dynamic_nominal",
+          "e643c9a0595db29f7d123e4b71018fdd2d90287cf355bf5940531f78e8175cd7"
         ],
         [
           "1d.operator_approval_goal_replacement.dynamic_nominal",
@@ -15720,12 +15724,12 @@
                   ]
                 }
               ],
-              "observation_sha256": "72d556fba0ccc1fdbff9b0e7d853715bbde0eabdadb4702cc7871c729a4e4cbe",
-              "plan_sha256": "df1760c627a32f12ff608fb2a83d28b176fb64f22257dced081f0ec7f6044721",
+              "observation_sha256": "01cbf21f81f8c4cdad6496d4c0da89d8bfc1683afa74650e01934349f0d50e2d",
+              "plan_sha256": "5e8961f895ea0c94a41be7f5b6ac34a040c872423116de68c82071b3938fb9a0",
               "planning_submission_id": "head_on.synchronized_lateral",
               "planning_submission_sha256": "6087f3cfcd1a9186fbe8b1750f83a74726f3a268d39462c566836611e68fae79",
               "selected_candidate_sha256": "0a9fd92d2613163392fc1aac29f957fa303bf5b9c3f846933b0d856a17c7f08b",
-              "trajectory_set_sha256": "ec00c9c5009eb59b8f60e831595f5edf1574965d832ca4ea460e31f20cd3509c",
+              "trajectory_set_sha256": "4c2214c8542e2934c7d27cecb4374ff4ea382b34b45ef51a827bb7c1cc8597cb",
               "trajectory_sha256_by_role": {
                 "Alpha": "b510548d67f9d02a0efa3a34c834a5ba20b0c39367233faf9cda16cadfeb2894",
                 "Beta": "2f59249a8721c3dcc6c20c4b689e3d79bd710a12f3d24810f0741378366a3301"
@@ -15733,7 +15737,7 @@
             },
             "blocking_reason": null,
             "bounded_search_complete": true,
-            "plan_sha256": "df1760c627a32f12ff608fb2a83d28b176fb64f22257dced081f0ec7f6044721",
+            "plan_sha256": "5e8961f895ea0c94a41be7f5b6ac34a040c872423116de68c82071b3938fb9a0",
             "planning_status": "READY",
             "proposal_key": "2d.head_on_conflict.canonical_nominal/head_on.synchronized_lateral",
             "retained_candidate_sha256s": [
@@ -15777,7 +15781,7 @@
           {
             "blocking_reason": "no bounded generated candidate satisfies every hard constraint",
             "bounded_search_complete": true,
-            "plan_sha256": "5ef7ef8b3fdf3d3b15c39ec2337c1417bec9e7682339f19461414efba5846239",
+            "plan_sha256": "fe42f76b0f8960509756ac0ebc9466aea0a6cf66875189572e7967efcb3d9e16",
             "planning_status": "BLOCKED",
             "proposal_key": "2d.head_on_conflict.canonical_nominal/head_on.synchronized_vertical",
             "retained_candidate_sha256s": [
@@ -15809,7 +15813,7 @@
           {
             "blocking_reason": "no bounded generated candidate satisfies every hard constraint",
             "bounded_search_complete": true,
-            "plan_sha256": "c3ff4652094018f3d873b175b6b9e20ceb668da0c7cd128111e7f7a91792d0d7",
+            "plan_sha256": "c86dd31b99bdaf7ce2ff6028e3005f80185ce9fbfe350b36d2970551843447a2",
             "planning_status": "BLOCKED",
             "proposal_key": "2d.head_on_conflict.canonical_nominal/head_on.path_fidelity_combined",
             "retained_candidate_sha256s": [
@@ -15843,7 +15847,7 @@
           {
             "blocking_reason": "no bounded generated candidate satisfies every hard constraint",
             "bounded_search_complete": true,
-            "plan_sha256": "5bacf742fcf7cce0d8f4db35096b334b0f466a55a3ae854930893ad8c5f69d17",
+            "plan_sha256": "d0487e751878cda7ab6b890ddc160a46132a8d5afad0d25479f76f88c646d9f5",
             "planning_status": "BLOCKED",
             "proposal_key": "2d.head_on_conflict.canonical_nominal/head_on.robustness_combined",
             "retained_candidate_sha256s": [
@@ -16013,12 +16017,12 @@
                   ]
                 }
               ],
-              "observation_sha256": "91e2134145dc25f632c753591e0ffe25ee1e0af1cd7727d03995ec6eb46b10af",
-              "plan_sha256": "b994a9c4508bd9fffe34111c5e65c9d42cab16e580472cae236553e5c6f56c00",
+              "observation_sha256": "9ed0ec8577b69dd6c0480cc5a5e79ddda6d76081a1be98c324761f9491652f6a",
+              "plan_sha256": "bcc8ebf296bbc0d6dd1d300496d4b2ae02e12a6baf46c9d98c315f19ebdc4c26",
               "planning_submission_id": "merge.parallel_lanes",
               "planning_submission_sha256": "9b50a9da48bf69dbad079196b953ef19c6c9e1a16cfc295693c8cfdf684990ed",
               "selected_candidate_sha256": "00045b93e55616ab2dd7079cbfcdc9cdb3f53589673cf8a8d06bd26f1a9c1c33",
-              "trajectory_set_sha256": "59f3169093b1d23e4e9993a372285b3dd28c5b5c4654e5dd51c33a7697741404",
+              "trajectory_set_sha256": "76e58d43d2b626767961978db4eee525e049c52fb122cc4b215dc5b6f0b67c52",
               "trajectory_sha256_by_role": {
                 "Alpha": "b75a73b91c8f9037618268bc40c858cecedce577495570f6c4d44d06a13c1ac9",
                 "Beta": "730a31f350833d751af279a5f553977c9250a8ee7417a00334fb8f7650dac91d"
@@ -16026,7 +16030,7 @@
             },
             "blocking_reason": null,
             "bounded_search_complete": true,
-            "plan_sha256": "b994a9c4508bd9fffe34111c5e65c9d42cab16e580472cae236553e5c6f56c00",
+            "plan_sha256": "bcc8ebf296bbc0d6dd1d300496d4b2ae02e12a6baf46c9d98c315f19ebdc4c26",
             "planning_status": "READY",
             "proposal_key": "2d.merge.canonical_nominal/merge.parallel_lanes",
             "retained_candidate_sha256s": [
@@ -16070,7 +16074,7 @@
           {
             "blocking_reason": "no bounded generated candidate satisfies every hard constraint",
             "bounded_search_complete": true,
-            "plan_sha256": "4bcf3bf60aaf727707c6db724c1906e3ac9832c6971da9011383bfcbaa110c5f",
+            "plan_sha256": "12114440104140816fc4ddb4406f446c2cb53ccbec073a3c50d8b875fa091047",
             "planning_status": "BLOCKED",
             "proposal_key": "2d.merge.canonical_nominal/merge.vertical_stack",
             "retained_candidate_sha256s": [
@@ -16102,7 +16106,7 @@
           {
             "blocking_reason": "sampled candidates failed independent continuous feasibility verification",
             "bounded_search_complete": true,
-            "plan_sha256": "f52e26a860203c4b78544c8c17499024268c5faaa12f511421b5d8bc61e0ade3",
+            "plan_sha256": "6f22dc4084fc495554551cca1add61af29563db20ecf1c440fa2760d6faa64e9",
             "planning_status": "BLOCKED",
             "proposal_key": "2d.perpendicular_crossing.nominal_equal_priority/crossing.synchronized_lateral",
             "retained_candidate_sha256s": [
@@ -16282,12 +16286,12 @@
                   "value": 0.010000000000000009
                 }
               ],
-              "observation_sha256": "44a34243b1a3999d92b7f1cda8e1e9e00e2c47e04b541e955d82be89052e8afb",
-              "plan_sha256": "8f1f9b74f18091ea8eb5ad09bae56f2330f49566e940aa69744d1c98d71ec85d",
+              "observation_sha256": "e622212fe88594a5984582a01781e2b020c550326872295a8125329f66e1392d",
+              "plan_sha256": "2340c237d8266b20179b3f39cfcfd3d181f0858044ba841a04b1ca09efbd453a",
               "planning_submission_id": "crossing.synchronized_vertical",
               "planning_submission_sha256": "8d4d1caa116755ccfa7e99e806d227668e8ef62b6ca8e7fc73825f33ea387462",
               "selected_candidate_sha256": "6ba8e1afd373a7b2ad05e8b2979b171542930db73595fad3d6a4219acb456c9c",
-              "trajectory_set_sha256": "ad5a32f93f726de65b2032d1cbf3cd2ad40e71de41ed805b2e54001107ffbedb",
+              "trajectory_set_sha256": "8efb42ad6bea76cddb8a07f8a6e69d38a16e6860c3402db7335157701181aae7",
               "trajectory_sha256_by_role": {
                 "Alpha": "20a0c3875dedbeabb09e2dae482c843da8b834094643a4f7830cf0377719f5c7",
                 "Beta": "d10b09c44b8ca4dc738e948e5f3c045e72868db437f418e38969aacf9489e7ed"
@@ -16295,7 +16299,7 @@
             },
             "blocking_reason": null,
             "bounded_search_complete": true,
-            "plan_sha256": "8f1f9b74f18091ea8eb5ad09bae56f2330f49566e940aa69744d1c98d71ec85d",
+            "plan_sha256": "2340c237d8266b20179b3f39cfcfd3d181f0858044ba841a04b1ca09efbd453a",
             "planning_status": "READY",
             "proposal_key": "2d.perpendicular_crossing.nominal_equal_priority/crossing.synchronized_vertical",
             "retained_candidate_sha256s": [
@@ -16327,7 +16331,7 @@
           {
             "blocking_reason": "no bounded generated candidate satisfies every hard constraint",
             "bounded_search_complete": true,
-            "plan_sha256": "b7590bcf94d00e656e5445a409f34070b337613686e3881457b57dd7e6c369d1",
+            "plan_sha256": "f2d1c28b9f8ed8ec05e3eff3f1e1922a458623fa0d6154aa70781d2061f02f2c",
             "planning_status": "BLOCKED",
             "proposal_key": "3d.merge.canonical_nominal/merge.parallel_capacity",
             "retained_candidate_sha256s": [
@@ -16391,7 +16395,7 @@
           {
             "blocking_reason": "no bounded generated candidate satisfies every hard constraint",
             "bounded_search_complete": true,
-            "plan_sha256": "cf61da114148bc2cd7973032673803464637874db86418517376ffc63ed3040f",
+            "plan_sha256": "d9cc0571766c87649d83146fa7c3a499cf984d0e2c05f3af1ce913fb06f4ce5e",
             "planning_status": "BLOCKED",
             "proposal_key": "3d.merge.canonical_nominal/merge.vertical_capacity",
             "retained_candidate_sha256s": [
@@ -16431,7 +16435,7 @@
           {
             "blocking_reason": "no bounded generated candidate satisfies every hard constraint",
             "bounded_search_complete": true,
-            "plan_sha256": "b79f0ff75be38f9a1e2cac1c863a4b71b4128f0daec9c1170f63604a96441b11",
+            "plan_sha256": "357ddf0b6b386a7b35d6989acc4f7d00b8a9eeed555e1098fa91dcd0396ff1b2",
             "planning_status": "BLOCKED",
             "proposal_key": "3d.simultaneous_center_conflict.joint_schedule_v2/center.synchronized_lateral",
             "retained_candidate_sha256s": [
@@ -16697,12 +16701,12 @@
                   ]
                 }
               ],
-              "observation_sha256": "62b3feec95dfc6e8e9e64248bab7a31aacbd8c0b01abb255d0de010972cab9e4",
-              "plan_sha256": "b141dd260f3091d6a524fcefb2281178c7220abd879105ffe12645d65fb57bd5",
+              "observation_sha256": "6a8827843843a53424838f57d8b6f2cb6047641abd745e5db88faef55f50b18d",
+              "plan_sha256": "4b580367243e335084aa9184b80e75459bc888cad628749cff65a176f1670373",
               "planning_submission_id": "center.synchronized_layers",
               "planning_submission_sha256": "c8273b7a6d15a17fe16d24e2734ed18f6658cd9c2b7f03b0411769e34600b9c8",
               "selected_candidate_sha256": "26e99f16b3d3b9123dd1f7f1f844b35e7899307084a2b3c9847224f5631db831",
-              "trajectory_set_sha256": "31d398e6a92afc8309b418c36dea5281095aeb014ee7d2a79e32f0ce92ebc821",
+              "trajectory_set_sha256": "6e3a75d28018913a0c68a0f5367322f5f26b98cffcb12173de7604b2b74ef7dc",
               "trajectory_sha256_by_role": {
                 "Alpha": "20a0c3875dedbeabb09e2dae482c843da8b834094643a4f7830cf0377719f5c7",
                 "Beta": "d10b09c44b8ca4dc738e948e5f3c045e72868db437f418e38969aacf9489e7ed",
@@ -16711,7 +16715,7 @@
             },
             "blocking_reason": null,
             "bounded_search_complete": true,
-            "plan_sha256": "b141dd260f3091d6a524fcefb2281178c7220abd879105ffe12645d65fb57bd5",
+            "plan_sha256": "4b580367243e335084aa9184b80e75459bc888cad628749cff65a176f1670373",
             "planning_status": "READY",
             "proposal_key": "3d.simultaneous_center_conflict.joint_schedule_v2/center.synchronized_layers",
             "retained_candidate_sha256s": [
@@ -16743,24 +16747,24 @@
     ]
   },
   "current_file_manifest": {
-    "missions/campaigns/sim/qualification/selective-submission-registry-v1.json": "e99803b2c2bdf6d4e3cf398da90d4a283b39b78051368f04c74186e1a81aa5d5",
-    "missions/campaigns/sim/qualification/selective-submission-runtime-v2.json": "ABSENT",
+    "missions/campaigns/sim/qualification/selective-submission-registry-v1.json": "9e79f82ec20aec3ee17b0596d123edb99cd4c4e93dabe33d17a81fc983a950cd",
+    "missions/campaigns/sim/qualification/selective-submission-runtime-v2.json": "3c8a501968b86ee66ae97ebf32585517f7676aedf1fe64913430672c9a606fe8",
     "missions/campaigns/sim/qualification/selective-submission-ui-inspection-v1.json": "b58665ffde8ff2c8e9a09eccc78d6a12af5f2432d63bdb08693a5e81b3cb3c47",
-    "missions/campaigns/sim/submissions/admission-records-v1.yaml": "c7ddb86102c63693d18c031e9498506df551b4eac7310b09d7c1a9e9b26d67dc",
-    "missions/campaigns/sim/submissions/case-submissions-v1.yaml": "51e16625e636b983fd54fe7f92599f23eece4f8b7bd938aef59644c19834acbd",
-    "scripts/generate_submission_registry.py": "ee28fcbd08fa4221a100e5224219b217fce85b5aae2bdd68494197527d0b6c81",
-    "scripts/qualify_submission_registry.py": "309f6078dd5f412f75a458de11715cdb4b429053a3d1a4c87edc0dc58728ee62",
-    "scripts/qualify_submission_registry_r6.py": "b76bbfd29a0b5f66b27ec0edbbe55ab9d8cb2d5658b76cd8093a5e9b8d01274b",
-    "scripts/qualify_submission_runtime.py": "ABSENT",
-    "scripts/reconcile_wp52_56_r7_implementation.py": "a8dc40466f897ef6e71bf176f9bed97cd33a3707df58e674cd291a73833853b9",
-    "src/crazyswarm_app/campaign/planner.py": "337ac38968ac1a6bdaf71ce69de4a90b8946344f5aaa20d3bd29ae45fb3e2a47",
-    "src/crazyswarm_app/campaign/runtime_executor.py": "eff68869fcc5943adbc5d3b1e258f5304f213417121d9207f312b7d2bd5a3e38",
-    "src/crazyswarm_app/campaign/service.py": "14c1738ac63f2fd1edcfb3609f81cebbeec0cec6047fe00641fbd2c9273422b7",
-    "src/crazyswarm_app/campaign/submission_measurement.py": "00a846c86d637c73e36fb54528e76910b7696b2af30ad3302465bed9d3fc36bb",
-    "src/crazyswarm_app/campaign/submissions.py": "97bf2b936ffab2b9424cacff6e270402fab232d2c8dec6996c09e1d23badc782",
-    "src/crazyswarm_app/campaign/trajectory.py": "3b96df5bc0c0efaa0a02a6dded8712f2a57a8f1a03a133177c3f2d72b6a24929",
-    "tests/campaign/test_submission_runtime_qualification.py": "a91bdd572aef1a0359fc92d3989f2916e28fd96e7681dd0f247c703834a7d8b0",
-    "tests/campaign/test_submissions.py": "4600c594812f6f9454ea1d686bef4d870f46de83aa9026043a60955892c06a75"
+    "missions/campaigns/sim/submissions/admission-records-v1.yaml": "c24a888659916d3281ef02ffe55b7a597d6a3ea34bd8bcac1327e5e8c224864c",
+    "missions/campaigns/sim/submissions/case-submissions-v1.yaml": "792a52aae56e9f84145419e8462fbfc471b1b8ac3c1bd2913af3a720394a72ab",
+    "scripts/generate_submission_registry.py": "e46ea834b7e1eff640b3489b82d891253a2adde3c186d7dcb054c84d44a4804b",
+    "scripts/qualify_submission_registry.py": "2f02e17bf33f334234e07af39aab683245f9ba4d97e94686e6f004292cf61538",
+    "scripts/qualify_submission_registry_r6.py": "a5e31a749045f9b59c7e60b3d2d23205b6118220a7ed57dc39967a14f9b2f797",
+    "scripts/qualify_submission_runtime.py": "b6749e62b3ff462d91cb7398eabce5f6d56b66b24f85e10884cde3eedeb3cf27",
+    "scripts/reconcile_wp52_56_r7_implementation.py": "da858a778dcc9ce6d255b443c52a064e3e0bdf256d2048133bbdf031414bc714",
+    "src/crazyswarm_app/campaign/planner.py": "8f7e08a7d4390112f955ec64c702c63b563ee3c0dfe6c47993bf74ebc5966893",
+    "src/crazyswarm_app/campaign/runtime_executor.py": "2059995dd226c47ceaa0f86df984f396395f89a707f41ddfdaba7a7ad896564e",
+    "src/crazyswarm_app/campaign/service.py": "2089d5fd146c341cd2bba02eca0af4bcd66cfdd8dcd1cabae01d0feefd9b0636",
+    "src/crazyswarm_app/campaign/submission_measurement.py": "41629de8f64dc2a1c0eaa61f9c805f1f63bd163338f4de24844fb169ed207672",
+    "src/crazyswarm_app/campaign/submissions.py": "a1f1f423b602e20a288d44d4f13096b0d61ba659a678a874bafdd971e022e016",
+    "src/crazyswarm_app/campaign/trajectory.py": "3596a0811e451b915e79f66161ddc3a4d8ce527aaf83988dcdc6ac2f39b91148",
+    "tests/campaign/test_submission_runtime_qualification.py": "7a453489120bdf39bea6ea3f5ebe386298ca8e0fa84201a6d84755a24a61b513",
+    "tests/campaign/test_submissions.py": "a4408abb1be66d3b7eb7dae99dcb4a634b78dcbbe9f46ae1c4dadd4b86cd3781"
   },
   "current_semantic_projection": {
     "audit_id": "wp52-56-r6-complete-numerical-predraft-v1",
@@ -30265,7 +30269,7 @@
                 "repeated_checkpoint_visits": 1,
                 "role_id": "Alpha",
                 "sample_step_s": 0.01,
-                "samples_sha256": "a6d1fc7012f1a797df62fdee35b7c8478158172b15fea16652d147ea321aa9eb",
+                "samples_sha256": "0794f416309aed0e6154bff1f2d3ce2c41932c6b8de7b35a61be2307b1c53d64",
                 "stop_speed_threshold_m_s": 0.02,
                 "terminal_guard_s": 0.2,
                 "topology": "ordered_route",
@@ -30298,19 +30302,19 @@
               "equality_tolerance": 0.0001,
               "metric_id": "SP_REFERENCE",
               "unit": "m",
-              "value": 0.05151287712880875
+              "value": 0.07892141984394405
             },
             {
               "equality_tolerance": 0.001,
               "metric_id": "DY_CURVATURE",
               "unit": "1/m",
-              "value": 14214.724114485505
+              "value": 26105.616510272077
             },
             {
               "equality_tolerance": 0.01,
               "metric_id": "DY_JERK",
               "unit": "m/s^3",
-              "value": 2.095885176524664
+              "value": 1.9923328819222448
             },
             {
               "equality_tolerance": 0.0001,
@@ -30320,7 +30324,7 @@
             }
           ],
           "planning_submission_id": "case_planning_authority",
-          "selected_candidate_sha256": "11a862b1a99baf11af3c20478664fbaf9d08533036118ac9cf5e8cb05e6846db"
+          "selected_candidate_sha256": "402055bd5e57c5b15eda8ab1991acebcb4339983f99e0ec02406328e1b6859b7"
         },
         "counterexamples": {
           "inserted_interior_stop": {
@@ -30523,7 +30527,7 @@
             }
           ],
           "planning_submission_id": "case_planning_authority",
-          "selected_candidate_sha256": "5eea1960b52545b72663343b6b733b78adc7ca58c7a1dfb7c9a9a9055af40634"
+          "selected_candidate_sha256": "7a2c21e547977ff7d0f7bfe3c847a6ef5b34896d013033865d786b0ad26def07"
         }
       },
       {
@@ -30581,7 +30585,7 @@
                 "repeated_checkpoint_visits": 3,
                 "role_id": "Alpha",
                 "sample_step_s": 0.01,
-                "samples_sha256": "7946bd9dd2d0fa00cd66e4868ad237b2cfe3060dc4e02f8467f6daebe805f34e",
+                "samples_sha256": "0cf25a0406b0deb76c9eb0c732480544799b60c4cfa457fcfb4d97aeda482ace",
                 "stop_speed_threshold_m_s": 0.02,
                 "terminal_guard_s": 0.2,
                 "topology": "figure_eight",
@@ -30602,19 +30606,19 @@
               "equality_tolerance": 0.0001,
               "metric_id": "SP_REFERENCE",
               "unit": "m",
-              "value": 0.07629210532315496
+              "value": 0.11047391308130254
             },
             {
               "equality_tolerance": 0.001,
               "metric_id": "DY_CURVATURE",
               "unit": "1/m",
-              "value": 1050.0568912523079
+              "value": 1992.5635357076312
             },
             {
               "equality_tolerance": 0.01,
               "metric_id": "DY_JERK",
               "unit": "m/s^3",
-              "value": 1.9910833735605507
+              "value": 1.8870675218996176
             },
             {
               "equality_tolerance": null,
@@ -30641,7 +30645,7 @@
             }
           ],
           "planning_submission_id": "case_planning_authority",
-          "selected_candidate_sha256": "3838c4df496d97ce63caaa333b9cbef42e222dfa9b1338ca3d4775d47ccd1b7f"
+          "selected_candidate_sha256": "4e651161ff700c1407c3b5dc1dd5602f059978bb0108b965e5048cdd4c8542c3"
         },
         "counterexamples": {
           "original_observation": {
@@ -30909,7 +30913,7 @@
             }
           ],
           "planning_submission_id": "case_planning_authority",
-          "selected_candidate_sha256": "1ad9f499da54756c7cd51f9461e200d361adacc09df15f2708b33cf58b30fcfc"
+          "selected_candidate_sha256": "b069d0b695cdb20abd813e9964cbd0b2bb1f297a8dbb43d6ea594806da73d1b8"
         }
       },
       {
@@ -30955,7 +30959,7 @@
                 "repeated_checkpoint_visits": 1,
                 "role_id": "Alpha",
                 "sample_step_s": 0.01,
-                "samples_sha256": "fc014f2cbb22ed8d1e87209471add78111f999f3506bf21ddc64ac8847bb97e9",
+                "samples_sha256": "375bc308d4847e648798c0a5bde1b12418c376cabfc99b52348ee9d559707ad5",
                 "stop_speed_threshold_m_s": 0.02,
                 "terminal_guard_s": 0.2,
                 "topology": "ordered_route",
@@ -30970,13 +30974,13 @@
               "equality_tolerance": 0.0001,
               "metric_id": "SP_RADIAL",
               "unit": "m",
-              "value": 0.050335579078420324
+              "value": 0.08330812207632984
             },
             {
               "equality_tolerance": 0.0001,
               "metric_id": "SP_REFERENCE",
               "unit": "m",
-              "value": 0.050335579078420324
+              "value": 0.08330812207632984
             },
             {
               "equality_tolerance": 0.0001,
@@ -30988,13 +30992,13 @@
               "equality_tolerance": 0.001,
               "metric_id": "DY_CURVATURE",
               "unit": "1/m",
-              "value": 477.95742871713253
+              "value": 1006.4484796476872
             },
             {
               "equality_tolerance": 0.01,
               "metric_id": "DY_JERK",
               "unit": "m/s^3",
-              "value": 1.9979284112899076
+              "value": 1.715067334294951
             },
             {
               "equality_tolerance": 0.0001,
@@ -31004,7 +31008,7 @@
             }
           ],
           "planning_submission_id": "case_planning_authority",
-          "selected_candidate_sha256": "40357343e81da6ff00e7cfb26b519ad017304d6667d1880b03a1c6aa0237b79f"
+          "selected_candidate_sha256": "27d98b0731f3160b6b22ea594c0d63bf2f1a20ec881bd65b3bf483fd4c7a8e9e"
         },
         "proposal_key": "1d.curved_route.canonical_nominal/curve.jerk_first",
         "relation_evaluation": {
@@ -31057,7 +31061,7 @@
                 "repeated_checkpoint_visits": 1,
                 "role_id": "Alpha",
                 "sample_step_s": 0.01,
-                "samples_sha256": "b6c03ad6d1bcd6edb79a7d9f7da3c275be4ef4ae0e06b9b8ae3ab9f6526dc337",
+                "samples_sha256": "f1a037a7a6ebd2ec0ffe236d5f5bc8784d783c9948f7a9da4e65abcf985f685a",
                 "stop_speed_threshold_m_s": 0.02,
                 "terminal_guard_s": 0.2,
                 "topology": "ordered_route",
@@ -31072,13 +31076,13 @@
               "equality_tolerance": 0.0001,
               "metric_id": "SP_RADIAL",
               "unit": "m",
-              "value": 0.050335904757015555
+              "value": 0.083307858533799
             },
             {
               "equality_tolerance": 0.0001,
               "metric_id": "SP_REFERENCE",
               "unit": "m",
-              "value": 0.050335904757015555
+              "value": 0.083307858533799
             },
             {
               "equality_tolerance": 0.0001,
@@ -31090,13 +31094,13 @@
               "equality_tolerance": 0.001,
               "metric_id": "DY_CURVATURE",
               "unit": "1/m",
-              "value": 2016.8789039707056
+              "value": 4247.8193390755705
             },
             {
               "equality_tolerance": 0.01,
               "metric_id": "DY_JERK",
               "unit": "m/s^3",
-              "value": 0.9110964272093369
+              "value": 0.7820439519933216
             },
             {
               "equality_tolerance": 0.0001,
@@ -31106,7 +31110,7 @@
             }
           ],
           "planning_submission_id": "case_planning_authority",
-          "selected_candidate_sha256": "53e2eb080416114192cb358d8b79579586ddaf061ae9b91688d4b900e009455d"
+          "selected_candidate_sha256": "f6ba47ea148f98f50578af3c7176c45adce2f6124ad872027ed9054a10381cf3"
         }
       }
     ],
@@ -31168,6 +31172,10 @@
         [
           "1d.moving_target.dynamic_nominal",
           "f8bd430f8d5dd8f36f0f763b1b4fbb5e08457f8ab9e9d51382f378dbe4593e96"
+        ],
+        [
+          "1d.online_obstacle_replan.dynamic_nominal",
+          "e643c9a0595db29f7d123e4b71018fdd2d90287cf355bf5940531f78e8175cd7"
         ],
         [
           "1d.operator_approval_goal_replacement.dynamic_nominal",
@@ -32396,46 +32404,55 @@
     "script_sha256": "e1fcfc5582fa8af6d217ce23c060a825e751ade24b3f08f698fbbeae088097da"
   },
   "historical_semantic_projection_sha256": "bd77a6f4b1eb266f7a1f837940d4f299fd07ccd0e05e292ba4fff0898a7da4c0",
-  "mutable_identity_change_count": 544,
-  "mutable_identity_changes_sha256": "6ff0267c753d9b7a7f29c6a2fb1294f514a06725a7e1370a9cbf5599c5637238",
-  "passed": true,
+  "mutable_identity_change_count": 576,
+  "mutable_identity_changes_sha256": "959faa0c6ce9362ff4ffeafb90437f03a40c8e248df264a82656d3bbbf39df50",
+  "passed": false,
   "reconciliation_id": "wp52-56-r7-implementation-reconciliation-v1",
-  "reconciliation_sha256": "9167224978439ebe5fd8aec00e667d4d8658c9cbaad530542f6a097fb9f10617",
+  "reconciliation_sha256": "b08c005a5a350f295f5c9773483de7887ecfd0a07fb66c985c9f0d4e0f0e7fa6",
   "registry_counts": {
-    "case_count": 54,
-    "hidden_collapse_count": 28,
+    "case_count": 55,
+    "hidden_collapse_count": 21,
     "lifecycle_counts": {
-      "BASELINE_ONLY": 9,
+      "BASELINE_ONLY": 10,
       "RETAIN_EXISTING_ONLY": 2,
       "SUBMISSIONS": 43
     },
     "passed": true,
     "proposal_count": 111,
     "retained_altitude_profile_count": 5,
-    "visible_relation_count": 83
+    "visible_relation_count": 90
   },
   "registry_qualification": {
-    "file_sha256": "e99803b2c2bdf6d4e3cf398da90d4a283b39b78051368f04c74186e1a81aa5d5",
+    "file_sha256": "9e79f82ec20aec3ee17b0596d123edb99cd4c4e93dabe33d17a81fc983a950cd",
     "passed": true,
     "path": "missions/campaigns/sim/qualification/selective-submission-registry-v1.json",
     "present": true,
-    "retained_sha256": "42d07ed7801a197ed3634804a8ee64952e9e540e305a72fafab20bcf4321e831",
+    "retained_sha256": "df00874f6b6e823761861541123843fb6f36ad28c643608df19282f663b0dc6d",
     "retained_sha256_valid": true
   },
   "runtime_qualification": {
+    "file_sha256": "3c8a501968b86ee66ae97ebf32585517f7676aedf1fe64913430672c9a606fe8",
     "passed": false,
     "path": "missions/campaigns/sim/qualification/selective-submission-runtime-v2.json",
-    "present": false
+    "present": true,
+    "retained_sha256": "0a578583658643d9ad577bad1173cf4e81e1f83dc3f28adf9f8f84747e4eed3d",
+    "retained_sha256_valid": true
   },
   "schema_version": 1,
-  "semantic_projection_equal": true,
-  "semantic_projection_sha256": "bd77a6f4b1eb266f7a1f837940d4f299fd07ccd0e05e292ba4fff0898a7da4c0",
+  "semantic_projection_equal": false,
+  "semantic_projection_sha256": "dc9a6429828c7a0d8705ff40dfc878f2463e4fe2a8d6edd262d8535829ccb46f",
   "seven_public_service_previews_passed": true,
+  "status": "SUPERSEDED_BY_WP57_61",
+  "supersession": {
+    "distinguished_relation_count": 7,
+    "reason": "Whole-route smoothing and the online-obstacle successor case intentionally change the historical R7 semantic projection.",
+    "work_packet_batch": "WP-57-through-WP-61"
+  },
   "ui_inspection": {
     "file_sha256": "b58665ffde8ff2c8e9a09eccc78d6a12af5f2432d63bdb08693a5e81b3cb3c47",
     "passed": false,
     "present": true,
-    "release_name": "release-wp52-56-fix1-20260812",
-    "release_tree_sha256": "8abab1fa3b899c9f067711650d9e616d13d852acabc66b75e4592c32fa7f11df"
+    "release_name": "release-1488e6d1afd64f5ea71f31049191fa32",
+    "release_tree_sha256": "da5a92ebbca03fda0fa71294251969468b84c829e82bcefd87b2b2bb40928290"
   }
 }

@@ -72,6 +72,7 @@ from crazyswarm_app.campaign.service import (
     CampaignReviewSourceRow,
     CampaignRunStatus,
     CampaignService,
+    ReviewItem,
 )
 from crazyswarm_app.campaign.submissions import (
     planning_submissions_for_case,
@@ -89,6 +90,7 @@ from crazyswarm_app.domain.errors import CrazySwarmError, ErrorCode
 from crazyswarm_app.domain.models import (
     AuthorityClass,
     BackendRole,
+    CoordinateFrame,
     OperatingMode,
     Vector3,
     VehicleCapability,
@@ -98,6 +100,7 @@ from crazyswarm_app.domain.simulation import (
     ADAPTER_CONTRACT_VERSION,
     CANONICAL_FRAME_CONVENTION,
     COMMAND_SEMANTICS,
+    canonical_sha256,
 )
 from crazyswarm_app.fleet.artifacts import (
     BackendBindingProfile,
@@ -132,12 +135,91 @@ from crazyswarm_app.provenance import repository_provenance
 from crazyswarm_app.safety.models import LiveModeAuthorization
 from crazyswarm_app.simulation.faults import FaultWindow
 from crazyswarm_app.simulation.models import DEFAULT_FIDELITY_MANIFEST
-from crazyswarm_app.twin.models import TwinSessionConfig
+from crazyswarm_app.twin.calibration import (
+    CalibrationCandidateRequest,
+    CalibrationPromotionAcceptance,
+)
+from crazyswarm_app.twin.curriculum import TwinCurriculumResultRequest, TwinStageStatus
+from crazyswarm_app.twin.models import (
+    TwinIngestionBatch,
+    TwinInitialState,
+    TwinSessionConfig,
+    TwinSourceClass,
+)
+from crazyswarm_app.twin.physical_handoff import (
+    PhysicalTwinHandoffRequest,
+    assess_physical_twin_handoff,
+)
 from crazyswarm_app.vehicles.providers import SoftwareBackendVehicleProvider
 
 MutationResultT = TypeVar("MutationResultT")
 
 LIVE_STATE_HISTORY_LIMIT = 10
+
+
+def retain_campaign_twin_evidence(
+    runtime: ApplicationRuntime,
+    service: CampaignService,
+    review: ReviewItem,
+    *,
+    curriculum_stage_id: str | None = None,
+) -> str | None:
+    """Retain a successful one-drone Campaign run through the production twin path.
+
+    Fast Sim estimator values remain explicitly ``CONFIGURED`` observations and
+    simulator ground truth remains ``SIMULATED_MODEL`` prediction. Repeated API
+    delivery reuses the campaign-run identity instead of creating duplicate twins.
+    """
+
+    if len(review.analysis.vehicles) != 1:
+        return None
+    existing = runtime.twins.session_for_campaign_run(review.run_id)
+    if existing is not None:
+        service.link_twin_session(review.run_id, existing.session_id)
+        return existing.session_id
+    case = service.catalog.get(review.case_id)
+    vehicle_id = review.analysis.vehicles[0].vehicle_id
+    simulation_parameters = runtime.config.simulation.vehicle_parameters()
+    config = TwinSessionConfig(
+        observed_vehicle_id=vehicle_id,
+        simulated_vehicle_id=f"{vehicle_id}-predicted",
+        mission_id=case.case_id,
+        mission_version=str(case.schema_version),
+        mission_source_sha256=case.case_sha256,
+        physics_model_id="fast-sim-rigid-body",
+        physics_model_version="1",
+        physics_configuration_sha256=simulation_parameters.sha256,
+        calibration_id=runtime.twins.active_calibration_id(),
+        curriculum_stage_id=curriculum_stage_id,
+        campaign_run_id=review.run_id,
+        campaign_review_id=review.review_id,
+        observed_initial_state=TwinInitialState(
+            source_class=TwinSourceClass.CONFIGURED,
+            source_id="fast-sim-estimator-telemetry",
+            frame=CoordinateFrame.WORLD,
+        ),
+        simulated_initial_state=TwinInitialState(
+            source_class=TwinSourceClass.SIMULATED_MODEL,
+            source_id="fast-sim-ground-truth-model",
+            frame=CoordinateFrame.WORLD,
+        ),
+        ground_truth_available=True,
+    )
+    record = runtime.twins.create_session(config)
+    telemetry_path = (
+        service.state_directory
+        / "evidence"
+        / review.analysis.mission_execution_id
+        / "telemetry.csv"
+    )
+    try:
+        runtime.twins.ingest_telemetry_csv(record.session_id, telemetry_path.read_bytes())
+    except Exception:
+        runtime.twins.complete(record.session_id, failed=True)
+        raise
+    runtime.twins.complete(record.session_id)
+    service.link_twin_session(review.run_id, record.session_id)
+    return record.session_id
 
 
 def generate_local_token() -> str:
@@ -368,6 +450,9 @@ def create_app(
             "configured_flight_volume": runtime.supervisor.policy.flight_volume.model_dump(
                 mode="json"
             ),
+            "visible_obstacles": [
+                obstacle.model_dump(mode="json") for obstacle in runtime.visible_obstacles()
+            ],
             "safety_policy": {
                 "minimum_takeoff_battery_percent": (
                     runtime.supervisor.policy.minimum_takeoff_battery_percent
@@ -661,7 +746,7 @@ def create_app(
 
             async def execute_campaign() -> None:
                 try:
-                    await service.run_active(
+                    review = await service.run_active(
                         body.mode,
                         idempotency_key=context.request_id,
                         submission_id=body.submission_id,
@@ -670,6 +755,7 @@ def create_app(
                         planning_capability_request=body.planning_capability_request,
                         execution_capability_request=body.execution_capability_request,
                     )
+                    retain_campaign_twin_evidence(runtime, service, review)
                 except asyncio.CancelledError:
                     raise
                 except Exception:
@@ -2511,10 +2597,18 @@ def create_app(
                 )
             observed = _require_vehicle(runtime, body.observed_vehicle_id)
             simulated = _require_vehicle(runtime, body.simulated_vehicle_id)
-            if observed.backend_profile.authority is not AuthorityClass.PHYSICAL:
+            sim_truth_session = (
+                observed.backend_profile.authority is AuthorityClass.SIMULATION
+                and body.observed_initial_state.source_class is TwinSourceClass.CONFIGURED
+                and body.ground_truth_available
+            )
+            if (
+                observed.backend_profile.authority is not AuthorityClass.PHYSICAL
+                and not sim_truth_session
+            ):
                 raise CrazySwarmError(
                     ErrorCode.INVALID_COMMAND,
-                    "the observed twin side requires a real adapter",
+                    "observed twin side requires a real adapter or explicit Sim truth",
                 )
             if simulated.backend_profile.authority is not AuthorityClass.SIMULATION:
                 raise CrazySwarmError(
@@ -2531,6 +2625,175 @@ def create_app(
             operation=operation,
         )
 
+    @router.get("/twins/calibrations/candidates")
+    async def twin_calibration_candidates() -> list[dict[str, Any]]:
+        return [item.model_dump(mode="json") for item in runtime.twins.calibration_candidates()]
+
+    @router.get("/twins/calibrations/reports")
+    async def twin_calibration_reports() -> list[dict[str, Any]]:
+        return [item.model_dump(mode="json") for item in runtime.twins.calibration_reports()]
+
+    @router.get("/twins/calibrations/active")
+    async def active_twin_calibration() -> dict[str, str | None]:
+        return {"calibration_id": runtime.twins.active_calibration_id()}
+
+    @router.post("/twins/calibrations/candidates")
+    async def create_twin_calibration_candidate(
+        body: CalibrationCandidateRequest,
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> Any:
+        async def operation() -> dict[str, Any]:
+            return runtime.twins.create_calibration_candidate(body).model_dump(mode="json")
+
+        return await mutate(
+            request,
+            context,
+            action="create_twin_calibration_candidate",
+            vehicle_id=runtime.selected_vehicle_id,
+            operation=operation,
+        )
+
+    @router.post("/twins/calibrations/{calibration_id}/promote")
+    async def promote_twin_calibration(
+        calibration_id: str,
+        body: CalibrationPromotionAcceptance,
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> Any:
+        async def operation() -> dict[str, Any]:
+            return runtime.twins.promote_calibration(
+                calibration_id,
+                body,
+            ).model_dump(mode="json")
+
+        return await mutate(
+            request,
+            context,
+            action="promote_twin_calibration",
+            vehicle_id=runtime.selected_vehicle_id,
+            operation=operation,
+        )
+
+    @router.get("/twins/curriculum")
+    async def twin_curriculum() -> dict[str, Any]:
+        return runtime.twins.curriculum().model_dump(mode="json")
+
+    @router.post("/twins/curriculum/{stage_id}/runs", status_code=202)
+    async def run_twin_curriculum_stage(
+        stage_id: str,
+        body: CampaignRunRequest,
+        context: OperatorContext = Depends(operator_context),
+    ) -> dict[str, Any]:
+        stage = runtime.twins.curriculum_stage(stage_id)
+        if stage.environment != "FAST_SIM":
+            raise CrazySwarmError(
+                ErrorCode.MODE_NOT_AUTHORIZED,
+                "real-adapter curriculum execution remains literal NOT_RUN",
+            )
+        service = campaign_service()
+        stage_request_id = f"twin-stage-{canonical_sha256([stage_id, context.request_id])[:24]}"
+        existing_run_id = service.state.idempotency.get(stage_request_id)
+        if existing_run_id is None:
+            if stage.status is not TwinStageStatus.READY:
+                raise CrazySwarmError(
+                    ErrorCode.INVALID_COMMAND,
+                    "twin curriculum stage prerequisites are not ready",
+                )
+
+            async def execute_stage() -> None:
+                try:
+                    service.set_active(
+                        stage.case_id,
+                        actor_id=context.client_id,
+                        reason=f"Run ready digital-twin curriculum stage {stage.stage_id}",
+                    )
+                    review = await service.run_active(
+                        body.mode,
+                        idempotency_key=stage_request_id,
+                        submission_id=body.submission_id,
+                        planning_submission_id=body.planning_submission_id,
+                        comparison_context_id=body.comparison_context_id,
+                        planning_capability_request=body.planning_capability_request,
+                        execution_capability_request=body.execution_capability_request,
+                    )
+                    session_id = retain_campaign_twin_evidence(
+                        runtime,
+                        service,
+                        review,
+                        curriculum_stage_id=stage.stage_id,
+                    )
+                    if session_id is None:
+                        return
+                    runtime.twins.record_curriculum_result(
+                        stage.stage_id,
+                        TwinCurriculumResultRequest(
+                            session_id=session_id,
+                            status=(
+                                TwinStageStatus.PASSED
+                                if review.status is CampaignRunStatus.SUCCEEDED
+                                else TwinStageStatus.FAILED
+                            ),
+                            result_sha256=canonical_sha256(
+                                [stage.stage_id, review.review_sha256, session_id]
+                            ),
+                        ),
+                    )
+                except asyncio.CancelledError:
+                    raise
+                except Exception:
+                    return
+
+            task = asyncio.create_task(
+                execute_stage(),
+                name=f"twin-curriculum-{stage.stage_id}-{context.request_id}",
+            )
+            campaign_run_tasks.add(task)
+            task.add_done_callback(campaign_run_tasks.discard)
+            await asyncio.sleep(0)
+            existing_run_id = service.state.idempotency.get(stage_request_id)
+        if existing_run_id is None:
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "code": "TWIN_CURRICULUM_EXECUTION_FAILED",
+                    "message": "twin curriculum run could not be queued",
+                },
+            )
+        return {
+            "accepted": True,
+            "stage_id": stage.stage_id,
+            "case_id": stage.case_id,
+            "run_id": existing_run_id,
+        }
+
+    @router.post("/twins/physical-handoff/assess")
+    async def physical_twin_handoff_assessment(
+        body: PhysicalTwinHandoffRequest,
+    ) -> dict[str, Any]:
+        return assess_physical_twin_handoff(body).model_dump(mode="json")
+
+    @router.post("/twins/curriculum/{stage_id}/results")
+    async def record_twin_curriculum_result(
+        stage_id: str,
+        body: TwinCurriculumResultRequest,
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> Any:
+        async def operation() -> dict[str, Any]:
+            return runtime.twins.record_curriculum_result(
+                stage_id,
+                body,
+            ).model_dump(mode="json")
+
+        return await mutate(
+            request,
+            context,
+            action="record_twin_curriculum_result",
+            vehicle_id=runtime.twins.session(body.session_id).observed_vehicle_id,
+            operation=operation,
+        )
+
     @router.get("/twins/{session_id}")
     async def twin_session(session_id: str) -> dict[str, Any]:
         return runtime.twins.session(session_id).model_dump(mode="json")
@@ -2538,6 +2801,44 @@ def create_app(
     @router.get("/twins/{session_id}/report")
     async def twin_report(session_id: str) -> dict[str, Any]:
         return runtime.twins.report(session_id).model_dump(mode="json")
+
+    @router.get("/twins/{session_id}/timeline")
+    async def twin_timeline(
+        session_id: str,
+        channels: str = "",
+        after_source_s: float | None = None,
+        limit: int = 4096,
+    ) -> dict[str, Any]:
+        channel_ids = tuple(value for value in channels.split(",") if value)
+        return runtime.twins.timeline(
+            session_id,
+            channel_ids=channel_ids,
+            after_source_s=after_source_s,
+            limit=limit,
+        ).model_dump(mode="json")
+
+    @router.post("/twins/{session_id}/samples")
+    async def ingest_twin_samples(
+        session_id: str,
+        body: TwinIngestionBatch,
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> Any:
+        async def operation() -> dict[str, Any]:
+            if body.session_id != session_id:
+                raise CrazySwarmError(
+                    ErrorCode.IDENTITY_MISMATCH,
+                    "twin batch route and payload identities differ",
+                )
+            return runtime.twins.ingest(body).model_dump(mode="json")
+
+        return await mutate(
+            request,
+            context,
+            action="ingest_twin_samples",
+            vehicle_id=runtime.twins.session(session_id).observed_vehicle_id,
+            operation=operation,
+        )
 
     @router.post("/simulation/fleet/reset-poses")
     async def reset_simulation_fleet(

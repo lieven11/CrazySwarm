@@ -24,7 +24,7 @@ from crazyswarm_app.observability.storage import EvidenceStore
 from crazyswarm_app.planning.approval import MissionPlanApproval
 from crazyswarm_app.safety.supervisor import SafetySupervisor
 from crazyswarm_app.simulation.factory import vehicles_from_scenario
-from crazyswarm_app.simulation.world import ScenarioConfig, load_scenario
+from crazyswarm_app.simulation.world import ObstacleConfig, ScenarioConfig, load_scenario
 from crazyswarm_app.twin.coordinator import TwinCoordinator
 from crazyswarm_app.vehicles.base import Vehicle
 from crazyswarm_app.vehicles.providers import ProvisionedFleet
@@ -62,6 +62,12 @@ class ApplicationRuntime:
     active_vehicle_ids: set[str] = field(default_factory=set)
     plan_approvals: dict[str, MissionPlanApproval] = field(default_factory=dict)
     run_files_backfill_task: asyncio.Task[None] | None = None
+    dynamic_obstacles: dict[str, ObstacleConfig] = field(default_factory=dict)
+
+    def visible_obstacles(self) -> tuple[ObstacleConfig, ...]:
+        obstacles = {item.obstacle_id: item for item in self.scenario.world.obstacles}
+        obstacles.update(self.dynamic_obstacles)
+        return tuple(sorted(obstacles.values(), key=lambda item: item.obstacle_id))
 
     def latest_mission_for_vehicle(self, vehicle_id: str) -> MissionRunSnapshot | None:
         runs = [run for run in self.runner.list_runs() if run.vehicle_id == vehicle_id]
@@ -319,7 +325,7 @@ def create_runtime(
         recorder=recorder,
         selected_vehicle_id=next(iter(vehicles)),
         parameters=ParameterService(vehicles),
-        twins=TwinCoordinator(),
+        twins=TwinCoordinator(config.cache_directory / "digital-twin"),
         bootstrap_vehicle_ids=frozenset(vehicles),
         active_vehicle_ids=set(vehicles),
     )

@@ -289,6 +289,51 @@ class MissionContext:
         )
         self.checkpoint()
 
+    async def certified_abort_and_land_for_replan(
+        self,
+        *,
+        target_position_m: Vector3,
+        certificate_sha256: str,
+        reason: str,
+    ) -> None:
+        """Execute a separately certified fallback through Supervisor authority."""
+
+        self.checkpoint()
+        self._record_intent(
+            "replan_abort_and_land",
+            {
+                "reason": reason,
+                "target_position_m": target_position_m.model_dump(mode="json"),
+                "certificate_sha256": certificate_sha256,
+            },
+        )
+        await self.fleet_authority.evaluate_health(
+            lambda binding: self.supervisor.land(
+                self.vehicle_id,
+                self.owner_id,
+                duration_s=5.0,
+                target_position_m=target_position_m,
+                source=CommandSource.SUPERVISOR,
+                mission_run_id=self.mission_run_id,
+                fleet_binding=binding,
+            )
+        )
+        self.checkpoint()
+
+    async def emergency_fallback_for_replan(self, *, reason: str) -> None:
+        """Request the existing Supervisor emergency policy without claiming safety."""
+
+        self._record_intent("replan_unqualified_emergency_fallback", {"reason": reason})
+        await self.fleet_authority.evaluate_health(
+            lambda binding: self.supervisor.abort_and_land(
+                self.vehicle_id,
+                self.owner_id,
+                reason=reason,
+                mission_run_id=self.mission_run_id,
+                fleet_binding=binding,
+            )
+        )
+
     async def execute_replanned_trajectory(
         self,
         trajectory: TimeParameterizedTrajectory,

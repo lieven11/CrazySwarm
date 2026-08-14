@@ -31,6 +31,21 @@ from crazyswarm_app.safety.policy import SafetyPolicy
 _ALLOWED_CASE_SUFFIXES = {".json", ".yaml", ".yml"}
 _IGNORED_NAMES = {"README.md", ".DS_Store"}
 
+ONE_DRONE_FAMILY_ORDER = (
+    "takeoff_hover_land",
+    "point_to_point_relocation",
+    "move_return",
+    "altitude_transition",
+    "continuous_waypoint_sequence",
+    "curved_route",
+    "planar_shape_loop",
+    "boundary_constrained_route",
+    "static_multi_goal_sequence",
+)
+_ONE_DRONE_FAMILY_RANK = {
+    family: index for index, family in enumerate(ONE_DRONE_FAMILY_ORDER)
+}
+
 
 @dataclass(frozen=True, slots=True)
 class CatalogEntry:
@@ -106,7 +121,7 @@ class CampaignCatalog:
         return self.entries()
 
     def entries(self) -> tuple[CatalogEntry, ...]:
-        return tuple(self._entries[key] for key in sorted(self._entries))
+        return tuple(sorted(self._entries.values(), key=_presentation_key))
 
     def cases(self) -> tuple[CampaignCase, ...]:
         return tuple(entry.case for entry in self.entries())
@@ -159,7 +174,13 @@ class CampaignCatalog:
                 cluster: {
                     fleet: {
                         family: tuple(sorted(case_ids))
-                        for family, case_ids in sorted(families.items())
+                        for family, case_ids in sorted(
+                            families.items(),
+                            key=lambda item: (
+                                _ONE_DRONE_FAMILY_RANK.get(item[0], 10_000),
+                                item[0],
+                            ),
+                        )
                     }
                     for fleet, families in sorted(fleets.items())
                 }
@@ -216,6 +237,21 @@ def validate_case_against_policy(case: CampaignCase, policy: SafetyPolicy) -> No
         for drone in case.drones
     ):
         raise ValueError("case initial battery is below global takeoff minimum")
+
+
+def _presentation_key(entry: CatalogEntry) -> tuple[int, int, int, str, str]:
+    case = entry.case
+    environment_rank = 0 if case.environment is EnvironmentKind.SIMULATION else 1
+    family_rank = (
+        _ONE_DRONE_FAMILY_RANK.get(case.family, 10_000) if case.drone_count == 1 else 0
+    )
+    return (
+        environment_rank,
+        case.drone_count,
+        family_rank,
+        case.cluster.value,
+        case.case_id,
+    )
 
 
 def compile_spatial_point(

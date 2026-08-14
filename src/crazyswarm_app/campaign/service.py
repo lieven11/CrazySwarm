@@ -45,6 +45,7 @@ from crazyswarm_app.campaign.submissions import (
     PlanningCapabilityRequest,
     ResolvedPlanningPackage,
     bind_execution_capability,
+    motion_contract_for_execution_profile,
     planning_submissions_for_case,
     resolve_planning_package,
     resolve_submission,
@@ -140,8 +141,11 @@ class CampaignExecutionRequest(ContractModel):
             and self.plan.submission_id is None
             and self.plan.submission_sha256 is None
         )
+        motion_contract = motion_contract_for_execution_profile(self.case, profile)
         if (
             self.plan.case_sha256 != self.case.case_sha256
+            or self.plan.motion_quality_contract != motion_contract
+            or self.plan.motion_quality_contract_sha256 != canonical_sha256(motion_contract)
             or not plan_profile_matches
             or self.plan.planning_submission_id != planning.planning_submission_id
             or self.plan.planning_submission_sha256 != planning.planning_submission_sha256
@@ -181,6 +185,8 @@ class CampaignExecutionRequest(ContractModel):
         if (
             self.trajectories.set_sha256 != canonical_sha256(self.trajectories.canonical_payload())
             or self.trajectories.case_sha256 != self.case.case_sha256
+            or self.trajectories.motion_quality_contract != motion_contract
+            or self.trajectories.motion_quality_contract_sha256 != canonical_sha256(motion_contract)
             or self.trajectories.candidate_sha256 != selected.candidate_sha256
             or not trajectory_profile_matches
             or self.trajectories.planning_submission_id != planning.planning_submission_id
@@ -263,6 +269,7 @@ class ReviewItem(ContractModel):
     mode_comparison: ModeComparison | None = None
     operator_questions: tuple[str, ...]
     operator_observations: tuple[str, ...] = ()
+    twin_session_ids: tuple[Identifier, ...] = ()
     approval: ReviewApproval | None = None
     review_sha256: SHA256
 
@@ -971,7 +978,13 @@ class CampaignService:
                     raise
             if hashlib.sha256(artifacts.csv_content).hexdigest() != artifacts.csv_bytes_sha256:
                 raise ValueError("executor CSV bytes do not match the declared hash")
-            review = self._intake(case, record, artifacts, plan)
+            review = self._intake(
+                case,
+                record,
+                artifacts,
+                plan,
+                execution_profile=package.execution_profile,
+            )
             return review
         except asyncio.CancelledError:
             current = next(item for item in self._state.runs if item.run_id == run_id)
@@ -1632,6 +1645,7 @@ class CampaignService:
         artifacts: RunArtifactSet,
         plan: BoundedPlanningResult,
         *,
+        execution_profile: ExecutionProfileSubmission | None = None,
         original_bytes: tuple[bytes, bytes, bytes] | None = None,
         artifact_hash_override: str | None = None,
     ) -> ReviewItem:
@@ -1716,6 +1730,7 @@ class CampaignService:
                 run,
                 analysis,
                 artifacts.evaluation,
+                execution_profile=execution_profile,
             ),
             "cross_case_profile_comparison": self._cross_case_profile_comparison(
                 case,
@@ -1777,27 +1792,39 @@ class CampaignService:
         run: CampaignRunRecord,
         analysis: MissionAnalysis,
         evaluation: Mapping[str, Any],
+        *,
+        execution_profile: ExecutionProfileSubmission | None = None,
     ) -> dict[str, float | str | bool | None]:
-        try:
-            submission = resolve_submission(
-                case,
-                run.locked_inputs.submission_id,
-                require_executable=False,
-            )
-        except ValueError:
-            if run.locked_inputs.submission_id != "core.energy_aware_retiming":
-                raise
-            from crazyswarm_app.campaign.submissions import ExecutionProfileParameters
+        if execution_profile is not None:
+            if (
+                execution_profile.submission_id != run.locked_inputs.submission_id
+                or execution_profile.profile_sha256 != run.locked_inputs.submission_sha256
+            ):
+                raise ValueError("intake execution profile does not match the retained run lock")
+            submission = execution_profile
+        else:
+            try:
+                submission = resolve_submission(
+                    case,
+                    run.locked_inputs.submission_id,
+                    require_executable=False,
+                )
+            except ValueError as error:
+                if run.locked_inputs.submission_id != "core.energy_aware_retiming":
+                    raise
+                from crazyswarm_app.campaign.submissions import ExecutionProfileParameters
 
-            submission = bind_execution_capability(
-                case,
-                ExecutionCapabilityRequest(
-                    capability_id="core.energy_aware_retiming",
-                    parameters=ExecutionProfileParameters(),
-                ),
-            )
-            if submission.profile_sha256 != run.locked_inputs.submission_sha256:
-                raise ValueError("run lock does not match reconstructed energy capability")
+                submission = bind_execution_capability(
+                    case,
+                    ExecutionCapabilityRequest(
+                        capability_id="core.energy_aware_retiming",
+                        parameters=ExecutionProfileParameters(),
+                    ),
+                )
+                if submission.profile_sha256 != run.locked_inputs.submission_sha256:
+                    raise ValueError(
+                        "run lock does not match reconstructed energy capability"
+                    ) from error
         baseline_id = submission.baseline_submission_id
         baseline_sha256 = submission.baseline_submission_sha256
         if baseline_id is None or baseline_sha256 is None:
@@ -2105,6 +2132,23 @@ class CampaignService:
             }
         )
         self._persist()
+
+    def link_twin_session(self, run_id: str, twin_session_id: str) -> ReviewItem:
+        """Bind retained twin evidence to its immutable campaign review."""
+
+        try:
+            review = next(item for item in self._state.reviews if item.run_id == run_id)
+        except StopIteration as error:
+            raise KeyError(f"unknown campaign run review: {run_id}") from error
+        if twin_session_id in review.twin_session_ids:
+            return review
+        updated = _rehash_review(
+            review.model_copy(
+                update={"twin_session_ids": (*review.twin_session_ids, twin_session_id)}
+            )
+        )
+        self._replace_review(updated)
+        return updated
 
     def _snapshot(self, snapshot_id: str) -> CampaignSnapshotRecord:
         try:

@@ -36,9 +36,7 @@ class IndependentMetricObservation(ContractModel):
 
 class IndependentBehaviorMeasurement(ContractModel):
     schema_version: Literal[1] = 1
-    oracle_id: Literal["independent-submission-behavior-v1"] = (
-        "independent-submission-behavior-v1"
-    )
+    oracle_id: Literal["independent-submission-behavior-v1"] = "independent-submission-behavior-v1"
     case_id: Identifier
     case_sha256: SHA256
     submission_id: Identifier
@@ -117,8 +115,7 @@ def measure_planning_behavior(
     routes = tuple(sorted(plan.selected.routes, key=lambda item: item.role_id))
     trajectory_by_role = {item.role_id: item for item in trajectories.trajectories}
     samples_by_role = {
-        route.role_id: _independent_samples(trajectory_by_role[route.role_id])
-        for route in routes
+        route.role_id: _independent_samples(trajectory_by_role[route.role_id]) for route in routes
     }
     raw = _raw_metrics(case, plan, routes, samples_by_role)
     observations = []
@@ -186,9 +183,7 @@ def compare_for_collapse(
         if tolerance is None:
             equivalent = left.value == right.value
             reason = (
-                "exact discrete values are equal"
-                if equivalent
-                else "exact discrete values differ"
+                "exact discrete values are equal" if equivalent else "exact discrete values differ"
             )
         else:
             if not isinstance(left.value, (int, float)) or not isinstance(
@@ -304,8 +299,7 @@ def derive_sampled_route_semantics(
                     and future.maximum_m == expected.maximum_m
                 )
                 same_as_captured = any(
-                    future.minimum_m == prior.minimum_m
-                    and future.maximum_m == prior.maximum_m
+                    future.minimum_m == prior.minimum_m and future.maximum_m == prior.maximum_m
                     for prior in captured
                 )
                 if same_as_expected or same_as_captured:
@@ -327,18 +321,12 @@ def derive_sampled_route_semantics(
         stop_threshold = case.hard_constraints.dynamics.stop_speed_threshold_m_s
         persistence = case.hard_constraints.dynamics.unintended_stop_persistence_s
         terminal_guard_s = max(0.20, persistence)
-        speed_by_index = tuple(
-            _norm_tuple(sample["velocity_m_s"]) for sample in samples
-        )
+        speed_by_index = tuple(_norm_tuple(sample["velocity_m_s"]) for sample in samples)
         low_start: int | None = None
         stop_intervals = []
-        for index, (sample, speed) in enumerate(
-            zip(samples, speed_by_index, strict=True)
-        ):
+        for index, (sample, speed) in enumerate(zip(samples, speed_by_index, strict=True)):
             interior = (
-                terminal_guard_s
-                <= sample["time_s"]
-                <= samples[-1]["time_s"] - terminal_guard_s
+                terminal_guard_s <= sample["time_s"] <= samples[-1]["time_s"] - terminal_guard_s
             )
             if interior and speed <= stop_threshold:
                 if low_start is None:
@@ -371,9 +359,9 @@ def derive_sampled_route_semantics(
             )
             geometry_counts[geometry_sha] = geometry_counts.get(geometry_sha, 0) + 1
         maximum_repeat = max(geometry_counts.values(), default=0)
-        complete_order = tuple(observed) == tuple(
-            region.region_id for region in authored
-        ) and not out_of_order
+        complete_order = (
+            tuple(observed) == tuple(region.region_id for region in authored) and not out_of_order
+        )
         topology = (
             "figure_eight"
             if complete_order and maximum_repeat >= 3
@@ -404,9 +392,7 @@ def derive_sampled_route_semantics(
             case.hard_constraints.dynamics.unintended_stop_persistence_s
         ),
         "roles": tuple(roles),
-        "DS_LOBE_ORDER": tuple(
-            region_id for role in roles for region_id in role["observed_order"]
-        ),
+        "DS_LOBE_ORDER": tuple(region_id for role in roles for region_id in role["observed_order"]),
         "DS_TOPOLOGY": (
             roles[0]["topology"]
             if len(roles) == 1
@@ -416,9 +402,7 @@ def derive_sampled_route_semantics(
                 else "order_violation"
             )
         ),
-        "DS_UNINTENDED_STOP_COUNT": sum(
-            role["unintended_stop_count"] for role in roles
-        ),
+        "DS_UNINTENDED_STOP_COUNT": sum(role["unintended_stop_count"] for role in roles),
     }
     return {**payload, "evidence_sha256": canonical_sha256(payload)}
 
@@ -469,7 +453,9 @@ def _raw_metrics(
             capture_errors.append(
                 min(_point_region_distance(sample["position_m"], goal) for sample in samples)
             )
-    velocities = [sample["velocity_m_s"] for samples in samples_by_role.values() for sample in samples]
+    velocities = [
+        sample["velocity_m_s"] for samples in samples_by_role.values() for sample in samples
+    ]
     accelerations = [
         sample["acceleration_m_s2"] for samples in samples_by_role.values() for sample in samples
     ]
@@ -490,7 +476,10 @@ def _raw_metrics(
     starts = tuple(route.route_start_s for route in routes)
     finishes = tuple(route.route_start_s + route.route_duration_s for route in routes)
     overlap = max(0.0, min(finishes) - max(starts)) if routes else 0.0
-    role_order = tuple(route.role_id for route in sorted(routes, key=lambda item: (item.route_start_s, item.role_id)))
+    role_order = tuple(
+        route.role_id
+        for route in sorted(routes, key=lambda item: (item.route_start_s, item.role_id))
+    )
     affected_roles = tuple(
         sorted(
             route.role_id
@@ -525,19 +514,29 @@ def _raw_metrics(
     initial_reserves = tuple(drone.initial_battery_percent for drone in case.drones)
     capacity_wh = 0.25 * 4.2
     energy_share = predicted_energy_wh / max(1, len(case.drones))
-    terminal_reserves = tuple(value - energy_share / capacity_wh * 100.0 for value in initial_reserves)
+    terminal_reserves = tuple(
+        value - energy_share / capacity_wh * 100.0 for value in initial_reserves
+    )
     formation_error, spacing_error = _fleet_shape_errors(routes, samples_by_role)
     route_identity = tuple(
-        (route.role_id, canonical_sha256(tuple(point.model_dump(mode="python") for point in route.points_m)))
+        (
+            route.role_id,
+            canonical_sha256(tuple(point.model_dump(mode="python") for point in route.points_m)),
+        )
         for route in routes
     )
-    schedule = tuple((route.role_id, route.route_start_s, route.route_duration_s) for route in routes)
+    schedule = tuple(
+        (route.role_id, route.route_start_s, route.route_duration_s) for route in routes
+    )
     metric_values: dict[str, Any] = {
         "SP_CAPTURE": max(capture_errors, default=0.0),
         "SP_REFERENCE": max(references, default=0.0),
         "SP_RADIAL": max(references, default=0.0),
         "SP_CLOSURE": max(
-            (math.dist(_point_tuple(points[0]), _point_tuple(points[-1])) for points in authored.values()),
+            (
+                math.dist(_point_tuple(points[0]), _point_tuple(points[-1]))
+                for points in authored.values()
+            ),
             default=0.0,
         ),
         "SP_CORNER_CUT": max(references, default=0.0),
@@ -554,7 +553,9 @@ def _raw_metrics(
         "TM_DURATION": max((route.route_duration_s for route in routes), default=0.0),
         "TM_SETTLE": max(finishes, default=0.0),
         "TM_TRANSITION_START": _transition_start_distance(routes),
-        "TM_DWELL": max((sum(stop.dwell_s for stop in route.declared_stops) for route in routes), default=0.0),
+        "TM_DWELL": max(
+            (sum(stop.dwell_s for stop in route.declared_stops) for route in routes), default=0.0
+        ),
         "TM_RELEASE": max(starts, default=0.0) - min(starts, default=0.0),
         "TM_OVERLAP": overlap,
         "TM_WAIT": max(starts, default=0.0),
@@ -639,15 +640,23 @@ def _authored_points(case: CampaignCase, role_id: str) -> tuple[Vector3, ...]:
     )
 
 
-def _point_polyline_distance(point: tuple[float, float, float], points: tuple[Vector3, ...]) -> float:
+def _point_polyline_distance(
+    point: tuple[float, float, float], points: tuple[Vector3, ...]
+) -> float:
     return min(_point_segment_distance(point, before, after) for before, after in pairwise(points))
 
 
-def _point_segment_distance(point: tuple[float, float, float], before: Vector3, after: Vector3) -> float:
+def _point_segment_distance(
+    point: tuple[float, float, float], before: Vector3, after: Vector3
+) -> float:
     start, end = _point_tuple(before), _point_tuple(after)
     delta = _subtract_tuple(end, start)
     denominator = _dot(delta, delta)
-    fraction = 0.0 if denominator <= 1e-18 else max(0.0, min(1.0, _dot(_subtract_tuple(point, start), delta) / denominator))
+    fraction = (
+        0.0
+        if denominator <= 1e-18
+        else max(0.0, min(1.0, _dot(_subtract_tuple(point, start), delta) / denominator))
+    )
     closest = tuple(start[index] + fraction * delta[index] for index in range(3))
     return math.dist(point, closest)
 
@@ -710,9 +719,7 @@ def _fleet_shape_errors(
 ) -> tuple[float, float]:
     if len(routes) < 2:
         return 0.0, 0.0
-    initial = {
-        role_id: samples[0]["position_m"] for role_id, samples in samples_by_role.items()
-    }
+    initial = {role_id: samples[0]["position_m"] for role_id, samples in samples_by_role.items()}
     formation = 0.0
     spacing = 0.0
     for first, second in combinations(sorted(samples_by_role), 2):
@@ -730,7 +737,9 @@ def _transition_start_distance(routes: tuple[Any, ...]) -> float:
     for route in routes:
         if len(route.points_m) < 3:
             continue
-        distances.append(math.dist(_point_tuple(route.points_m[0]), _point_tuple(route.points_m[1])))
+        distances.append(
+            math.dist(_point_tuple(route.points_m[0]), _point_tuple(route.points_m[1]))
+        )
     return min(distances, default=0.0)
 
 
@@ -757,7 +766,11 @@ def _turn_angle(before: Vector3, current: Vector3, after: Vector3) -> float:
     first = _subtract_tuple(_point_tuple(current), _point_tuple(before))
     second = _subtract_tuple(_point_tuple(after), _point_tuple(current))
     denominator = _norm_tuple(first) * _norm_tuple(second)
-    return 0.0 if denominator <= 1e-18 else math.acos(max(-1.0, min(1.0, _dot(first, second) / denominator)))
+    return (
+        0.0
+        if denominator <= 1e-18
+        else math.acos(max(-1.0, min(1.0, _dot(first, second) / denominator)))
+    )
 
 
 def _point_tuple(point: Vector3) -> tuple[float, float, float]:

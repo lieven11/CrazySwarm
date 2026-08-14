@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from itertools import pairwise
 
 import pytest
 
@@ -100,6 +101,25 @@ async def test_battery_setup_confirmation_bypasses_modeled_transport_loss() -> N
     assert snapshot.sequence == 1
     assert snapshot.telemetry.battery_percent == 5.0
     assert snapshot.telemetry.faults == ("CRITICAL_BATTERY",)
+
+
+@pytest.mark.asyncio
+async def test_telemetry_source_rate_is_bounded_when_command_has_short_final_step() -> None:
+    vehicle = make_vehicle()
+    await vehicle.connect()
+    await vehicle.execute(command(vehicle, "arm", ArmCommand()))
+    await vehicle.execute(
+        command(vehicle, "takeoff", TakeoffCommand(height_m=0.3, duration_s=2.001))
+    )
+    await vehicle.execute(command(vehicle, "hover", HoverCommand(duration_s=0.101)))
+
+    positive_deltas = [
+        later.source_timestamp_s - earlier.source_timestamp_s
+        for earlier, later in pairwise(vehicle.telemetry_history)
+        if later.source_timestamp_s > earlier.source_timestamp_s
+    ]
+    assert positive_deltas
+    assert min(positive_deltas) >= 1.0 / 500.0 - 1e-12
 
 
 @pytest.mark.asyncio

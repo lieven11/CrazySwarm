@@ -17,8 +17,14 @@ from pydantic import Field, model_validator
 from crazyswarm_app.campaign.models import (
     BehaviorOracleKind,
     CampaignCase,
+    MotionQualityContract,
     ScenarioEventKind,
     ScenarioExpectedDisposition,
+    TraversalMode,
+)
+from crazyswarm_app.campaign.physical_truth import (
+    DifferentialActuationAnalysis,
+    analyze_differential_actuation_csv,
 )
 from crazyswarm_app.domain.models import ContractModel, Identifier, Vector3
 from crazyswarm_app.domain.simulation import SHA256, canonical_sha256
@@ -51,10 +57,251 @@ class MetricDistribution(ContractModel):
     peak: float | None = None
 
 
-class KinematicsGateReconciliation(ContractModel):
-    raw_scope: Literal["ALL_RECORDED_AIRBORNE_SAMPLES"] = (
-        "ALL_RECORDED_AIRBORNE_SAMPLES"
+class MotionQualityVector(ContractModel):
+    """Literal source-clock motion vector; fields remain separate by design."""
+
+    speed_compliance_fraction: float | None = Field(default=None, ge=0.0, le=1.0)
+    speed_ripple_m_s: float | None = Field(default=None, ge=0.0)
+    acceleration_p95_m_s2: float | None = Field(default=None, ge=0.0)
+    jerk_p95_m_s3: float | None = Field(default=None, ge=0.0)
+    angular_rate_p95_rad_s: float | None = Field(default=None, ge=0.0)
+    minimum_motor_thrust_headroom_n: float | None = None
+    motor_spread_p95_percent: float | None = Field(default=None, ge=0.0)
+    motor_saturation_fraction: float | None = Field(default=None, ge=0.0, le=1.0)
+    motor_differential_sign_agreement_fraction: float | None = Field(default=None, ge=0.0, le=1.0)
+    motor_differential_normalized_error_p95: float | None = Field(default=None, ge=0.0)
+    electrical_energy_used_j: float | None = Field(default=None, ge=0.0)
+    tracking_rms_m: float | None = Field(default=None, ge=0.0)
+    path_tube_max_error_m: float | None = Field(default=None, ge=0.0)
+    minimum_clearance_m: float | None = None
+    collision_count: int | None = Field(default=None, ge=0)
+    checkpoint_hold_conformance_fraction: float | None = Field(default=None, ge=0.0, le=1.0)
+    minimum_continuous_knot_speed_ratio: float | None = Field(default=None, ge=0.0)
+    unintended_fly_through_stop_count: int | None = Field(default=None, ge=0)
+    terminal_secondary_peak_m_s: float | None = Field(default=None, ge=0.0)
+    terminal_reversal_count: int | None = Field(default=None, ge=0)
+    duration_s: float = Field(ge=0.0)
+    supervisor_safety_gate_passed: bool | None = None
+
+
+class MotionQualityAnalysis(ContractModel):
+    schema_version: Literal[1] = 1
+    vehicle_id: Identifier
+    contract_sha256: SHA256
+    csv_sha256: SHA256
+    sample_count: int = Field(ge=0)
+    vector: MotionQualityVector
+    failed_guards: tuple[Identifier, ...]
+    missing_guards: tuple[Identifier, ...]
+    analysis_sha256: SHA256
+
+
+def analyze_motion_quality_csv(
+    csv_bytes: bytes,
+    contract: MotionQualityContract,
+    *,
+    vehicle_id: str | None = None,
+    planned_route_m: Sequence[Vector3] = (),
+    minimum_clearance_m: float | None = None,
+    collision_count: int | None = None,
+    checkpoint_hold_conformance_fraction: float | None = None,
+    minimum_continuous_knot_speed_ratio: float | None = None,
+    unintended_fly_through_stop_count: int | None = None,
+    motor_differential_sign_agreement_fraction: float | None = None,
+    motor_differential_normalized_error_p95: float | None = None,
+    supervisor_safety_gate_passed: bool | None = None,
+    motion_window_source_s: tuple[float, float] | None = None,
+) -> MotionQualityAnalysis:
+    """Recompute the WP-57/61 guard vector from raw run-telemetry-v1 rows.
+
+    Geometry-, mixer-, and Supervisor-owned values are explicit inputs. They are
+    reported missing when their independent oracle did not supply them; this function
+    never fabricates them from a summary or a visually rounded motor value.
+    """
+
+    text = csv_bytes.decode("utf-8-sig")
+    rows = list(csv.DictReader(text.splitlines()))
+    if not rows:
+        raise ValueError("telemetry CSV contains no rows")
+    selected_id = vehicle_id or str(rows[0].get("vehicle_id") or "")
+    selected = [row for row in rows if row.get("vehicle_id") == selected_id]
+    if not selected_id or not selected:
+        raise ValueError("motion analysis vehicle is absent from telemetry CSV")
+    ordered = sorted(
+        selected,
+        key=lambda row: (
+            _first_float(row, "simulation_timestamp_s", "source_timestamp_s"),
+            int(_float(row.get("telemetry_sequence")) or 0),
+        ),
     )
+    unique: list[Mapping[str, str]] = []
+    seen: set[tuple[float, int]] = set()
+    for row in ordered:
+        key = (
+            _first_float(row, "simulation_timestamp_s", "source_timestamp_s"),
+            int(_float(row.get("telemetry_sequence")) or 0),
+        )
+        if key not in seen:
+            seen.add(key)
+            unique.append(row)
+    if motion_window_source_s is not None:
+        start_s, end_s = motion_window_source_s
+        if end_s <= start_s:
+            raise ValueError("motion source window must have positive duration")
+        unique = [
+            row
+            for row in unique
+            if start_s <= _first_float(row, "simulation_timestamp_s", "source_timestamp_s") <= end_s
+        ]
+        if len(unique) < 3:
+            raise ValueError("motion source window contains fewer than three samples")
+    times = [_first_float(row, "simulation_timestamp_s", "source_timestamp_s") for row in unique]
+    velocities = [
+        (timestamp, value)
+        for timestamp, row in zip(times, unique, strict=True)
+        if (value := _row_vector(row, "velocity", "_m_s")) is not None
+    ]
+    if not velocities:
+        positions = [
+            (timestamp, value)
+            for timestamp, row in zip(times, unique, strict=True)
+            if (value := _row_vector(row, "ground_truth")) is not None
+        ]
+        velocities = _derivative_vectors(positions)
+    speeds = [(timestamp, _norm(value)) for timestamp, value in velocities]
+    moving_speeds = [value for _timestamp, value in speeds if value > 0.02]
+    accelerations = _derivative_values(speeds)
+    imu_accelerations = [
+        (timestamp, value)
+        for timestamp, row in zip(times, unique, strict=True)
+        if (value := _row_vector(row, "imu_acceleration", "_m_s2")) is not None
+    ]
+    imu_jerks = _derivative_vectors(imu_accelerations)
+    jerks = (
+        [(timestamp, _norm(value)) for timestamp, value in imu_jerks]
+        if imu_jerks
+        else _derivative_values(accelerations)
+    )
+    angular_rates = [
+        _norm(value)
+        for row in unique
+        if (value := _row_vector(row, "imu_angular_velocity", "_rad_s")) is not None
+    ]
+    motor_spreads: list[float] = []
+    motor_headrooms: list[float] = []
+    saturated_count = 0
+    motor_count = 0
+    for row in unique:
+        pwm = [_float(row.get(f"motor_m{index}_applied_pwm_percent")) for index in range(1, 5)]
+        present_pwm = [value for value in pwm if value is not None]
+        if len(present_pwm) == 4:
+            motor_spreads.append(max(present_pwm) - min(present_pwm))
+        for index in range(1, 5):
+            thrust = _float(row.get(f"motor_m{index}_thrust_n"))
+            available = _float(row.get(f"motor_m{index}_available_thrust_n"))
+            saturated = _boolean(row.get(f"motor_m{index}_saturated"))
+            if thrust is not None and available is not None:
+                motor_headrooms.append(available - thrust)
+            if saturated is not None:
+                motor_count += 1
+                saturated_count += int(saturated)
+    power = [
+        (timestamp, voltage * current)
+        for timestamp, row in zip(times, unique, strict=True)
+        if (voltage := _float(row.get("battery_voltage_v"))) is not None
+        and (current := _float(row.get("battery_current_a"))) is not None
+    ]
+    energy = sum(
+        (before[1] + after[1]) * 0.5 * (after[0] - before[0])
+        for before, after in pairwise(power)
+        if after[0] > before[0]
+    )
+    observed_positions = [
+        value for row in unique if (value := _row_vector(row, "ground_truth")) is not None
+    ]
+    path_errors = (
+        [_distance_to_polyline(point, planned_route_m) for point in observed_positions]
+        if len(planned_route_m) >= 2
+        else []
+    )
+    terminal_window_size = max(3, len(speeds) // 10)
+    terminal_speeds = [value for _timestamp, value in speeds[-terminal_window_size:]]
+    terminal_peak = _secondary_peak_prominence(terminal_speeds)
+    terminal_reversals = _terminal_reversal_count(
+        [value for _timestamp, value in velocities[-terminal_window_size:]],
+        direction=(
+            Vector3(
+                x=planned_route_m[-1].x - planned_route_m[-2].x,
+                y=planned_route_m[-1].y - planned_route_m[-2].y,
+                z=planned_route_m[-1].z - planned_route_m[-2].z,
+            )
+            if len(planned_route_m) >= 2
+            else None
+        ),
+    )
+    speed_compliance = None
+    if contract.target_speed_m_s is not None and moving_speeds:
+        speed_compliance = sum(
+            abs(value - contract.target_speed_m_s) <= contract.speed_band_m_s
+            for value in moving_speeds
+        ) / len(moving_speeds)
+    payload_vector = MotionQualityVector(
+        speed_compliance_fraction=speed_compliance,
+        speed_ripple_m_s=(
+            _percentile(sorted(moving_speeds), 0.95) - _percentile(sorted(moving_speeds), 0.05)
+            if moving_speeds
+            else None
+        ),
+        acceleration_p95_m_s2=(
+            _percentile(sorted(value for _time, value in accelerations), 0.95)
+            if accelerations
+            else None
+        ),
+        jerk_p95_m_s3=(
+            _percentile(sorted(value for _time, value in jerks), 0.95) if jerks else None
+        ),
+        angular_rate_p95_rad_s=(
+            _percentile(sorted(angular_rates), 0.95) if angular_rates else None
+        ),
+        minimum_motor_thrust_headroom_n=min(motor_headrooms, default=None),
+        motor_spread_p95_percent=(
+            _percentile(sorted(motor_spreads), 0.95) if motor_spreads else None
+        ),
+        motor_saturation_fraction=(saturated_count / motor_count if motor_count else None),
+        motor_differential_sign_agreement_fraction=(motor_differential_sign_agreement_fraction),
+        motor_differential_normalized_error_p95=motor_differential_normalized_error_p95,
+        electrical_energy_used_j=(energy if len(power) >= 2 else None),
+        tracking_rms_m=(
+            math.sqrt(sum(value * value for value in path_errors) / len(path_errors))
+            if path_errors
+            else None
+        ),
+        path_tube_max_error_m=max(path_errors, default=None),
+        minimum_clearance_m=minimum_clearance_m,
+        collision_count=collision_count,
+        checkpoint_hold_conformance_fraction=checkpoint_hold_conformance_fraction,
+        minimum_continuous_knot_speed_ratio=minimum_continuous_knot_speed_ratio,
+        unintended_fly_through_stop_count=unintended_fly_through_stop_count,
+        terminal_secondary_peak_m_s=terminal_peak,
+        terminal_reversal_count=terminal_reversals,
+        duration_s=max(0.0, times[-1] - times[0]),
+        supervisor_safety_gate_passed=supervisor_safety_gate_passed,
+    )
+    failed, missing = _motion_guard_verdict(payload_vector, contract)
+    payload: dict[str, Any] = {
+        "vehicle_id": selected_id,
+        "contract_sha256": contract.contract_sha256,
+        "csv_sha256": hashlib.sha256(csv_bytes).hexdigest(),
+        "sample_count": len(unique),
+        "vector": payload_vector,
+        "failed_guards": failed,
+        "missing_guards": missing,
+    }
+    return MotionQualityAnalysis(**payload, analysis_sha256=canonical_sha256(payload))
+
+
+class KinematicsGateReconciliation(ContractModel):
+    raw_scope: Literal["ALL_RECORDED_AIRBORNE_SAMPLES"] = "ALL_RECORDED_AIRBORNE_SAMPLES"
     processed_scope: Literal["SMOOTHED_ROUTE_WINDOW"] = "SMOOTHED_ROUTE_WINDOW"
     raw_horizontal_speed_peak_m_s: float | None = Field(default=None, ge=0.0)
     raw_vertical_speed_peak_m_s: float | None = Field(default=None, ge=0.0)
@@ -154,7 +401,7 @@ class BehaviorOracleResult(ContractModel):
 
 
 class MissionAnalysis(ContractModel):
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 2
     analyzer_id: Literal["campaign-offline-analyzer"] = "campaign-offline-analyzer"
     analyzer_version: Literal["1.0.0"] = "1.0.0"
     mission_execution_id: Identifier
@@ -175,6 +422,9 @@ class MissionAnalysis(ContractModel):
     bundle_sha256: SHA256
     csv_sha256: SHA256
     vehicles: tuple[VehicleAnalysis, ...]
+    motion_quality: tuple[MotionQualityAnalysis, ...] = ()
+    physical_truth: tuple[DifferentialActuationAnalysis, ...] = ()
+    replan_timeline: tuple[dict[str, Any], ...] = ()
     pair_separation: tuple[PairSeparation, ...]
     minimum_truth_separation_m: float | None = Field(default=None, ge=0.0)
     landing: tuple[LandingComparison, ...]
@@ -186,9 +436,7 @@ class MissionAnalysis(ContractModel):
 
     @model_validator(mode="after")
     def planning_evidence_identity_is_complete(self) -> MissionAnalysis:
-        if (self.planning_submission_id is None) != (
-            self.planning_submission_sha256 is None
-        ):
+        if (self.planning_submission_id is None) != (self.planning_submission_sha256 is None):
             raise ValueError("analysis planning submission identity must be complete")
         if (
             self.resolved_planning_package_sha256 is not None
@@ -251,13 +499,9 @@ def compare_execution_modes(
             differences.append(abs(float(first) - float(second)))
         return max(differences, default=None), applicable, asymmetric_absence
 
-    target, target_applicable, target_asymmetric = maximum_difference(
-        "source_clock_target_error_s"
-    )
+    target, target_applicable, target_asymmetric = maximum_difference("source_clock_target_error_s")
     path, path_applicable, path_asymmetric = maximum_difference("truth_path_length_m")
-    tracking, tracking_applicable, tracking_asymmetric = maximum_difference(
-        "tracking_rms_error_m"
-    )
+    tracking, tracking_applicable, tracking_asymmetric = maximum_difference("tracking_rms_error_m")
     accelerated_separation = accelerated.minimum_truth_separation_m
     realtime_separation = realtime.minimum_truth_separation_m
     separation_applicable = accelerated_separation is not None or realtime_separation is not None
@@ -393,9 +637,10 @@ def analyze_execution(
         by_vehicle[row.vehicle_id].append(row)
     drones_by_role = {drone.role_id: drone for drone in case.drones}
     context = _mapping(bundle.get("context", {}), "context")
-    trajectory_values = _mapping(
+    campaign_trajectories = _mapping(
         context.get("campaign_trajectories", {}), "campaign_trajectories"
-    ).get("trajectories", ())
+    )
+    trajectory_values = campaign_trajectories.get("trajectories", ())
     trajectories_by_role = {
         str(value.get("role_id")): value
         for value in trajectory_values
@@ -404,35 +649,100 @@ def analyze_execution(
     assignments = _mapping(
         bundle.get("assignments") or context.get("assignments", {}), "assignments"
     )
+    retained_motion_contract = _retained_motion_contract(context)
     analyses: list[VehicleAnalysis] = []
+    motion_analyses: list[MotionQualityAnalysis] = []
+    physical_truth_analyses: list[DifferentialActuationAnalysis] = []
     landing: list[LandingComparison] = []
     for vehicle_id in sorted(by_vehicle):
         samples = by_vehicle[vehicle_id]
-        role_id = next(
+        artifact_role_id = next(
             (str(role) for role, assigned in assignments.items() if str(assigned) == vehicle_id),
             vehicle_id,
         )
-        route_window = _campaign_route_window(context, role_id)
+        role_id = _case_role_id(artifact_role_id, tuple(drones_by_role))
+        route_window = _campaign_route_window(context, artifact_role_id)
         analysis = _analyze_vehicle(
             samples,
             case,
             selected,
             planned_route_window_s=route_window,
             planned_declared_stop_offsets_s=_declared_stop_offsets(
-                trajectories_by_role.get(role_id)
+                trajectories_by_role.get(artifact_role_id)
             ),
         )
         analyses.append(analysis)
+        contract = retained_motion_contract or case.motion_contract_for(role_id)
+        physical_truth = analyze_differential_actuation_csv(
+            csv_bytes,
+            vehicle_id=vehicle_id,
+        )
+        physical_truth_analyses.append(physical_truth)
+        planned_route = _planned_route_for_role(context, artifact_role_id)
+        knot_ratio, checkpoint_conformance = _route_semantics_observations(
+            case=case,
+            role_id=role_id,
+            samples=samples,
+            trajectory=trajectories_by_role.get(artifact_role_id),
+            route_points=planned_route,
+            route_start_source_s=analysis.timeline.route_start_source_s,
+            contract=contract,
+        )
+        trace = _mapping(
+            context.get("campaign_execution_head_trace", {}),
+            "execution_head_trace",
+        )
+        clearance = _minimum_certified_clearance(trace)
+        if clearance is None:
+            clearance = _minimum_route_clearance(
+                case,
+                samples,
+                analysis.timeline.route_start_source_s,
+                analysis.timeline.landing_start_source_s,
+            )
+        fleet_result = _mapping(context.get("fleet_result", {}), "fleet_result")
+        supervisor_passed = (
+            str(fleet_result.get("status", "")) == "SUCCEEDED" if fleet_result else None
+        )
+        collision_count = sum("COLLISION" in sample.faults.upper() for sample in samples)
+        motion_analyses.append(
+            analyze_motion_quality_csv(
+                csv_bytes,
+                contract,
+                vehicle_id=vehicle_id,
+                planned_route_m=planned_route,
+                minimum_clearance_m=clearance,
+                collision_count=collision_count,
+                checkpoint_hold_conformance_fraction=checkpoint_conformance,
+                minimum_continuous_knot_speed_ratio=knot_ratio,
+                unintended_fly_through_stop_count=analysis.unintended_stop_count,
+                motor_differential_sign_agreement_fraction=(physical_truth.sign_agreement_fraction),
+                motor_differential_normalized_error_p95=(physical_truth.normalized_error_p95),
+                supervisor_safety_gate_passed=supervisor_passed,
+                motion_window_source_s=(
+                    (
+                        analysis.timeline.route_start_source_s,
+                        analysis.timeline.landing_start_source_s,
+                    )
+                    if analysis.timeline.route_start_source_s is not None
+                    and analysis.timeline.landing_start_source_s is not None
+                    else None
+                ),
+            )
+        )
         drone = drones_by_role.get(role_id)
         if drone is not None:
             capture = _goal_capture_for_vehicle(context, vehicle_id)
             plan = _mapping(bundle.get("accepted_plan", {}), "accepted_plan")
-            role_plan = _mapping(_mapping(plan.get("roles", {}), "roles").get(role_id, {}), "role")
+            role_plan = _mapping(
+                _mapping(plan.get("roles", {}), "roles").get(artifact_role_id, {}),
+                "role",
+            )
             campaign_plan = _mapping(
                 bundle.get("campaign_plan") or context.get("campaign_plan", {}),
                 "campaign_plan",
             )
-            campaign_arrival = _campaign_arrival(campaign_plan, role_id)
+            campaign_arrival = _campaign_arrival(campaign_plan, artifact_role_id)
             landing.append(
                 LandingComparison(
                     vehicle_id=vehicle_id,
@@ -445,7 +755,7 @@ def analyze_execution(
                     ),
                     estimated_touchdown_m=analysis.estimated_touchdown_m,
                     truth_touchdown_m=analysis.truth_touchdown_m,
-                    displayed_goal_marker_m=_displayed_marker(bundle, role_id),
+                    displayed_goal_marker_m=_displayed_marker(bundle, artifact_role_id),
                     landing_goal_id=_optional_string(
                         _mapping(capture.get("goal", {}), "goal").get("goal_id")
                     ),
@@ -506,6 +816,16 @@ def analyze_execution(
         "bundle_sha256": canonical_sha256(bundle),
         "csv_sha256": hashlib.sha256(csv_bytes).hexdigest(),
         "vehicles": tuple(analyses),
+        "motion_quality": tuple(motion_analyses),
+        "physical_truth": tuple(physical_truth_analyses),
+        "replan_timeline": tuple(
+            dict(record)
+            for record in _mapping(
+                context.get("campaign_execution_head_trace", {}),
+                "execution_head_trace",
+            ).get("records", ())
+            if isinstance(record, Mapping)
+        ),
         "pair_separation": pairs,
         "minimum_truth_separation_m": min(truth_minima) if truth_minima else None,
         "landing": tuple(landing),
@@ -553,6 +873,166 @@ def analyze_execution(
         }
     )
     return MissionAnalysis(**payload, analysis_sha256=canonical_sha256(payload))
+
+
+def _case_role_id(artifact_role_id: str, case_role_ids: tuple[str, ...]) -> str:
+    if artifact_role_id in case_role_ids:
+        return artifact_role_id
+    normalized = artifact_role_id.lower().removeprefix("route_").replace("-", "_")
+    matches = [
+        role_id
+        for role_id in case_role_ids
+        if role_id.lower().replace("-", "_") == normalized
+        or normalized.endswith(role_id.lower().replace("-", "_"))
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            f"artifact role {artifact_role_id!r} cannot be mapped to immutable case roles"
+        )
+    return matches[0]
+
+
+def _planned_route_for_role(context: Mapping[str, Any], role_id: str) -> tuple[Vector3, ...]:
+    plan = _mapping(context.get("campaign_plan", {}), "campaign_plan")
+    candidates = plan.get("retained_candidates", ())
+    selected_index = plan.get("selected_candidate_index")
+    if not isinstance(candidates, Sequence) or isinstance(candidates, (str, bytes)):
+        return ()
+    if not isinstance(selected_index, int) or not 0 <= selected_index < len(candidates):
+        return ()
+    candidate = candidates[selected_index]
+    if not isinstance(candidate, Mapping):
+        return ()
+    for route in candidate.get("routes", ()):
+        if not isinstance(route, Mapping) or str(route.get("role_id")) != role_id:
+            continue
+        return tuple(
+            point
+            for value in route.get("points_m", ())
+            if (point := _optional_vector(value)) is not None
+        )
+    return ()
+
+
+def _retained_motion_contract(
+    context: Mapping[str, Any],
+) -> MotionQualityContract | None:
+    """Recover and cross-check the contract that was actually planned and flown."""
+
+    contracts: list[MotionQualityContract] = []
+    for key in ("campaign_plan", "campaign_trajectories"):
+        retained = _mapping(context.get(key, {}), key)
+        raw_contract = retained.get("motion_quality_contract")
+        if raw_contract is None:
+            continue
+        if not isinstance(raw_contract, Mapping):
+            raise ValueError(f"{key} motion quality contract must be a mapping")
+        contract = MotionQualityContract.model_validate(raw_contract)
+        retained_sha256 = retained.get("motion_quality_contract_sha256")
+        if retained_sha256 is not None and str(retained_sha256) != canonical_sha256(contract):
+            raise ValueError(f"{key} motion quality contract hash mismatch")
+        contracts.append(contract)
+    if contracts and any(contract != contracts[0] for contract in contracts[1:]):
+        raise ValueError("planned and flown motion quality contracts differ")
+    return contracts[0] if contracts else None
+
+
+def _route_semantics_observations(
+    *,
+    case: CampaignCase,
+    role_id: str,
+    samples: Sequence[_Sample],
+    trajectory: Mapping[str, Any] | None,
+    route_points: Sequence[Vector3],
+    route_start_source_s: float | None,
+    contract: MotionQualityContract,
+) -> tuple[float | None, float | None]:
+    """Observe semantic knot motion on the raw source clock.
+
+    Authored route states are matched in sequence against the accepted trajectory, so
+    a repeated figure-eight crossover remains two distinct observations rather than
+    one coordinate lookup.
+    """
+
+    if (
+        case.semantics is None
+        or trajectory is None
+        or route_start_source_s is None
+        or len(route_points) < 2
+    ):
+        return None, None
+    intents = case.semantics.route_intent_by_role.get(role_id, ())
+    if len(intents) != len(route_points) - 1:
+        return None, None
+    trajectory_points = tuple(
+        value for value in trajectory.get("points", ()) if isinstance(value, Mapping)
+    )
+    matched: list[tuple[Any, Mapping[str, Any]]] = []
+    cursor = 0
+    for route_point, intent in zip(route_points[1:], intents, strict=True):
+        match_index = next(
+            (
+                index
+                for index in range(cursor, len(trajectory_points))
+                if (
+                    (position := _optional_vector(trajectory_points[index].get("position_m")))
+                    is not None
+                    and _distance(position, route_point) <= 1e-6
+                )
+            ),
+            None,
+        )
+        if match_index is None:
+            return None, None
+        matched.append((intent, trajectory_points[match_index]))
+        cursor = match_index + 1
+
+    ordered_samples = sorted(samples, key=lambda item: (item.source_s, item.sequence))
+    fly_through_ratios: list[float] = []
+    checkpoint_passes: list[bool] = []
+    for intent, point in matched[:-1]:
+        offset = point.get("time_from_start_s")
+        planned_velocity = _optional_vector(point.get("velocity_m_s"))
+        if not isinstance(offset, (int, float)) or planned_velocity is None:
+            continue
+        target_source_s = route_start_source_s + float(offset)
+        observed = min(
+            ordered_samples,
+            key=lambda item: abs(item.source_s - target_source_s),
+            default=None,
+        )
+        if observed is None or observed.velocity is None:
+            continue
+        observed_speed = _norm(observed.velocity)
+        planned_speed = _norm(planned_velocity)
+        if intent.mode.value == "FLY_THROUGH" and planned_speed > 1e-6:
+            fly_through_ratios.append(observed_speed / planned_speed)
+        elif intent.mode.value in {"CAPTURE_AND_HOLD", "REVERSAL"}:
+            checkpoint_passes.append(
+                observed_speed <= case.hard_constraints.dynamics.stop_speed_threshold_m_s + 1e-9
+            )
+    knot_ratio = (
+        min(fly_through_ratios)
+        if contract.traversal_mode is TraversalMode.CONTINUOUS_FLY_THROUGH and fly_through_ratios
+        else None
+    )
+    checkpoint_conformance = (
+        sum(checkpoint_passes) / len(checkpoint_passes)
+        if contract.traversal_mode is TraversalMode.CHECKPOINT and checkpoint_passes
+        else None
+    )
+    return knot_ratio, checkpoint_conformance
+
+
+def _minimum_certified_clearance(trace: Mapping[str, Any]) -> float | None:
+    clearances = [
+        float(certificate["certified_clearance_m"])
+        for record in trace.get("records", ())
+        if isinstance(record, Mapping)
+        and isinstance(certificate := record.get("safe_prefix_certificate"), Mapping)
+        and isinstance(certificate.get("certified_clearance_m"), (int, float))
+    ]
+    return min(clearances, default=None)
 
 
 def _evaluate_behavior_oracles(
@@ -933,8 +1413,7 @@ def _evaluate_behavior_oracles(
                     ScenarioEventKind.PASSAGE_CLOSED,
                     ScenarioEventKind.PASSAGE_OPENED,
                 }
-                and event.expected_disposition
-                is ScenarioExpectedDisposition.ACCEPTED_UPDATE
+                and event.expected_disposition is ScenarioExpectedDisposition.ACCEPTED_UPDATE
             }
             runtime_handled_events = {
                 str(record.get("event_id", ""))
@@ -942,25 +1421,14 @@ def _evaluate_behavior_oracles(
                 if isinstance(record, Mapping)
                 and str(record.get("disposition", "")) == "ACCEPTED"
                 and str(record.get("execution_disposition", "")) == "DISPATCHED"
-                and isinstance(
-                    record.get("replacement_trajectory_sha256_by_role"), Mapping
-                )
-                and set(record["replacement_trajectory_sha256_by_role"])
-                == set(role_to_vehicle)
-                and isinstance(
-                    record.get("replacement_authority_sha256_by_role"), Mapping
-                )
-                and set(record["replacement_authority_sha256_by_role"])
-                == set(role_to_vehicle)
+                and isinstance(record.get("replacement_trajectory_sha256_by_role"), Mapping)
+                and set(record["replacement_trajectory_sha256_by_role"]) == set(role_to_vehicle)
+                and isinstance(record.get("replacement_authority_sha256_by_role"), Mapping)
+                and set(record["replacement_authority_sha256_by_role"]) == set(role_to_vehicle)
                 and isinstance(record.get("replacement_prepared_role_ids"), Sequence)
-                and not isinstance(
-                    record.get("replacement_prepared_role_ids"), (str, bytes)
-                )
-                and set(record.get("replacement_prepared_role_ids", ()))
-                == set(role_to_vehicle)
-                and isinstance(
-                    record.get("replacement_dispatch_started_role_ids"), Sequence
-                )
+                and not isinstance(record.get("replacement_prepared_role_ids"), (str, bytes))
+                and set(record.get("replacement_prepared_role_ids", ())) == set(role_to_vehicle)
+                and isinstance(record.get("replacement_dispatch_started_role_ids"), Sequence)
                 and not isinstance(
                     record.get("replacement_dispatch_started_role_ids"), (str, bytes)
                 )
@@ -976,12 +1444,8 @@ def _evaluate_behavior_oracles(
                     )
                 )
             }
-            static_handled = bool(
-                scenario_trace.get("all_expected_dispositions_observed", False)
-            )
-            runtime_handled = accepted_environment_events.issubset(
-                runtime_handled_events
-            )
+            static_handled = bool(scenario_trace.get("all_expected_dispositions_observed", False))
+            runtime_handled = accepted_environment_events.issubset(runtime_handled_events)
             observed = static_handled and runtime_handled
             passed = observed
             reason = (
@@ -1202,10 +1666,7 @@ def _analyze_vehicle(
         else timeline.route_start_source_s
     )
     declared_stop_source_s = (
-        tuple(
-            declared_stop_base_s + offset
-            for offset in planned_declared_stop_offsets_s
-        )
+        tuple(declared_stop_base_s + offset for offset in planned_declared_stop_offsets_s)
         if declared_stop_base_s is not None
         else ()
     )
@@ -1222,9 +1683,7 @@ def _analyze_vehicle(
     estimated_touchdown = next((item.estimate for item in reversed(unique) if item.estimate), None)
     truth_touchdown = next((item.truth for item in reversed(unique) if item.truth), None)
     raw_airborne_velocity = tuple(
-        item.velocity
-        for item in unique
-        if item.velocity is not None and item.flying is True
+        item.velocity for item in unique if item.velocity is not None and item.flying is True
     )
     raw_horizontal_peak = max(
         (math.hypot(value.x, value.y) for value in raw_airborne_velocity),
@@ -1408,6 +1867,236 @@ def _parse_csv(content: bytes) -> list[_Sample]:
     if reader.fieldnames is None or not required.issubset(reader.fieldnames):
         raise ValueError("telemetry CSV does not satisfy run-telemetry-v1 identity columns")
     return [_Sample(row) for row in reader if row.get("vehicle_id")]
+
+
+def _motion_guard_verdict(
+    vector: MotionQualityVector,
+    contract: MotionQualityContract,
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    checks: tuple[tuple[str, float | int | bool | None, bool], ...] = (
+        (
+            "speed_compliance_fraction",
+            vector.speed_compliance_fraction,
+            vector.speed_compliance_fraction is not None
+            and vector.speed_compliance_fraction >= contract.minimum_speed_band_coverage_fraction,
+        ),
+        (
+            "speed_ripple_m_s",
+            vector.speed_ripple_m_s,
+            vector.speed_ripple_m_s is not None
+            and vector.speed_ripple_m_s <= contract.maximum_speed_ripple_m_s,
+        ),
+        (
+            "acceleration_p95_m_s2",
+            vector.acceleration_p95_m_s2,
+            vector.acceleration_p95_m_s2 is not None
+            and vector.acceleration_p95_m_s2 <= contract.maximum_acceleration_m_s2,
+        ),
+        (
+            "jerk_p95_m_s3",
+            vector.jerk_p95_m_s3,
+            vector.jerk_p95_m_s3 is not None and vector.jerk_p95_m_s3 <= contract.maximum_jerk_m_s3,
+        ),
+        (
+            "angular_rate_p95_rad_s",
+            vector.angular_rate_p95_rad_s,
+            vector.angular_rate_p95_rad_s is not None
+            and vector.angular_rate_p95_rad_s <= contract.maximum_angular_rate_p95_rad_s,
+        ),
+        (
+            "minimum_motor_thrust_headroom_n",
+            vector.minimum_motor_thrust_headroom_n,
+            vector.minimum_motor_thrust_headroom_n is not None
+            and vector.minimum_motor_thrust_headroom_n >= contract.minimum_motor_thrust_headroom_n,
+        ),
+        (
+            "motor_spread_p95_percent",
+            vector.motor_spread_p95_percent,
+            vector.motor_spread_p95_percent is not None
+            and vector.motor_spread_p95_percent <= contract.maximum_motor_spread_p95_percent,
+        ),
+        (
+            "motor_saturation_fraction",
+            vector.motor_saturation_fraction,
+            vector.motor_saturation_fraction is not None
+            and vector.motor_saturation_fraction <= contract.maximum_motor_saturation_fraction,
+        ),
+        (
+            "motor_differential_sign_agreement_fraction",
+            vector.motor_differential_sign_agreement_fraction,
+            vector.motor_differential_sign_agreement_fraction is not None
+            and vector.motor_differential_sign_agreement_fraction
+            >= contract.minimum_motor_differential_sign_agreement_fraction,
+        ),
+        (
+            "motor_differential_normalized_error_p95",
+            vector.motor_differential_normalized_error_p95,
+            vector.motor_differential_normalized_error_p95 is not None
+            and vector.motor_differential_normalized_error_p95
+            <= contract.maximum_motor_differential_normalized_error_p95,
+        ),
+        (
+            "electrical_energy_used_j",
+            vector.electrical_energy_used_j,
+            vector.electrical_energy_used_j is not None
+            and vector.electrical_energy_used_j <= contract.maximum_electrical_energy_used_j,
+        ),
+        (
+            "tracking_rms_m",
+            vector.tracking_rms_m,
+            vector.tracking_rms_m is not None
+            and vector.tracking_rms_m <= contract.maximum_path_tube_error_m,
+        ),
+        (
+            "path_tube_max_error_m",
+            vector.path_tube_max_error_m,
+            vector.path_tube_max_error_m is not None
+            and vector.path_tube_max_error_m <= contract.maximum_path_tube_error_m,
+        ),
+        (
+            "minimum_clearance_m",
+            vector.minimum_clearance_m,
+            vector.minimum_clearance_m is not None
+            and vector.minimum_clearance_m >= contract.minimum_clearance_m,
+        ),
+        (
+            "collision_count",
+            vector.collision_count,
+            vector.collision_count is not None
+            and vector.collision_count <= contract.maximum_collision_count,
+        ),
+        (
+            "checkpoint_hold_conformance_fraction",
+            vector.checkpoint_hold_conformance_fraction,
+            vector.checkpoint_hold_conformance_fraction is not None
+            and vector.checkpoint_hold_conformance_fraction
+            >= contract.minimum_checkpoint_hold_conformance_fraction,
+        ),
+        (
+            "minimum_continuous_knot_speed_ratio",
+            vector.minimum_continuous_knot_speed_ratio,
+            vector.minimum_continuous_knot_speed_ratio is not None
+            and vector.minimum_continuous_knot_speed_ratio
+            >= contract.minimum_continuous_knot_speed_ratio,
+        ),
+        (
+            "unintended_fly_through_stop_count",
+            vector.unintended_fly_through_stop_count,
+            vector.unintended_fly_through_stop_count is not None
+            and vector.unintended_fly_through_stop_count
+            <= contract.maximum_unintended_fly_through_stop_count,
+        ),
+        (
+            "terminal_secondary_peak_m_s",
+            vector.terminal_secondary_peak_m_s,
+            vector.terminal_secondary_peak_m_s is not None
+            and vector.terminal_secondary_peak_m_s <= contract.maximum_terminal_secondary_peak_m_s,
+        ),
+        (
+            "terminal_reversal_count",
+            vector.terminal_reversal_count,
+            vector.terminal_reversal_count is not None
+            and vector.terminal_reversal_count <= contract.maximum_terminal_reversal_count,
+        ),
+        (
+            "duration_s",
+            vector.duration_s,
+            contract.maximum_duration_s is None or vector.duration_s <= contract.maximum_duration_s,
+        ),
+        (
+            "supervisor_safety_gate_passed",
+            vector.supervisor_safety_gate_passed,
+            not contract.supervisor_safety_gate_required
+            or vector.supervisor_safety_gate_passed is True,
+        ),
+    )
+    not_applicable: set[str] = set()
+    if contract.target_speed_m_s is None:
+        not_applicable.add("speed_compliance_fraction")
+    if contract.traversal_mode is TraversalMode.CONTINUOUS_FLY_THROUGH:
+        not_applicable.add("checkpoint_hold_conformance_fraction")
+    else:
+        not_applicable.update(
+            {
+                "minimum_continuous_knot_speed_ratio",
+                "unintended_fly_through_stop_count",
+            }
+        )
+    missing = tuple(
+        guard_id
+        for guard_id, observed, _passed in checks
+        if observed is None and guard_id not in not_applicable
+    )
+    failed = tuple(
+        guard_id
+        for guard_id, observed, passed in checks
+        if observed is not None and not passed and guard_id not in not_applicable
+    )
+    return failed, missing
+
+
+def _secondary_peak_prominence(values: Sequence[float]) -> float:
+    if len(values) < 3:
+        return 0.0
+    peaks = [
+        value - max(values[index - 1], values[index + 1])
+        for index, value in enumerate(values[1:-1], start=1)
+        if value > values[index - 1] and value > values[index + 1]
+    ]
+    return max(peaks, default=0.0)
+
+
+def _terminal_reversal_count(
+    values: Sequence[Vector3],
+    threshold_m_s: float = 0.01,
+    *,
+    direction: Vector3 | None = None,
+) -> int:
+    if direction is None or _norm(direction) <= 1e-12:
+        direction = next((value for value in values if _norm(value) > threshold_m_s), None)
+    if direction is None:
+        return 0
+    unit = Vector3(
+        x=direction.x / _norm(direction),
+        y=direction.y / _norm(direction),
+        z=direction.z / _norm(direction),
+    )
+    progress = [value.x * unit.x + value.y * unit.y + value.z * unit.z for value in values]
+    signs = [1 if value > 0.0 else -1 for value in progress if abs(value) > threshold_m_s]
+    return sum(before != after for before, after in pairwise(signs))
+
+
+def _distance_to_polyline(point: Vector3, route: Sequence[Vector3]) -> float:
+    return min(_distance_to_segment(point, before, after) for before, after in pairwise(route))
+
+
+def _distance_to_segment(point: Vector3, before: Vector3, after: Vector3) -> float:
+    segment = Vector3(
+        x=after.x - before.x,
+        y=after.y - before.y,
+        z=after.z - before.z,
+    )
+    offset = Vector3(
+        x=point.x - before.x,
+        y=point.y - before.y,
+        z=point.z - before.z,
+    )
+    denominator = segment.x**2 + segment.y**2 + segment.z**2
+    if denominator <= 1e-15:
+        return _distance(point, before)
+    factor = max(
+        0.0,
+        min(
+            1.0,
+            (offset.x * segment.x + offset.y * segment.y + offset.z * segment.z) / denominator,
+        ),
+    )
+    projection = Vector3(
+        x=before.x + factor * segment.x,
+        y=before.y + factor * segment.y,
+        z=before.z + factor * segment.z,
+    )
+    return _distance(point, projection)
 
 
 def _resample(
@@ -1685,6 +2374,38 @@ def _boundary_margin(point: Vector3, case: CampaignCase) -> float:
     )
 
 
+def _minimum_route_clearance(
+    case: CampaignCase,
+    samples: Sequence[_Sample],
+    start_source_s: float | None,
+    end_source_s: float | None,
+) -> float | None:
+    if start_source_s is None or end_source_s is None:
+        return None
+    points = [
+        sample.truth or sample.estimate
+        for sample in samples
+        if start_source_s <= sample.source_s <= end_source_s
+        and (sample.truth is not None or sample.estimate is not None)
+    ]
+    if not points:
+        return None
+    nominal_vehicle_radius_m = 0.055
+    margins = [_boundary_margin(point, case) - nominal_vehicle_radius_m for point in points]
+    keep_out = (
+        case.semantics.environment_constraints.keep_out_regions
+        if case.semantics is not None
+        else ()
+    )
+    for point in points:
+        for region in keep_out:
+            dx = max(region.minimum_m.x - point.x, 0.0, point.x - region.maximum_m.x)
+            dy = max(region.minimum_m.y - point.y, 0.0, point.y - region.maximum_m.y)
+            dz = max(region.minimum_m.z - point.z, 0.0, point.z - region.maximum_m.z)
+            margins.append(math.sqrt(dx * dx + dy * dy + dz * dz) - nominal_vehicle_radius_m)
+    return min(margins)
+
+
 def _distance(first: Vector3, second: Vector3) -> float:
     return math.sqrt(
         (first.x - second.x) ** 2 + (first.y - second.y) ** 2 + (first.z - second.z) ** 2
@@ -1764,9 +2485,7 @@ def _optional_nonnegative_float(value: Any) -> float | None:
     return float(value) if isinstance(value, (int, float)) and value >= 0.0 else None
 
 
-def _goal_capture_for_vehicle(
-    context: Mapping[str, Any], vehicle_id: str
-) -> Mapping[str, Any]:
+def _goal_capture_for_vehicle(context: Mapping[str, Any], vehicle_id: str) -> Mapping[str, Any]:
     fleet_result = context.get("fleet_result")
     if not isinstance(fleet_result, Mapping):
         return {}

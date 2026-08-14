@@ -58,7 +58,7 @@ import type {
   VehicleView,
 } from "../lib/models";
 import { missionPlan, missionPreviewPaths } from "../lib/spatial";
-import { RoomScene, type HomeBaseView, type SceneSnapshotCapture } from "./RoomScene";
+import { RoomScene, type HomeBaseView, type SceneSnapshotCapture, type TwinSceneOverlay } from "./RoomScene";
 import { FlightReadout, RunFilesControl, telemetrySample, type TelemetrySample } from "./TelemetryDock";
 import { CampaignLab, humanizeCampaignValue } from "./CampaignLab";
 
@@ -299,6 +299,7 @@ export function ControlCenter() {
   const [missionPreview, setMissionPreview] = useState<MissionPreview>();
   const [campaignPreview, setCampaignPreview] = useState<MissionPreview>();
   const [planOverview, setPlanOverview] = useState<MissionPreview>();
+  const [twinSceneOverlay, setTwinSceneOverlay] = useState<TwinSceneOverlay>();
   const [missionStart, setMissionStart] = useState<{ missionId: string; runId?: string; homeBases: HomeBaseView[] }>();
   const [previewingMissionId, setPreviewingMissionId] = useState<string>();
   const previewRequestRef = useRef(0);
@@ -308,6 +309,10 @@ export function ControlCenter() {
   const batteryControlRef = useRef<HTMLDivElement>(null);
 
   const api = useMemo(() => new ControlApi(LOCAL_API), []);
+  const loadTwinTimeline = useCallback(
+    (sessionId: string) => api.twinTimeline(sessionId),
+    [api],
+  );
   const handleActiveCampaignCaseChange = useCallback((campaignCase: CampaignCaseView | undefined) => {
     const activeCaseChanged = activeCampaignCaseIdRef.current !== campaignCase?.case_id;
     activeCampaignCaseIdRef.current = campaignCase?.case_id;
@@ -1397,6 +1402,7 @@ export function ControlCenter() {
             } : undefined}
             onSceneCapture={campaignRun?.status === "RUNNING" ? captureCampaignScene : undefined}
             onSceneCaptureError={setNotice}
+            twinOverlay={twinSceneOverlay}
           />
         </section>
 
@@ -1634,6 +1640,8 @@ export function ControlCenter() {
             setTelemetryOpen(next);
             if (next) setMissionOpen(false);
           }}
+          onLoadTwinTimeline={loadTwinTimeline}
+          onTwinSceneOverlay={setTwinSceneOverlay}
         />
       </div>
 

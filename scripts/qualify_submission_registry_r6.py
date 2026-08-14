@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import math
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -23,18 +22,15 @@ from crazyswarm_app.campaign.submissions import (
     BASELINE_PLANNING_SUBMISSION_ID,
     AdmissionLifecycle,
     PlanningSelectionOracle,
-    SubmissionLayer,
     SubmissionStatus,
     admission_record_for_case,
     compile_registry_planning_submission,
     load_admission_registry,
     load_case_submission_registry,
-    planning_submissions_for_case,
     proposal_oracle_for_case,
     registry_row_for_case,
     resolve_planning_package,
     resolve_planning_submission,
-    submissions_for_case,
     validate_registry_coverage,
 )
 from crazyswarm_app.campaign.trajectory import generate_smooth_trajectories
@@ -45,9 +41,7 @@ OUTPUT = ROOT / "missions/campaigns/sim/qualification/selective-submission-regis
 UI_INSPECTION = (
     ROOT / "missions/campaigns/sim/qualification/selective-submission-ui-inspection-v1.json"
 )
-R6_DESIGN_EVIDENCE = (
-    ROOT / "docs/work-packages/WP52_56_R6_NUMERICAL_PREDRAFT_AUDIT_2026-08-12.json"
-)
+R6_DESIGN_EVIDENCE = ROOT / "docs/work-packages/WP52_56_R6_NUMERICAL_PREDRAFT_AUDIT_2026-08-12.json"
 
 PROFILE_KEYS = (
     (
@@ -158,16 +152,16 @@ def _collapse_results(
     results = []
     failures = []
     for registry_row in load_case_submission_registry().rows:
-        hidden_specs = tuple(
-            item for item in registry_row.submissions if not item.catalog_visible
-        )
+        hidden_specs = tuple(item for item in registry_row.submissions if not item.catalog_visible)
         if not hidden_specs:
             continue
         case = catalog.get(registry_row.case_id)
         try:
             profile = resolve_planning_package(case).execution_profile
         except ValueError as error:
-            raise ValueError(f"collapse baseline unavailable for {case.case_id}: {error}") from error
+            raise ValueError(
+                f"collapse baseline unavailable for {case.case_id}: {error}"
+            ) from error
         for hidden in hidden_specs:
             oracle = proposal_oracle_for_case(case, hidden.submission_id)
             compiled_hidden = compile_registry_planning_submission(
@@ -284,7 +278,10 @@ def _profile_counterexamples(case: Any, package: Any, plan: Any) -> dict[str, An
     return output
 
 
-def _profile_results(catalog: CampaignCatalog, planner: BoundedJointPlanner) -> list[dict[str, Any]]:
+def _profile_results(
+    catalog: CampaignCatalog,
+    planner: BoundedJointPlanner,
+) -> list[dict[str, Any]]:
     results = []
     for case_id, submission_id in PROFILE_KEYS:
         case = catalog.get(case_id)
@@ -343,7 +340,10 @@ def _profile_results(catalog: CampaignCatalog, planner: BoundedJointPlanner) -> 
     return results
 
 
-def _capacity_results(catalog: CampaignCatalog, planner: BoundedJointPlanner) -> list[dict[str, Any]]:
+def _capacity_results(
+    catalog: CampaignCatalog,
+    planner: BoundedJointPlanner,
+) -> list[dict[str, Any]]:
     expected_winner = {
         "head_on.earliest_safe_release": (
             "4b58f90649bf145d5226192d413fc03388b73510f6a159e1bdfea0743943626c"
@@ -476,8 +476,7 @@ def _robust_center_result(catalog: CampaignCatalog, planner: BoundedJointPlanner
             and plan.selected_candidate_sha256 == expected
         ),
         "positive_overlap": metrics["TM_OVERLAP"] >= 2.0,
-        "all_roles_complete": set(metrics["DS_ALL_ROLE_COMPLETION"])
-        == {"Alpha", "Beta", "Gamma"},
+        "all_roles_complete": set(metrics["DS_ALL_ROLE_COMPLETION"]) == {"Alpha", "Beta", "Gamma"},
     }
     return {
         "proposal_key": (
@@ -501,20 +500,21 @@ def _production_previews() -> list[dict[str, Any]]:
             catalog=CampaignCatalog(ROOT / "missions/campaigns/sim/cases"),
             state_directory=Path(temporary),
         )
-        requests = [
-            (case_id, None, submission_id, None)
-            for case_id, submission_id in PROFILE_KEYS
-        ] + [
-            (case_id, submission_id, None, "overlap-capacity-v1")
-            for case_id, submission_id in CAPACITY_KEYS
-        ] + [
-            (
-                "3d.simultaneous_center_conflict.joint_schedule_v2",
-                "center.robust_combined",
-                None,
-                None,
-            )
-        ]
+        requests = (
+            [(case_id, None, submission_id, None) for case_id, submission_id in PROFILE_KEYS]
+            + [
+                (case_id, submission_id, None, "overlap-capacity-v1")
+                for case_id, submission_id in CAPACITY_KEYS
+            ]
+            + [
+                (
+                    "3d.simultaneous_center_conflict.joint_schedule_v2",
+                    "center.robust_combined",
+                    None,
+                    None,
+                )
+            ]
+        )
         for case_id, planning_id, execution_id, context_id in requests:
             service.set_active(
                 case_id,
@@ -538,9 +538,7 @@ def _production_previews() -> list[dict[str, Any]]:
                     "profile_audits_passed": all(
                         item.passed for item in trajectories.profile_audits
                     ),
-                    "dynamics_audits_passed": all(
-                        item.passed for item in trajectories.audits
-                    ),
+                    "dynamics_audits_passed": all(item.passed for item in trajectories.audits),
                     "claim_boundary": [
                         "PRODUCTION_ENTRY",
                         "NO_RUNTIME",
@@ -611,12 +609,11 @@ def main() -> None:
         for lifecycle in AdmissionLifecycle
     }
     matrix_passed = (
-        len(registry.rows) == 54
+        len(registry.rows) == 55
         and proposal_count == 111
-        and len(collapse_results) == 28
-        and visible_count == 83
-        and lifecycle_counts
-        == {"SUBMISSIONS": 43, "BASELINE_ONLY": 9, "RETAIN_EXISTING_ONLY": 2}
+        and len(collapse_results) == 21
+        and visible_count == 90
+        and lifecycle_counts == {"SUBMISSIONS": 43, "BASELINE_ONLY": 10, "RETAIN_EXISTING_ONLY": 2}
     )
     passed = (
         matrix_passed

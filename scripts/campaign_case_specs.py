@@ -428,6 +428,17 @@ def _operator_update(_: str) -> tuple[RoleRoute, ...]:
     return (((-1.20, -0.80, 0.04), ((0.75, -0.40, 0.45),), (0.75, -0.40, 0.04), ("CAPTURE",)),)
 
 
+def _online_obstacle_replan(_: str) -> tuple[RoleRoute, ...]:
+    return (
+        (
+            (-1.35, 0.0, 0.04),
+            ((1.35, 0.0, 0.40),),
+            (1.35, 0.0, 0.04),
+            ("CAPTURE",),
+        ),
+    )
+
+
 def _crossing_update(_: str) -> tuple[RoleRoute, ...]:
     return (
         (
@@ -464,6 +475,7 @@ _DYNAMIC_BASE = {
     "planning_budget_expiry": "move_return",
     "blocked_replan": "move_return",
     "operator_approval_goal_replacement": "move_return",
+    "online_obstacle_replan": "point_to_point_relocation",
     "failure_recovery": "continuous_waypoint_sequence",
     "abort_and_land_goal_fallback": "move_return",
     "leader_loss": "leader_follower",
@@ -519,6 +531,7 @@ _BUILDERS = {
     (1, "mid_route_goal_replacement"): _mid_route_update,
     (1, "duplicate_stale_goal_update"): _duplicate_update,
     (1, "operator_approval_goal_replacement"): _operator_update,
+    (1, "online_obstacle_replan"): _online_obstacle_replan,
     (2, "crossing_goal_change"): _crossing_update,
     (3, "cascading_replan"): _cascading_update,
 }

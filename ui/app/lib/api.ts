@@ -28,6 +28,9 @@ import type {
   RunHistoryView,
   TelemetryView,
   TransportView,
+  TwinSessionView,
+  TwinTimelineSampleView,
+  TwinTimelineView,
   Vec3,
   VehicleView,
 } from "./models";
@@ -99,6 +102,65 @@ export class ControlApi {
     return {
       dashboard: adaptDashboardState(current, state, this.credentials.clientId),
       activeRun: activeRunId ? mapMissionRunById(state.mission_runs, activeRunId) : undefined,
+    };
+  }
+
+  async twinTimeline(sessionId: string): Promise<TwinTimelineView> {
+    const value = await this.request<Record<string, unknown>>(
+      `/api/v1/twins/${encodeURIComponent(sessionId)}/timeline`,
+    );
+    const samples = (Array.isArray(value.samples) ? value.samples : []).flatMap((item) => {
+      const sample = asRecord(item);
+      const side: TwinTimelineSampleView["side"] | undefined =
+        sample?.side === "OBSERVED" || sample?.side === "PREDICTED"
+          ? sample.side
+          : undefined;
+      const availability = twinAvailability(sample?.availability);
+      const quality = twinQuality(sample?.quality);
+      const sourceTimestampS = finiteNumber(sample?.source_timestamp_s);
+      const receivedTimestampS = finiteNumber(sample?.received_timestamp_s);
+      if (!sample || !side || !availability || !quality || sourceTimestampS === undefined || receivedTimestampS === undefined || typeof sample.channel_id !== "string" || typeof sample.sample_sha256 !== "string") return [];
+      return [{
+        sampleSha256: sample.sample_sha256,
+        side,
+        channelId: sample.channel_id,
+        sourceTimestampS,
+        receivedTimestampS,
+        availability,
+        quality,
+        calibrationId: typeof sample.calibration_id === "string" ? sample.calibration_id : undefined,
+        unit: stringValue(sample.unit, "unknown"),
+        frame: stringValue(sample.frame, "unknown"),
+        value: twinValue(sample.value),
+      }];
+    });
+    const residuals = (Array.isArray(value.residuals) ? value.residuals : []).flatMap((item) => {
+      const residual = asRecord(item);
+      const availability = twinAvailability(residual?.availability);
+      const quality = twinQuality(residual?.quality);
+      const sourceTimestampS = finiteNumber(residual?.source_timestamp_s);
+      if (!residual || !availability || !quality || sourceTimestampS === undefined || typeof residual.channel_id !== "string" || typeof residual.residual_sha256 !== "string") return [];
+      const rawValue = twinValue(residual.value);
+      return [{
+        residualSha256: residual.residual_sha256,
+        channelId: residual.channel_id,
+        sourceTimestampS,
+        availability,
+        quality,
+        unit: stringValue(residual.unit, "unknown"),
+        frame: stringValue(residual.frame, "unknown"),
+        value: typeof rawValue === "number" || (rawValue && typeof rawValue === "object") ? rawValue : undefined,
+      }];
+    });
+    if (typeof value.session_id !== "string" || typeof value.timeline_sha256 !== "string") {
+      throw new Error("Twin timeline response is invalid");
+    }
+    return {
+      sessionId: value.session_id,
+      timelineSha256: value.timeline_sha256,
+      samples,
+      residuals,
+      nextAfterSourceS: finiteNumber(value.next_after_source_s),
     };
   }
 
@@ -785,6 +847,8 @@ export function adaptDashboard(
     return mission ? [mission] : [];
   });
   model.room = mapRoom(worldValue, model.selectedVehicleId, state.configured_flight_volume);
+  const visibleObstacles = mapObstacles(state.visible_obstacles);
+  if (model.room && visibleObstacles) model.room.obstacles = visibleObstacles;
   model.fidelity = mapFidelity(fidelityValue);
   model.twins = mapTwins(twinsValue);
   return model;
@@ -796,6 +860,10 @@ export function adaptDashboardState(
   clientId: string,
 ): DashboardModel {
   const model = { ...current };
+  const visibleObstacles = mapObstacles(state.visible_obstacles);
+  if (model.room && visibleObstacles) {
+    model.room = { ...model.room, obstacles: visibleObstacles };
+  }
   model.apiConnected = true;
   model.serviceLabel = "Local control service";
   if (isMode(state.mode)) model.mode = state.mode;
@@ -1013,10 +1081,36 @@ function mapTwins(twinsValue: unknown[]): DashboardModel["twins"] {
       status: stringValue(twin.status, "UNKNOWN"),
       observedVehicleId: twin.observed_vehicle_id,
       simulatedVehicleId: twin.simulated_vehicle_id,
+      observedSourceClass: twinSourceClass(twin.observed_source_class),
+      simulatedSourceClass: twinSourceClass(twin.simulated_source_class),
+      observedSourceId: typeof twin.observed_source_id === "string" ? twin.observed_source_id : undefined,
+      simulatedSourceId: typeof twin.simulated_source_id === "string" ? twin.simulated_source_id : undefined,
+      calibrationId: typeof twin.calibration_id === "string" ? twin.calibration_id : undefined,
+      campaignRunId: typeof twin.campaign_run_id === "string" ? twin.campaign_run_id : undefined,
+      campaignReviewId: typeof twin.campaign_review_id === "string" ? twin.campaign_review_id : undefined,
       groundTruthAvailable: twin.ground_truth_available === true,
       latestDeviation,
     }];
   });
+}
+
+function twinSourceClass(value: unknown): TwinSessionView["observedSourceClass"] {
+  return value === "MEASURED_REAL" || value === "SIMULATED_MODEL" || value === "TEST"
+    ? value
+    : "CONFIGURED";
+}
+
+function twinAvailability(value: unknown): TwinTimelineView["samples"][number]["availability"] | undefined {
+  return value === "AVAILABLE" || value === "MISSING" || value === "STALE" || value === "REJECTED" ? value : undefined;
+}
+
+function twinQuality(value: unknown): TwinTimelineView["samples"][number]["quality"] | undefined {
+  return value === "GOOD" || value === "DEGRADED" || value === "INVALID" || value === "UNQUALIFIED" ? value : undefined;
+}
+
+function twinValue(value: unknown): number | boolean | string | Vec3 | undefined {
+  if (typeof value === "number" || typeof value === "boolean" || typeof value === "string") return value;
+  return vec3(value) ?? undefined;
 }
 
 function mapMission(value: unknown): MissionOption | null {
@@ -1249,12 +1343,24 @@ function mapTelemetry(
     const reading = asRecord(value);
     const id = reading?.motor_id;
     const commandPercent = finiteNumber(reading?.command_percent);
+    const appliedPwmPercent = finiteNumber(reading?.applied_pwm_percent);
+    const requestedThrustN = finiteNumber(reading?.requested_thrust_n);
     const thrustN = finiteNumber(reading?.thrust_n);
+    const availableThrustN = finiteNumber(reading?.available_thrust_n);
     const currentA = finiteNumber(reading?.current_a);
     const motorId = id === "M1" || id === "M2" || id === "M3" || id === "M4" ? id : undefined;
     return motorId
       && commandPercent !== undefined && thrustN !== undefined && currentA !== undefined
-      ? [{ id: motorId, commandPercent, thrustN, currentA }]
+      ? [{
+          id: motorId,
+          commandPercent,
+          appliedPwmPercent,
+          requestedThrustN,
+          thrustN,
+          availableThrustN,
+          currentA,
+          saturated: reading?.saturated === true,
+        }]
       : [];
   });
   const localizationSource = stringValue(source.localization_source, "");
@@ -1366,18 +1472,23 @@ function mapRoom(worldValue: Record<string, unknown>, selectedVehicleId: string 
     heightM,
     home: vec3(spawn?.position_m) ?? undefined,
     geofence: geofenceMinimum && geofenceMaximum ? { minimum: geofenceMinimum, maximum: geofenceMaximum } : undefined,
-    obstacles: Array.isArray(source.obstacles) ? source.obstacles.flatMap((value) => {
-      const obstacle = asRecord(value);
-      const minimum = vec3(obstacle?.minimum_m);
-      const maximum = vec3(obstacle?.maximum_m);
-      return obstacle && minimum && maximum
-        ? [{ id: stringValue(obstacle.obstacle_id, "obstacle"), minimum, maximum }]
-        : [];
-    }) : [],
+    obstacles: mapObstacles(source.obstacles) ?? [],
     source: "configured",
     frame: "world",
     version: finiteNumber(worldValue.schema_version) ?? 1,
   };
+}
+
+function mapObstacles(value: unknown): RoomView["obstacles"] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  return value.flatMap((item) => {
+    const obstacle = asRecord(item);
+    const minimum = vec3(obstacle?.minimum_m);
+    const maximum = vec3(obstacle?.maximum_m);
+    return obstacle && minimum && maximum
+      ? [{ id: stringValue(obstacle.obstacle_id, "obstacle"), minimum, maximum }]
+      : [];
+  });
 }
 
 function mapFidelity(source: Record<string, unknown>): FidelityManifest | undefined {

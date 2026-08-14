@@ -18,6 +18,7 @@ from crazyswarm_app.campaign.geometry import (
 from crazyswarm_app.campaign.models import (
     BehaviorOracleKind,
     CampaignCase,
+    MotionQualityContract,
     ObjectiveMetric,
     PlannerStrategy,
     RouteNodeMode,
@@ -32,6 +33,7 @@ from crazyswarm_app.campaign.submissions import (
     ObjectiveComposition,
     PlanningSelectionOracle,
     PlanningSubmission,
+    motion_contract_for_execution_profile,
     normalized_route_polyline,
     resolve_capability_resolution,
     resolve_package_capability_resolution,
@@ -42,6 +44,7 @@ from crazyswarm_app.domain.models import ContractModel, Identifier, Vector3
 from crazyswarm_app.domain.simulation import SHA256, canonical_sha256
 from crazyswarm_app.domain.trajectory import (
     TimeParameterizedTrajectory,
+    quintic_sample,
     sample_trajectory,
     sample_trajectory_segment,
 )
@@ -201,11 +204,13 @@ class CandidateEvaluation(ContractModel):
 
 
 class BoundedPlanningResult(ContractModel):
-    schema_version: Literal[1, 2, 3] = 3
+    schema_version: Literal[1, 2, 3, 4] = 4
     planner_id: Identifier
     planner_version: str
     case_id: Identifier
     case_sha256: SHA256
+    motion_quality_contract: MotionQualityContract | None = None
+    motion_quality_contract_sha256: SHA256 | None = None
     submission_id: Identifier | None = None
     submission_sha256: SHA256 | None = None
     planning_submission_id: Identifier = BASELINE_PLANNING_SUBMISSION_ID
@@ -230,6 +235,14 @@ class BoundedPlanningResult(ContractModel):
 
     @model_validator(mode="after")
     def authority_is_complete(self) -> BoundedPlanningResult:
+        if (self.motion_quality_contract is None) != (self.motion_quality_contract_sha256 is None):
+            raise ValueError("planning motion-quality contract identity is incomplete")
+        if (
+            self.motion_quality_contract is not None
+            and canonical_sha256(self.motion_quality_contract)
+            != self.motion_quality_contract_sha256
+        ):
+            raise ValueError("planning motion-quality contract hash mismatch")
         if self.status is PlanningStatus.READY:
             if self.selected_candidate_index is None or self.selected_candidate_sha256 is None:
                 raise ValueError("ready planning result requires one selected candidate")
@@ -263,6 +276,9 @@ class BoundedPlanningResult(ContractModel):
         if self.submission_id is None:
             payload.pop("submission_id", None)
             payload.pop("submission_sha256", None)
+        if self.motion_quality_contract is None:
+            payload.pop("motion_quality_contract", None)
+            payload.pop("motion_quality_contract_sha256", None)
         return payload
 
     @property
@@ -347,9 +363,7 @@ class BoundedJointPlanner:
             and selected_capability_resolution.feasibility.disposition
             is CapabilityFeasibilityDisposition.PROVEN_INFEASIBLE
         ):
-            violated = ",".join(
-                selected_capability_resolution.feasibility.violated_constraints
-            )
+            violated = ",".join(selected_capability_resolution.feasibility.violated_constraints)
             return _planning_result(
                 case,
                 submission=selected_submission,
@@ -359,8 +373,7 @@ class BoundedJointPlanner:
                 truncated=False,
                 duration_s=0.0,
                 blocking_reason=(
-                    "complete capability compiler and independent dense oracle proved "
-                    f"{violated}"
+                    f"complete capability compiler and independent dense oracle proved {violated}"
                 ),
                 disposition=SearchDisposition.PROVEN_INFEASIBLE_WITHIN_DECLARED_BOUNDS,
                 optimality_claim=(
@@ -368,6 +381,10 @@ class BoundedJointPlanner:
                     "independent dense deadline/dynamics oracle"
                 ),
             )
+        # Only the perception-independent initial-world projection may reach search.
+        # Future environment events remain available to the runtime executor, not to
+        # candidate generation or feasibility certification.
+        case = case.initial_planning_view()
         environment = case.semantics.environment_constraints if case.semantics else None
         obstacle_conditioned_submission = (
             selected_planning_submission.planning_submission_id != BASELINE_PLANNING_SUBMISSION_ID
@@ -398,15 +415,42 @@ class BoundedJointPlanner:
             ExecutionProfileKind.DURATION_SCALE,
             ExecutionProfileKind.CORNER_TRANSITION,
         }:
-            seed_source = (
-                _apply_execution_profile_to_seed(
-                    case,
-                    seed,
-                    selected_submission,
-                    selected_capability_resolution,
+            if (
+                case.drone_count == 1
+                and selected_planning_submission.planning_submission_id
+                == BASELINE_PLANNING_SUBMISSION_ID
+            ):
+                # A reusable one-drone execution profile changes the accepted
+                # time law, not geometry authority. Compile it over the authored
+                # direct route instead of rerunning every unrelated detour and
+                # delay candidate; this keeps cold and warm admission inside the
+                # same immutable planning budget.
+                seed_source = (
+                    _CandidateSeed(
+                        PlannerStrategy.DIRECT,
+                        "one-drone-execution-profile-v3",
+                        {
+                            "submission_id": selected_submission.submission_id,
+                            "profile_kind": selected_submission.kind.value,
+                        },
+                        _apply_execution_profile(
+                            case,
+                            base_routes,
+                            selected_submission,
+                            selected_capability_resolution,
+                        ),
+                    ),
                 )
-                for seed in seed_source
-            )
+            else:
+                seed_source = (
+                    _apply_execution_profile_to_seed(
+                        case,
+                        seed,
+                        selected_submission,
+                        selected_capability_resolution,
+                    )
+                    for seed in seed_source
+                )
         elif selected_submission.kind is not ExecutionProfileKind.PLANNER_RETIMED_BASELINE:
             # Segment-indexed experiments remain bound to the authored reference
             # geometry until they gain their own geometry-remapping semantics.
@@ -442,6 +486,7 @@ class BoundedJointPlanner:
         evaluations: list[CandidateEvaluation] = []
         trajectory_cache: dict[TrajectoryCacheKey, TimeParameterizedTrajectory] = {}
         position_cache: dict[TrajectoryCacheKey, tuple[Vector3, ...]] = {}
+        boundary_cache: dict[TrajectoryCacheKey, float] = {}
         dynamics_cache: dict[TrajectoryCacheKey, tuple[float, float]] = {}
         budget_expired = False
         for index, seed in enumerate(retained_seeds):
@@ -455,6 +500,7 @@ class BoundedJointPlanner:
                 planning_submission=selected_planning_submission,
                 trajectory_cache=trajectory_cache,
                 position_cache=position_cache,
+                boundary_cache=boundary_cache,
                 dynamics_cache=dynamics_cache,
             )
             evaluations.append(evaluation)
@@ -501,10 +547,7 @@ class BoundedJointPlanner:
         selected_index: int | None = None
         certificate: FeasibilityCertificate | None = None
         optimality_claim: str | None = None
-        if (
-            selected_planning_submission.selection_oracle
-            is PlanningSelectionOracle.OBJECTIVE_ORDER
-        ):
+        if selected_planning_submission.selection_oracle is PlanningSelectionOracle.OBJECTIVE_ORDER:
             ranked_feasible = sorted(
                 feasible,
                 key=lambda index: (
@@ -621,6 +664,7 @@ class BoundedJointPlanner:
         evaluations: list[CandidateEvaluation] = []
         trajectory_cache: dict[TrajectoryCacheKey, TimeParameterizedTrajectory] = {}
         position_cache: dict[TrajectoryCacheKey, tuple[Vector3, ...]] = {}
+        boundary_cache: dict[TrajectoryCacheKey, float] = {}
         dynamics_cache: dict[TrajectoryCacheKey, tuple[float, float]] = {}
         verifier_rejected = False
         exhausted = True
@@ -648,6 +692,7 @@ class BoundedJointPlanner:
                 planning_submission=planning_submission,
                 trajectory_cache=trajectory_cache,
                 position_cache=position_cache,
+                boundary_cache=boundary_cache,
                 dynamics_cache=dynamics_cache,
             )
             evaluations.append(evaluation)
@@ -938,9 +983,7 @@ def _direct_routes(case: CampaignCase) -> tuple[CandidateRoute, ...]:
             )
             authored_times.append(allocated[matched].time_from_start_s)
             search_start = matched + 1
-        segment_durations = tuple(
-            after - before for before, after in pairwise(authored_times)
-        )
+        segment_durations = tuple(after - before for before, after in pairwise(authored_times))
         routes.append(
             CandidateRoute(
                 role_id=drone.role_id,
@@ -950,8 +993,7 @@ def _direct_routes(case: CampaignCase) -> tuple[CandidateRoute, ...]:
                 declared_stops=declared_stops,
                 segment_durations_s=(
                     segment_durations
-                    if not declared_stops
-                    or all(stop.dwell_s <= 1e-12 for stop in declared_stops)
+                    if not declared_stops or all(stop.dwell_s <= 1e-12 for stop in declared_stops)
                     else ()
                 ),
             )
@@ -1109,10 +1151,7 @@ def _apply_execution_profile(
         )
         raw_total = sum(raw_distances)
         raw_segment_durations = (
-            tuple(
-                points[-1].time_from_start_s * distance / raw_total
-                for distance in raw_distances
-            )
+            tuple(points[-1].time_from_start_s * distance / raw_total for distance in raw_distances)
             if submission.kind is ExecutionProfileKind.CORNER_TRANSITION and raw_total > 1e-9
             else retimed_durations
         )
@@ -1274,12 +1313,7 @@ def _joint_continuous_release_candidates(
                             "airborne_wait_s": 0.0,
                         }
                     )
-                    if (
-                        _minimum_continuous_candidate_distance(
-                            (*scheduled, candidate)
-                        )
-                        >= required
-                    ):
+                    if _minimum_continuous_candidate_distance((*scheduled, candidate)) >= required:
                         upper = probe
                         break
                     lower = probe
@@ -1295,12 +1329,7 @@ def _joint_continuous_release_candidates(
                             "airborne_wait_s": 0.0,
                         }
                     )
-                    if (
-                        _minimum_continuous_candidate_distance(
-                            (*scheduled, candidate)
-                        )
-                        >= required
-                    ):
+                    if _minimum_continuous_candidate_distance((*scheduled, candidate)) >= required:
                         upper = midpoint
                     else:
                         lower = midpoint
@@ -1496,9 +1525,7 @@ def _speed_retimed_route(
             )
             authored_times.append(allocated[matched].time_from_start_s)
             search_start = matched + 1
-        segment_durations = tuple(
-            after - before for before, after in pairwise(authored_times)
-        )
+        segment_durations = tuple(after - before for before, after in pairwise(authored_times))
     return route.model_copy(
         update={
             "route_duration_s": allocated[-1].time_from_start_s,
@@ -2351,20 +2378,26 @@ def _evaluate_candidate(
     planning_submission: PlanningSubmission,
     trajectory_cache: dict[TrajectoryCacheKey, TimeParameterizedTrajectory],
     position_cache: dict[TrajectoryCacheKey, tuple[Vector3, ...]],
+    boundary_cache: dict[TrajectoryCacheKey, float],
     dynamics_cache: dict[TrajectoryCacheKey, tuple[float, float]],
 ) -> CandidateEvaluation:
     reasons: list[str] = []
-    trajectories = _candidate_trajectories(seed.routes, case, trajectory_cache)
-    margins = [
-        _boundary_margin(point, case)
-        for route, trajectory in zip(seed.routes, trajectories, strict=True)
-        for point in _sample_trajectory_positions(
-            route,
-            trajectory,
-            case.search.prediction_step_s,
-            position_cache,
-        )
-    ]
+    trajectories = _candidate_trajectories(
+        seed.routes,
+        case,
+        trajectory_cache,
+        planning_submission=planning_submission,
+    )
+    margins = []
+    for route, trajectory in zip(seed.routes, trajectories, strict=True):
+        key = _trajectory_cache_key(route)
+        if key not in boundary_cache:
+            boundary_cache[key] = _minimum_trajectory_boundary_margin(
+                trajectory,
+                case,
+                case.search.prediction_step_s,
+            )
+        margins.append(boundary_cache[key])
     boundary = min(margins) if margins else None
     if boundary is None or boundary < 0.0:
         reasons.append("FLIGHT_VOLUME_VIOLATION")
@@ -2372,11 +2405,15 @@ def _evaluate_candidate(
     if semantics is not None:
         environment = semantics.environment_constraints
         for route, trajectory in zip(seed.routes, trajectories, strict=True):
-            samples = _sample_trajectory_positions(
-                route,
-                trajectory,
-                case.search.prediction_step_s,
-                position_cache,
+            samples = (
+                _sample_trajectory_positions(
+                    route,
+                    trajectory,
+                    case.search.prediction_step_s,
+                    position_cache,
+                )
+                if environment.keep_out_regions or environment.required_corridors
+                else ()
             )
             if any(
                 region.contains(point)
@@ -2422,8 +2459,7 @@ def _evaluate_candidate(
     )
     if (
         planning_coordination.synchronized_route_start_required
-        and planning_start_skew_s
-        > planning_coordination.maximum_route_start_skew_s + 1e-9
+        and planning_start_skew_s > planning_coordination.maximum_route_start_skew_s + 1e-9
     ):
         reasons.append("PLANNING_SYNCHRONIZED_ROUTE_START_VIOLATION")
     if (
@@ -2461,8 +2497,7 @@ def _evaluate_candidate(
     )
     objective_separation = (
         _minimum_continuous_candidate_distance(seed.routes)
-        if planning_submission.planning_submission_id
-        == "constrained.robust_schedule"
+        if planning_submission.planning_submission_id == "constrained.robust_schedule"
         else separation
     )
     required = planning_submission.clearance.required_pairwise_center_separation_m
@@ -2506,8 +2541,7 @@ def _evaluate_candidate(
             key=lambda route: (-drone_by_role[route.role_id].priority, route.role_id),
         )
         if any(
-            later.route_start_s - earlier.route_start_s
-            < precedence_threshold - 1e-9
+            later.route_start_s - earlier.route_start_s < precedence_threshold - 1e-9
             for earlier, later in pairwise(prioritized_routes)
         ):
             reasons.append("PRIORITY_PRECEDENCE_VIOLATION")
@@ -2613,12 +2647,15 @@ def _planning_result(
         )
     elif optimality_claim is None:
         optimality_claim = "no feasibility or optimality claim"
+    motion_contract = motion_contract_for_execution_profile(case, submission)
     payload: dict[str, Any] = {
-        "schema_version": 3,
+        "schema_version": 4,
         "planner_id": case.search.implementation_id,
         "planner_version": case.search.implementation_version,
         "case_id": case.case_id,
         "case_sha256": case.case_sha256,
+        "motion_quality_contract": motion_contract,
+        "motion_quality_contract_sha256": canonical_sha256(motion_contract),
         "planning_submission_id": planning_submission.planning_submission_id,
         "planning_submission_sha256": planning_submission.planning_submission_sha256,
         "status": status,
@@ -2738,9 +2775,12 @@ def _candidate_trajectories(
     routes: Sequence[CandidateRoute],
     case: CampaignCase,
     cache: dict[TrajectoryCacheKey, TimeParameterizedTrajectory],
+    *,
+    planning_submission: PlanningSubmission,
 ) -> tuple[TimeParameterizedTrajectory, ...]:
     from crazyswarm_app.campaign.trajectory import (
         allocate_trajectory_points,
+        apply_planning_trajectory_envelope,
         declared_stop_sequences,
     )
 
@@ -2757,6 +2797,24 @@ def _candidate_trajectories(
                 declared_stops=route.declared_stops,
                 segment_durations_s=route.segment_durations_s,
             )
+            if case.drone_count == 1:
+                try:
+                    points = apply_planning_trajectory_envelope(
+                        case,
+                        route,
+                        points,
+                        planning_submission,
+                        sample_step_s=case.search.prediction_step_s,
+                    )
+                except ValueError as error:
+                    if str(error) != (
+                        "accepted route knots cannot satisfy the planning trajectory envelope"
+                    ):
+                        raise
+                    # A generated candidate may put its knots outside the immutable
+                    # envelope. Preserve its original trajectory so the normal
+                    # feasibility oracle retains the precise rejection instead of
+                    # aborting the bounded search around other candidates.
             trajectory = TimeParameterizedTrajectory(
                 trajectory_id=f"candidate-audit-{canonical_sha256(key)[:20]}",
                 role_id=route.role_id,
@@ -2790,6 +2848,54 @@ def _sample_trajectory_positions(
     samples = tuple(output)
     cache[key] = samples
     return samples
+
+
+def _minimum_trajectory_boundary_margin(
+    trajectory: TimeParameterizedTrajectory,
+    case: CampaignCase,
+    step_s: float,
+) -> float:
+    """Sample the frozen source-time grid without allocating telemetry models."""
+
+    volume = case.hard_constraints.flight_volume
+    minimum = float("inf")
+    segment_index = 0
+    timestamp_s = 0.0
+    while timestamp_s < trajectory.duration_s:
+        while (
+            segment_index < len(trajectory.points) - 2
+            and timestamp_s > trajectory.points[segment_index + 1].time_from_start_s
+        ):
+            segment_index += 1
+        start = trajectory.points[segment_index]
+        end = trajectory.points[segment_index + 1]
+        duration_s = end.time_from_start_s - start.time_from_start_s
+        elapsed_s = timestamp_s - start.time_from_start_s
+        coordinates = tuple(
+            quintic_sample(
+                getattr(start.position_m, axis),
+                getattr(start.velocity_m_s, axis),
+                getattr(start.acceleration_m_s2, axis),
+                getattr(end.position_m, axis),
+                getattr(end.velocity_m_s, axis),
+                getattr(end.acceleration_m_s2, axis),
+                duration_s,
+                elapsed_s,
+            )[0]
+            for axis in ("x", "y", "z")
+        )
+        minimum = min(
+            minimum,
+            coordinates[0] - volume.minimum_m.x,
+            volume.maximum_m.x - coordinates[0],
+            coordinates[1] - volume.minimum_m.y,
+            volume.maximum_m.y - coordinates[1],
+            coordinates[2] - volume.minimum_m.z,
+            volume.maximum_m.z - coordinates[2],
+        )
+        timestamp_s += step_s
+    terminal = trajectory.points[-1].position_m
+    return min(minimum, _boundary_margin(terminal, case))
 
 
 def _minimum_smooth_joint_separation(

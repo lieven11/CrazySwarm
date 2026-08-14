@@ -76,6 +76,13 @@ DYNAMIC_CASES = (
     (1, "blocked_replan", "WP-34A", "move_return", "AUTO_WITHIN_FROZEN_LIMITS"),
     (
         1,
+        "online_obstacle_replan",
+        "WP-59E",
+        "point_to_point_relocation",
+        "AUTO_WITHIN_FROZEN_LIMITS",
+    ),
+    (
+        1,
         "operator_approval_goal_replacement",
         "WP-34A",
         "move_return",
@@ -187,6 +194,9 @@ def main() -> int:
     cases.extend(_dynamic_cases())
     cases.append(_legacy_three_drone_multi_conflict())
     cases = [CampaignCase.model_validate(case).model_dump(mode="json") for case in cases]
+    for case in cases:
+        if case.get("motion_quality_contract") is None:
+            case.pop("motion_quality_contract", None)
     sim = args.root / "campaigns" / "sim" / "cases"
     for cluster in CLUSTER_ORDER:
         for count in (1, 2, 3):
@@ -683,7 +693,9 @@ def _semantics(
         oracles.append(
             _oracle("causal-event-outcome", "EVENT_HANDLED", "EVENT_TRACE", roles, 1.0, "boolean")
         )
-    if any(event["expected_disposition"] == "ACCEPTED_UPDATE" for event in events):
+    if family != "online_obstacle_replan" and any(
+        event["expected_disposition"] == "ACCEPTED_UPDATE" for event in events
+    ):
         oracles.append(
             _oracle(
                 "accepted-event-goal-capture",
@@ -774,6 +786,52 @@ def _oracle(
 
 
 def _scenario_events(count: int, family: str) -> list[dict[str, Any]]:
+    if family == "online_obstacle_replan":
+        first = _region("sensed-rock-1", (-0.15, -0.20, 0.10), (0.20, 0.20, 0.70))
+        moved = _region("sensed-rock-1", (0.20, -0.25, 0.10), (0.50, 0.15, 0.70))
+        second = _region("sensed-wall-2", (0.55, -0.10, 0.00), (0.70, 0.55, 0.80))
+        return [
+            {
+                "event_id": "online-obstacle-appear-1",
+                "kind": "OBSTACLE_ADDED",
+                "trigger_time_s": 2.0,
+                "replacement_goal": first,
+                "duration_s": 3.0,
+                "sequence": 1,
+                "generation": 1,
+                "expected_disposition": "ACCEPTED_UPDATE",
+            },
+            {
+                "event_id": "online-obstacle-move-1",
+                "kind": "OBSTACLE_MOVED",
+                "trigger_time_s": 5.5,
+                "replacement_goal": moved,
+                "duration_s": 3.0,
+                "sequence": 2,
+                "generation": 2,
+                "expected_disposition": "ACCEPTED_UPDATE",
+            },
+            {
+                "event_id": "online-obstacle-appear-2",
+                "kind": "OBSTACLE_ADDED",
+                "trigger_time_s": 9.0,
+                "replacement_goal": second,
+                "duration_s": 3.0,
+                "sequence": 3,
+                "generation": 3,
+                "expected_disposition": "ACCEPTED_UPDATE",
+            },
+            {
+                "event_id": "online-obstacle-remove-1",
+                "kind": "OBSTACLE_REMOVED",
+                "trigger_time_s": 12.5,
+                "duration_s": 3.0,
+                "sequence": 4,
+                "generation": 4,
+                "update_identity": "sensed-rock-1",
+                "expected_disposition": "ACCEPTED_UPDATE",
+            },
+        ]
     goal_families = {
         "moving_target": 3,
         "mid_route_goal_replacement": 1,
@@ -943,6 +1001,13 @@ def _dynamic_cases() -> list[dict[str, Any]]:
                 "expected_decisions": _dynamic_expected_decisions(family),
             }
         )
+        if family == "online_obstacle_replan":
+            value.update(
+                {
+                    "implementation_status": "EXECUTABLE",
+                    "execution_eligibility": "BOTH",
+                }
+            )
         cases.append(value)
     return cases
 
@@ -1026,7 +1091,10 @@ def _real_mirror(case: dict[str, Any]) -> dict[str, Any]:
             "execution_eligibility": "STATIC_VALIDATE_ONLY",
         }
     )
-    return CampaignCase.model_validate(mirrored).model_dump(mode="json")
+    output = CampaignCase.model_validate(mirrored).model_dump(mode="json")
+    if output.get("motion_quality_contract") is None:
+        output.pop("motion_quality_contract", None)
+    return output
 
 
 def _volume(variation: str) -> tuple[tuple[float, float, float], tuple[float, float, float]]:

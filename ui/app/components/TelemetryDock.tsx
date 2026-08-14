@@ -1,9 +1,9 @@
 "use client";
 
 import { ChevronDown, ChevronUp, Download, FileSpreadsheet, LoaderCircle, RefreshCw, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
-import type { DashboardModel, RangeRay, RunFileMissionView, TwinSessionView, Vec3, VehicleView } from "../lib/models";
-import { formatClockContext } from "./RoomScene";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { DashboardModel, RangeRay, RunFileMissionView, TwinSessionView, TwinTimelineSampleView, TwinTimelineView, Vec3, VehicleView } from "../lib/models";
+import { formatClockContext, type TwinSceneOverlay } from "./RoomScene";
 
 export type TelemetrySample = {
   t: number;
@@ -117,6 +117,8 @@ export function FlightReadout({
   samples,
   expanded,
   onToggle,
+  onLoadTwinTimeline,
+  onTwinSceneOverlay,
 }: {
   model: DashboardModel;
   vehicle?: VehicleView;
@@ -124,9 +126,12 @@ export function FlightReadout({
   samples: TelemetrySample[];
   expanded: boolean;
   onToggle: () => void;
+  onLoadTwinTimeline?: (sessionId: string) => Promise<TwinTimelineView>;
+  onTwinSceneOverlay?: (overlay?: TwinSceneOverlay) => void;
 }) {
   const [trendMetric, setTrendMetric] = useState<TrendMetric>("altitude");
   const [systemsOpen, setSystemsOpen] = useState(true);
+  const [evidenceOpen, setEvidenceOpen] = useState(true);
   const data = vehicle?.telemetry;
   if (!vehicle || !data) return null;
   const trendGroup = TREND_GROUPS.find((group) => group.metrics.includes(trendMetric)) ?? TREND_GROUPS[0];
@@ -142,6 +147,12 @@ export function FlightReadout({
       ? "warning"
       : "normal";
   const rangeTone = nearest !== undefined && nearest < .2 ? "critical" : nearest !== undefined && nearest < .45 ? "warning" : "normal";
+  const meanMotorPwm = data.motors
+    ? data.motors.readings.reduce(
+        (total, motor) => total + (motor.appliedPwmPercent ?? motor.commandPercent),
+        0,
+      ) / data.motors.readings.length
+    : undefined;
 
   return (
     <aside className={`flight-readout ${expanded ? "is-expanded" : ""}`} aria-label="Flight telemetry">
@@ -196,6 +207,19 @@ export function FlightReadout({
           </section>
           <TrendChart samples={samples} metric={trendMetric} source={vehicle.observationClass} />
 
+          {twin && onLoadTwinTimeline ? (
+            <details
+              className="detail-disclosure twin-evidence-disclosure"
+              open={evidenceOpen}
+              onToggle={(event) => setEvidenceOpen(event.currentTarget.open)}
+            >
+              <summary>Evidence <ChevronDown size={15} /></summary>
+              <div className="disclosure-body">
+                <TwinSessionPanel twin={twin} onLoad={onLoadTwinTimeline} onSceneOverlay={onTwinSceneOverlay} />
+              </div>
+            </details>
+          ) : null}
+
           {hasSystemDetail(vehicle) ? (
             <details
               className="detail-disclosure"
@@ -211,8 +235,9 @@ export function FlightReadout({
                       {data.motors.readings.map((motor) => (
                         <div key={motor.id}>
                           <span>{motor.id}</span>
-                          <i aria-hidden="true"><b style={{ width: `${clamp(motor.commandPercent, 0, 100)}%` }} /></i>
-                          <strong>{motor.commandPercent.toFixed(0)}%</strong>
+                          <i aria-hidden="true"><b style={{ width: `${clamp(motor.appliedPwmPercent ?? motor.commandPercent, 0, 100)}%` }} /></i>
+                          <strong>{(motor.appliedPwmPercent ?? motor.commandPercent).toFixed(2)}% · {motor.thrustN.toFixed(4)} N · {motor.currentA.toFixed(3)} A</strong>
+                          <small>{meanMotorPwm === undefined ? "" : `${(motor.appliedPwmPercent ?? motor.commandPercent) - meanMotorPwm >= 0 ? "+" : ""}${((motor.appliedPwmPercent ?? motor.commandPercent) - meanMotorPwm).toFixed(3)} pp`}{motor.saturated ? " · SATURATED" : ""}</small>
                         </div>
                       ))}
                     </div>
@@ -300,6 +325,192 @@ export function FlightReadout({
       ) : null}
     </aside>
   );
+}
+
+type TwinViewGroup = "PATH" | "SENSORS" | "MOTORS" | "RESIDUALS" | "EVENTS";
+
+const TWIN_GROUPS: readonly { id: TwinViewGroup; label: string }[] = [
+  { id: "PATH", label: "Path" },
+  { id: "SENSORS", label: "Sensors" },
+  { id: "MOTORS", label: "Motors" },
+  { id: "RESIDUALS", label: "Residuals" },
+  { id: "EVENTS", label: "World & replan" },
+];
+
+export function twinSourceLabel(source: TwinSessionView["observedSourceClass"]): string {
+  if (source === "MEASURED_REAL") return "Measured real adapter";
+  if (source === "SIMULATED_MODEL") return "Simulated model";
+  if (source === "TEST") return "Test-only source";
+  return "Configured source";
+}
+
+export function TwinSessionPanel({
+  twin,
+  onLoad,
+  onSceneOverlay,
+}: {
+  twin: TwinSessionView;
+  onLoad: (sessionId: string) => Promise<TwinTimelineView>;
+  onSceneOverlay?: (overlay?: TwinSceneOverlay) => void;
+}) {
+  const [timeline, setTimeline] = useState<TwinTimelineView>();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>();
+  const [group, setGroup] = useState<TwinViewGroup>("PATH");
+  const [cursor, setCursor] = useState(100);
+
+  const refresh = useCallback(() => {
+    setLoading(true);
+    setError(undefined);
+    void onLoad(twin.id)
+      .then(setTimeline)
+      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Twin timeline is unavailable"))
+      .finally(() => setLoading(false));
+  }, [onLoad, twin.id]);
+
+  useEffect(refresh, [refresh]);
+  const sourceTimes = useMemo(
+    () => [...new Set(timeline?.samples.map((sample) => sample.sourceTimestampS) ?? [])].sort((left, right) => left - right),
+    [timeline],
+  );
+  const cursorIndex = sourceTimes.length ? Math.min(sourceTimes.length - 1, Math.round((cursor / 100) * (sourceTimes.length - 1))) : 0;
+  const cursorSourceS = sourceTimes[cursorIndex];
+  const visibleSamples = useMemo(
+    () => timeline?.samples.filter((sample) => cursorSourceS === undefined || sample.sourceTimestampS <= cursorSourceS) ?? [],
+    [cursorSourceS, timeline],
+  );
+  const latest = visibleSamples.at(-1);
+  const dataAgeMs = latest ? Math.max(0, latest.receivedTimestampS - latest.sourceTimestampS) * 1000 : undefined;
+  const stale = visibleSamples.some((sample) => sample.availability === "STALE") || (dataAgeMs !== undefined && dataAgeMs > 250);
+
+  useEffect(() => {
+    onSceneOverlay?.(twinSceneOverlayFromSamples(visibleSamples, twin));
+    return () => onSceneOverlay?.(undefined);
+  }, [onSceneOverlay, twin, visibleSamples]);
+
+  return (
+    <section className="twin-session-panel" aria-label="Digital twin session">
+      <header>
+        <span>
+          <strong>Digital twin</strong>
+          <small>{twinSourceLabel(twin.observedSourceClass)} → {twinSourceLabel(twin.simulatedSourceClass)}</small>
+        </span>
+        <span className={`twin-quality ${error ? "is-error" : stale ? "is-stale" : "is-current"}`}>
+          {error ? "ERROR" : stale ? "STALE" : latest?.quality ?? twin.status}
+        </span>
+      </header>
+      <div className="twin-session-meta">
+        <DataRow label="Outcome" value={twin.status} />
+        <DataRow label="Primary residual" value={twin.latestDeviation?.positionM === undefined ? "Unavailable" : `${twin.latestDeviation.positionM.toFixed(3)} m · ${twin.latestDeviation.validity.toLowerCase()}`} />
+        <DataRow label="Observed" value={twin.observedVehicleId} mono />
+        <DataRow label="Predicted" value={twin.simulatedVehicleId} mono />
+        <DataRow label="Observed source" value={twin.observedSourceId ?? twinSourceLabel(twin.observedSourceClass)} mono />
+        <DataRow label="Predicted source" value={twin.simulatedSourceId ?? twinSourceLabel(twin.simulatedSourceClass)} mono />
+        <DataRow label="Calibration" value={twin.calibrationId ?? "Uncalibrated predecessor"} mono />
+        <DataRow label="Data age" value={dataAgeMs === undefined ? "Unavailable" : `${dataAgeMs.toFixed(0)} ms`} />
+        <DataRow label="Ground truth" value={twin.groundTruthAvailable ? "Available" : "Not available"} />
+        {twin.campaignReviewId ? <DataRow label="Campaign review" value={twin.campaignReviewId} mono /> : null}
+      </div>
+      <div className="twin-view-switch" role="group" aria-label="Twin timeline view">
+        {TWIN_GROUPS.map((item) => (
+          <button key={item.id} type="button" aria-pressed={group === item.id} className={group === item.id ? "is-active" : ""} onClick={() => setGroup(item.id)}>
+            {item.label}
+          </button>
+        ))}
+      </div>
+      {loading ? <p className="twin-session-state" role="status"><LoaderCircle className="spin" size={14} />Loading retained twin timeline</p> : null}
+      {error ? (
+        <div className="twin-session-error" role="alert"><span>{error}</span><button type="button" onClick={refresh}><RefreshCw size={13} />Retry</button></div>
+      ) : null}
+      {!loading && !error && !timeline?.samples.length ? <p className="twin-session-state">No twin samples retained. Missing channels are not inferred.</p> : null}
+      {!loading && !error && timeline?.samples.length ? (
+        <>
+          {group === "PATH" ? <TwinPathOverlay samples={visibleSamples} observedLabel={twinSourceLabel(twin.observedSourceClass)} /> : null}
+          {group === "SENSORS" ? <TwinChannelGrid samples={visibleSamples} channels={["imu.acceleration", "imu.angular_velocity", "attitude.euler", "battery.voltage", "battery.current", "battery.state", "estimator.health", "flow.state", "range.state"]} /> : null}
+          {group === "MOTORS" ? <TwinChannelGrid samples={visibleSamples} channels={["motor.m1.pwm", "motor.m2.pwm", "motor.m3.pwm", "motor.m4.pwm", "motor.m1.thrust", "motor.m2.thrust", "motor.m3.thrust", "motor.m4.thrust", "motor.m1.state", "motor.m2.state", "motor.m3.state", "motor.m4.state"]} /> : null}
+          {group === "RESIDUALS" ? (
+            timeline.residuals.length ? <div className="twin-residual-list">{timeline.residuals.filter((item) => cursorSourceS === undefined || item.sourceTimestampS <= cursorSourceS).slice(-12).map((item) => <DataRow key={item.residualSha256} label={item.channelId} value={formatTwinValue(item.value, item.unit, item.availability)} />)}</div> : <p className="twin-session-state">No source-aligned residuals are available.</p>
+          ) : null}
+          {group === "EVENTS" ? <TwinChannelGrid samples={visibleSamples} channels={["perception.world_revision", "command.identity", "plan.identity", "replan.identity", "safety.state"]} /> : null}
+          <label className="twin-time-cursor">
+            <span>Source-time cursor <strong>{cursorSourceS?.toFixed(3) ?? "—"} s</strong></span>
+            <input type="range" min="0" max="100" value={cursor} onChange={(event) => setCursor(Number(event.target.value))} aria-label="Twin source-time cursor" />
+          </label>
+          <small className="twin-review-hash">Immutable review · {timeline.timelineSha256}</small>
+        </>
+      ) : null}
+    </section>
+  );
+}
+
+export function twinSceneOverlayFromSamples(
+  samples: TwinTimelineSampleView[],
+  twin: TwinSessionView,
+): TwinSceneOverlay | undefined {
+  const positions = samples.filter(
+    (sample) => sample.channelId === "pose.position"
+      && sample.availability === "AVAILABLE"
+      && isVec3(sample.value),
+  );
+  const observedPath = positions
+    .filter((sample) => sample.side === "OBSERVED")
+    .map((sample) => sample.value as Vec3);
+  const predictedPath = positions
+    .filter((sample) => sample.side === "PREDICTED")
+    .map((sample) => sample.value as Vec3);
+  if (!observedPath.length && !predictedPath.length) return undefined;
+  return {
+    observedPath,
+    predictedPath,
+    observedLabel: twinSourceLabel(twin.observedSourceClass),
+    predictedLabel: twinSourceLabel(twin.simulatedSourceClass),
+    sourceTimestampS: positions.at(-1)?.sourceTimestampS,
+  };
+}
+
+function TwinPathOverlay({ samples, observedLabel }: { samples: TwinTimelineSampleView[]; observedLabel: string }) {
+  const pathSamples = samples.filter((sample) => sample.channelId === "pose.position" && isVec3(sample.value));
+  const observed = pathSamples.filter((sample) => sample.side === "OBSERVED").map((sample) => sample.value as Vec3);
+  const predicted = pathSamples.filter((sample) => sample.side === "PREDICTED").map((sample) => sample.value as Vec3);
+  const all = [...observed, ...predicted];
+  if (!all.length) return <p className="twin-session-state">Observed and predicted paths are unavailable.</p>;
+  const xs = all.map((point) => point.x);
+  const ys = all.map((point) => point.y);
+  const minimumX = Math.min(...xs);
+  const maximumX = Math.max(...xs);
+  const minimumY = Math.min(...ys);
+  const maximumY = Math.max(...ys);
+  const points = (values: Vec3[]) => values.map((point) => `${12 + ((point.x - minimumX) / Math.max(maximumX - minimumX, .001)) * 216},${128 - ((point.y - minimumY) / Math.max(maximumY - minimumY, .001)) * 112}`).join(" ");
+  return (
+    <figure className="twin-path-overlay">
+      <svg viewBox="0 0 240 140" role="img" aria-label="Observed and predicted world path overlay">
+        <polyline className="twin-path-predicted" points={points(predicted)} />
+        <polyline className="twin-path-observed" points={points(observed)} />
+      </svg>
+      <figcaption><span><i className="observed" />{observedLabel}</span><span><i className="predicted" />Predicted model</span></figcaption>
+    </figure>
+  );
+}
+
+function TwinChannelGrid({ samples, channels }: { samples: TwinTimelineSampleView[]; channels: string[] }) {
+  return (
+    <div className="twin-channel-grid">
+      {channels.map((channel) => {
+        const latest = samples.filter((sample) => sample.channelId === channel).at(-1);
+        return <DataRow key={channel} label={channel} value={latest ? formatTwinValue(latest.value, latest.unit, latest.availability) : "Unavailable"} />;
+      })}
+    </div>
+  );
+}
+
+function isVec3(value: TwinTimelineSampleView["value"]): value is Vec3 {
+  return Boolean(value && typeof value === "object" && "x" in value && "y" in value && "z" in value);
+}
+
+function formatTwinValue(value: TwinTimelineSampleView["value"], unit: string, availability: string): string {
+  if (availability !== "AVAILABLE" || value === undefined) return availability.toLowerCase();
+  if (isVec3(value)) return `${value.x.toFixed(3)}, ${value.y.toFixed(3)}, ${value.z.toFixed(3)} ${unit}`;
+  return `${typeof value === "number" ? value.toFixed(3) : String(value)} ${unit}`.trim();
 }
 
 function RunFileMission({

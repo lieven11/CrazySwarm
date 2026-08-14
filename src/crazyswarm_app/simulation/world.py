@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import math
+import random
+from enum import StrEnum
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from crazyswarm_app.domain.models import Identifier, Vector3
+from crazyswarm_app.domain.simulation import SHA256, canonical_sha256
 from crazyswarm_app.simulation.faults import FaultWindow
 from crazyswarm_app.simulation.models import SimulationConfig
 from crazyswarm_app.simulation.physics import PhysicsModelConfig
@@ -29,6 +32,163 @@ class ObstacleConfig(BaseModel):
         ):
             raise ValueError("obstacle minimum must be below maximum on every axis")
         return self
+
+
+class WorldTruthEventKind(StrEnum):
+    SOLID_APPEARED = "SOLID_APPEARED"
+    SOLID_MOVED = "SOLID_MOVED"
+    SOLID_DISAPPEARED = "SOLID_DISAPPEARED"
+    PASSAGE_CLOSED = "PASSAGE_CLOSED"
+    PASSAGE_OPENED = "PASSAGE_OPENED"
+
+
+class WorldTruthEvent(BaseModel):
+    """Simulator-private world truth. Planner code must never receive this model."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: Literal[1] = 1
+    event_id: Identifier
+    sequence: int = Field(ge=1)
+    source_timestamp_s: float = Field(ge=0.0)
+    effective_source_s: float = Field(ge=0.0)
+    kind: WorldTruthEventKind
+    solid_id: Identifier
+    obstacle: ObstacleConfig | None = None
+    truth_sha256: SHA256
+
+    @model_validator(mode="after")
+    def causal_and_complete(self) -> WorldTruthEvent:
+        if self.effective_source_s < self.source_timestamp_s:
+            raise ValueError("world truth cannot become effective before its source time")
+        needs_solid = self.kind in {
+            WorldTruthEventKind.SOLID_APPEARED,
+            WorldTruthEventKind.SOLID_MOVED,
+            WorldTruthEventKind.PASSAGE_CLOSED,
+            WorldTruthEventKind.PASSAGE_OPENED,
+        }
+        if needs_solid != (self.obstacle is not None):
+            raise ValueError("world-truth solid payload does not match event kind")
+        payload = self.model_dump(mode="python", exclude={"truth_sha256"})
+        if canonical_sha256(payload) != self.truth_sha256:
+            raise ValueError("world-truth event hash mismatch")
+        return self
+
+    @classmethod
+    def create(cls, **values: object) -> WorldTruthEvent:
+        payload = {"schema_version": 1, **values}
+        return cls(**payload, truth_sha256=canonical_sha256(payload))
+
+
+class DynamicWorldTimeline:
+    def __init__(
+        self,
+        initial_obstacles: tuple[ObstacleConfig, ...],
+        events: tuple[WorldTruthEvent, ...],
+    ) -> None:
+        if len({item.obstacle_id for item in initial_obstacles}) != len(initial_obstacles):
+            raise ValueError("initial world contains duplicate solids")
+        ordered = tuple(
+            sorted(events, key=lambda item: (item.source_timestamp_s, item.sequence, item.event_id))
+        )
+        if len({item.event_id for item in ordered}) != len(ordered):
+            raise ValueError("world-truth event IDs must be unique")
+        self.initial_obstacles = initial_obstacles
+        self.events = ordered
+
+    @property
+    def initial_world_sha256(self) -> SHA256:
+        return canonical_sha256(
+            tuple(sorted(self.initial_obstacles, key=lambda item: item.obstacle_id))
+        )
+
+    def snapshot_at(self, source_timestamp_s: float) -> tuple[int, tuple[ObstacleConfig, ...]]:
+        solids = {item.obstacle_id: item for item in self.initial_obstacles}
+        revision = 0
+        for event in self.events:
+            if event.source_timestamp_s > source_timestamp_s:
+                break
+            revision += 1
+            if event.kind in {
+                WorldTruthEventKind.SOLID_APPEARED,
+                WorldTruthEventKind.SOLID_MOVED,
+                WorldTruthEventKind.PASSAGE_CLOSED,
+            }:
+                assert event.obstacle is not None
+                solids[event.solid_id] = event.obstacle
+            else:
+                solids.pop(event.solid_id, None)
+        return revision, tuple(sorted(solids.values(), key=lambda item: item.obstacle_id))
+
+
+def materialize_seeded_world_events(
+    events: tuple[WorldTruthEvent, ...],
+    *,
+    seed_material: str,
+    volume_minimum_m: Vector3,
+    volume_maximum_m: Vector3,
+) -> tuple[WorldTruthEvent, ...]:
+    """Materialize one run-private, reproducible changed-world sequence.
+
+    The accepted plan is compiled before ``seed_material`` exists.  Runtime therefore
+    receives bounded geometry/time variants that the initial planner cannot inspect,
+    while an exact run remains reproducible from its retained run identity.
+    """
+
+    materialized: list[WorldTruthEvent] = []
+    previous_source_s = -math.inf
+    for event in sorted(
+        events,
+        key=lambda item: (item.source_timestamp_s, item.sequence, item.event_id),
+    ):
+        event_random = random.Random(
+            int(
+                canonical_sha256((seed_material, event.event_id, event.sequence))[:16],
+                16,
+            )
+        )
+        source_s = max(
+            previous_source_s + 0.50,
+            event.source_timestamp_s + event_random.uniform(-0.25, 0.25),
+        )
+        previous_source_s = source_s
+        obstacle = event.obstacle
+        if obstacle is not None:
+            solid_random = random.Random(
+                int(canonical_sha256((seed_material, event.solid_id))[:16], 16)
+            )
+            dx = solid_random.uniform(-0.08, 0.08)
+            dy = solid_random.uniform(-0.10, 0.10)
+            dx = min(
+                max(dx, volume_minimum_m.x - obstacle.minimum_m.x),
+                volume_maximum_m.x - obstacle.maximum_m.x,
+            )
+            dy = min(
+                max(dy, volume_minimum_m.y - obstacle.minimum_m.y),
+                volume_maximum_m.y - obstacle.maximum_m.y,
+            )
+            obstacle = obstacle.model_copy(
+                update={
+                    "minimum_m": obstacle.minimum_m.model_copy(
+                        update={"x": obstacle.minimum_m.x + dx, "y": obstacle.minimum_m.y + dy}
+                    ),
+                    "maximum_m": obstacle.maximum_m.model_copy(
+                        update={"x": obstacle.maximum_m.x + dx, "y": obstacle.maximum_m.y + dy}
+                    ),
+                }
+            )
+        materialized.append(
+            WorldTruthEvent.create(
+                event_id=event.event_id,
+                sequence=event.sequence,
+                source_timestamp_s=source_s,
+                effective_source_s=source_s + (event.effective_source_s - event.source_timestamp_s),
+                kind=event.kind,
+                solid_id=event.solid_id,
+                obstacle=obstacle,
+            )
+        )
+    return tuple(materialized)
 
 
 class WorldConfig(BaseModel):

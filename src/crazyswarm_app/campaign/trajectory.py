@@ -7,7 +7,11 @@ from typing import Any, Literal, TypeAlias, cast
 
 from pydantic import Field, model_validator
 
-from crazyswarm_app.campaign.models import BehaviorOracleKind, CampaignCase
+from crazyswarm_app.campaign.models import (
+    BehaviorOracleKind,
+    CampaignCase,
+    MotionQualityContract,
+)
 from crazyswarm_app.campaign.planner import CandidateEvaluation, CandidateRoute, RouteStop
 from crazyswarm_app.campaign.submissions import (
     BASELINE_SUBMISSION_ID,
@@ -16,6 +20,7 @@ from crazyswarm_app.campaign.submissions import (
     ExecutionProfileSubmission,
     PathAdherenceMode,
     PlanningSubmission,
+    motion_contract_for_execution_profile,
     normalized_route_polyline,
     resolve_capability_resolution,
     resolve_package_capability_resolution,
@@ -27,7 +32,11 @@ from crazyswarm_app.domain.trajectory import (
     TimeParameterizedTrajectory,
     TrajectoryPoint,
     sample_trajectory,
+    sample_trajectory_segment,
 )
+
+PROFILED_KNOT_ACCELERATION_GAIN_SMOOTH = 2.5
+PROFILED_KNOT_ACCELERATION_GAIN_BALANCED = 4.0
 
 
 class TrajectoryDynamicsAudit(ContractModel):
@@ -102,10 +111,12 @@ AuditedTrajectory: TypeAlias = TimeParameterizedTrajectory | ContinuousCutoverTr
 
 
 class SmoothTrajectorySet(ContractModel):
-    schema_version: Literal[1, 2] = 2
+    schema_version: Literal[1, 2, 3] = 3
     profile_id: Literal["fast-sim-smoothness-v1"] = "fast-sim-smoothness-v1"
     case_sha256: SHA256
     candidate_sha256: SHA256
+    motion_quality_contract: MotionQualityContract | None = None
+    motion_quality_contract_sha256: SHA256 | None = None
     submission_id: str | None = None
     submission_sha256: SHA256 | None = None
     planning_submission_id: str | None = None
@@ -119,6 +130,14 @@ class SmoothTrajectorySet(ContractModel):
     def planning_authority_is_paired(self) -> SmoothTrajectorySet:
         if (self.planning_submission_id is None) != (self.planning_submission_sha256 is None):
             raise ValueError("trajectory-set planning submission identity must be complete")
+        if (self.motion_quality_contract is None) != (self.motion_quality_contract_sha256 is None):
+            raise ValueError("trajectory-set motion-quality contract identity is incomplete")
+        if (
+            self.motion_quality_contract is not None
+            and canonical_sha256(self.motion_quality_contract)
+            != self.motion_quality_contract_sha256
+        ):
+            raise ValueError("trajectory-set motion-quality contract hash mismatch")
         return self
 
     def canonical_payload(self) -> dict[str, Any]:
@@ -132,6 +151,9 @@ class SmoothTrajectorySet(ContractModel):
         if self.planning_submission_id is None:
             payload.pop("planning_submission_id", None)
             payload.pop("planning_submission_sha256", None)
+        if self.motion_quality_contract is None:
+            payload.pop("motion_quality_contract", None)
+            payload.pop("motion_quality_contract_sha256", None)
         return payload
 
 
@@ -196,9 +218,12 @@ def generate_smooth_trajectories(
             profile_audits.append(
                 _audit_execution_profile(case, route, trajectory, selected_submission, audit)
             )
+    motion_contract = motion_contract_for_execution_profile(case, selected_submission)
     payload: dict[str, Any] = {
         "case_sha256": case.case_sha256,
         "candidate_sha256": candidate.candidate_sha256,
+        "motion_quality_contract": motion_contract,
+        "motion_quality_contract_sha256": canonical_sha256(motion_contract),
         "trajectories": tuple(trajectories),
         "audits": tuple(audits),
     }
@@ -315,8 +340,7 @@ def _audit_execution_profile(
             achieved_values.append(0.0)
             missing_required_window = missing_required_window or (
                 requested_value > 0.0
-                and audit_route.segment_durations_s[index]
-                > 2.0 * parameters.entry_exit_ramp_s
+                and audit_route.segment_durations_s[index] > 2.0 * parameters.entry_exit_ramp_s
             )
             continue
         start_s, end_s = window
@@ -350,10 +374,15 @@ def _audit_execution_profile(
             ),
         )
     )
-    if submission.kind is ExecutionProfileKind.CORNER_TRANSITION:
-        # Corner blending may be uniformly safety-retimed by the bounded allocator.
-        # Conformance is therefore measured against the resolved, reported speed
-        # after that retiming; short transition-only segments have no steady window.
+    if submission.kind in {
+        ExecutionProfileKind.CONSTANT_PATH_SPEED,
+        ExecutionProfileKind.CORNER_TRANSITION,
+    }:
+        # A requested speed law may be uniformly safety-retimed by the bounded
+        # allocator. Conformance is measured against that explicit resolved speed,
+        # while the safety factor remains visible rather than pretending the
+        # original target was reached. Short transition-only segments have no
+        # steady window.
         retimed_errors = [
             abs(actual - requested_value / scale) / (requested_value / scale)
             for requested_value, actual in zip(requested, achieved, strict=True)
@@ -656,7 +685,7 @@ def _trajectory_for_route(
     )
     if not math.isclose(points[-1].time_from_start_s, route.route_duration_s, abs_tol=1e-9):
         raise ValueError("planner route duration does not match smooth time allocation")
-    points = _apply_planning_trajectory_envelope(
+    points = apply_planning_trajectory_envelope(
         case,
         route,
         points,
@@ -664,11 +693,10 @@ def _trajectory_for_route(
         sample_step_s=sample_step_s,
     )
     stop_sequences = set(declared_stop_sequences(route, points))
-    if (
-        planning_submission is not None
-        and planning_submission.path_adherence.mode
-        in {PathAdherenceMode.HARD_TUBE, PathAdherenceMode.EXACT_ROUTE}
-    ):
+    if planning_submission is not None and planning_submission.path_adherence.mode in {
+        PathAdherenceMode.HARD_TUBE,
+        PathAdherenceMode.EXACT_ROUTE,
+    }:
         stop_sequences.update(
             point.sequence
             for point in points[1:-1]
@@ -687,7 +715,7 @@ def _trajectory_for_route(
     )
 
 
-def _apply_planning_trajectory_envelope(
+def apply_planning_trajectory_envelope(
     case: CampaignCase,
     route: CandidateRoute,
     points: tuple[TrajectoryPoint, ...],
@@ -711,16 +739,20 @@ def _apply_planning_trajectory_envelope(
         in {PathAdherenceMode.HARD_TUBE, PathAdherenceMode.EXACT_ROUTE}
         else None
     )
-    boundary_threshold = next(
-        (
-            float(oracle.threshold or 0.0)
-            for oracle in case.semantics.behavior_oracles
-            if oracle.required
-            and oracle.kind is BehaviorOracleKind.BOUNDARY_MARGIN
-            and (not oracle.role_ids or route.role_id in oracle.role_ids)
-        ),
-        None,
-    ) if case.semantics is not None else None
+    boundary_threshold = (
+        next(
+            (
+                float(oracle.threshold or 0.0)
+                for oracle in case.semantics.behavior_oracles
+                if oracle.required
+                and oracle.kind is BehaviorOracleKind.BOUNDARY_MARGIN
+                and (not oracle.role_ids or route.role_id in oracle.role_ids)
+            ),
+            None,
+        )
+        if case.semantics is not None
+        else None
+    )
     boundary_limit = (
         boundary_threshold + planning_submission.clearance.uncertainty_allowance_m
         if boundary_threshold is not None
@@ -742,33 +774,93 @@ def _apply_planning_trajectory_envelope(
             for index, point in enumerate(points)
         )
 
-    def accepted(candidate: tuple[TrajectoryPoint, ...]) -> bool:
+    def sampled_limits(
+        candidate: tuple[TrajectoryPoint, ...],
+    ) -> tuple[float | None, float | None]:
         sampled = _sample_points(candidate, sample_step_s)
-        if path_limit is not None and max(
-            (
-                _distance_to_polyline(sample.position_m, route.points_m)
-                for sample in sampled
-            ),
-            default=float("inf"),
-        ) > path_limit + 1e-9:
-            return False
-        if boundary_limit is not None and min(
-            (_lateral_ceiling_margin(sample.position_m, case) for sample in sampled),
-            default=-float("inf"),
-        ) < boundary_limit - 1e-9:
-            return False
-        return True
+        maximum_path_error = (
+            max(
+                (
+                    _distance_to_segment(sample.position_m, segment_start, segment_end)
+                    for sample, segment_start, segment_end in sampled
+                ),
+                default=float("inf"),
+            )
+            if path_limit is not None
+            else None
+        )
+        minimum_boundary_margin = (
+            min(
+                (_lateral_ceiling_margin(sample.position_m, case) for sample, _, _ in sampled),
+                default=-float("inf"),
+            )
+            if boundary_limit is not None
+            else None
+        )
+        return maximum_path_error, minimum_boundary_margin
 
-    if accepted(points):
+    def accepted(limits: tuple[float | None, float | None]) -> bool:
+        path_error, boundary_margin = limits
+        return not (
+            path_limit is not None and (path_error is None or path_error > path_limit + 1e-9)
+        ) and not (
+            boundary_limit is not None
+            and (boundary_margin is None or boundary_margin < boundary_limit - 1e-9)
+        )
+
+    full_limits = sampled_limits(points)
+    if accepted(full_limits):
         return points
     zero = scaled(0.0)
-    if not accepted(zero):
+    zero_limits = sampled_limits(zero)
+    if not accepted(zero_limits):
         raise ValueError("accepted route knots cannot satisfy the planning trajectory envelope")
+
+    # Hermite position is affine in its endpoint derivatives, so scaling all
+    # internal derivatives interpolates between the zero-derivative path and the
+    # original smooth path. Distance to a convex segment is convex and box margin
+    # is concave; these two endpoint measurements therefore provide a conservative
+    # safe derivative factor without an expensive per-candidate binary search.
+    factors = [1.0]
+    full_path_error, full_boundary_margin = full_limits
+    zero_path_error, zero_boundary_margin = zero_limits
+    if (
+        path_limit is not None
+        and full_path_error is not None
+        and zero_path_error is not None
+        and full_path_error > path_limit
+    ):
+        factors.append(
+            max(
+                0.0,
+                (path_limit - zero_path_error) / max(full_path_error - zero_path_error, 1e-12),
+            )
+        )
+    if (
+        boundary_limit is not None
+        and full_boundary_margin is not None
+        and zero_boundary_margin is not None
+        and full_boundary_margin < boundary_limit
+    ):
+        factors.append(
+            max(
+                0.0,
+                (zero_boundary_margin - boundary_limit)
+                / max(zero_boundary_margin - full_boundary_margin, 1e-12),
+            )
+        )
+    factor = min(factors) * 0.98
+    candidate = scaled(factor)
+    if accepted(sampled_limits(candidate)):
+        return candidate
+
+    # Retain a short deterministic fallback for floating-point edge cases in the
+    # conservative endpoint bound. It can only reduce the already bounded factor.
     low = 0.0
-    high = 1.0
-    for _ in range(48):
+    high = factor
+    for _ in range(12):
         middle = (low + high) / 2.0
-        if accepted(scaled(middle)):
+        if accepted(sampled_limits(scaled(middle))):
             low = middle
         else:
             high = middle
@@ -779,22 +871,20 @@ def _sample_points(
     points: tuple[TrajectoryPoint, ...],
     sample_step_s: float,
 ) -> tuple[Any, ...]:
-    trajectory = TimeParameterizedTrajectory(
-        trajectory_id="trajectory-envelope-probe",
-        role_id="trajectory-envelope-role",
-        vehicle_id="trajectory-envelope-role",
-        route_sha256="0" * 64,
-        points=points,
-        declared_stop_sequences=(1, len(points)),
-        completion_position_tolerance_m=0.05,
-        completion_velocity_tolerance_m_s=0.05,
-    )
     output = []
-    timestamp = 0.0
-    while timestamp < trajectory.duration_s:
-        output.append(sample_trajectory(trajectory, timestamp))
-        timestamp += sample_step_s
-    output.append(sample_trajectory(trajectory, trajectory.duration_s))
+    for start, end in pairwise(points):
+        duration_s = end.time_from_start_s - start.time_from_start_s
+        sample_count = min(25, max(9, math.ceil(duration_s / sample_step_s) + 1))
+        for index in range(sample_count):
+            fraction = index / (sample_count - 1)
+            timestamp_s = start.time_from_start_s + duration_s * fraction
+            output.append(
+                (
+                    sample_trajectory_segment(start, end, timestamp_s),
+                    start.position_m,
+                    end.position_m,
+                )
+            )
     return tuple(output)
 
 
@@ -815,8 +905,7 @@ def _distance_to_segment(point: Vector3, before: Vector3, after: Vector3) -> flo
         0.0,
         min(
             1.0,
-            (relative.x * delta.x + relative.y * delta.y + relative.z * delta.z)
-            / length_squared,
+            (relative.x * delta.x + relative.y * delta.y + relative.z * delta.z) / length_squared,
         ),
     )
     projection = _add_scaled(before, delta, fraction)
@@ -864,6 +953,7 @@ def allocate_trajectory_points(
         entry_exit_ramp_s,
         transition_distance_m,
         turn_blend_radius_m,
+        case.drone_count == 1,
     )
 
 
@@ -882,6 +972,7 @@ def _allocate_trajectory_points_cached(
     entry_exit_ramp_s: float,
     transition_distance_m: float | None,
     turn_blend_radius_m: float | None,
+    whole_route_continuous: bool,
 ) -> tuple[TrajectoryPoint, ...]:
     """Cache immutable allocations shared by timing variants in one bounded search."""
 
@@ -937,7 +1028,13 @@ def _allocate_trajectory_points_cached(
                 scale,
             )
         else:
-            points = _trajectory_points(positions, durations, scale, stop_indices)
+            points = _trajectory_points(
+                positions,
+                durations,
+                scale,
+                stop_indices,
+                whole_route_continuous=whole_route_continuous,
+            )
         trajectory = TimeParameterizedTrajectory(
             trajectory_id=f"allocation-{canonical_sha256(points)[:20]}",
             role_id="allocation-role",
@@ -1082,7 +1179,11 @@ def _profiled_path_speed_points(
                 # limit only by global retiming and produced more jerk than the
                 # baseline it was meant to smooth. Low-speed reusable profiles
                 # retain their already-frozen derivative family.
-                (5.5 if min(speed, next_speed) >= 0.30 else 2.5)
+                (
+                    PROFILED_KNOT_ACCELERATION_GAIN_SMOOTH
+                    if min(speed, next_speed) < 0.10
+                    else PROFILED_KNOT_ACCELERATION_GAIN_BALANCED
+                )
                 / transition_duration_s
             ),
         )
@@ -1126,6 +1227,8 @@ def _trajectory_points(
     durations: list[float],
     scale: float,
     stop_indices: frozenset[int],
+    *,
+    whole_route_continuous: bool,
 ) -> tuple[TrajectoryPoint, ...]:
     timestamps = [0.0]
     for duration in durations:
@@ -1154,7 +1257,18 @@ def _trajectory_points(
             else max(
                 0.03,
                 min(incoming_speed, outgoing_speed)
-                * min(0.75, max(0.20, (direction_alignment + 1.0) / 2.0)),
+                # This is a whole-route tangent projection, not a waypoint stop.
+                # Collinear sampling knots retain full speed; a real corner is
+                # reduced only as much as its turn angle requires. The bounded
+                # dynamics pass below still retimes the complete route atomically.
+                * (
+                    min(
+                        1.0,
+                        max(0.20, math.sqrt(max(0.0, (direction_alignment + 1.0) / 2.0))),
+                    )
+                    if whole_route_continuous
+                    else min(0.75, max(0.20, (direction_alignment + 1.0) / 2.0))
+                ),
             )
         )
         velocities.append(

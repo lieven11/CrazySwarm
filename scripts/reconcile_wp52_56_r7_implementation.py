@@ -187,12 +187,12 @@ def _registry_counts() -> dict[str, Any]:
         "lifecycle_counts": lifecycle_counts,
         "retained_altitude_profile_count": retained_altitude_profiles,
         "passed": (
-            len(registry.rows) == 54
+            len(registry.rows) == 55
             and sum(len(row.proposals) for row in admissions.rows) == 111
-            and sum(not item.catalog_visible for item in proposals) == 28
-            and sum(item.catalog_visible for item in proposals) == 83
+            and sum(not item.catalog_visible for item in proposals) == 21
+            and sum(item.catalog_visible for item in proposals) == 90
             and lifecycle_counts
-            == {"SUBMISSIONS": 43, "BASELINE_ONLY": 9, "RETAIN_EXISTING_ONLY": 2}
+            == {"SUBMISSIONS": 43, "BASELINE_ONLY": 10, "RETAIN_EXISTING_ONLY": 2}
             and retained_altitude_profiles == 5
         ),
     }
@@ -273,10 +273,29 @@ def build_reconciliation(expected_path: Path = R6_ORACLE) -> dict[str, Any]:
         ),
     }
     passed = semantic_equal and counts["passed"] and registry_qualification_passed
+    successor_transition_valid = (
+        not semantic_equal and counts["passed"] and registry_qualification_passed
+    )
+    status = (
+        "CURRENT" if passed else "SUPERSEDED_BY_WP57_61" if successor_transition_valid else "FAILED"
+    )
     payload = {
         "schema_version": 1,
         "reconciliation_id": "wp52-56-r7-implementation-reconciliation-v1",
         "accepted_r7_design_payload_sha256": ACCEPTED_R7_DESIGN_SHA256,
+        "status": status,
+        "supersession": (
+            {
+                "work_packet_batch": "WP-57-through-WP-61",
+                "reason": (
+                    "Whole-route smoothing and the online-obstacle successor case "
+                    "intentionally change the historical R7 semantic projection."
+                ),
+                "distinguished_relation_count": 7,
+            }
+            if successor_transition_valid
+            else None
+        ),
         "historical_oracle": {
             "script_sha256": _file_sha256(R6_SCRIPT),
             "artifact_sha256": _file_sha256(R6_ORACLE),
@@ -325,7 +344,7 @@ def main() -> int:
         arguments.output.parent.mkdir(parents=True, exist_ok=True)
         arguments.output.write_text(rendered, encoding="utf-8")
     print(payload["reconciliation_sha256"])
-    return 0 if payload["passed"] else 1
+    return 0 if payload["status"] in {"CURRENT", "SUPERSEDED_BY_WP57_61"} else 1
 
 
 if __name__ == "__main__":

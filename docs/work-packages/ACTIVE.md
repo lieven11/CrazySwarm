@@ -4223,11 +4223,11 @@ twin pipeline.
 
 | Packet | Status | Independent verification |
 |---|---|---|
-| WP-57 — 1D retained-evidence truth and motion-quality contract | `PLANNED` | `DESIGN_VERIFIED` |
-| WP-58 — whole-route continuous flight and adaptive motion intent | `PLANNED` | `DESIGN_VERIFIED` |
-| WP-59 — one-drone sensor-sourced changed-world replanning | `PLANNED` | `DESIGN_VERIFIED` |
-| WP-60 — differential-actuation physical-reality evidence | `PLANNED` | `DESIGN_VERIFIED` |
-| WP-61 — persistent all-sensor digital twin and staged physical curriculum | `PLANNED` | `DESIGN_VERIFIED` |
+| WP-57 — 1D retained-evidence truth and motion-quality contract | `PARTIALLY_IMPLEMENTED` | `BLOCKED_WITH_FINDINGS` |
+| WP-58 — whole-route continuous flight and adaptive motion intent | `PARTIALLY_IMPLEMENTED` | `BLOCKED_WITH_FINDINGS` |
+| WP-59 — one-drone sensor-sourced changed-world replanning | `PARTIALLY_IMPLEMENTED` | `BLOCKED_WITH_FINDINGS` |
+| WP-60 — differential-actuation physical-reality evidence | `PARTIALLY_IMPLEMENTED` | `BLOCKED_WITH_FINDINGS` |
+| WP-61 — persistent all-sensor digital twin and staged physical curriculum | `PARTIALLY_IMPLEMENTED` | `BLOCKED_WITH_FINDINGS` |
 
 <!-- WP57-61-DESIGN-PAYLOAD-BEGIN -->
 
@@ -4458,9 +4458,9 @@ qualification work.
 
 ### WP-57 — retained-evidence truth and motion-quality contract
 
-**Status:** `PLANNED`
+**Status:** `PARTIALLY_IMPLEMENTED`
 
-**Independent verification:** `DRAFT_UNVERIFIED`
+**Independent verification:** `BLOCKED_WITH_FINDINGS`
 
 Implement a typed `MotionQualityContract` carried by case intent, accepted plan,
 trajectory, evidence, analysis, review bundle, and UI. It must keep separate objective
@@ -4492,9 +4492,9 @@ not change execution semantics.
 
 ### WP-58 — whole-route continuous flight and adaptive motion intent
 
-**Status:** `PLANNED`
+**Status:** `PARTIALLY_IMPLEMENTED`
 
-**Independent verification:** `DRAFT_UNVERIFIED`
+**Independent verification:** `BLOCKED_WITH_FINDINGS`
 
 Replace one-next-node velocity assignment with a bounded whole-route or receding-
 horizon trajectory pass that reasons over all remaining nodes, node modes, curvature,
@@ -4540,9 +4540,9 @@ response. Any failed child blocks later children; it does not lower the parent g
 
 ### WP-59 — one-drone sensor-sourced changed-world replanning
 
-**Status:** `PLANNED`
+**Status:** `PARTIALLY_IMPLEMENTED`
 
-**Independent verification:** `DRAFT_UNVERIFIED`
+**Independent verification:** `BLOCKED_WITH_FINDINGS`
 
 Generalize the production in-flight replanning coordinator and execution head from
 the current two/three-drone restriction to one through three drones. Add one successor
@@ -4612,9 +4612,9 @@ system does not detour gratuitously.
 
 ### WP-60 — differential-actuation physical-reality evidence
 
-**Status:** `PLANNED`
+**Status:** `PARTIALLY_IMPLEMENTED`
 
-**Independent verification:** `DRAFT_UNVERIFIED`
+**Independent verification:** `BLOCKED_WITH_FINDINGS`
 
 Audit every retained moving 1D CSV at motor level and add an independent rigid-body
 force/torque oracle for the X-layout mixer. For forward acceleration the oracle must
@@ -4633,9 +4633,9 @@ validated Crazyflie aerodynamics.
 
 ### WP-61 — persistent all-sensor digital twin and staged physical curriculum
 
-**Status:** `PLANNED`
+**Status:** `PARTIALLY_IMPLEMENTED`
 
-**Independent verification:** `DRAFT_UNVERIFIED`
+**Independent verification:** `BLOCKED_WITH_FINDINGS`
 
 Replace the ephemeral twin summary with a persistent, source-aligned stream accepting
 all adapter-provided sensor and actuator samples, including pose, velocity, attitude,
@@ -5262,3 +5262,31 @@ focused recheck by that same verifier remains. Any unresolved P0/P1 leaves the b
   Fast Sim, realtime, rendered UI, and hardware evidence remain implementation and
   qualification obligations.
 - Composite design accepted; implementation is authorized from this exact identity.
+
+### WP-57 through WP-61 implementation-review handoff
+
+- Independent verification: `BLOCKED_WITH_FINDINGS`.
+- Initial implementation payload: staged patch SHA-256
+  `3c9cd9bf0e65e35c72e50db74015b0e8429800d9cf7c396291b27d009568d735`;
+  exact 87-file pre/post manifest in
+  `missions/campaigns/sim/qualification/wp57-61-implementation-manifest-v1.md`.
+- Fresh verifier: `/root/wp57_61_implementation_review`; initial review and the one
+  permitted focused recheck are consumed. No further automatic implementation pass is
+  permitted.
+- Sole fix overlay: SHA-256
+  `a9dd5636b86b29e8c21a93d44e3554cc3d4c6491fb90ffe6ba29a810afdb340b`.
+  The verifier confirmed WP-59A/B/E future-truth exclusion is resolved: hidden future
+  environment geometry/timing changes execution identity but cannot enter or change
+  the initial planner view, case identity, or plan identity.
+- Remaining P1 findings: nominal sensed changes still stop-and-hold before replanning;
+  adaptive motion-intent replacement is not connected to production; motion and
+  physical-truth guard failures do not block qualification; calibration promotion
+  trusts caller-supplied results instead of replay-derived session evidence; yaw is
+  absent from the motor oracle; and required served/realtime UI evidence is not
+  available. These keep the smallest affected WP-57 through WP-61 scopes partial and
+  unverified.
+- Retained P2: the first four twin curriculum labels reuse one mission without
+  stage-specific independent oracles.
+- Real-aircraft evidence remains literal `NOT_RUN`. The interrupted UI dependency tree
+  prevented lint/build/browser execution and is recorded as an evidence limitation,
+  not a passing result.

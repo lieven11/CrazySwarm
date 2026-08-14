@@ -24,7 +24,7 @@ build_reconciliation = MODULE.build_reconciliation
 semantic_projection = MODULE.semantic_projection
 
 
-def test_r7_reconciliation_is_current_and_semantically_exact() -> None:
+def test_r7_reconciliation_records_the_wp57_61_successor_boundary() -> None:
     retained_path = Path(
         "missions/campaigns/sim/qualification/wp52-56-r7-implementation-reconciliation-v1.json"
     )
@@ -32,23 +32,25 @@ def test_r7_reconciliation_is_current_and_semantically_exact() -> None:
     observed = build_reconciliation()
 
     assert retained == observed
-    assert observed["passed"]
-    assert observed["semantic_projection_equal"]
+    assert observed["passed"] is False
+    assert observed["semantic_projection_equal"] is False
+    assert observed["status"] == "SUPERSEDED_BY_WP57_61"
+    assert observed["supersession"]["distinguished_relation_count"] == 7
     assert observed["registry_counts"] == {
-        "case_count": 54,
+        "case_count": 55,
         "proposal_count": 111,
-        "hidden_collapse_count": 28,
-        "visible_relation_count": 83,
+        "hidden_collapse_count": 21,
+        "visible_relation_count": 90,
         "lifecycle_counts": {
             "SUBMISSIONS": 43,
-            "BASELINE_ONLY": 9,
+            "BASELINE_ONLY": 10,
             "RETAIN_EXISTING_ONLY": 2,
         },
         "retained_altitude_profile_count": 5,
         "passed": True,
     }
     assert observed["seven_public_service_previews_passed"]
-    assert observed["claim_boundaries"]["integration"]
+    assert observed["claim_boundaries"]["integration"] is False
     assert observed["claim_boundaries"]["production_entry_no_runtime"]
 
 

@@ -97,6 +97,48 @@
       "notes": ["Physical crossing optional and requires a separate approved procedure"]
     }
   ],
+  "digital_twin_handoff": {
+    "authorization": "NOT_AUTHORIZED",
+    "radio_discovery": "NOT_RUN",
+    "props_on_operation": "NOT_RUN",
+    "real_takeoff": "NOT_RUN",
+    "common_twin_schema_required": true,
+    "stages": [
+      {
+        "stage_id": "physical.adapter_identity",
+        "status": "NOT_RUN",
+        "requires_operator_phrase": "AUTHORIZE PHYSICAL ADAPTER IDENTITY CHECK",
+        "checks": ["vehicle identity", "firmware identity", "units", "frames", "source clock"]
+      },
+      {
+        "stage_id": "physical.props_off_stream",
+        "status": "NOT_RUN",
+        "requires_operator_phrase": "AUTHORIZE PROPS-OFF SENSOR STREAM",
+        "checks": ["disconnect", "stale telemetry", "partial sensor", "bad unit", "bad frame", "buffer overflow"]
+      },
+      {
+        "stage_id": "physical.contained_entry",
+        "status": "NOT_RUN",
+        "requires_operator_phrase": "AUTHORIZE CONTAINED PHYSICAL ENTRY",
+        "checks": ["preflight", "supervisor", "emergency stop", "landing region", "observer acknowledgement"]
+      },
+      {
+        "stage_id": "physical.slow_1d_curriculum",
+        "status": "NOT_RUN",
+        "requires_operator_phrase": "AUTHORIZE SLOW 1D PHYSICAL CURRICULUM",
+        "checks": ["startup", "slow takeoff", "hover", "land", "straight path", "checkpoint path", "continuous path"]
+      }
+    ],
+    "fail_closed_conditions": [
+      "disconnect",
+      "stale telemetry",
+      "bad units",
+      "bad frame",
+      "partial required sensors",
+      "simulated data labeled as real",
+      "unacknowledged supervisor fallback"
+    ]
+  },
   "unsupported_claims": [
     "precise global return",
     "tight formation",

@@ -3,11 +3,23 @@ from __future__ import annotations
 import math
 import random
 from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from crazyswarm_app.campaign.models import Region3D
+from crazyswarm_app.campaign.perception import (
+    PerceptionChangeKind,
+    PerceptionObservation,
+    PerceptionObservationSource,
+)
 from crazyswarm_app.domain.models import Vector3
+from crazyswarm_app.domain.simulation import canonical_sha256
+
+if TYPE_CHECKING:
+    from crazyswarm_app.simulation.world import DynamicWorldTimeline
 
 
 class FlowModelConfig(BaseModel):
@@ -37,6 +49,105 @@ class RangeModelConfig(BaseModel):
     bias_m: float = 0.0
     beam_half_angle_rad: float = Field(default=0.0, ge=0.0, lt=math.pi / 2.0)
     parameter_source: str = "CONFIGURED_UNQUALIFIED"
+
+
+class PerceptionModelConfig(BaseModel):
+    """Bounded deterministic depth/range solid observation contract."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    sensor_id: str = "simulated-depth-range"
+    latency_s: float = Field(default=0.12, ge=0.0, le=2.0)
+    expiry_s: float = Field(default=0.50, gt=0.0, le=5.0)
+    confidence: float = Field(default=0.98, ge=0.0, le=1.0)
+    extent_bias_m: float = Field(default=0.0, ge=-0.05, le=0.05)
+    parameter_source: str = "CONFIGURED_UNQUALIFIED"
+
+    @property
+    def configuration_sha256(self) -> str:
+        return canonical_sha256(self)
+
+
+class SimulatedPerceptionObservationSource(PerceptionObservationSource):
+    """Sensor adapter is the only boundary that can inspect dynamic world truth."""
+
+    def __init__(
+        self,
+        *,
+        timeline: DynamicWorldTimeline,
+        config: PerceptionModelConfig,
+        mission_id: str,
+        run_id: str,
+        vehicle_id: str,
+        on_release: Callable[[PerceptionObservation], None] | None = None,
+    ) -> None:
+        observations: list[PerceptionObservation] = []
+        for sequence, event in enumerate(timeline.events, start=1):
+            region = None
+            if event.obstacle is not None:
+                obstacle = event.obstacle
+                bias = config.extent_bias_m
+                region = Region3D(
+                    region_id=obstacle.obstacle_id,
+                    minimum_m=Vector3(
+                        x=obstacle.minimum_m.x - bias,
+                        y=obstacle.minimum_m.y - bias,
+                        z=obstacle.minimum_m.z - bias,
+                    ),
+                    maximum_m=Vector3(
+                        x=obstacle.maximum_m.x + bias,
+                        y=obstacle.maximum_m.y + bias,
+                        z=obstacle.maximum_m.z + bias,
+                    ),
+                )
+            received_s = event.source_timestamp_s + config.latency_s
+            raw_payload = {
+                "sensor_id": config.sensor_id,
+                "sequence": sequence,
+                "source_timestamp_s": event.source_timestamp_s,
+                "solid_id": event.solid_id,
+                "region": region,
+            }
+            observations.append(
+                PerceptionObservation.create(
+                    observation_id=f"{config.sensor_id}.{sequence}.{event.event_id}",
+                    source_event_id=event.event_id,
+                    mission_id=mission_id,
+                    run_id=run_id,
+                    vehicle_id=vehicle_id,
+                    sensor_id=config.sensor_id,
+                    sensor_configuration_sha256=config.configuration_sha256,
+                    world_revision=sequence,
+                    prior_perceived_world_revision=sequence - 1,
+                    sequence=sequence,
+                    source_timestamp_s=event.source_timestamp_s,
+                    received_timestamp_s=received_s,
+                    effective_source_s=event.effective_source_s,
+                    expires_source_s=received_s + config.expiry_s,
+                    confidence=config.confidence,
+                    change_kind=_PERCEPTION_KIND_BY_TRUTH[event.kind.value],
+                    solid_id=event.solid_id,
+                    region=region,
+                    raw_payload_sha256=canonical_sha256(raw_payload),
+                )
+            )
+        super().__init__(tuple(observations))
+        self._on_release = on_release
+
+    def pop_ready(self, source_now_s: float) -> PerceptionObservation | None:
+        observation = super().pop_ready(source_now_s)
+        if observation is not None and self._on_release is not None:
+            self._on_release(observation)
+        return observation
+
+
+_PERCEPTION_KIND_BY_TRUTH = {
+    "SOLID_APPEARED": PerceptionChangeKind.SOLID_APPEARED,
+    "SOLID_MOVED": PerceptionChangeKind.SOLID_MOVED,
+    "SOLID_DISAPPEARED": PerceptionChangeKind.SOLID_DISAPPEARED,
+    "PASSAGE_CLOSED": PerceptionChangeKind.PASSAGE_CLOSED,
+    "PASSAGE_OPENED": PerceptionChangeKind.PASSAGE_OPENED,
+}
 
 
 class ImuModelConfig(BaseModel):

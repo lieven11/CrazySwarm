@@ -112,6 +112,106 @@ class RouteNodeMode(StrEnum):
     REVERSAL = "REVERSAL"
 
 
+class TraversalMode(StrEnum):
+    """Reusable route semantics; authored checkpoints are never inferred from knots."""
+
+    CHECKPOINT = "CHECKPOINT"
+    CONTINUOUS_FLY_THROUGH = "CONTINUOUS_FLY_THROUGH"
+
+
+class MotionSpeedLaw(StrEnum):
+    CONSTANT = "CONSTANT"
+    RAMPED = "RAMPED"
+    PRECISION_FIRST = "PRECISION_FIRST"
+    BALANCED = "BALANCED"
+
+
+class MotionQualityMetric(StrEnum):
+    SPEED_COMPLIANCE = "SPEED_COMPLIANCE"
+    SPEED_RIPPLE = "SPEED_RIPPLE"
+    PATH_ADHERENCE = "PATH_ADHERENCE"
+    ACCELERATION = "ACCELERATION"
+    JERK = "JERK"
+    ANGULAR_ACTIVITY = "ANGULAR_ACTIVITY"
+    MOTOR_HEADROOM = "MOTOR_HEADROOM"
+    MOTOR_DIFFERENTIAL = "MOTOR_DIFFERENTIAL"
+    MOTOR_SPREAD = "MOTOR_SPREAD"
+    MOTOR_SATURATION = "MOTOR_SATURATION"
+    ENERGY = "ENERGY"
+    TERMINAL_BEHAVIOR = "TERMINAL_BEHAVIOR"
+    DURATION = "DURATION"
+
+
+class MotionQualityContract(ContractModel):
+    """Hash-bound objective vector and hard guards for one accepted flight program."""
+
+    schema_version: Literal[1] = 1
+    traversal_mode: TraversalMode = TraversalMode.CONTINUOUS_FLY_THROUGH
+    speed_law: MotionSpeedLaw = MotionSpeedLaw.BALANCED
+    objective_order: tuple[MotionQualityMetric, ...] = (
+        MotionQualityMetric.PATH_ADHERENCE,
+        MotionQualityMetric.JERK,
+        MotionQualityMetric.DURATION,
+    )
+    target_speed_m_s: float | None = Field(default=None, gt=0.0, le=2.0)
+    speed_band_m_s: float = Field(default=0.05, gt=0.0, le=0.5)
+    minimum_speed_band_coverage_fraction: float = Field(default=0.95, ge=0.0, le=1.0)
+    maximum_speed_ripple_m_s: float = Field(default=0.05, ge=0.0, le=1.0)
+    maximum_path_tube_error_m: float = Field(default=0.05, gt=0.0, le=1.0)
+    maximum_acceleration_m_s2: float = Field(default=1.0, gt=0.0)
+    maximum_jerk_m_s3: float = Field(default=8.0, gt=0.0)
+    maximum_angular_rate_p95_rad_s: float = Field(default=0.40, gt=0.0)
+    minimum_motor_thrust_headroom_n: float = Field(default=0.030, ge=0.0)
+    maximum_motor_spread_p95_percent: float = Field(default=0.50, ge=0.0, le=100.0)
+    maximum_motor_saturation_fraction: float = Field(default=0.02, ge=0.0, le=1.0)
+    minimum_motor_differential_sign_agreement_fraction: float = Field(default=0.95, ge=0.0, le=1.0)
+    maximum_motor_differential_normalized_error_p95: float = Field(default=0.10, ge=0.0)
+    maximum_electrical_energy_used_j: float = Field(default=220.0, gt=0.0)
+    minimum_clearance_m: float = Field(default=0.15, ge=0.0)
+    maximum_collision_count: int = Field(default=0, ge=0)
+    minimum_checkpoint_hold_conformance_fraction: float = Field(default=1.0, ge=0.0, le=1.0)
+    minimum_continuous_knot_speed_ratio: float = Field(default=0.85, ge=0.0, le=1.0)
+    minimum_crossover_knot_speed_ratio: float = Field(default=0.95, ge=0.0, le=1.0)
+    maximum_unintended_fly_through_stop_count: int = Field(default=0, ge=0)
+    maximum_terminal_secondary_peak_m_s: float = Field(default=0.02, ge=0.0)
+    maximum_terminal_reversal_count: int = Field(default=0, ge=0)
+    maximum_duration_s: float | None = Field(default=None, gt=0.0)
+    supervisor_safety_gate_required: bool = True
+
+    @model_validator(mode="after")
+    def complete_vector(self) -> MotionQualityContract:
+        if len(set(self.objective_order)) != len(self.objective_order):
+            raise ValueError("motion objective order must not contain duplicates")
+        if self.speed_law is MotionSpeedLaw.CONSTANT and self.target_speed_m_s is None:
+            raise ValueError("constant-speed motion requires target_speed_m_s")
+        return self
+
+    @property
+    def contract_sha256(self) -> SHA256:
+        return canonical_sha256(self)
+
+
+class MotionContractAmendment(ContractModel):
+    amendment_id: Identifier
+    source_id: Identifier
+    sequence: int = Field(ge=1)
+    source_timestamp_s: float = Field(ge=0.0)
+    effective_source_s: float = Field(ge=0.0)
+    prior_contract_sha256: SHA256
+    replacement: MotionQualityContract
+    authenticated: bool = True
+
+    @model_validator(mode="after")
+    def ordered(self) -> MotionContractAmendment:
+        if self.effective_source_s < self.source_timestamp_s:
+            raise ValueError("motion amendment cannot take effect before its source time")
+        return self
+
+    @property
+    def amendment_sha256(self) -> SHA256:
+        return canonical_sha256(self)
+
+
 class ScenarioEventKind(StrEnum):
     GOAL_UPDATE = "GOAL_UPDATE"
     OBSTACLE_ADDED = "OBSTACLE_ADDED"
@@ -489,6 +589,7 @@ class CampaignCase(ContractModel):
     search: SearchSettings = SearchSettings()
     execution: ExecutionSettings = ExecutionSettings()
     replanning_authority: ReplanningAuthority = ReplanningAuthority.ABORT_ONLY
+    motion_quality_contract: MotionQualityContract | None = None
     semantics: CaseSemantics | None = None
     field_classification: dict[str, FieldClass] = Field(
         default_factory=lambda: {
@@ -626,31 +727,72 @@ class CampaignCase(ContractModel):
 
     @property
     def case_sha256(self) -> str:
-        if self.semantics is None:
+        identity_case = self.initial_planning_view()
+        if self.motion_quality_contract is None:
             # Preserve the identity of schema-v2 evidence produced before the semantic
-            # contract was introduced. New cases include semantics in their identity.
-            return canonical_sha256(self.model_dump(mode="python", exclude={"semantics"}))
-        return canonical_sha256(self)
+            # and motion contracts were introduced. New cases include every authored
+            # contract in their identity without invalidating historical catalog rows.
+            return canonical_sha256(
+                identity_case.model_dump(
+                    mode="python",
+                    exclude={
+                        "motion_quality_contract",
+                        *(() if self.semantics is not None else ("semantics",)),
+                    },
+                )
+            )
+        return canonical_sha256(identity_case)
+
+    def initial_planning_view(self) -> CampaignCase:
+        """Return the case surface that the initial planner is authorized to inspect.
+
+        Sensor-sourced future world truth is runtime-private.  Its authored test
+        controls remain in the execution-semantics identity and retained evidence,
+        but are removed from both the initial planner input and its case hash.
+        """
+
+        if self.semantics is None:
+            return self
+        environment_change_kinds = {
+            ScenarioEventKind.OBSTACLE_ADDED,
+            ScenarioEventKind.OBSTACLE_MOVED,
+            ScenarioEventKind.OBSTACLE_REMOVED,
+            ScenarioEventKind.PASSAGE_CLOSED,
+            ScenarioEventKind.PASSAGE_OPENED,
+        }
+        visible_events = tuple(
+            event
+            for event in self.semantics.scenario_events
+            if event.kind not in environment_change_kinds
+        )
+        if len(visible_events) == len(self.semantics.scenario_events):
+            return self
+        return self.model_copy(
+            update={
+                "semantics": self.semantics.model_copy(update={"scenario_events": visible_events})
+            }
+        )
 
     @property
     def execution_semantics_sha256(self) -> str:
         """Hash only fields that can change the authored mission behavior."""
 
-        return canonical_sha256(
-            {
-                "drone_count": self.drone_count,
-                "drones": self.drones,
-                "environment": self.environment,
-                "authorization": self.authorization,
-                "execution_eligibility": self.execution_eligibility,
-                "hard_constraints": self.hard_constraints,
-                "allowed_strategies": self.allowed_strategies,
-                "search": self.search,
-                "execution": self.execution,
-                "replanning_authority": self.replanning_authority,
-                "semantics": self.semantics,
-            }
-        )
+        payload = {
+            "drone_count": self.drone_count,
+            "drones": self.drones,
+            "environment": self.environment,
+            "authorization": self.authorization,
+            "execution_eligibility": self.execution_eligibility,
+            "hard_constraints": self.hard_constraints,
+            "allowed_strategies": self.allowed_strategies,
+            "search": self.search,
+            "execution": self.execution,
+            "replanning_authority": self.replanning_authority,
+            "semantics": self.semantics,
+        }
+        if self.motion_quality_contract is not None:
+            payload["motion_quality_contract"] = self.motion_quality_contract
+        return canonical_sha256(payload)
 
     def route_nodes_for(self, role_id: str) -> tuple[RouteNodeIntent, ...]:
         drone = next((item for item in self.drones if item.role_id == role_id), None)
@@ -662,6 +804,47 @@ class CampaignCase(ContractModel):
             RouteNodeIntent(region_id=region.region_id, mode=RouteNodeMode.CAPTURE)
             for region in drone.goal_sequence
         )
+
+    def motion_contract_for(self, role_id: str) -> MotionQualityContract:
+        nodes = self.route_nodes_for(role_id)
+        drone = next(item for item in self.drones if item.role_id == role_id)
+        if self.motion_quality_contract is not None:
+            return self.motion_quality_contract
+        checkpoint = any(
+            node.mode in {RouteNodeMode.CAPTURE_AND_HOLD, RouteNodeMode.REVERSAL} for node in nodes
+        )
+        return MotionQualityContract(
+            traversal_mode=(
+                TraversalMode.CHECKPOINT if checkpoint else TraversalMode.CONTINUOUS_FLY_THROUGH
+            ),
+            maximum_acceleration_m_s2=self.hard_constraints.dynamics.maximum_acceleration_m_s2,
+            maximum_jerk_m_s3=self.hard_constraints.dynamics.maximum_jerk_m_s3,
+            minimum_continuous_knot_speed_ratio=(
+                0.95
+                if len(
+                    {
+                        (
+                            round(region.center_m.x, 9),
+                            round(region.center_m.y, 9),
+                            round(region.center_m.z, 9),
+                        )
+                        for region in drone.goal_sequence
+                    }
+                )
+                < len(drone.goal_sequence)
+                else 0.85
+            ),
+            maximum_duration_s=self.hard_constraints.deadline_s,
+        )
+
+
+def motion_contract_for(case: CampaignCase) -> MotionQualityContract:
+    """Resolve the one accepted contract shared by a campaign trajectory set."""
+
+    contracts = tuple(case.motion_contract_for(drone.role_id) for drone in case.drones)
+    if any(contract != contracts[0] for contract in contracts[1:]):
+        raise ValueError("one trajectory set cannot carry conflicting role motion contracts")
+    return contracts[0]
 
 
 class LockedDevelopmentInputs(ContractModel):

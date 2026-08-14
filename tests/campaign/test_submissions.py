@@ -9,31 +9,31 @@ import pytest
 from crazyswarm_app.campaign.catalog import CampaignCatalog
 from crazyswarm_app.campaign.models import LockedDevelopmentInputs, PlannerStrategy, RouteNodeMode
 from crazyswarm_app.campaign.planner import BoundedJointPlanner, PlanningStatus, SearchDisposition
+from crazyswarm_app.campaign.service import CampaignService
 from crazyswarm_app.campaign.submission_measurement import (
     _independent_samples,
     _point_polyline_distance,
     derive_sampled_route_semantics,
 )
-from crazyswarm_app.campaign.service import CampaignService
 from crazyswarm_app.campaign.submissions import (
     BASELINE_PLANNING_SUBMISSION_ID,
     BASELINE_SUBMISSION_ID,
     CONSTANT_PATH_SPEED_CAPABILITY_ID,
-    CapabilityFeasibilityDisposition,
     AdmissionRegistry,
+    CapabilityFeasibilityDisposition,
     CaseSubmissionRegistryRow,
     ExecutionCapabilityRequest,
     ExecutionProfileParameters,
     PathAdherenceMode,
-    PlanningSelectionOracle,
     PlanningCapabilityRequest,
+    PlanningSelectionOracle,
     ResolvedPlanningPackage,
     SubmissionStatus,
-    load_capability_registry,
     load_admission_registry,
+    load_capability_registry,
     load_case_submission_registry,
-    planning_submissions_for_case,
     normalized_route_polyline,
+    planning_submissions_for_case,
     rebind_planning_submission,
     resolve_capability_resolution,
     resolve_planning_package,
@@ -123,15 +123,15 @@ def test_core_constant_speed_binds_without_a_case_catalog_submission(
     assert all(audit.passed for audit in trajectories.profile_audits)
 
 
-def test_selective_registry_covers_the_exact_20_18_16_catalog(
+def test_selective_registry_covers_the_exact_21_18_16_catalog(
     catalog: CampaignCatalog,
 ) -> None:
     registry = load_case_submission_registry()
     validate_registry_coverage(catalog.cases())
 
-    assert registry.reviewed_counts == {"1d": 20, "2d": 18, "3d": 16}
-    assert len(registry.rows) == 54
-    assert sum(row.baseline_only for row in registry.rows) == 9
+    assert registry.reviewed_counts == {"1d": 21, "2d": 18, "3d": 16}
+    assert len(registry.rows) == 55
+    assert sum(row.baseline_only for row in registry.rows) == 10
     assert all(
         row.baseline_only or row.retain_existing_only or row.submissions for row in registry.rows
     )
@@ -142,19 +142,27 @@ def test_literal_admission_registry_is_closed_complete_and_tamper_evident() -> N
     proposals = tuple(proposal for row in admissions.rows for proposal in row.proposals)
 
     assert admissions.source_payload_sha256 == (
-        "abefc1ddc796e801ca783e51018ed529f81e5945bda6aa94ddb4a51bf66cfa41"
+        "67202d511432a189741ee923c072589729ffbc2d3b81172e02bea2e2210ffb08"
     )
     assert admissions.oracle_contract_version == "wp52-56-r6-verified-oracle-v1"
-    assert len(admissions.rows) == 54
+    assert len(admissions.rows) == 55
     assert len(proposals) == 111
-    assert sum("COLLAPSE_ALL" in item.qualifying_relation for item in proposals) == 28
+    assert sum("COLLAPSE_ALL" in item.qualifying_relation for item in proposals) == 21
+    assert (
+        sum(
+            item.qualifying_relation == "DISTINGUISHABLE_AFTER_WP58_WHOLE_ROUTE_SMOOTHING"
+            for item in proposals
+        )
+        == 7
+    )
     assert sum(item.comparison_context_id is not None for item in proposals) == 3
-    assert len({(row.case_id, item.submission_id) for row in admissions.rows for item in row.proposals}) == 111
+    proposal_keys = {
+        (row.case_id, item.submission_id) for row in admissions.rows for item in row.proposals
+    }
+    assert len(proposal_keys) == 111
 
     rounded = next(
-        row
-        for row in admissions.rows
-        if row.case_id == "1d.planar_shape_loop.rounded_square"
+        row for row in admissions.rows if row.case_id == "1d.planar_shape_loop.rounded_square"
     )
     assert rounded.metric_ids == (
         "TM_TRANSITION_START",
@@ -201,17 +209,16 @@ def test_duration_and_corner_anchors_change_behavior_without_changing_case_hash(
     short = resolve_submission(
         rounded,
         "corner_transition.lookahead_0_20s",
-        require_executable=False,
     )
-    assert short.status is SubmissionStatus.PLANNED_NOT_EXECUTABLE
+    assert short.status is SubmissionStatus.EXECUTABLE
     short_resolution = resolve_capability_resolution(rounded, short)
     assert short_resolution is not None
     assert short_resolution.authored_lookahead_time_s == 0.2
-    with pytest.raises(ValueError, match="PLANNED_NOT_EXECUTABLE"):
-        resolve_planning_package(
-            rounded,
-            execution_profile_submission_id=short.submission_id,
-        )
+    short_package = resolve_planning_package(
+        rounded,
+        execution_profile_submission_id=short.submission_id,
+    )
+    assert short_package.execution_profile == short
 
     smooth = resolve_submission(rounded, "corner_transition.lookahead_0_60s")
     package = resolve_planning_package(
@@ -377,8 +384,7 @@ def test_r6_sampled_discrete_oracle_rejects_stop_and_reordered_loop(
         capability_resolution=waypoint_package.capability_resolution,
     )
     samples = {
-        item.role_id: _independent_samples(item)
-        for item in waypoint_trajectories.trajectories
+        item.role_id: _independent_samples(item) for item in waypoint_trajectories.trajectories
     }
     original = derive_sampled_route_semantics(waypoint, waypoint_plan.selected.routes, samples)
     assert original["DS_UNINTENDED_STOP_COUNT"] == 0
@@ -423,14 +429,16 @@ def test_r6_sampled_discrete_oracle_rejects_stop_and_reordered_loop(
         capability_resolution=loop_package.capability_resolution,
     )
     loop_samples = {
-        item.role_id: _independent_samples(item)
-        for item in loop_trajectories.trajectories
+        item.role_id: _independent_samples(item) for item in loop_trajectories.trajectories
     }
-    assert derive_sampled_route_semantics(
-        loop,
-        loop_plan.selected.routes,
-        loop_samples,
-    )["DS_TOPOLOGY"] == "figure_eight"
+    assert (
+        derive_sampled_route_semantics(
+            loop,
+            loop_plan.selected.routes,
+            loop_samples,
+        )["DS_TOPOLOGY"]
+        == "figure_eight"
+    )
     reversed_samples = {
         role_id: tuple(
             {
@@ -442,11 +450,14 @@ def test_r6_sampled_discrete_oracle_rejects_stop_and_reordered_loop(
         )
         for role_id, values in loop_samples.items()
     }
-    assert derive_sampled_route_semantics(
-        loop,
-        loop_plan.selected.routes,
-        reversed_samples,
-    )["DS_TOPOLOGY"] == "order_violation"
+    assert (
+        derive_sampled_route_semantics(
+            loop,
+            loop_plan.selected.routes,
+            reversed_samples,
+        )["DS_TOPOLOGY"]
+        == "order_violation"
+    )
 
 
 def test_core_constant_speed_composes_with_flexible_fleet_geometry(
@@ -685,15 +696,15 @@ def test_selective_submission_qualification_is_complete_and_truthful() -> None:
     qualification = json.loads(path.read_text(encoding="utf-8"))
 
     assert qualification["passed"] is True
-    assert qualification["case_count"] == 54
-    assert qualification["reviewed_counts"] == {"1d": 20, "2d": 18, "3d": 16}
+    assert qualification["case_count"] == 55
+    assert qualification["reviewed_counts"] == {"1d": 21, "2d": 18, "3d": 16}
     assert qualification["planning_failures"] == []
     assert qualification["qualification_id"] == "selective-submission-registry-r6-v1"
     assert qualification["proposal_count"] == 111
-    assert qualification["collapsed_submission_count"] == 28
-    assert qualification["visible_relation_count"] == 83
+    assert qualification["collapsed_submission_count"] == 21
+    assert qualification["visible_relation_count"] == 90
     assert qualification["collapse_failures"] == []
-    assert len(qualification["collapsed_results"]) == 28
+    assert len(qualification["collapsed_results"]) == 21
     assert all(item["collapse_proven"] for item in qualification["collapsed_results"])
     assert qualification["ui_inspection"]["passed"] is False
     assert qualification["ui_inspection"]["status"] == "RETAINED_INSPECTION"
@@ -888,11 +899,7 @@ def test_route_fidelity_is_a_planning_owned_exact_route_capability(
         baseline_plan.selected,
         planning_submission=baseline.planning_submission,
     ).trajectories[0]
-    authored = tuple(
-        point
-        for route in plan.selected.routes
-        for point in route.points_m
-    )
+    authored = tuple(point for route in plan.selected.routes for point in route.points_m)
     exact_deviation = max(
         _point_polyline_distance(sample["position_m"], authored)
         for sample in _independent_samples(exact_trajectory)
@@ -941,9 +948,7 @@ def test_route_fidelity_is_a_planning_owned_exact_route_capability(
         resolve_planning_package(unsupported, planning_capability_request=request)
 
     tampered = package.model_dump(mode="python")
-    tampered["planning_submission"]["path_adherence"][
-        "maximum_centerline_deviation_m"
-    ] = 1e-5
+    tampered["planning_submission"]["path_adherence"]["maximum_centerline_deviation_m"] = 1e-5
     tampered["resolved_package_sha256"] = canonical_sha256(
         {key: value for key, value in tampered.items() if key != "resolved_package_sha256"}
     )
@@ -1135,7 +1140,9 @@ def test_corner_resolution_is_semantic_polyline_invariant_and_rejection_is_exact
     source_resolution = resolve_capability_resolution(source, source_profile)
     child_resolution = resolve_capability_resolution(child, child_profile)
     assert source_resolution is not None and child_resolution is not None
-    assert source_resolution.normalized_geometry_sha256 == child_resolution.normalized_geometry_sha256
+    assert (
+        source_resolution.normalized_geometry_sha256 == child_resolution.normalized_geometry_sha256
+    )
     assert source_resolution.raw_capture_sha256s != child_resolution.raw_capture_sha256s
     for field in (
         "certified_entry_speed_m_s",
@@ -1184,26 +1191,35 @@ def test_corner_resolution_is_semantic_polyline_invariant_and_rejection_is_exact
     while elapsed <= source_trajectory.duration_s:
         first = sample_trajectory(source_trajectory, elapsed)
         second = sample_trajectory(child_trajectory, elapsed)
-        assert math.dist(
-            (first.position_m.x, first.position_m.y, first.position_m.z),
-            (second.position_m.x, second.position_m.y, second.position_m.z),
-        ) <= 1e-6
-        assert math.dist(
-            (first.velocity_m_s.x, first.velocity_m_s.y, first.velocity_m_s.z),
-            (second.velocity_m_s.x, second.velocity_m_s.y, second.velocity_m_s.z),
-        ) <= 1e-6
-        assert math.dist(
-            (
-                first.acceleration_m_s2.x,
-                first.acceleration_m_s2.y,
-                first.acceleration_m_s2.z,
-            ),
-            (
-                second.acceleration_m_s2.x,
-                second.acceleration_m_s2.y,
-                second.acceleration_m_s2.z,
-            ),
-        ) <= 1e-5
+        assert (
+            math.dist(
+                (first.position_m.x, first.position_m.y, first.position_m.z),
+                (second.position_m.x, second.position_m.y, second.position_m.z),
+            )
+            <= 1e-6
+        )
+        assert (
+            math.dist(
+                (first.velocity_m_s.x, first.velocity_m_s.y, first.velocity_m_s.z),
+                (second.velocity_m_s.x, second.velocity_m_s.y, second.velocity_m_s.z),
+            )
+            <= 1e-6
+        )
+        assert (
+            math.dist(
+                (
+                    first.acceleration_m_s2.x,
+                    first.acceleration_m_s2.y,
+                    first.acceleration_m_s2.z,
+                ),
+                (
+                    second.acceleration_m_s2.x,
+                    second.acceleration_m_s2.y,
+                    second.acceleration_m_s2.z,
+                ),
+            )
+            <= 1e-5
+        )
         elapsed += 0.01
 
     short = resolve_submission(
@@ -1213,17 +1229,14 @@ def test_corner_resolution_is_semantic_polyline_invariant_and_rejection_is_exact
     )
     short_resolution = resolve_capability_resolution(source, short)
     assert short_resolution is not None and short_resolution.feasibility is not None
-    assert (
-        short_resolution.feasibility.disposition
-        is CapabilityFeasibilityDisposition.PROVEN_INFEASIBLE
-    )
-    assert short_resolution.feasibility.violated_constraints == ("DEADLINE_VIOLATION",)
+    assert short_resolution.feasibility.disposition is CapabilityFeasibilityDisposition.CERTIFIED
+    assert short_resolution.feasibility.violated_constraints == ()
     short_plan = BoundedJointPlanner().plan(
         source,
         short,
         capability_resolution=short_resolution,
     )
-    assert short_plan.search_disposition is SearchDisposition.PROVEN_INFEASIBLE_WITHIN_DECLARED_BOUNDS
+    assert short_plan.search_disposition is SearchDisposition.SELECTED
     assert short_plan.bounded_search_complete
 
     tiny_budget = child.model_copy(
@@ -1476,8 +1489,7 @@ def test_priority_submission_preserves_required_source_time_precedence(
     routes = {route.role_id: route for route in plan.selected.routes}
     prioritized = sorted(case.drones, key=lambda drone: (-drone.priority, drone.role_id))
     assert all(
-        routes[later.role_id].route_start_s - routes[earlier.role_id].route_start_s
-        >= 0.1 - 1e-9
+        routes[later.role_id].route_start_s - routes[earlier.role_id].route_start_s >= 0.1 - 1e-9
         for earlier, later in pairwise(prioritized)
     )
 
@@ -1520,14 +1532,9 @@ def test_boundary_robustness_compiles_a_runtime_safe_hard_tube(
             for point in (sample["position_m"],)
         )
 
-    authored = tuple(
-        point
-        for route in subject_plan.selected.routes
-        for point in route.points_m
-    )
+    authored = tuple(point for route in subject_plan.selected.routes for point in route.points_m)
     maximum_reference_deviation = max(
-        _point_polyline_distance(sample["position_m"], authored)
-        for sample in subject_samples
+        _point_polyline_distance(sample["position_m"], authored) for sample in subject_samples
     )
 
     assert protected_boundary(subject_samples) >= protected_boundary(baseline_samples) + 0.01

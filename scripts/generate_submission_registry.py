@@ -3,7 +3,7 @@
 
 The source matrix is intentionally compact here, while the generated YAML freezes
 every discovered case hash and expands each admission record through the production
-schema.  Regeneration fails if the catalog or the reviewed 20/18/16 inventory moves.
+schema. Regeneration fails if the catalog or the reviewed 21/18/16 inventory moves.
 """
 
 # The compact reviewed matrix intentionally keeps one complete experiment per line.
@@ -408,6 +408,10 @@ MATRIX: dict[str, list[dict[str, object]] | str] = {
             fallback="CONTROLLED_LAND",
         ),
     ],
+    "1d.online_obstacle_replan.dynamic_nominal": (
+        "The sensed changed-world route uses the baseline accepted program; each future "
+        "suffix is admitted only through perception and safe-prefix authority."
+    ),
     "1d.operator_approval_goal_replacement.dynamic_nominal": "Hash-bound operator approval is the causal question; bypass authority is not a valid alternative.",
     "1d.abort_and_land_goal_fallback.dynamic_nominal": "The approved abort-and-land fallback defines the case; another destination requires a successor case.",
     "1d.failure_recovery.dynamic_nominal": "Observation loss retains the reviewed safe recovery; speculative navigation is not admitted.",
@@ -1123,7 +1127,6 @@ MATRIX: dict[str, list[dict[str, object]] | str] = {
 # certified plan inside the immutable case bounds, while the second compiled to the
 # same accepted candidate as its baseline or experiment peer.
 UNSUPPORTED_IDS = {
-    "corner_transition.lookahead_0_20s",
     "constrained_height.lateral_only",
     "no_hover.speed_only",
     "no_hover.lateral_only",
@@ -1154,16 +1157,10 @@ ATOMIC_DISABLED_IDS = {
 }
 
 R6_COLLAPSE_KEYS = {
-    "1d.boundary_constrained_route.canonical_nominal/boundary.route_fidelity",
-    "1d.continuous_waypoint_sequence.canonical_nominal/waypoint.centerline_first",
-    "1d.curved_route.canonical_nominal/curve.centerline_fidelity",
     "1d.move_return.canonical_nominal/turnaround.reversal_stop_first",
-    "1d.planar_shape_loop.circle/loop.radial_fidelity",
-    "1d.planar_shape_loop.figure_eight/loop.crossover_fidelity",
     "1d.point_to_point_relocation.canonical_nominal/relocation.minimum_time",
     "1d.point_to_point_relocation.canonical_nominal/relocation.energy_reserve",
     "1d.static_multi_goal_sequence.canonical_nominal/goals.shortest_valid_capture",
-    "2d.bottleneck.canonical_nominal/bottleneck.fair_precedence",
     "2d.constrained_border_height.canonical_nominal/constrained_height.timing_only",
     "2d.formation_spacing.canonical_nominal/formation.spacing_fidelity",
     "2d.formation_spacing.canonical_nominal/formation.centroid_smoothness",
@@ -1173,7 +1170,6 @@ R6_COLLAPSE_KEYS = {
     "2d.parallel_routes.canonical_nominal/parallel.phase_locked",
     "2d.parallel_routes.canonical_nominal/parallel.energy_balanced",
     "2d.unequal_priority.canonical_nominal/priority.bounded_fairness",
-    "3d.constrained_volume.canonical_nominal/constrained.priority_order",
     "3d.formation_shape_transform.canonical_nominal/formation.shape_fidelity",
     "3d.formation_shape_transform.canonical_nominal/formation.centroid_smoothness",
     "3d.formation_shape_transform.canonical_nominal/formation.energy_balance",
@@ -1184,10 +1180,17 @@ R6_COLLAPSE_KEYS = {
     "3d.unequal_priorities.canonical_nominal/priorities.minimax_wait",
 }
 
+WP58_DISTINGUISHED_KEYS = {
+    "1d.boundary_constrained_route.canonical_nominal/boundary.route_fidelity",
+    "1d.continuous_waypoint_sequence.canonical_nominal/waypoint.centerline_first",
+    "1d.curved_route.canonical_nominal/curve.centerline_fidelity",
+    "1d.planar_shape_loop.circle/loop.radial_fidelity",
+    "1d.planar_shape_loop.figure_eight/loop.crossover_fidelity",
+    "2d.bottleneck.canonical_nominal/bottleneck.fair_precedence",
+    "3d.constrained_volume.canonical_nominal/constrained.priority_order",
+}
+
 R6_PEER_COLLAPSE_TARGETS = {
-    "2d.bottleneck.canonical_nominal/bottleneck.fair_precedence": (
-        "2d.bottleneck.canonical_nominal/bottleneck.earliest_safe_release"
-    ),
     "2d.unequal_priority.canonical_nominal/priority.bounded_fairness": (
         "2d.unequal_priority.canonical_nominal/priority.strict_lexicographic"
     ),
@@ -1204,15 +1207,13 @@ R6_PEER_COLLAPSE_TARGETS = {
 
 R6_CAPACITY_RELATIONS = {
     "2d.head_on_conflict.canonical_nominal/head_on.earliest_safe_release": (
-        "CAT(DS_MANEUVER=timing),ARGMIN_BOUNDED(TM_RELEASE),"
-        "PASS(TM_OVERLAP),PASS(SP_CLEARANCE)"
+        "CAT(DS_MANEUVER=timing),ARGMIN_BOUNDED(TM_RELEASE),PASS(TM_OVERLAP),PASS(SP_CLEARANCE)"
     ),
     "2d.merge.canonical_nominal/merge.fair_release": (
         "MIN(TM_WAIT),PASS(TM_OVERLAP),PASS(SP_CLEARANCE)"
     ),
     "2d.perpendicular_crossing.nominal_equal_priority/crossing.earliest_equal_release": (
-        "CAT(DS_MANEUVER=timing),ARGMIN_BOUNDED(TM_RELEASE),"
-        "PASS(TM_OVERLAP),PASS(SP_CLEARANCE)"
+        "CAT(DS_MANEUVER=timing),ARGMIN_BOUNDED(TM_RELEASE),PASS(TM_OVERLAP),PASS(SP_CLEARANCE)"
     ),
 }
 
@@ -1231,8 +1232,7 @@ R6_PROFILE_ORACLES = {
         "axis": "SCALAR_PARAMETER",
         "axis_value": "duration_scale_1_30",
         "qualifying_relation": (
-            "MIN(DY_JERK),MAX(TM_DURATION),PASS(SP_RADIAL),PASS(SP_REFERENCE),"
-            "PASS(SP_CAPTURE)"
+            "MIN(DY_JERK),MAX(TM_DURATION),PASS(SP_RADIAL),PASS(SP_REFERENCE),PASS(SP_CAPTURE)"
         ),
     },
     "1d.planar_shape_loop.figure_eight/loop.curvature_continuity": {
@@ -1289,6 +1289,60 @@ R6_ATOMIC_PEERS = {
 def _reconcile_admission_registry() -> None:
     payload = yaml.safe_load(ADMISSION_OUTPUT.read_text(encoding="utf-8"))
     payload["oracle_contract_version"] = "wp52-56-r6-verified-oracle-v1"
+    registry_payload = yaml.safe_load(OUTPUT.read_text(encoding="utf-8"))
+    registry_by_id = {row["case_id"]: row for row in registry_payload["rows"]}
+    for row in payload["rows"]:
+        registry_row = registry_by_id.get(row["case_id"])
+        if registry_row is not None:
+            row["expected_case_sha256"] = registry_row["expected_case_sha256"]
+    existing_ids = {row["case_id"] for row in payload["rows"]}
+    for registry_row in registry_payload["rows"]:
+        if registry_row["case_id"] in existing_ids:
+            continue
+        rationale = registry_row.get(
+            "baseline_only_rationale",
+            "No alternative submission is admitted for this successor case.",
+        )
+        payload["rows"].append(
+            {
+                "case_id": registry_row["case_id"],
+                "expected_case_sha256": registry_row["expected_case_sha256"],
+                "lifecycle": "BASELINE_ONLY",
+                "proposed_additions_or_disposition": "`BASELINE_ONLY`",
+                "causal_question": rationale,
+                "baseline_limitation": "`BASELINE_ONLY`",
+                "fixed_inputs": [
+                    "case_hash",
+                    "world_hash",
+                    "vehicle_model_hash",
+                    "route_and_event_truth",
+                    "hard_constraints",
+                    "backend_configuration",
+                    "search_budget",
+                    "seed",
+                ],
+                "comparison_and_distinguishing_oracle": rationale,
+                "metric_ids": ["SP_CAPTURE", "DS_TERMINAL_STATE", "DS_COMMAND_OWNERSHIP"],
+                "reused_evidence": [
+                    "immutable_case_hash",
+                    "bounded_planner_contract",
+                    "continuous_safety_certificate",
+                ],
+                "new_integration_gate": rationale,
+                "backend_semantics": (
+                    "The exact baseline package enters Fast Sim production; hardware and "
+                    "physical-flight equivalence are not implied."
+                ),
+                "safety_bounds": (
+                    "Volume, dynamics, energy, freshness, authority, atomicity, and terminal "
+                    "gates remain hard."
+                ),
+                "operator_comparison": rationale,
+                "learning_value": rationale,
+                "proposals": [],
+            }
+        )
+    payload["rows"].sort(key=lambda row: row["case_id"])
     proposal_count = 0
     collapse_count = 0
     context_keys: set[str] = set()
@@ -1300,29 +1354,27 @@ def _reconcile_admission_registry() -> None:
             if key in R6_COLLAPSE_KEYS:
                 proposal["qualifying_relation"] = "COLLAPSE_ALL"
                 target = R6_PEER_COLLAPSE_TARGETS.get(key)
-                proposal["comparator_id"] = (
-                    f"PEER({target})" if target else f"BASELINE({case_id})"
-                )
+                proposal["comparator_id"] = f"PEER({target})" if target else f"BASELINE({case_id})"
                 proposal["comparison_context_id"] = None
                 collapse_count += 1
+            elif key in WP58_DISTINGUISHED_KEYS:
+                proposal["qualifying_relation"] = "DISTINGUISHABLE_AFTER_WP58_WHOLE_ROUTE_SMOOTHING"
+                proposal["comparator_id"] = f"BASELINE({case_id})"
+                proposal["comparison_context_id"] = None
             elif key in R6_PROFILE_ORACLES:
                 proposal.update(R6_PROFILE_ORACLES[key])
                 proposal["comparator_id"] = f"BASELINE_EXECUTION_PROFILE({case_id})"
                 proposal["comparison_context_id"] = None
             elif key in R6_CAPACITY_RELATIONS:
                 proposal["qualifying_relation"] = R6_CAPACITY_RELATIONS[key]
-                proposal["comparator_id"] = (
-                    f"BASELINE({case_id},overlap-capacity-v1)"
-                )
+                proposal["comparator_id"] = f"BASELINE({case_id},overlap-capacity-v1)"
                 proposal["comparison_context_id"] = "overlap-capacity-v1"
                 context_keys.add(key)
             elif key in R6_ATOMIC_PEERS:
                 proposal["comparator_id"] = f"PEER({R6_ATOMIC_PEERS[key]})"
                 proposal["comparison_context_id"] = None
             elif key.endswith("/center.earliest_combined"):
-                proposal["qualifying_relation"] = (
-                    "OPEN(INCONCLUSIVE_MISSING_FEASIBLE_WITNESS)"
-                )
+                proposal["qualifying_relation"] = "OPEN(INCONCLUSIVE_MISSING_FEASIBLE_WITNESS)"
                 proposal["comparator_id"] = None
                 proposal["comparison_context_id"] = None
             elif key.endswith("/center.robust_combined"):
@@ -1334,7 +1386,7 @@ def _reconcile_admission_registry() -> None:
                 proposal["comparison_context_id"] = None
             elif proposal.get("comparison_context_id") is not None:
                 raise ValueError(f"unexpected R6 comparison context key: {key}")
-    if proposal_count != 111 or collapse_count != 28 or len(context_keys) != 3:
+    if proposal_count != 111 or collapse_count != 21 or len(context_keys) != 3:
         raise ValueError(
             "R6 admission cardinality mismatch: "
             f"proposals={proposal_count}, collapses={collapse_count}, contexts={len(context_keys)}"
@@ -1365,7 +1417,7 @@ def main() -> None:
             for case_id in cases
         ),
     }
-    if counts != {"1d": 20, "2d": 18, "3d": 16}:
+    if counts != {"1d": 21, "2d": 18, "3d": 16}:
         raise SystemExit(f"reviewed catalog cardinality changed: {counts}")
 
     rows: list[dict[str, object]] = []
@@ -1389,8 +1441,7 @@ def main() -> None:
                 compiled = dict(item)
                 proposal_key = f"{case_id}/{compiled['submission_id']}"
                 production_disposition = (
-                    compiled["submission_id"]
-                    not in (UNSUPPORTED_IDS | ATOMIC_DISABLED_IDS)
+                    compiled["submission_id"] not in (UNSUPPORTED_IDS | ATOMIC_DISABLED_IDS)
                     and proposal_key not in R6_COLLAPSE_KEYS
                 )
                 compiled["status"] = (
@@ -1407,11 +1458,7 @@ def main() -> None:
                     )
                 elif compiled["submission_id"] in UNSUPPORTED_IDS:
                     compiled["support_reason"] = (
-                        "The validated 0.20 s lookahead compiler requires safety retiming that "
-                        "exceeds the immutable rounded-square deadline; it remains visible as a "
-                        "precise safe rejection and issues no command."
-                        if compiled["submission_id"] == "corner_transition.lookahead_0_20s"
-                        else "Production planning did not certify this alternative inside the immutable "
+                        "Production planning did not certify this alternative inside the immutable "
                         "case bounds; it remains visible as a precise safe rejection and issues no command."
                     )
                 elif proposal_key in R6_COLLAPSE_KEYS:

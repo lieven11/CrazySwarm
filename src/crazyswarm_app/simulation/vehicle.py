@@ -81,6 +81,8 @@ def _vector_length(value: Vector3) -> float:
 
 
 class SimulatedVehicle(Vehicle):
+    _MIN_TELEMETRY_PERIOD_S = 1.0 / 500.0
+
     def __init__(
         self,
         identity: VehicleIdentity,
@@ -1382,6 +1384,14 @@ class SimulatedVehicle(Vehicle):
 
     async def _publish(self, *, bypass_transport_loss: bool = False) -> None:
         if self.faults.active(FaultType.STALE_TELEMETRY, self.clock.now_s):
+            return
+        source_delta_s = self.clock.now_s - self._last_published.source_timestamp_s
+        if 0.0 < source_delta_s < self._MIN_TELEMETRY_PERIOD_S - 1e-12:
+            # Physics integrates the exact final remainder of a command, which can
+            # be shorter than the telemetry contract's maximum 500 Hz source rate.
+            # Keep integration exact while sampling that state on the next eligible
+            # source tick. Same-tick state transitions remain publishable and are
+            # coalesced by downstream source-time adapters using the highest sequence.
             return
         if (
             not bypass_transport_loss

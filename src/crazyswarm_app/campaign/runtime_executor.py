@@ -3,11 +3,21 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+from collections.abc import Callable
 from contextlib import suppress
 from typing import TYPE_CHECKING
 
 from crazyswarm_app.campaign.execution import compile_campaign_execution_programs
 from crazyswarm_app.campaign.execution_head import CampaignExecutionHead
+from crazyswarm_app.campaign.models import (
+    ScenarioEventKind,
+    ScenarioExpectedDisposition,
+)
+from crazyswarm_app.campaign.perception import PerceptionObservation
+from crazyswarm_app.campaign.planner import (
+    DEFAULT_STABILIZATION_S,
+    DEFAULT_TAKEOFF_DURATION_S,
+)
 from crazyswarm_app.campaign.scenario import compile_scenario_trace
 from crazyswarm_app.campaign.service import (
     CampaignExecutionRequest,
@@ -15,6 +25,7 @@ from crazyswarm_app.campaign.service import (
     RunArtifactSet,
 )
 from crazyswarm_app.domain.models import OperatingMode, VehicleCapability, VehicleState
+from crazyswarm_app.domain.simulation import canonical_sha256
 from crazyswarm_app.fleet.artifacts import (
     BackendBindingProfile,
     BackendVehicleBinding,
@@ -40,6 +51,17 @@ from crazyswarm_app.missions.script import (
     parse_python_mission,
 )
 from crazyswarm_app.simulation.clock import ClockMode
+from crazyswarm_app.simulation.sensors import (
+    PerceptionModelConfig,
+    SimulatedPerceptionObservationSource,
+)
+from crazyswarm_app.simulation.world import (
+    DynamicWorldTimeline,
+    ObstacleConfig,
+    WorldTruthEvent,
+    WorldTruthEventKind,
+    materialize_seeded_world_events,
+)
 from crazyswarm_app.vehicles.providers import SoftwareBackendVehicleProvider
 
 if TYPE_CHECKING:
@@ -66,12 +88,22 @@ class FastSimCampaignExecutor:
         if not scenario_trace.all_expected_dispositions_observed:
             raise ValueError("campaign scenario disposition differs from its causal oracle")
         await runtime.cleanup_completed_execution_vehicles()
+        runtime.dynamic_obstacles.clear()
         runtime.supervisor.set_mode(OperatingMode.SIM)
 
         record = _campaign_mission(request)
+        perception_source = _perception_source(
+            request,
+            mission_id=record.mission_id,
+            initial_obstacles=runtime.scenario.world.obstacles,
+            on_release=lambda observation: _show_perceived_obstacle(runtime, observation),
+        )
         execution_head = CampaignExecutionHead(
             case=request.case,
             planning_submission=request.resolved_package.planning_submission,
+            perception_source=perception_source,
+            mission_id=record.mission_id,
+            run_id=request.run_id,
         )
         mission = _HeadAwareCampaignMission(record, execution_head)
         runtime.missions.register(mission, replace=True)
@@ -94,10 +126,7 @@ class FastSimCampaignExecutor:
             if controls is None:
                 raise RuntimeError("campaign executor received a non-simulation vehicle")
             controls.reset()
-            if (
-                request.mode is CampaignRunMode.AUTOMATED_ACCELERATED
-                and execution_head.enabled
-            ):
+            if request.mode is CampaignRunMode.AUTOMATED_ACCELERATED and execution_head.enabled:
                 # A paced accelerated clock gives the source-time execution head a
                 # deterministic observation boundary.  An unpaced coroutine clock
                 # can complete a whole route before another task observes its first
@@ -185,6 +214,7 @@ class FastSimCampaignExecutor:
                 await preparation.disconnect_all_safe()
             with suppress(KeyError):
                 runtime.missions.unregister(record.mission_id)
+            runtime.dynamic_obstacles.clear()
 
         context = {
             "campaign_locked_inputs": request.locked_inputs.model_dump(mode="json"),
@@ -238,9 +268,7 @@ class FastSimCampaignExecutor:
                 "case_sha256": request.case.case_sha256,
                 "plan_sha256": request.plan.plan_sha256,
                 "planning_submission_id": request.locked_inputs.planning_submission_id,
-                "planning_submission_sha256": (
-                    request.locked_inputs.planning_submission_sha256
-                ),
+                "planning_submission_sha256": (request.locked_inputs.planning_submission_sha256),
                 "resolved_planning_package_sha256": (
                     request.locked_inputs.resolved_planning_package_sha256
                 ),
@@ -250,9 +278,7 @@ class FastSimCampaignExecutor:
                 "case_sha256": request.case.case_sha256,
                 "campaign_plan": request.plan.model_dump(mode="json"),
                 "planning_submission_id": request.locked_inputs.planning_submission_id,
-                "planning_submission_sha256": (
-                    request.locked_inputs.planning_submission_sha256
-                ),
+                "planning_submission_sha256": (request.locked_inputs.planning_submission_sha256),
                 "resolved_planning_package_sha256": (
                     request.locked_inputs.resolved_planning_package_sha256
                 ),
@@ -286,6 +312,111 @@ class _HeadAwareCampaignMission(ScriptMission):
             context,
             trajectory_executor=self.execution_head.execute,
         )
+
+
+def _perception_source(
+    request: CampaignExecutionRequest,
+    *,
+    mission_id: str,
+    initial_obstacles: tuple[ObstacleConfig, ...],
+    on_release: Callable[[PerceptionObservation], None] | None = None,
+) -> SimulatedPerceptionObservationSource | None:
+    semantics = request.case.semantics
+    if semantics is None:
+        return None
+    accepted = tuple(
+        event
+        for event in semantics.scenario_events
+        if event.kind in _WORLD_TRUTH_KIND_BY_SCENARIO
+        and event.expected_disposition is ScenarioExpectedDisposition.ACCEPTED_UPDATE
+    )
+    if not accepted:
+        return None
+    truth_events = []
+    route_start_offset_s = (
+        DEFAULT_TAKEOFF_DURATION_S
+        + DEFAULT_STABILIZATION_S
+        + min(
+            (
+                item.ground_wait_s
+                for item in (
+                    request.plan.selected.routes if request.plan.selected is not None else ()
+                )
+            ),
+            default=0.0,
+        )
+    )
+    for event in accepted:
+        region = event.environment_region
+        solid_id = (
+            event.update_identity
+            if event.kind is ScenarioEventKind.OBSTACLE_REMOVED
+            else region.region_id
+            if region is not None
+            else None
+        )
+        if solid_id is None or event.duration_s is None:
+            raise ValueError("dynamic world scenario event has incomplete truth geometry")
+        obstacle = (
+            ObstacleConfig(
+                obstacle_id=solid_id,
+                minimum_m=region.minimum_m,
+                maximum_m=region.maximum_m,
+            )
+            if region is not None
+            else None
+        )
+        truth_events.append(
+            WorldTruthEvent.create(
+                event_id=event.event_id,
+                sequence=event.sequence,
+                source_timestamp_s=event.trigger_time_s + route_start_offset_s,
+                effective_source_s=(event.trigger_time_s + route_start_offset_s + event.duration_s),
+                kind=_WORLD_TRUTH_KIND_BY_SCENARIO[event.kind],
+                solid_id=solid_id,
+                obstacle=obstacle,
+            )
+        )
+    truth_events = list(
+        materialize_seeded_world_events(
+            tuple(truth_events),
+            seed_material=canonical_sha256((request.case.execution.seed, request.run_id)),
+            volume_minimum_m=request.case.hard_constraints.flight_volume.minimum_m,
+            volume_maximum_m=request.case.hard_constraints.flight_volume.maximum_m,
+        )
+    )
+    first_vehicle_id = min(item.role_id for item in request.case.drones)
+    return SimulatedPerceptionObservationSource(
+        timeline=DynamicWorldTimeline(initial_obstacles, tuple(truth_events)),
+        config=PerceptionModelConfig(),
+        mission_id=mission_id,
+        run_id=request.run_id,
+        vehicle_id=first_vehicle_id,
+        on_release=on_release,
+    )
+
+
+def _show_perceived_obstacle(
+    runtime: ApplicationRuntime,
+    observation: PerceptionObservation,
+) -> None:
+    if observation.region is None:
+        runtime.dynamic_obstacles.pop(observation.solid_id, None)
+        return
+    runtime.dynamic_obstacles[observation.solid_id] = ObstacleConfig(
+        obstacle_id=observation.solid_id,
+        minimum_m=observation.region.minimum_m,
+        maximum_m=observation.region.maximum_m,
+    )
+
+
+_WORLD_TRUTH_KIND_BY_SCENARIO = {
+    ScenarioEventKind.OBSTACLE_ADDED: WorldTruthEventKind.SOLID_APPEARED,
+    ScenarioEventKind.OBSTACLE_MOVED: WorldTruthEventKind.SOLID_MOVED,
+    ScenarioEventKind.OBSTACLE_REMOVED: WorldTruthEventKind.SOLID_DISAPPEARED,
+    ScenarioEventKind.PASSAGE_CLOSED: WorldTruthEventKind.PASSAGE_CLOSED,
+    ScenarioEventKind.PASSAGE_OPENED: WorldTruthEventKind.PASSAGE_OPENED,
+}
 
 
 def _campaign_mission(request: CampaignExecutionRequest) -> MissionFileRecord:

@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from crazyswarm_app.campaign.catalog import CampaignCatalog
+from crazyswarm_app.campaign.geometry import structured_world_from_case
 from crazyswarm_app.campaign.models import (
     CampaignCase,
     PlannerStrategy,
@@ -14,6 +15,7 @@ from crazyswarm_app.campaign.models import (
 )
 from crazyswarm_app.campaign.planner import BoundedJointPlanner
 from crazyswarm_app.campaign.replanning import (
+    ChangedWorldSafetyMonitor,
     DynamicEventKind,
     DynamicReplanDisposition,
     FleetRouteReplacement,
@@ -282,6 +284,15 @@ def test_changed_world_object_in_line_produces_real_certified_atomic_replacement
         for item in proposal.route_authorities
     )
 
+    safe_prefix = ChangedWorldSafetyMonitor(case).certify(
+        event=event,
+        observations=observations,
+        active_trajectories=old_trajectories,
+        perceived_world_sha256="b" * 64,
+        old_world_sha256=structured_world_from_case(case).world_sha256,
+        minimum_clearance_m=0.15,
+    )
+
     decision = commit_changed_world_replacement(
         proposal,
         coordinator=InFlightReplanCoordinator(case),
@@ -289,12 +300,12 @@ def test_changed_world_object_in_line_produces_real_certified_atomic_replacement
         queue_latency_s=0.0,
         acknowledgement_latency_s=0.02,
         cutover_guard_s=0.10,
-        old_epoch_safe_until_source_s=8.0,
-        old_epoch_still_safe=True,
+        safe_prefix_certificate=safe_prefix,
         old_epoch=1,
         old_reservation_sha256="a" * 64,
         cancellation_acknowledged_role_ids=frozenset({"Alpha", "Beta"}),
         replacement_acknowledged_role_ids=frozenset({"Alpha", "Beta"}),
+        fallback_acknowledged_role_ids=frozenset({"Alpha", "Beta"}),
     )
     assert decision.disposition is DynamicReplanDisposition.ACCEPTED
     assert decision.fleet_decision is not None

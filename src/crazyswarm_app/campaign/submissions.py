@@ -16,9 +16,13 @@ from crazyswarm_app.campaign.models import (
     CampaignCase,
     EnvironmentKind,
     ImplementationStatus,
+    MotionQualityContract,
+    MotionQualityMetric,
+    MotionSpeedLaw,
     ObjectiveMetric,
     PlannerStrategy,
     RouteNodeMode,
+    motion_contract_for,
 )
 from crazyswarm_app.domain.models import ContractModel, Identifier, Vector3
 from crazyswarm_app.domain.simulation import SHA256, canonical_sha256
@@ -31,28 +35,76 @@ CORNER_TRANSITION_CAPABILITY_ID = "core.corner_transition"
 ENERGY_AWARE_RETIMING_CAPABILITY_ID = "core.energy_aware_retiming"
 SUBMISSION_REGISTRY_PATH = Path("missions/campaigns/sim/submissions/case-submissions-v1.yaml")
 CAPABILITY_REGISTRY_PATH = Path("missions/campaigns/sim/submissions/capabilities-v1.yaml")
-ADMISSION_RECORDS_PATH = Path(
-    "missions/campaigns/sim/submissions/admission-records-v1.yaml"
-)
+ADMISSION_RECORDS_PATH = Path("missions/campaigns/sim/submissions/admission-records-v1.yaml")
 SEMANTIC_POLYLINE_RULE_VERSION = "semantic-polyline-v1"
 OVERLAP_CAPACITY_CONTEXT_ID = "overlap-capacity-v1"
 OVERLAP_CAPACITY_CONTEXT = {"minimum_simultaneous_flight_s": 2.0}
-OVERLAP_CAPACITY_CONTEXT_SHA256 = (
-    "5254a2e98af7599c2d81bdf4457d94f7b44768d267a4a51d374752651b445f63"
-)
+OVERLAP_CAPACITY_CONTEXT_SHA256 = "5254a2e98af7599c2d81bdf4457d94f7b44768d267a4a51d374752651b445f63"
 QUALIFICATION_METRIC_IDS = frozenset(
-    """DS_ACKNOWLEDGED_ROLES DS_AFFECTED_ROLES DS_ALL_ROLE_COMPLETION DS_ASSIGNMENT
-    DS_COMMAND_OWNERSHIP DS_DIRECTION_CHANGE_COUNT DS_DISPOSITION DS_FALLBACK DS_FLEET_EPOCH
-    DS_GENERATION DS_LEASE_GENERATION DS_LOBE_ORDER DS_MANEUVER DS_OCCUPANCY_INTERVALS
-    DS_PARTIAL_COMMIT_COUNT DS_PREPARED_ROLES DS_PRIORITY_INVERSION_COUNT DS_QUEUE_ORDER
-    DS_REVERSAL_COUNT DS_ROLE_ORDER DS_ROUTE_IDENTITY DS_SCHEDULE DS_STALE_COMMAND_COUNT
-    DS_TERMINAL_STATE DS_TOPOLOGY DS_UNINTENDED_STOP_COUNT DY_ACCELERATION DY_CURVATURE
-    DY_JERK DY_SPEED_MIN DY_SPEED_TRACKING DY_VERTICAL_TRACKING EN_ACTUATOR_HEADROOM_N
-    EN_ENERGY_WH EN_RESERVE_PP EN_SPREAD_PP SP_BOUNDARY SP_CAPTURE SP_CLEARANCE SP_CLOSURE
-    SP_CORNER_CUT SP_FORMATION SP_OFFSET SP_RADIAL SP_REFERENCE SP_SPACING SP_SPLICE_POSITION
-    SP_UNAFFECTED_PATH TM_COVERAGE_GAP TM_CUTOVER TM_DURATION TM_DWELL TM_FINISH_SKEW
-    TM_HOLD TM_HORIZON TM_OVERLAP TM_PHASE_ERROR TM_RELEASE TM_SETTLE TM_STARVATION
-    TM_TRANSITION_START TM_WAIT""".split()
+    [
+        "DS_ACKNOWLEDGED_ROLES",
+        "DS_AFFECTED_ROLES",
+        "DS_ALL_ROLE_COMPLETION",
+        "DS_ASSIGNMENT",
+        "DS_COMMAND_OWNERSHIP",
+        "DS_DIRECTION_CHANGE_COUNT",
+        "DS_DISPOSITION",
+        "DS_FALLBACK",
+        "DS_FLEET_EPOCH",
+        "DS_GENERATION",
+        "DS_LEASE_GENERATION",
+        "DS_LOBE_ORDER",
+        "DS_MANEUVER",
+        "DS_OCCUPANCY_INTERVALS",
+        "DS_PARTIAL_COMMIT_COUNT",
+        "DS_PREPARED_ROLES",
+        "DS_PRIORITY_INVERSION_COUNT",
+        "DS_QUEUE_ORDER",
+        "DS_REVERSAL_COUNT",
+        "DS_ROLE_ORDER",
+        "DS_ROUTE_IDENTITY",
+        "DS_SCHEDULE",
+        "DS_STALE_COMMAND_COUNT",
+        "DS_TERMINAL_STATE",
+        "DS_TOPOLOGY",
+        "DS_UNINTENDED_STOP_COUNT",
+        "DY_ACCELERATION",
+        "DY_CURVATURE",
+        "DY_JERK",
+        "DY_SPEED_MIN",
+        "DY_SPEED_TRACKING",
+        "DY_VERTICAL_TRACKING",
+        "EN_ACTUATOR_HEADROOM_N",
+        "EN_ENERGY_WH",
+        "EN_RESERVE_PP",
+        "EN_SPREAD_PP",
+        "SP_BOUNDARY",
+        "SP_CAPTURE",
+        "SP_CLEARANCE",
+        "SP_CLOSURE",
+        "SP_CORNER_CUT",
+        "SP_FORMATION",
+        "SP_OFFSET",
+        "SP_RADIAL",
+        "SP_REFERENCE",
+        "SP_SPACING",
+        "SP_SPLICE_POSITION",
+        "SP_UNAFFECTED_PATH",
+        "TM_COVERAGE_GAP",
+        "TM_CUTOVER",
+        "TM_DURATION",
+        "TM_DWELL",
+        "TM_FINISH_SKEW",
+        "TM_HOLD",
+        "TM_HORIZON",
+        "TM_OVERLAP",
+        "TM_PHASE_ERROR",
+        "TM_RELEASE",
+        "TM_SETTLE",
+        "TM_STARVATION",
+        "TM_TRANSITION_START",
+        "TM_WAIT",
+    ]
 )
 
 
@@ -75,13 +127,12 @@ class NormalizedPolyline(ContractModel):
 
     @model_validator(mode="after")
     def identities_match_payload(self) -> NormalizedPolyline:
-        if not (
-            len(self.raw_node_ids) == len(self.raw_node_modes) == len(self.raw_points_m)
-        ):
+        if not (len(self.raw_node_ids) == len(self.raw_node_modes) == len(self.raw_points_m)):
             raise ValueError("normalized polyline raw node fields must have equal length")
-        if self.retained_raw_indices[0] != 0 or self.retained_raw_indices[-1] != len(
-            self.raw_points_m
-        ) - 1:
+        if (
+            self.retained_raw_indices[0] != 0
+            or self.retained_raw_indices[-1] != len(self.raw_points_m) - 1
+        ):
             raise ValueError("normalized polyline must retain both endpoints")
         if tuple(sorted(set(self.retained_raw_indices))) != self.retained_raw_indices:
             raise ValueError("normalized polyline indices must be unique and increasing")
@@ -136,9 +187,9 @@ class CapabilityFeasibilityRecord(ContractModel):
     def disposition_matches_constraints(self) -> CapabilityFeasibilityRecord:
         if not self.complete_bounded_compiler:
             raise ValueError("capability feasibility record requires a complete compiler")
-        if (
-            self.disposition is CapabilityFeasibilityDisposition.PROVEN_INFEASIBLE
-        ) != bool(self.violated_constraints):
+        if (self.disposition is CapabilityFeasibilityDisposition.PROVEN_INFEASIBLE) != bool(
+            self.violated_constraints
+        ):
             raise ValueError("capability feasibility disposition/violations mismatch")
         payload = self.model_dump(mode="python", exclude={"evidence_sha256"})
         if self.evidence_sha256 != canonical_sha256(payload):
@@ -204,9 +255,7 @@ class EnergyRetimingResolution(ContractModel):
             raise ValueError("energy resolution has no feasible candidate")
         minimum_energy = min(item.predicted_energy_wh for item in feasible)
         energy_ties = tuple(
-            item
-            for item in feasible
-            if item.predicted_energy_wh <= minimum_energy + 1e-5
+            item for item in feasible if item.predicted_energy_wh <= minimum_energy + 1e-5
         )
         expected = min(
             energy_ties,
@@ -482,14 +531,17 @@ class CapabilityResolution(ContractModel):
                 abs_tol=1e-9,
             ):
                 raise ValueError("turn blend radius does not match bounded derivation")
-        elif any(
-            value is not None
-            for value in (
-                self.normalization_rule_version,
-                self.normalized_geometry_sha256,
-                self.feasibility,
+        elif (
+            any(
+                value is not None
+                for value in (
+                    self.normalization_rule_version,
+                    self.normalized_geometry_sha256,
+                    self.feasibility,
+                )
             )
-        ) or self.raw_capture_sha256s:
+            or self.raw_capture_sha256s
+        ):
             raise ValueError("non-corner capability cannot carry corner geometry evidence")
         return self
 
@@ -714,9 +766,7 @@ class ExecutionCapabilityRequest(ContractModel):
                     parameters.lookahead_time_s,
                 )
             ):
-                raise ValueError(
-                    "energy-aware retiming has no caller-selected scalar parameter"
-                )
+                raise ValueError("energy-aware retiming has no caller-selected scalar parameter")
         elif self.capability_id == ROUTE_FIDELITY_CAPABILITY_ID:
             if parameters.segment_target_speeds_m_s or any(
                 value is not None
@@ -889,6 +939,78 @@ class ExecutionProfileSubmission(ContractModel):
         )
 
 
+def motion_contract_for_execution_profile(
+    case: CampaignCase,
+    profile: ExecutionProfileSubmission,
+) -> MotionQualityContract:
+    """Bind the flown time law to the immutable motion-quality guard vector.
+
+    Execution profiles may reorder objectives and declare the requested speed law,
+    but they do not silently loosen any of the case's quantitative safety or motion
+    guards.  The returned contract is therefore suitable for hashing into the plan,
+    trajectory set, execution request, and retained analysis.
+    """
+
+    contract = motion_contract_for(case)
+    kind = profile.kind
+    if kind in {
+        ExecutionProfileKind.CONSTANT_PATH_SPEED,
+        ExecutionProfileKind.CORNER_TRANSITION,
+    }:
+        target_speed = profile.parameters.target_path_speed_m_s
+        if target_speed is None:  # Model validation already prevents this.
+            raise ValueError(f"{kind.value} profile has no target path speed")
+        objectives = (
+            (
+                MotionQualityMetric.JERK,
+                MotionQualityMetric.SPEED_RIPPLE,
+                MotionQualityMetric.PATH_ADHERENCE,
+                MotionQualityMetric.DURATION,
+            )
+            if kind is ExecutionProfileKind.CORNER_TRANSITION
+            else (
+                MotionQualityMetric.SPEED_COMPLIANCE,
+                MotionQualityMetric.SPEED_RIPPLE,
+                MotionQualityMetric.PATH_ADHERENCE,
+                MotionQualityMetric.JERK,
+            )
+        )
+        return contract.model_copy(
+            update={
+                "speed_law": MotionSpeedLaw.CONSTANT,
+                "target_speed_m_s": target_speed,
+                "objective_order": objectives,
+            }
+        )
+    if kind is ExecutionProfileKind.RAMPED_SEGMENT_SPEED:
+        return contract.model_copy(
+            update={
+                "speed_law": MotionSpeedLaw.RAMPED,
+                "target_speed_m_s": None,
+                "objective_order": (
+                    MotionQualityMetric.SPEED_COMPLIANCE,
+                    MotionQualityMetric.JERK,
+                    MotionQualityMetric.PATH_ADHERENCE,
+                    MotionQualityMetric.DURATION,
+                ),
+            }
+        )
+    if kind is ExecutionProfileKind.DURATION_SCALE:
+        return contract.model_copy(
+            update={
+                "speed_law": MotionSpeedLaw.PRECISION_FIRST,
+                "target_speed_m_s": None,
+                "objective_order": (
+                    MotionQualityMetric.ENERGY,
+                    MotionQualityMetric.DURATION,
+                    MotionQualityMetric.PATH_ADHERENCE,
+                    MotionQualityMetric.JERK,
+                ),
+            }
+        )
+    return contract
+
+
 class CapabilityRegistrySpec(ContractModel):
     capability_id: Identifier
     owner: ExecutionProfileOwner
@@ -1000,7 +1122,7 @@ class CaseAdmissionRecord(ContractModel):
 class AdmissionRegistry(ContractModel):
     schema_version: Literal[1] = 1
     oracle_contract_version: Literal["wp52-56-r6-verified-oracle-v1"]
-    rows: tuple[CaseAdmissionRecord, ...] = Field(min_length=54, max_length=54)
+    rows: tuple[CaseAdmissionRecord, ...] = Field(min_length=55, max_length=55)
     source_payload_sha256: SHA256
 
     @model_validator(mode="after")
@@ -1166,7 +1288,7 @@ class CaseSubmissionRegistry(ContractModel):
                 for item in self.rows
             ),
         }
-        if self.reviewed_counts != observed or observed != {"1d": 20, "2d": 18, "3d": 16}:
+        if self.reviewed_counts != observed or observed != {"1d": 21, "2d": 18, "3d": 16}:
             raise ValueError(f"submission registry cardinality mismatch: {observed}")
         case_ids = tuple(item.case_id for item in self.rows)
         if len(set(case_ids)) != len(case_ids):
@@ -1225,23 +1347,17 @@ def validate_admission_registry(
                 or oracle.axis is not spec.axis
                 or oracle.axis_value != spec.axis_value
             ):
-                raise ValueError(
-                    f"admission proposal axis mismatch for {case_id}/{submission_id}"
-                )
+                raise ValueError(f"admission proposal axis mismatch for {case_id}/{submission_id}")
             if oracle.comparison_context_id is not None:
                 contextual_keys.add(f"{case_id}/{submission_id}")
     expected_contextual_keys = {
         "2d.head_on_conflict.canonical_nominal/head_on.earliest_safe_release",
         "2d.merge.canonical_nominal/merge.fair_release",
-        (
-            "2d.perpendicular_crossing.nominal_equal_priority/"
-            "crossing.earliest_equal_release"
-        ),
+        ("2d.perpendicular_crossing.nominal_equal_priority/crossing.earliest_equal_release"),
     }
     if contextual_keys != expected_contextual_keys:
         raise ValueError(
-            "admission registry overlap-capacity context mismatch: "
-            f"{sorted(contextual_keys)}"
+            f"admission registry overlap-capacity context mismatch: {sorted(contextual_keys)}"
         )
     hidden_keys = {
         f"{row.case_id}/{item.submission_id}"
@@ -1255,8 +1371,16 @@ def validate_admission_registry(
         for item in row.proposals
         if item.qualifying_relation == "COLLAPSE_ALL"
     }
-    if hidden_keys != admission_collapse_keys or len(hidden_keys) != 28:
-        raise ValueError("R6 hidden/collapse partition must contain the same exact 28 keys")
+    if hidden_keys != admission_collapse_keys or len(hidden_keys) != 21:
+        raise ValueError("current hidden/collapse partition must contain the same exact 21 keys")
+    distinguished_keys = {
+        f"{row.case_id}/{item.submission_id}"
+        for row in admissions.rows
+        for item in row.proposals
+        if item.qualifying_relation == "DISTINGUISHABLE_AFTER_WP58_WHOLE_ROUTE_SMOOTHING"
+    }
+    if len(distinguished_keys) != 7 or distinguished_keys & hidden_keys:
+        raise ValueError("WP58 distinguished proposals must be seven visible non-collapse keys")
 
     boundary = admissions_by_id["1d.boundary_constrained_route.canonical_nominal"]
     if "Continuous boundary clearance and reference deviation" not in (
@@ -1287,9 +1411,7 @@ def load_case_submission_registry() -> CaseSubmissionRegistry:
 
 def admission_record_for_case(case: CampaignCase) -> CaseAdmissionRecord:
     source = _registry_source_row_for_case(case)
-    record = next(
-        item for item in load_admission_registry().rows if item.case_id == source.case_id
-    )
+    record = next(item for item in load_admission_registry().rows if item.case_id == source.case_id)
     if source.case_id == case.case_id:
         return record
     return record.model_copy(
@@ -1302,9 +1424,7 @@ def proposal_oracle_for_case(
     submission_id: str,
 ) -> ProposalOracleRecord:
     record = admission_record_for_case(case)
-    return next(
-        item for item in record.proposals if item.submission_id == submission_id
-    )
+    return next(item for item in record.proposals if item.submission_id == submission_id)
 
 
 def _registry_source_row_for_case(case: CampaignCase) -> CaseSubmissionRegistryRow:
@@ -1801,14 +1921,10 @@ def compile_contextual_planning_submission(
     else:
         oracle = proposal_oracle_for_case(case, selected_id)
         if oracle.comparison_context_id != OVERLAP_CAPACITY_CONTEXT_ID:
-            raise ValueError(
-                f"planning submission {selected_id} is outside overlap-capacity-v1"
-            )
+            raise ValueError(f"planning submission {selected_id} is outside overlap-capacity-v1")
         source = resolve_planning_submission(case, selected_id, require_executable=False)
         contextual_id = selected_id
-    coordination = baseline.coordination.model_copy(
-        update=OVERLAP_CAPACITY_CONTEXT
-    )
+    coordination = baseline.coordination.model_copy(update=OVERLAP_CAPACITY_CONTEXT)
     updates: dict[str, object] = {
         "planning_submission_id": contextual_id,
         "display_name": source.display_name,
@@ -1840,9 +1956,7 @@ def compile_contextual_planning_submission(
     elif source.experiment_axis is ExperimentAxis.OBJECTIVE_ORDER:
         updates["objective"] = source.objective
     else:
-        raise ValueError(
-            f"overlap comparison does not define axis {source.experiment_axis.value}"
-        )
+        raise ValueError(f"overlap comparison does not define axis {source.experiment_axis.value}")
     return baseline.model_copy(update=updates)
 
 
@@ -2037,9 +2151,7 @@ def bind_planning_capability(
             if item.case_id == "1d.curved_route.canonical_nominal"
         }
     ):
-        raise ValueError(
-            "core.route_fidelity is qualified only for the curved-route anchor family"
-        )
+        raise ValueError("core.route_fidelity is qualified only for the curved-route anchor family")
     if PlannerStrategy.DIRECT not in case.allowed_strategies:
         raise ValueError("compatible child removed required exact-route planning authority")
 
@@ -2266,62 +2378,66 @@ def _planning_submission(
     objective_order = case.objective_order
     if spec is not None and spec.objective_focus:
         objective_order = tuple(dict.fromkeys((*spec.objective_focus, *case.objective_order)))
-    admission = _admission_from_record(case, spec) if spec is not None else VariationAdmissionRecord(
-        causal_question=(
-            spec.causal_question
-            if spec is not None
-            else "What behavior does the immutable case authority select?"
-        ),
-        baseline_limitation=(
-            spec.baseline_limitation
-            if spec is not None
-            else "This is the comparison baseline rather than a new causal alternative."
-        ),
-        principal_variable=(spec.axis.value.lower() if spec is not None else "case_default"),
-        fixed_inputs=(
-            "case_hash",
-            "world_hash",
-            "vehicle_model_hash",
-            "hard_constraints",
-            "backend_configuration",
-            "search_budget",
-        ),
-        behavior_difference=(
-            spec.behavior_difference
-            if spec is not None
-            else "No authority or objective override is applied."
-        ),
-        distinguishing_oracle=(
-            spec.distinguishing_oracle
-            if spec is not None
-            else "The accepted plan and evidence reproduce the retained case authority."
-        ),
-        reused_evidence=spec.reused_evidence if spec is not None else (),
-        new_integration_gate=(
-            spec.new_integration_gate
-            if spec is not None
-            else "Deterministic baseline planning and continuous certification must pass."
-        ),
-        backend_semantics=(
-            spec.backend_semantics
-            if spec is not None
-            else "The configured fast-sim-v1 planner is supported; no runtime or physical equivalence is claimed."
-        ),
-        safety_bounds=(
-            spec.safety_bounds
-            if spec is not None
-            else "Every immutable case safety, geometry, dynamics, energy, freshness, atomicity, and terminal gate remains hard."
-        ),
-        operator_comparison=(
-            spec.operator_comparison
-            if spec is not None
-            else "Compare the identical case hash, accepted plan, trajectory, and continuous feasibility evidence."
-        ),
-        learning_value=(
-            spec.learning_value
-            if spec is not None
-            else "Provides the immutable comparison point for admitted alternatives."
-        ),
+    admission = (
+        _admission_from_record(case, spec)
+        if spec is not None
+        else VariationAdmissionRecord(
+            causal_question=(
+                spec.causal_question
+                if spec is not None
+                else "What behavior does the immutable case authority select?"
+            ),
+            baseline_limitation=(
+                spec.baseline_limitation
+                if spec is not None
+                else "This is the comparison baseline rather than a new causal alternative."
+            ),
+            principal_variable=(spec.axis.value.lower() if spec is not None else "case_default"),
+            fixed_inputs=(
+                "case_hash",
+                "world_hash",
+                "vehicle_model_hash",
+                "hard_constraints",
+                "backend_configuration",
+                "search_budget",
+            ),
+            behavior_difference=(
+                spec.behavior_difference
+                if spec is not None
+                else "No authority or objective override is applied."
+            ),
+            distinguishing_oracle=(
+                spec.distinguishing_oracle
+                if spec is not None
+                else "The accepted plan and evidence reproduce the retained case authority."
+            ),
+            reused_evidence=spec.reused_evidence if spec is not None else (),
+            new_integration_gate=(
+                spec.new_integration_gate
+                if spec is not None
+                else "Deterministic baseline planning and continuous certification must pass."
+            ),
+            backend_semantics=(
+                spec.backend_semantics
+                if spec is not None
+                else "The configured fast-sim-v1 planner is supported; no runtime or physical equivalence is claimed."
+            ),
+            safety_bounds=(
+                spec.safety_bounds
+                if spec is not None
+                else "Every immutable case safety, geometry, dynamics, energy, freshness, atomicity, and terminal gate remains hard."
+            ),
+            operator_comparison=(
+                spec.operator_comparison
+                if spec is not None
+                else "Compare the identical case hash, accepted plan, trajectory, and continuous feasibility evidence."
+            ),
+            learning_value=(
+                spec.learning_value
+                if spec is not None
+                else "Provides the immutable comparison point for admitted alternatives."
+            ),
+        )
     )
     return PlanningSubmission(
         planning_submission_id=planning_submission_id,
@@ -2358,9 +2474,7 @@ def _planning_submission(
             terms=tuple(PlanningObjectiveTerm(metric=metric) for metric in objective_order)
         ),
         selection_oracle=(
-            spec.selection_oracle
-            if spec is not None
-            else PlanningSelectionOracle.OBJECTIVE_ORDER
+            spec.selection_oracle if spec is not None else PlanningSelectionOracle.OBJECTIVE_ORDER
         ),
         feasibility_oracle_ids=(
             "continuous_pairwise_clearance",
@@ -2455,7 +2569,8 @@ def _submission(
         else (),
         prerequisite_submission_ids=prerequisites,
         metric_ids=metric_ids,
-        admission=admission_override or VariationAdmissionRecord(
+        admission=admission_override
+        or VariationAdmissionRecord(
             causal_question=causal_question,
             baseline_limitation=baseline_limitation,
             principal_variable=principal_variable,
@@ -2548,9 +2663,7 @@ def bind_execution_capability(
                 "anchor families"
             )
         energy_retiming = _energy_retiming_resolution(case)
-        parameters = ExecutionProfileParameters(
-            duration_scale=energy_retiming.selected_factor
-        )
+        parameters = ExecutionProfileParameters(duration_scale=energy_retiming.selected_factor)
     baseline = _baseline_execution_profile(case)
     return _submission(
         case,
@@ -2677,8 +2790,7 @@ def normalized_route_polyline(
             after = positions[after_index]
             current_is_unidentified = node_ids[current_index].startswith("@geometry-")
             if (
-                _vector_distance(before, current) <= 1e-9
-                and current_is_unidentified
+                _vector_distance(before, current) <= 1e-9 and current_is_unidentified
             ) or _forward_collinear(before, current, after):
                 retained.pop(retained_position)
                 changed = True
@@ -2844,12 +2956,16 @@ def resolve_capability_resolution(
         ),
         None,
     )
+    contract_deviation_cap = min(
+        case.motion_contract_for(case.drones[0].role_id).maximum_path_tube_error_m,
+        0.25,
+    )
     path_deviation_cap = min(
-        0.03,
+        contract_deviation_cap,
         (
             profile_spec.maximum_centerline_deviation_m
             if profile_spec is not None and profile_spec.maximum_centerline_deviation_m is not None
-            else 0.03
+            else contract_deviation_cap
         ),
     )
     flight_volume = case.hard_constraints.flight_volume
@@ -2985,9 +3101,7 @@ def resolve_capability_resolution(
         capability_request_sha256=request_hash,
         normalization_rule_version=SEMANTIC_POLYLINE_RULE_VERSION,
         normalized_geometry_sha256=normalized_geometry_sha256,
-        raw_capture_sha256s=tuple(
-            polyline.raw_capture_sha256 for polyline in normalized_polylines
-        ),
+        raw_capture_sha256s=tuple(polyline.raw_capture_sha256 for polyline in normalized_polylines),
         authored_lookahead_time_s=lookahead,
         authored_target_path_speed_m_s=target_speed,
         certified_entry_speed_m_s=certified_speed,
@@ -3019,11 +3133,10 @@ def _energy_retiming_resolution_cached(
 
     case = CampaignCase.model_validate_json(case_payload_json)
 
+    from crazyswarm_app.campaign.trajectory import allocate_trajectory_points
     from crazyswarm_app.domain.trajectory import TimeParameterizedTrajectory, sample_trajectory
     from crazyswarm_app.simulation.physics import PhysicsModelConfig
     from crazyswarm_app.simulation.powertrain import solve_coupled_powertrain
-
-    from crazyswarm_app.campaign.trajectory import allocate_trajectory_points
 
     physics = PhysicsModelConfig()
     physics_hash = canonical_sha256(physics)
@@ -3047,11 +3160,11 @@ def _energy_retiming_resolution_cached(
         for drone in sorted(case.drones, key=lambda item: item.role_id):
             polyline = normalized_route_polyline(case, drone.role_id)
             positions = polyline.raw_points_m
-            distances = tuple(_vector_distance(first, second) for first, second in pairwise(positions))
+            distances = tuple(
+                _vector_distance(first, second) for first, second in pairwise(positions)
+            )
             baseline_durations = tuple(
-                0.01
-                if distance <= 1e-9
-                else max(0.5, distance / max(0.02, nominal_speed))
+                0.01 if distance <= 1e-9 else max(0.5, distance / max(0.02, nominal_speed))
                 for distance in distances
             )
             requested_durations = tuple(value * factor for value in baseline_durations)
@@ -3080,12 +3193,14 @@ def _energy_retiming_resolution_cached(
             while timestamp_s < trajectory.duration_s - 1e-12:
                 samples.append((timestamp_s, sample_trajectory(trajectory, timestamp_s)))
                 timestamp_s += 0.01
-            samples.append((trajectory.duration_s, sample_trajectory(trajectory, trajectory.duration_s)))
+            samples.append(
+                (trajectory.duration_s, sample_trajectory(trajectory, trajectory.duration_s))
+            )
 
             powers_w: list[float] = []
             currents_a: list[float] = []
             drone_energy_wh = 0.0
-            for timestamp_s, sample in samples:
+            for _timestamp_s, sample in samples:
                 acceleration = sample.acceleration_m_s2
                 horizontal_speed = math.hypot(sample.velocity_m_s.x, sample.velocity_m_s.y)
                 vertical_speed = abs(sample.velocity_m_s.z)
@@ -3108,8 +3223,10 @@ def _energy_retiming_resolution_cached(
                     motor_commands=(motor_command,) * 4,
                     additional_current_a=0.0,
                 )
-                if motor_command > 1.0 + 1e-12 or solution.current_limited or any(
-                    motor.saturated for motor in solution.motors
+                if (
+                    motor_command > 1.0 + 1e-12
+                    or solution.current_limited
+                    or any(motor.saturated for motor in solution.motors)
                 ):
                     rejection_reasons.append(f"ACTUATOR_HEADROOM_VIOLATION:{drone.role_id}")
                 powers_w.append(solution.terminal_voltage_v * solution.total_current_a)
@@ -3121,7 +3238,9 @@ def _energy_retiming_resolution_cached(
                 powers_w[1:],
                 strict=True,
             ):
-                drone_energy_wh += 0.5 * (before_power + after_power) * (after_t - before_t) / 3600.0
+                drone_energy_wh += (
+                    0.5 * (before_power + after_power) * (after_t - before_t) / 3600.0
+                )
             total_energy_wh += drone_energy_wh
             peak_current_a = max(peak_current_a, max(currents_a, default=0.0))
             reserve = drone.initial_battery_percent - (

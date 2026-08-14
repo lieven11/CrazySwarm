@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Qualify the selective 54-case submission registry through production planning."""
+"""Qualify the selective 55-case submission registry through production planning."""
 
 from __future__ import annotations
 

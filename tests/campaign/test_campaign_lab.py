@@ -54,7 +54,7 @@ def test_successor_catalog_is_semantically_distinct_and_fail_closed(
     catalog: CampaignCatalog,
 ) -> None:
     cases = catalog.cases()
-    assert len(cases) == 54
+    assert len(cases) == 55
     assert len({case.case_sha256 for case in cases}) == len(cases)
     assert len({case.execution_semantics_sha256 for case in cases}) == len(cases)
     assert {case.drone_count for case in cases} == {1, 2, 3}

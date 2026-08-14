@@ -225,7 +225,7 @@ rows:
     experiment_id: boundary.objective
     axis: OBJECTIVE_ORDER
     axis_value: route_fidelity
-    qualifying_relation: COLLAPSE_ALL
+    qualifying_relation: DISTINGUISHABLE_AFTER_WP58_WHOLE_ROUTE_SMOOTHING
     comparator_id: BASELINE(1d.boundary_constrained_route.canonical_nominal)
     comparison_context_id: null
   - submission_id: boundary.robustness_first
@@ -287,7 +287,7 @@ rows:
     experiment_id: waypoint.objective
     axis: OBJECTIVE_ORDER
     axis_value: centerline
-    qualifying_relation: COLLAPSE_ALL
+    qualifying_relation: DISTINGUISHABLE_AFTER_WP58_WHOLE_ROUTE_SMOOTHING
     comparator_id: BASELINE(1d.continuous_waypoint_sequence.canonical_nominal)
     comparison_context_id: null
   - submission_id: waypoint.smoothness_first
@@ -341,7 +341,7 @@ rows:
     experiment_id: curve.objective
     axis: OBJECTIVE_ORDER
     axis_value: centerline
-    qualifying_relation: COLLAPSE_ALL
+    qualifying_relation: DISTINGUISHABLE_AFTER_WP58_WHOLE_ROUTE_SMOOTHING
     comparator_id: BASELINE(1d.curved_route.canonical_nominal)
     comparison_context_id: null
   - submission_id: curve.jerk_first
@@ -600,6 +600,43 @@ rows:
     qualifying_relation: MIN(SP_SPLICE_POSITION),MIN(DY_JERK),ZERO(DS_STALE_COMMAND_COUNT),PASS(SP_CAPTURE),PASS(DS_TERMINAL_STATE)
     comparator_id: BASELINE(1d.moving_target.dynamic_nominal)
     comparison_context_id: null
+- case_id: 1d.online_obstacle_replan.dynamic_nominal
+  expected_case_sha256: b265e16a9b54cfc0271f38c03486244da6e1fe6558c1d6580aa47b79acdac401
+  lifecycle: BASELINE_ONLY
+  proposed_additions_or_disposition: '`BASELINE_ONLY`'
+  causal_question: The sensed changed-world route uses the baseline accepted program; each future suffix
+    is admitted only through perception and safe-prefix authority.
+  baseline_limitation: '`BASELINE_ONLY`'
+  fixed_inputs:
+  - case_hash
+  - world_hash
+  - vehicle_model_hash
+  - route_and_event_truth
+  - hard_constraints
+  - backend_configuration
+  - search_budget
+  - seed
+  comparison_and_distinguishing_oracle: The sensed changed-world route uses the baseline accepted program;
+    each future suffix is admitted only through perception and safe-prefix authority.
+  metric_ids:
+  - SP_CAPTURE
+  - DS_TERMINAL_STATE
+  - DS_COMMAND_OWNERSHIP
+  reused_evidence:
+  - immutable_case_hash
+  - bounded_planner_contract
+  - continuous_safety_certificate
+  new_integration_gate: The sensed changed-world route uses the baseline accepted program; each future
+    suffix is admitted only through perception and safe-prefix authority.
+  backend_semantics: The exact baseline package enters Fast Sim production; hardware and physical-flight
+    equivalence are not implied.
+  safety_bounds: Volume, dynamics, energy, freshness, authority, atomicity, and terminal gates remain
+    hard.
+  operator_comparison: The sensed changed-world route uses the baseline accepted program; each future
+    suffix is admitted only through perception and safe-prefix authority.
+  learning_value: The sensed changed-world route uses the baseline accepted program; each future suffix
+    is admitted only through perception and safe-prefix authority.
+  proposals: []
 - case_id: 1d.operator_approval_goal_replacement.dynamic_nominal
   expected_case_sha256: 34a8f0ff6196719dcb10e56191644444d07f9432b64877c9501c23b62d57f964
   lifecycle: BASELINE_ONLY
@@ -683,7 +720,7 @@ rows:
     experiment_id: circle.objective
     axis: OBJECTIVE_ORDER
     axis_value: radial_fidelity
-    qualifying_relation: COLLAPSE_ALL
+    qualifying_relation: DISTINGUISHABLE_AFTER_WP58_WHOLE_ROUTE_SMOOTHING
     comparator_id: BASELINE(1d.planar_shape_loop.circle)
     comparison_context_id: null
   - submission_id: core.constant_path_speed
@@ -736,7 +773,7 @@ rows:
     experiment_id: figure_eight.objective
     axis: OBJECTIVE_ORDER
     axis_value: crossover_fidelity
-    qualifying_relation: COLLAPSE_ALL
+    qualifying_relation: DISTINGUISHABLE_AFTER_WP58_WHOLE_ROUTE_SMOOTHING
     comparator_id: BASELINE(1d.planar_shape_loop.figure_eight)
     comparison_context_id: null
   - submission_id: loop.curvature_continuity
@@ -1100,8 +1137,8 @@ rows:
     experiment_id: bottleneck.objective
     axis: OBJECTIVE_ORDER
     axis_value: fair
-    qualifying_relation: COLLAPSE_ALL
-    comparator_id: PEER(2d.bottleneck.canonical_nominal/bottleneck.earliest_safe_release)
+    qualifying_relation: DISTINGUISHABLE_AFTER_WP58_WHOLE_ROUTE_SMOOTHING
+    comparator_id: BASELINE(2d.bottleneck.canonical_nominal)
     comparison_context_id: null
 - case_id: 2d.constrained_border_height.canonical_nominal
   expected_case_sha256: 1bc4d919712807793b6944503eb09360dd91375476fe4fb6938fd24e940b7672
@@ -2372,8 +2409,8 @@ rows:
     experiment_id: constrained3.objective
     axis: OBJECTIVE_ORDER
     axis_value: priority
-    qualifying_relation: COLLAPSE_ALL
-    comparator_id: PEER(3d.constrained_volume.canonical_nominal/constrained.timing_makespan)
+    qualifying_relation: DISTINGUISHABLE_AFTER_WP58_WHOLE_ROUTE_SMOOTHING
+    comparator_id: BASELINE(3d.constrained_volume.canonical_nominal)
     comparison_context_id: null
   - submission_id: constrained.robust_schedule
     experiment_id: constrained3.objective
@@ -3014,4 +3051,4 @@ rows:
     case/run.
   learning_value: '`BASELINE_ONLY` legacy compatibility/regression'
   proposals: []
-source_payload_sha256: abefc1ddc796e801ca783e51018ed529f81e5945bda6aa94ddb4a51bf66cfa41
+source_payload_sha256: c3317f07c3c41b8777816ca390fa1e862d6f7a36797894bec65666e718a74308

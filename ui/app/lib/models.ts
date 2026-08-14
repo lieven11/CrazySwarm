@@ -97,7 +97,16 @@ export interface TelemetryView {
   motors?: {
     modelId: string;
     modelVersion: string;
-    readings: { id: "M1" | "M2" | "M3" | "M4"; commandPercent: number; thrustN: number; currentA: number }[];
+    readings: {
+      id: "M1" | "M2" | "M3" | "M4";
+      commandPercent: number;
+      appliedPwmPercent?: number;
+      requestedThrustN?: number;
+      thrustN: number;
+      availableThrustN?: number;
+      currentA: number;
+      saturated: boolean;
+    }[];
   };
   transport?: TransportView;
   radio?: RadioView;
@@ -171,8 +180,48 @@ export interface TwinSessionView {
   status: string;
   observedVehicleId: string;
   simulatedVehicleId: string;
+  observedSourceClass: "MEASURED_REAL" | "SIMULATED_MODEL" | "CONFIGURED" | "TEST";
+  simulatedSourceClass: "MEASURED_REAL" | "SIMULATED_MODEL" | "CONFIGURED" | "TEST";
+  observedSourceId?: string;
+  simulatedSourceId?: string;
+  calibrationId?: string;
+  campaignRunId?: string;
+  campaignReviewId?: string;
   groundTruthAvailable: boolean;
   latestDeviation?: TwinDeviationView;
+}
+
+export interface TwinTimelineSampleView {
+  sampleSha256: string;
+  side: "OBSERVED" | "PREDICTED";
+  channelId: string;
+  sourceTimestampS: number;
+  receivedTimestampS: number;
+  availability: "AVAILABLE" | "MISSING" | "STALE" | "REJECTED";
+  quality: "GOOD" | "DEGRADED" | "INVALID" | "UNQUALIFIED";
+  calibrationId?: string;
+  unit: string;
+  frame: string;
+  value?: number | boolean | string | Vec3;
+}
+
+export interface TwinResidualSampleView {
+  residualSha256: string;
+  channelId: string;
+  sourceTimestampS: number;
+  availability: "AVAILABLE" | "MISSING" | "STALE" | "REJECTED";
+  quality: "GOOD" | "DEGRADED" | "INVALID" | "UNQUALIFIED";
+  unit: string;
+  frame: string;
+  value?: number | Vec3;
+}
+
+export interface TwinTimelineView {
+  sessionId: string;
+  timelineSha256: string;
+  samples: TwinTimelineSampleView[];
+  residuals: TwinResidualSampleView[];
+  nextAfterSourceS?: number;
 }
 
 export interface ObstacleView {
@@ -522,6 +571,7 @@ export interface CampaignWorkspaceView {
     status: string;
     operator_questions: string[];
     operator_observations: string[];
+    twin_session_ids?: string[];
     baseline_comparison?: Record<string, string | number | boolean | null>;
     cross_case_profile_comparison?: Record<string, string | number | boolean | null>;
     approval?: { decision: "APPROVE" | "REJECT" | "NEEDS_RERUN" };
@@ -561,6 +611,45 @@ export interface CampaignWorkspaceView {
           processed_gate_passed?: boolean;
           gate_disagreement: boolean;
         };
+      }>;
+      motion_quality?: Array<{
+        vehicle_id: string;
+        contract_sha256: string;
+        csv_sha256: string;
+        sample_count: number;
+        vector: Record<string, number | boolean | null>;
+        failed_guards: string[];
+        missing_guards: string[];
+        analysis_sha256: string;
+      }>;
+      physical_truth?: Array<{
+        vehicle_id: string;
+        paired_sample_count: number;
+        maneuver_sample_count: number;
+        sign_agreement_fraction?: number;
+        normalized_error_p95?: number;
+        maximum_source_pairing_error_s?: number;
+        all_equal_moving_sample_count: number;
+        saturated_maneuver_sample_count: number;
+        failures: string[];
+        passed: boolean;
+        analysis_sha256: string;
+      }>;
+      replan_timeline?: Array<{
+        stage?: string;
+        event_id?: string;
+        observation_id?: string;
+        source_timestamp_s?: number;
+        received_timestamp_s?: number;
+        disposition?: string;
+        execution_disposition?: string;
+        fallback_command?: string;
+        observation_sha256?: string;
+        decision_sha256?: string;
+        reason?: string;
+        change_kind?: string;
+        solid_id?: string;
+        region?: { minimum_m: Vec3; maximum_m: Vec3 } | null;
       }>;
     };
   }>;

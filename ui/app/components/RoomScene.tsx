@@ -73,6 +73,13 @@ export interface HomeBaseView {
 
 export type ScenePathSet = Vec3[] | Record<string, Vec3[]>;
 type SceneLayers = { sensors: boolean; trace: boolean; plan: boolean; truth: boolean };
+export interface TwinSceneOverlay {
+  observedPath: Vec3[];
+  predictedPath: Vec3[];
+  observedLabel: string;
+  predictedLabel: string;
+  sourceTimestampS?: number;
+}
 export interface BrowserDisplayTiming {
   correlationId: string;
   stage: "BROWSER_RECEIPT" | "RENDER_FRAME" | "PLAYBACK_BUFFER";
@@ -180,6 +187,7 @@ export function RoomScene({
   onDisplayTiming,
   onSceneCapture,
   onSceneCaptureError,
+  twinOverlay,
 }: {
   model: DashboardModel;
   plannedPath: ScenePathSet;
@@ -191,6 +199,7 @@ export function RoomScene({
   onDisplayTiming?: (event: BrowserDisplayTiming) => void;
   onSceneCapture?: (capture: SceneSnapshotCapture) => Promise<void>;
   onSceneCaptureError?: (message: string) => void;
+  twinOverlay?: TwinSceneOverlay;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cameraRef = useRef<PerspectiveCamera | null>(null);
@@ -472,6 +481,7 @@ export function RoomScene({
       model.mode === "REPLAY",
       missionPreview,
       selectedVehicleIds,
+      twinOverlay,
     );
     if (displayHealthRef.current) {
       displayHealthRef.current.textContent = display.health;
@@ -525,7 +535,7 @@ export function RoomScene({
         });
       }
     }
-  }, [model.mode, model.selectedVehicleId, model.vehicles, historicalPath, sensorsVisible, traceVisible, truthVisible, missionPreview, selected?.id, selectedVehicleIds, staticSceneSignature]);
+  }, [model.mode, model.selectedVehicleId, model.vehicles, historicalPath, sensorsVisible, traceVisible, truthVisible, missionPreview, selected?.id, selectedVehicleIds, staticSceneSignature, twinOverlay]);
 
   if (!model.room) {
     return <div className="room-empty"><Layers3 size={24} /><strong>No room</strong></div>;
@@ -565,6 +575,8 @@ export function RoomScene({
         [
           ...scenePathPoints(plannedPath),
           ...scenePathPoints(historicalPath),
+          ...(twinOverlay?.observedPath ?? []),
+          ...(twinOverlay?.predictedPath ?? []),
           ...model.vehicles.flatMap((vehicle) => [
             vehicle.telemetry?.estimate,
             vehicle.telemetry?.simulatedTruth,
@@ -632,6 +644,15 @@ export function RoomScene({
         ) : null}
         {!missionPreview && !hasVehicleObservation ? (
           <div className="room-no-observation"><CircleDotIcon /><strong>NO DATA</strong></div>
+        ) : null}
+        {twinOverlay ? (
+          <div className="twin-scene-legend" aria-label="Digital twin path legend">
+            <span className="is-observed"><i />Actual · {twinOverlay.observedLabel}</span>
+            <span className="is-predicted"><i />Predicted · {twinOverlay.predictedLabel}</span>
+            <span className="is-plan"><i />Planned</span>
+            {model.mode === "REPLAY" ? <span className="is-replay"><i />Replay history</span> : null}
+            <small>Source {twinOverlay.sourceTimestampS?.toFixed(3) ?? "—"} s</small>
+          </div>
         ) : null}
         <div ref={displayHealthRef} className="room-display-health" hidden aria-live="polite" />
         {onSceneCapture ? (
@@ -856,6 +877,7 @@ export function syncDynamicScene(
   replay = false,
   missionPreview?: MissionPreview,
   selectedVehicleIds?: string[],
+  twinOverlay?: TwinSceneOverlay,
 ) {
   const activeSyncKeys = new Set<string>();
   const selectedIds = new Set(
@@ -884,6 +906,36 @@ export function syncDynamicScene(
     path.userData.sceneLayer = "trace";
     path.visible = layers.trace;
   });
+  if (twinOverlay) {
+    const observed = upsertPath(
+      scene,
+      "twin-path:observed",
+      twinOverlay.observedPath,
+      0x4cc9e8,
+      false,
+      "twin-observed-actual",
+      undefined,
+      0.96,
+    );
+    if (observed) {
+      observed.visible = layers.trace;
+      activeSyncKeys.add("twin-path:observed");
+    }
+    const predicted = upsertPath(
+      scene,
+      "twin-path:predicted",
+      twinOverlay.predictedPath,
+      0xff9b70,
+      false,
+      "twin-predicted-model",
+      undefined,
+      0.96,
+    );
+    if (predicted) {
+      predicted.visible = layers.trace;
+      activeSyncKeys.add("twin-path:predicted");
+    }
+  }
   if (missionPreview) {
     missionPreview.vehicles.forEach((vehicle) => {
       const motionKey = previewMotionKey(missionPreview.missionId, vehicle.vehicleId);

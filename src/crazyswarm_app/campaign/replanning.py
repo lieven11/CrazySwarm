@@ -50,6 +50,12 @@ class SafeFallback(StrEnum):
     FLEET_ABORT_AND_LAND = "FLEET_ABORT_AND_LAND"
 
 
+class SafeFallbackCommand(StrEnum):
+    STOP_AND_HOLD = "STOP_AND_HOLD"
+    ABORT_AND_LAND = "ABORT_AND_LAND"
+    UNQUALIFIED_EMERGENCY_FALLBACK = "UNQUALIFIED_EMERGENCY_FALLBACK"
+
+
 class GoalUpdateDisposition(StrEnum):
     ACCEPTED = "ACCEPTED"
     DUPLICATE_IDEMPOTENT = "DUPLICATE_IDEMPOTENT"
@@ -219,6 +225,202 @@ class ReplanObservation(ContractModel):
             "acceleration_m_s2": acceleration_m_s2 or Vector3(),
         }
         return cls(**payload, observation_sha256=canonical_sha256(payload))
+
+
+class SafePrefixCertificate(ContractModel):
+    schema_version: Literal[1] = 1
+    case_sha256: SHA256
+    event_sha256: SHA256
+    observation_sha256s: tuple[SHA256, ...] = Field(min_length=1, max_length=3)
+    perceived_world_sha256: SHA256
+    old_world_sha256: SHA256
+    active_trajectory_sha256s: tuple[SHA256, ...] = Field(min_length=1, max_length=3)
+    safe_until_source_s: float = Field(ge=0.0)
+    stopping_envelope_m: float = Field(ge=0.0)
+    certified_clearance_m: float = Field(ge=0.0)
+    observation_fresh_until_source_s: float = Field(ge=0.0)
+    fallback_command: SafeFallbackCommand
+    fallback_route_sha256: SHA256 | None = None
+    passed: bool
+    certificate_sha256: SHA256
+
+    @model_validator(mode="after")
+    def hash_and_fallback_are_complete(self) -> SafePrefixCertificate:
+        if (
+            self.fallback_command is SafeFallbackCommand.ABORT_AND_LAND
+        ) != (self.fallback_route_sha256 is not None):
+            raise ValueError("abort fallback requires one certified landing route")
+        payload = self.model_dump(mode="python", exclude={"certificate_sha256"})
+        if canonical_sha256(payload) != self.certificate_sha256:
+            raise ValueError("safe-prefix certificate hash mismatch")
+        return self
+
+
+class AbortRouteCertificate(ContractModel):
+    """Independent direct-to-accepted-landing fallback geometry certificate."""
+
+    schema_version: Literal[1] = 1
+    case_sha256: SHA256
+    perceived_world_sha256: SHA256
+    observation_sha256s: tuple[SHA256, ...] = Field(min_length=1, max_length=3)
+    route_points_by_role: dict[Identifier, tuple[Vector3, Vector3]]
+    minimum_sampled_clearance_m: float = Field(ge=0.0)
+    sample_step_fraction: float = Field(gt=0.0, le=0.10)
+    passed: bool
+    certificate_sha256: SHA256
+
+    @model_validator(mode="after")
+    def hash_matches_payload(self) -> AbortRouteCertificate:
+        payload = self.model_dump(mode="python", exclude={"certificate_sha256"})
+        if canonical_sha256(payload) != self.certificate_sha256:
+            raise ValueError("abort-route certificate hash mismatch")
+        return self
+
+
+class ChangedWorldSafetyMonitor:
+    """Derive old-prefix safety independently from planner and execution caller."""
+
+    def __init__(self, case: CampaignCase) -> None:
+        self.case = case
+
+    def certify_abort_route(
+        self,
+        *,
+        observations: Sequence[ReplanObservation],
+        perceived_world_sha256: SHA256,
+        perceived_solids: Mapping[str, Region3D],
+        minimum_clearance_m: float,
+    ) -> AbortRouteCertificate:
+        observations_by_role = {item.role_id: item for item in observations}
+        landing_by_role = {
+            item.role_id: item.landing_region.center_m for item in self.case.drones
+        }
+        if set(observations_by_role) != set(landing_by_role):
+            raise ValueError("abort-route observations do not cover the accepted roles")
+        routes = {
+            role_id: (observations_by_role[role_id].position_m, landing_by_role[role_id])
+            for role_id in sorted(landing_by_role)
+        }
+        sample_step_fraction = 1.0 / 64.0
+        clearances = [
+            _distance_to_region(_interpolate(start, end, index / 64.0), solid)
+            for start, end in routes.values()
+            for index in range(65)
+            for solid in perceived_solids.values()
+        ]
+        minimum_sampled_clearance = min(clearances, default=1_000_000.0)
+        volume = self.case.hard_constraints.flight_volume
+        volume_passed = all(
+            volume.contains(point)
+            for start, end in routes.values()
+            for point in (start, end)
+        )
+        payload: dict[str, Any] = {
+            "schema_version": 1,
+            "case_sha256": self.case.case_sha256,
+            "perceived_world_sha256": perceived_world_sha256,
+            "observation_sha256s": tuple(
+                observations_by_role[role_id].observation_sha256
+                for role_id in sorted(observations_by_role)
+            ),
+            "route_points_by_role": routes,
+            "minimum_sampled_clearance_m": minimum_sampled_clearance,
+            "sample_step_fraction": sample_step_fraction,
+            "passed": volume_passed
+            and minimum_sampled_clearance >= minimum_clearance_m,
+        }
+        return AbortRouteCertificate(
+            **payload,
+            certificate_sha256=canonical_sha256(payload),
+        )
+
+    def certify(
+        self,
+        *,
+        event: InFlightEnvironmentEvent,
+        observations: Sequence[ReplanObservation],
+        active_trajectories: Mapping[str, TimeParameterizedTrajectory],
+        perceived_world_sha256: SHA256,
+        old_world_sha256: SHA256,
+        minimum_clearance_m: float,
+        abort_route_certificate: AbortRouteCertificate | None = None,
+    ) -> SafePrefixCertificate:
+        if set(event.affected_role_ids) != {item.role_id for item in observations}:
+            raise ValueError("safe-prefix observations do not cover the affected roles")
+        if set(event.affected_role_ids) != set(active_trajectories):
+            raise ValueError("safe-prefix trajectories do not cover the affected roles")
+        acceleration = self.case.hard_constraints.dynamics.maximum_acceleration_m_s2
+        speed = max((_norm(item.velocity_m_s) for item in observations), default=0.0)
+        stopping_envelope = (
+            speed * speed / (2.0 * acceleration)
+            + self.case.hard_constraints.position_uncertainty_m
+        )
+        obstacle_clearance = min(
+            (
+                _distance_to_region(item.position_m, event.region)
+                for item in observations
+                if event.region is not None
+            ),
+            default=1_000_000.0,
+        )
+        hold_clear = obstacle_clearance >= stopping_envelope + minimum_clearance_m
+        if hold_clear:
+            fallback = SafeFallbackCommand.STOP_AND_HOLD
+            fallback_route = None
+            certified_clearance = obstacle_clearance - stopping_envelope
+            passed = True
+        elif (
+            abort_route_certificate is not None
+            and abort_route_certificate.passed
+            and abort_route_certificate.case_sha256 == self.case.case_sha256
+            and abort_route_certificate.perceived_world_sha256 == perceived_world_sha256
+            and abort_route_certificate.observation_sha256s
+            == tuple(
+                item.observation_sha256
+                for item in sorted(observations, key=lambda item: item.role_id)
+            )
+        ):
+            fallback = SafeFallbackCommand.ABORT_AND_LAND
+            fallback_route = abort_route_certificate.certificate_sha256
+            certified_clearance = abort_route_certificate.minimum_sampled_clearance_m
+            passed = True
+        else:
+            fallback = SafeFallbackCommand.UNQUALIFIED_EMERGENCY_FALLBACK
+            fallback_route = None
+            certified_clearance = max(0.0, obstacle_clearance - stopping_envelope)
+            passed = False
+        fresh_until = min(
+            item.captured_at_source_s
+            + self.case.hard_constraints.observation_freshness_limit_s
+            for item in observations
+        )
+        safe_until = (
+            event.effective_source_s
+            if passed
+            else min(event.effective_source_s, fresh_until)
+        )
+        payload: dict[str, Any] = {
+            "schema_version": 1,
+            "case_sha256": self.case.case_sha256,
+            "event_sha256": canonical_sha256(event),
+            "observation_sha256s": tuple(
+                item.observation_sha256
+                for item in sorted(observations, key=lambda item: item.role_id)
+            ),
+            "perceived_world_sha256": perceived_world_sha256,
+            "old_world_sha256": old_world_sha256,
+            "active_trajectory_sha256s": tuple(
+                active_trajectories[role_id].sha256 for role_id in sorted(active_trajectories)
+            ),
+            "safe_until_source_s": safe_until,
+            "stopping_envelope_m": stopping_envelope,
+            "certified_clearance_m": certified_clearance,
+            "observation_fresh_until_source_s": fresh_until,
+            "fallback_command": fallback,
+            "fallback_route_sha256": fallback_route,
+            "passed": passed,
+        }
+        return SafePrefixCertificate(**payload, certificate_sha256=canonical_sha256(payload))
 
 
 class CutoverAcknowledgements(ContractModel):
@@ -690,14 +892,35 @@ def commit_changed_world_replacement(
     queue_latency_s: float,
     acknowledgement_latency_s: float,
     cutover_guard_s: float,
-    old_epoch_safe_until_source_s: float,
-    old_epoch_still_safe: bool,
+    safe_prefix_certificate: SafePrefixCertificate,
     old_epoch: int,
     old_reservation_sha256: str,
     cancellation_acknowledged_role_ids: frozenset[str],
     replacement_acknowledged_role_ids: frozenset[str],
+    fallback_acknowledged_role_ids: frozenset[str],
 ) -> DynamicFleetReplanDecision:
-    """Commit a planned proposal using acknowledgements observed by the execution head."""
+    """Commit only with independently derived prefix safety and acknowledgements."""
+
+    role_ids = frozenset(item.role_id for item in proposal.route_authorities)
+    expected_active = tuple(
+        item.old_trajectory_sha256
+        for item in sorted(proposal.route_authorities, key=lambda item: item.role_id)
+    )
+    if safe_prefix_certificate.case_sha256 != proposal.original_case_sha256:
+        raise ValueError("safe-prefix certificate belongs to another case")
+    if safe_prefix_certificate.event_sha256 != canonical_sha256(proposal.event):
+        raise ValueError("safe-prefix certificate event identity mismatch")
+    if safe_prefix_certificate.old_world_sha256 != proposal.old_world_sha256:
+        raise ValueError("safe-prefix certificate old-world identity mismatch")
+    if safe_prefix_certificate.active_trajectory_sha256s != expected_active:
+        raise ValueError("safe-prefix certificate active trajectory mismatch")
+    if not safe_prefix_certificate.passed or (
+        safe_prefix_certificate.fallback_command
+        is SafeFallbackCommand.UNQUALIFIED_EMERGENCY_FALLBACK
+    ):
+        raise ValueError("safe-prefix certificate has no qualified fallback")
+    if fallback_acknowledged_role_ids != role_ids:
+        raise ValueError("safe fallback was not acknowledged by every affected role")
 
     replacements = tuple(
         FleetRouteReplacement(
@@ -718,15 +941,21 @@ def commit_changed_world_replacement(
         planning_latency_s=proposal.planning_latency_s,
         acknowledgement_latency_s=acknowledgement_latency_s,
         cutover_guard_s=cutover_guard_s,
-        old_epoch_safe_until_source_s=old_epoch_safe_until_source_s,
-        old_epoch_still_safe=old_epoch_still_safe,
+        old_epoch_safe_until_source_s=safe_prefix_certificate.safe_until_source_s,
+        old_epoch_still_safe=(
+            safe_prefix_certificate.fallback_command
+            is SafeFallbackCommand.STOP_AND_HOLD
+        ),
         old_epoch=old_epoch,
         old_reservation_sha256=old_reservation_sha256,
         old_world_sha256=proposal.old_world_sha256,
         replacement_world_sha256=proposal.replacement_world_sha256,
         replacements=replacements,
         feasibility_certificate_sha256s=tuple(
-            item.feasibility_certificate_sha256 for item in proposal.route_authorities
+            canonical_sha256(
+                [item.feasibility_certificate_sha256, safe_prefix_certificate.certificate_sha256]
+            )
+            for item in proposal.route_authorities
         ),
     )
 
@@ -839,8 +1068,8 @@ class InFlightReplanCoordinator:
     """Sequence dynamic world/peer events and commit one fleet reservation epoch."""
 
     def __init__(self, case: CampaignCase) -> None:
-        if not 2 <= case.drone_count <= 3:
-            raise ValueError("dynamic fleet replanning requires two or three drones")
+        if not 1 <= case.drone_count <= 3:
+            raise ValueError("dynamic replanning requires one through three drones")
         self.case = case
         self._latest_sequence_by_source: dict[str, int] = {}
         self._decision_by_event_id: dict[str, DynamicFleetReplanDecision] = {}
@@ -1493,7 +1722,22 @@ def _norm(value: Vector3) -> float:
     return math.sqrt(value.x**2 + value.y**2 + value.z**2)
 
 
+def _distance_to_region(point: Vector3, region: Region3D) -> float:
+    dx = max(region.minimum_m.x - point.x, 0.0, point.x - region.maximum_m.x)
+    dy = max(region.minimum_m.y - point.y, 0.0, point.y - region.maximum_m.y)
+    dz = max(region.minimum_m.z - point.z, 0.0, point.z - region.maximum_m.z)
+    return math.sqrt(dx * dx + dy * dy + dz * dz)
+
+
 def _distance(first: Vector3, second: Vector3) -> float:
     return math.sqrt(
         (first.x - second.x) ** 2 + (first.y - second.y) ** 2 + (first.z - second.z) ** 2
+    )
+
+
+def _interpolate(start: Vector3, end: Vector3, fraction: float) -> Vector3:
+    return Vector3(
+        x=start.x + (end.x - start.x) * fraction,
+        y=start.y + (end.y - start.y) * fraction,
+        z=start.z + (end.z - start.z) * fraction,
     )

@@ -31,7 +31,7 @@ def test_campaign_browse_validate_select_and_preview_do_not_launch(
 
     qualification = client.get("/api/v1/campaign/qualification", headers=auth_headers())
     assert qualification.status_code == 200
-    assert qualification.json()["case_count"] == 54
+    assert qualification.json()["case_count"] == 55
     assert qualification.json()["qualification_kind"] == "FAIL_CLOSED_STATIC_COMPILATION"
 
     validated = client.post(
@@ -269,7 +269,7 @@ def test_constraint_directed_planning_contract_preview_and_matrix_are_exposed(
     )
     assert selective.status_code == 200
     assert selective.json()["passed"] is True
-    assert selective.json()["case_count"] == 54
+    assert selective.json()["case_count"] == 55
 
 
 def test_campaign_case_can_move_to_review_manually_or_from_a_comment_then_complete(

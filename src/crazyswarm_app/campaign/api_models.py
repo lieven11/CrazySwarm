@@ -5,14 +5,14 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from crazyswarm_app.campaign.models import LifecycleState
-from crazyswarm_app.campaign.submissions import (
-    ExecutionCapabilityRequest,
-    PlanningCapabilityRequest,
-)
 from crazyswarm_app.campaign.service import (
     CampaignRunMode,
     ReviewDecision,
     SnapshotAssessmentDisposition,
+)
+from crazyswarm_app.campaign.submissions import (
+    ExecutionCapabilityRequest,
+    PlanningCapabilityRequest,
 )
 from crazyswarm_app.campaign.timing import TimingStage
 

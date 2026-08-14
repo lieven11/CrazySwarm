@@ -1551,6 +1551,17 @@ export function CampaignLab({
                       {` · ${selectedRunEntry.review?.analysis.telemetry_row_count?.toLocaleString() ?? "—"} rows`}
                       {` · ${formatCampaignRunDate(selectedRunEntry.run.finished_at_utc)}`}
                     </p>
+                    {selectedRunEntry.review?.twin_session_ids?.length ? (
+                      <details className="campaign-twin-evidence">
+                        <summary>
+                          Digital twin evidence · {selectedRunEntry.review.twin_session_ids.length} retained {selectedRunEntry.review.twin_session_ids.length === 1 ? "session" : "sessions"}
+                        </summary>
+                        <p>Source-aligned session links are immutable review evidence. Simulator sources are not physical-flight qualification.</p>
+                        <ol>
+                          {selectedRunEntry.review.twin_session_ids.map((sessionId) => <li key={sessionId}><code>{sessionId}</code></li>)}
+                        </ol>
+                      </details>
+                    ) : null}
                     <div className="campaign-review-detail-body">
                       {selectedMissionExecutionId ? (
                         <CampaignTelemetryPlots
@@ -1562,6 +1573,12 @@ export function CampaignLab({
                           <CircleAlert size={14} /> Flight graphs become available when the run telemetry CSV is retained.
                         </section>
                       )}
+                      {selectedRunEntry.review ? (
+                        <MotionQualityEvidence analysis={selectedRunEntry.review.analysis} />
+                      ) : null}
+                      {selectedRunEntry.review ? (
+                        <ReplanTimeline analysis={selectedRunEntry.review.analysis} />
+                      ) : null}
                       {selectedRunEntry.review ? (
                         <EvidenceReconciliation analysis={selectedRunEntry.review.analysis} />
                       ) : null}
@@ -1833,6 +1850,66 @@ function EvidenceReconciliation({ analysis }: { analysis: CampaignReviewAnalysis
       ))}
       </div>
     </details>
+  );
+}
+
+export function MotionQualityEvidence({ analysis }: { analysis: CampaignReviewAnalysis }) {
+  const motion = analysis.motion_quality ?? [];
+  const physical = analysis.physical_truth ?? [];
+  if (!motion.length && !physical.length) return null;
+  return (
+    <section className="campaign-motion-quality" aria-label="Motion quality and motor physical truth">
+      <header><span>Motion quality</span><strong>RAW SOURCE CLOCK</strong></header>
+      {motion.map((item) => (
+        <article key={item.analysis_sha256}>
+          <div className="campaign-motion-heading">
+            <strong>{item.vehicle_id}</strong>
+            <span className={item.failed_guards.length ? "is-fail" : item.missing_guards.length ? "is-missing" : "is-pass"}>
+              {item.failed_guards.length ? `${item.failed_guards.length} failed` : item.missing_guards.length ? `${item.missing_guards.length} unavailable` : "All guards passed"}
+            </span>
+          </div>
+          <dl>
+            {Object.entries(item.vector).map(([metric, value]) => (
+              <div key={metric} className={item.failed_guards.includes(metric) ? "is-fail" : item.missing_guards.includes(metric) ? "is-missing" : ""}>
+                <dt>{humanizeCampaignValue(metric)}</dt>
+                <dd>{typeof value === "number" ? value.toFixed(4) : value === null ? "Unavailable" : String(value)}</dd>
+              </div>
+            ))}
+          </dl>
+          <small>Contract {item.contract_sha256.slice(0, 12)} · CSV {item.csv_sha256.slice(0, 12)} · {item.sample_count.toLocaleString()} samples</small>
+        </article>
+      ))}
+      {physical.map((item) => (
+        <article className="campaign-motor-truth" key={item.analysis_sha256}>
+          <div className="campaign-motion-heading"><strong>{item.vehicle_id} differential actuation</strong><span className={item.passed ? "is-pass" : "is-fail"}>{item.passed ? "Physical oracle passed" : "Physical oracle failed"}</span></div>
+          <p>Torque ↔ IMU sign agreement {item.sign_agreement_fraction?.toFixed(3) ?? "unavailable"} · normalized magnitude error p95 {item.normalized_error_p95?.toFixed(3) ?? "unavailable"} · pairing {item.maximum_source_pairing_error_s?.toFixed(4) ?? "unavailable"} s · {item.maneuver_sample_count} maneuver components</p>
+          <p>All-equal moving samples {item.all_equal_moving_sample_count} · saturated maneuvers {item.saturated_maneuver_sample_count}{item.failures.length ? ` · ${item.failures.map(humanizeCampaignValue).join(" · ")}` : ""}</p>
+        </article>
+      ))}
+    </section>
+  );
+}
+
+export function ReplanTimeline({ analysis }: { analysis: CampaignReviewAnalysis }) {
+  const records = analysis.replan_timeline ?? [];
+  if (!records.length) return null;
+  return (
+    <section className="campaign-replan-timeline" aria-label="Sensor-sourced replan timeline">
+      <header><span>Changed-world timeline</span><strong>{records.length} retained stages</strong></header>
+      <ol>
+        {records.map((record, index) => (
+          <li key={`${record.observation_sha256 ?? record.decision_sha256 ?? record.event_id ?? "record"}-${index}`}>
+            <i aria-hidden="true" />
+            <span>
+              <strong>{humanizeCampaignValue(record.stage ?? record.execution_disposition ?? record.disposition ?? "event")}</strong>
+              <small>{record.observation_id ?? record.event_id ?? "Source event"}{record.change_kind ? ` · ${humanizeCampaignValue(record.change_kind)}` : ""}{record.solid_id ? ` · ${record.solid_id}` : ""}{record.fallback_command ? ` · ${humanizeCampaignValue(record.fallback_command)}` : ""}</small>
+              {record.reason ? <em>{record.reason}</em> : null}
+            </span>
+            <time>{record.received_timestamp_s?.toFixed(3) ?? record.source_timestamp_s?.toFixed(3) ?? "—"} s</time>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 

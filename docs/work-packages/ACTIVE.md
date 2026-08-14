@@ -4223,11 +4223,11 @@ twin pipeline.
 
 | Packet | Status | Independent verification |
 |---|---|---|
-| WP-57 — 1D retained-evidence truth and motion-quality contract | `PLANNED` | `REVIEW_BLOCKED` |
-| WP-58 — whole-route continuous flight and adaptive motion intent | `PLANNED` | `REVIEW_BLOCKED` |
-| WP-59 — one-drone sensor-sourced changed-world replanning | `PLANNED` | `REVIEW_BLOCKED` |
-| WP-60 — differential-actuation physical-reality evidence | `PLANNED` | `REVIEW_BLOCKED` |
-| WP-61 — persistent all-sensor digital twin and staged physical curriculum | `PLANNED` | `REVIEW_BLOCKED` |
+| WP-57 — 1D retained-evidence truth and motion-quality contract | `PLANNED` | `DESIGN_VERIFIED` |
+| WP-58 — whole-route continuous flight and adaptive motion intent | `PLANNED` | `DESIGN_VERIFIED` |
+| WP-59 — one-drone sensor-sourced changed-world replanning | `PLANNED` | `DESIGN_VERIFIED` |
+| WP-60 — differential-actuation physical-reality evidence | `PLANNED` | `DESIGN_VERIFIED` |
+| WP-61 — persistent all-sensor digital twin and staged physical curriculum | `PLANNED` | `DESIGN_VERIFIED` |
 
 <!-- WP57-61-DESIGN-PAYLOAD-BEGIN -->
 
@@ -5036,3 +5036,229 @@ correction or third structuring cycle. No production implementation may begin be
   proxies are the 51,957-byte base payload, 13,087-byte corrective overlay, two
   retained audit artifacts, 84 existing boundary hashes, 33 absence checks, and the
   exact 22-row claim matrix.
+
+<!-- WP57-61-R3-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-57 through WP-61 operator-authorized R3 guard-closure overlay
+
+### Frozen authorization, value, and boundary
+
+The unchanged originating request and all WP-57 through WP-61 parent/child scope are
+the exact 51,957-byte base payload with SHA-256
+`2096bac6a01dd437ff5f909bc63bd3b012b30927b7d270aa3f9c4644049f8c6f`.
+The unchanged second-cycle correction is the exact 13,087-byte R2 overlay with
+SHA-256
+`e1be5e88fa91c510eb5612ee1b30d35347df53008e4fd7d563f044cbd6c67b5c`.
+After being told that one narrow successor would close motor headroom, energy/reserve,
+motor differential, and waypoint-mode promotion guards, the operator authorized this
+successor with the exact request:
+
+> Ok continue then with this cycle
+
+This is one explicitly authorized successor design cycle under `REQ-WFL-037` and
+`REQ-WFL-044`, not an automatic third pass. The affected value is the explicit request
+that calibration improve the twin without overfitting or silently worsening flight
+quality. The safe fallback is the unchanged unpromoted predecessor calibration: no
+candidate can be promoted while this gate is blocked. The expected work is limited to
+deriving the complete guard universe, freezing exact whole-session arithmetic, and
+independent design review. It cannot wait until implementation because the prior
+promotion oracle would allow a candidate to regress already-declared motion behavior.
+
+R3 changes no product function, packet/child decomposition, production owner, physical
+authority, dependency, runtime boundary, UI design, sensor scope, parameter-search
+bound, split rule, primary/residual threshold, or WP-57 through WP-61 exit. It adds
+only the missing WP-61F promotion guards and a reusable completeness rule. Production
+implementation remains prohibited until the composite base+R2+R3 design reaches
+`DESIGN_VERIFIED`.
+
+### Retrospective and exact identities
+
+The focused R2 recheck proved that self-consistency of a guard registry does not prove
+semantic completeness. `REQ-WFL-049` now requires a source-to-category-to-metric map
+derived from the frozen operator request, durable requirements, packet contract, and
+claim/exit matrix independently of the registry. The workflow postimage SHA-256 is
+`b8972dfc2c74256adf268c672ae82a5bf700c43ab65d68d98a3aca88e3973183`.
+
+The exact R3 audit is `scripts/audit_wp57_61_r3_design.py`, SHA-256
+`b137fbb720a4be831451769b8a471ef06f2acf5a8ff4bf5ec24b355049527172`.
+Its retained output is
+`missions/campaigns/sim/qualification/wp57-61-r3-design-audit-v1.json`, file SHA-256
+`e28a293829c349208f33d3d8078f6f81d3fafd3990c310178f386146ccb33af5`
+and canonical payload SHA-256
+`5cbaa9d61a79a904575cff649fa1f9b8e445a161a18ad50beb8ae14d458f3070`.
+The retained audit independently recomputes the predecessor identities, including the
+R2 JSON canonical payload rather than trusting its stored hash. Reproduce R3 with:
+
+```bash
+python3 scripts/audit_wp57_61_r3_design.py --check missions/campaigns/sim/qualification/wp57-61-r3-design-audit-v1.json
+```
+
+At design freeze the branch base remains commit
+`7a27ddbb7342253b489d72e4a2ecc90ea852019b`. The new script and artifact are design
+evidence only. No production source, runtime configuration, generated mission, API,
+UI, test, or operator-owned Campaign evidence changed in this cycle. R3 inherits the
+R2 audit's exact 84 existing preimages, 33 absent/new owners, 22 claim bindings,
+production-transit probes, generated-output sets, and every base/R2 numerical oracle.
+
+### Independently derived complete promotion guard universe
+
+The audit derives 17 semantic categories from exact tokens in the composite design and
+durable requirements, then requires an exact one-to-one metric ownership closure. The
+22 ordered promotion guards are:
+
+1. Speed law/band: `speed_compliance_fraction`, `speed_ripple_m_s`.
+2. Acceleration and jerk: `acceleration_p95_m_s2`, `jerk_p95_m_s3`.
+3. Body activity: `angular_rate_p95_rad_s`.
+4. Motor truth: `minimum_motor_thrust_headroom_n`,
+   `motor_spread_p95_percent`, `motor_saturation_fraction`,
+   `motor_differential_sign_agreement_fraction`, and
+   `motor_differential_normalized_error_p95`.
+5. Energy: `electrical_energy_used_j`.
+6. Path truth: `tracking_rms_m`, `path_tube_max_error_m`,
+   `minimum_clearance_m`, and `collision_count`.
+7. Waypoint semantics: `checkpoint_hold_conformance_fraction`,
+   `minimum_continuous_knot_speed_ratio`, and
+   `unintended_fly_through_stop_count`.
+8. Terminal/runtime safety: `terminal_secondary_peak_m_s`,
+   `terminal_reversal_count`, `duration_s`, and
+   `supervisor_safety_gate_passed`.
+
+Every metric appears in exactly one semantic category, every category has a frozen
+declaration probe, the registry contains no extra metric, and every metric has a
+direction, hard threshold, repeat/geometry/aggregate relation, exact definition, pass
+vector, metric-level isolated rejection, and independently binding clause witness. An
+implementation cannot add, remove, merge, rename, or substitute a metric or omit a
+binding hard/regression/geometry branch without a new reviewed design revision.
+
+### Seven added direction-aware guards
+
+The 15 R2 guards remain byte-exact. R3 adds seven guards:
+
+- Motor headroom is the minimum, over every motor and source-sequence motion sample,
+  of configured maximum thrust minus applied thrust. It must remain at least
+  `0.030 N` and regress no more than `5%` per repeat, geometry, and six-session
+  aggregate.
+- Electrical energy is the trapezoidal source-time integral of measured battery
+  voltage times current from accepted motion start through terminal motor cutoff. It
+  must remain at most `220 J` and regress no more than `5%`. Battery percentage or a
+  planned energy estimate cannot replace this observation.
+- Signed differential agreement uses the independent WP-60 X-layout force/torque
+  oracle, not motor spread and not a caller flag. For samples with expected nonzero
+  body torque, at least `95%` of measured motor-pair differentials must have the
+  expected sign and the value may regress no more than `5%`.
+- Differential magnitude error is p95 absolute measured-minus-expected signed
+  motor-pair differential divided by `max(abs(expected differential), 0.005 N)`. It
+  must remain at most `0.10` and regress no more than `5%`. All-equal actuation during
+  an independently expected maneuver therefore fails rather than looking smooth.
+- Checkpoint conformance is the fraction of authored `CHECKPOINT` nodes captured
+  inside their ball and held for authored dwell within `±0.02 source seconds`; it must
+  equal `1.0`.
+- Continuous-knot speed is the minimum observed-to-adjacent-target ratio at authored
+  `CONTINUOUS_FLY_THROUGH` nodes. The straight ordinary-knot geometry must remain at
+  least `0.85`; the curve geometry's repeated figure-eight path-state must remain at
+  least `0.95`. The normalized value may regress no more than `5%`.
+- Unintended fly-through stop count uses the frozen stop-speed/dwell oracle and must
+  remain exactly zero.
+
+Both holdout geometries contain an authored checkpoint and continuous nodes. The curve
+geometry additionally binds its continuous ratio to the repeated crossover path-state
+rather than coordinate equality. This proves both requested traversal modes without
+turning every node into a stop or making every checkpoint a fly-through.
+
+### Complete repeat, aggregate, and sensitivity vectors
+
+R3 inherits the R2 pass residuals and first 15 guard values unchanged. Each baseline
+and candidate number below is repeated exactly three times as a whole-session replay
+for both geometries and is included in the same full-vector hash as position,
+altitude, velocity, and the retained 15 guards. All three hashes per geometry must be
+identical and every numeric spread must be at most `1e-12`.
+
+In the added-guard order headroom, energy, differential-sign agreement,
+differential-magnitude error, checkpoint conformance, continuous-knot ratio, and
+unintended fly-through stops, the straight baseline/pass vectors are
+`(0.040,150,0.980,0.060,1.0,0.920,0)` and
+`(0.039,153,0.970,0.062,1.0,0.900,0)`. The curve baseline/pass vectors are
+`(0.038,165,0.975,0.065,1.0,0.980,0)` and
+`(0.037,168,0.965,0.067,1.0,0.970,0)`. Every hard, regression,
+per-geometry, aggregate, hash, and tolerance clause passes together with the inherited
+primary position improvement and altitude/velocity residual guards.
+
+The exact isolated failures change only one named full-vector key across its three
+repeats while every residual, repeatability clause, other 21 guards, and the other
+geometry remain passing:
+
+| Guard | Isolated value and rejection |
+|---|---|
+| Motor headroom | Straight `0.029 N`; below the `0.030 N` hard floor |
+| Electrical energy | Straight `160 J`; `6.66666666666667%` regression from `150 J` |
+| Differential sign | Straight `0.940`; below the `0.95` hard floor |
+| Differential magnitude | Straight `0.110`; above the `0.10` hard ceiling |
+| Checkpoint mode | Straight `0.5`; not every checkpoint capture+dwell conforms |
+| Continuous mode | Curve crossover `0.940`; below its `0.95` hard floor |
+| Fly-through stop | Straight `1`; one undeclared stop violates exact zero |
+
+The audit also reconstructs and reruns all 15 R2 isolated failures against the expanded
+22-guard vector. These 22 metric-level scenarios prove one changed key and one rejected
+promotion per guard, but they are not claimed to sensitize every conjunctive clause.
+The sole R3 correction adds eight regression-only whole-vector scenarios whose hard
+bound, aggregate result, other geometry, other 21 guards, primary/residual relations,
+and repeatability remain passing:
+
+| Regression-only clause | Exact isolated candidate |
+|---|---:|
+| Straight speed ripple | `0.0421 m/s` (`5.25%` regression) |
+| Straight path-tube error | `0.0421 m` (`5.25%` regression) |
+| Straight saturation fraction | `0.0053` (`6%` regression) |
+| Straight terminal secondary peak | `0.0106 m/s` (`6%` regression) |
+| Straight minimum clearance | `0.189 m` (`5.5%` regression) |
+| Straight motor headroom | `0.0379 N` (`5.25%` regression) |
+| Straight differential magnitude error | `0.0631` (`5.16666666666667%` regression) |
+| Straight ordinary continuous-knot ratio | `0.873` (`5.10869565217391%` regression) |
+
+The audit now retains 30 isolated rejected promotions: 22 metric-level fixtures plus
+eight clause-isolating additions. Its mechanical 23-row binding-clause map selects the
+sensitive witness for every guard and separately covers the continuous guard's straight
+`0.85` regression branch and curve `0.95` hard branch. Under the exact canonical
+predecessor values, the map proves which hard or regression boundary is tighter; a
+logically dominated companion clause is not mislabeled independently binding. Each
+fixture
+retains full baseline/candidate repeats, full-vector hashes, per-geometry and aggregate
+arithmetic, the changed-key set, and the promotion verdict; a stored pass/fail boolean
+is never the oracle.
+
+### R3 design gate
+
+The composite base+R2+R3 design is `DRAFT_UNVERIFIED`. Fresh verifier
+`/root/wp57_61_r3_design_review` reproduced the initial R3 identities and arithmetic
+but returned one P1: metric-level failures did not isolate eight tighter regression
+clauses or the straight waypoint branch. The sole consolidated author correction is
+now consumed by the exact 30-scenario/23-binding-witness artifact above. Only one
+focused recheck by that same verifier remains. Any unresolved P0/P1 leaves the batch
+`REVIEW_BLOCKED`; no implementation or same-author certification is allowed.
+
+<!-- WP57-61-R3-DESIGN-PAYLOAD-END -->
+
+### WP-57 through WP-61 R3 design-review handoff
+
+- Independent verification: `DESIGN_VERIFIED`.
+- Composite identity: base SHA-256
+  `2096bac6a01dd437ff5f909bc63bd3b012b30927b7d270aa3f9c4644049f8c6f`, R2 SHA-256
+  `e1be5e88fa91c510eb5612ee1b30d35347df53008e4fd7d563f044cbd6c67b5c`, and R3
+  corrected 11,601-byte overlay SHA-256
+  `6f46645b39ee279b87bede0c530e4bc77fab138552cdcd8498837d02ed23deff`.
+- Initial R3 identity: 10,178-byte overlay SHA-256
+  `c6917cbc591c7f338087331fb3681ea96792fc8a6de11bde61cdd8d02036876a`.
+- Initial R3 review: `/root/wp57_61_r3_design_review` returned
+  `BLOCKED_WITH_FINDINGS`, no P0/P2 and one P1. Eight independently tighter
+  regression clauses and the straight waypoint branch lacked sensitive isolated
+  witnesses even though every metric had one failing scenario.
+- Sole author correction: consumed. The corrected artifact retains 22 metric-level
+  failures, eight regression-only additions, and an exact 23-row binding-clause map.
+- Focused-recheck budget: consumed; no further author revision is permitted in R3.
+- Focused recheck: `/root/wp57_61_r3_design_review` returned `DESIGN_VERIFIED` with no
+  remaining P0/P1/P2 findings. It independently reproduced the corrected identities,
+  all 30 isolated scenarios, all 23 binding-clause witnesses, and zero arithmetic
+  errors. The residual boundary is design-only `MODEL_ONLY / NO_RUNTIME`; production,
+  Fast Sim, realtime, rendered UI, and hardware evidence remain implementation and
+  qualification obligations.
+- Composite design accepted; implementation is authorized from this exact identity.

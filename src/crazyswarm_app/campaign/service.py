@@ -239,6 +239,24 @@ class CampaignRunRecord(ContractModel):
     analysis_sha256: SHA256 | None = None
     failure_reason: str | None = None
     automatic_retry_count: int = Field(default=0, ge=0, le=1)
+    superseded_at_utc: datetime | None = None
+    superseded_by_revision: Identifier | None = None
+    superseded_by_actor: Identifier | None = None
+    superseded_reason: str | None = Field(default=None, min_length=1, max_length=1000)
+
+    @model_validator(mode="after")
+    def superseded_identity_is_complete(self) -> CampaignRunRecord:
+        boundary = (
+            self.superseded_at_utc,
+            self.superseded_by_revision,
+            self.superseded_by_actor,
+            self.superseded_reason,
+        )
+        if any(value is not None for value in boundary) and not all(
+            value is not None for value in boundary
+        ):
+            raise ValueError("superseded campaign run identity must be complete")
+        return self
 
 
 class ReviewApproval(ContractModel):
@@ -453,6 +471,63 @@ class CampaignService:
     def state(self) -> CampaignWorkspaceState:
         return self._state
 
+    def mark_runs_old(
+        self,
+        *,
+        case_ids: Sequence[str],
+        revision_id: str,
+        actor_id: str,
+        reason: str,
+        marked_at_utc: datetime | None = None,
+    ) -> tuple[CampaignRunRecord, ...]:
+        """Start a new evidence generation without deleting the earlier journal."""
+
+        selected_case_ids = frozenset(item.strip() for item in case_ids if item.strip())
+        if not selected_case_ids:
+            raise ValueError("marking runs old requires at least one campaign case")
+        unknown = selected_case_ids.difference(case.case_id for case in self.catalog.cases())
+        if unknown:
+            raise KeyError("unknown campaign cases: " + ", ".join(sorted(unknown)))
+        revision = revision_id.strip()
+        actor = actor_id.strip()
+        explanation = reason.strip()
+        if not revision or not actor or not explanation:
+            raise ValueError("revision, actor, and reason are required")
+        active = tuple(
+            run.run_id
+            for run in self._state.runs
+            if run.locked_inputs.case_id in selected_case_ids
+            and run.status in {CampaignRunStatus.QUEUED, CampaignRunStatus.RUNNING}
+        )
+        if active:
+            raise ValueError("active campaign runs cannot be marked old: " + ", ".join(active))
+
+        timestamp = marked_at_utc or datetime.now(UTC)
+        changed: list[CampaignRunRecord] = []
+        runs: list[CampaignRunRecord] = []
+        for run in self._state.runs:
+            if (
+                run.locked_inputs.case_id not in selected_case_ids
+                or run.superseded_at_utc is not None
+            ):
+                runs.append(run)
+                continue
+            updated = CampaignRunRecord.model_validate(
+                {
+                    **run.model_dump(mode="python"),
+                    "superseded_at_utc": timestamp,
+                    "superseded_by_revision": revision,
+                    "superseded_by_actor": actor,
+                    "superseded_reason": explanation,
+                }
+            )
+            runs.append(updated)
+            changed.append(updated)
+        if changed:
+            self._state = self._state.model_copy(update={"runs": tuple(runs)})
+            self._persist()
+        return tuple(changed)
+
     def static_validate(
         self, case_id: str, *, actor_id: str = "campaign-validator"
     ) -> BoundedPlanningResult:
@@ -555,10 +630,17 @@ class CampaignService:
         record = self._state.lifecycle[case_id]
         if record.state is LifecycleState.BASELINED:
             return record
+        current_run_ids = {
+            run.run_id
+            for run in self._state.runs
+            if run.superseded_at_utc is None
+        }
         reviews = [
             item
             for item in self._state.reviews
-            if item.case_id == case_id and item.case_sha256 == case.case_sha256
+            if item.run_id in current_run_ids
+            and item.case_id == case_id
+            and item.case_sha256 == case.case_sha256
         ]
         if not reviews:
             raise ValueError("moving to review requires at least one recorded run")
@@ -588,10 +670,16 @@ class CampaignService:
         record = self._state.lifecycle[case_id]
         if record.state is LifecycleState.PROMOTED:
             return record
+        current_run_ids = {
+            run.run_id
+            for run in self._state.runs
+            if run.superseded_at_utc is None
+        }
         succeeded = [
             item
             for item in self._state.reviews
-            if item.case_id == case_id
+            if item.run_id in current_run_ids
+            and item.case_id == case_id
             and item.case_sha256 == case.case_sha256
             and item.status is CampaignRunStatus.SUCCEEDED
         ]
@@ -633,10 +721,17 @@ class CampaignService:
             self.set_active(case_id, actor_id=actor_id, reason=reason)
             return self._state.lifecycle[case_id]
 
+        current_run_ids = {
+            run.run_id
+            for run in self._state.runs
+            if run.superseded_at_utc is None
+        }
         matching_reviews = [
             review
             for review in self._state.reviews
-            if review.case_id == case_id and review.case_sha256 == case.case_sha256
+            if review.run_id in current_run_ids
+            and review.case_id == case_id
+            and review.case_sha256 == case.case_sha256
         ]
         latest = matching_reviews[-1] if matching_reviews else None
         changed = current.transition(
@@ -803,7 +898,11 @@ class CampaignService:
         return tuple(sorted(missing))
 
     def _run_has_qualified_submission_evidence(self, run: CampaignRunRecord) -> bool:
-        if run.status is not CampaignRunStatus.SUCCEEDED or run.mission_execution_id is None:
+        if (
+            run.superseded_at_utc is not None
+            or run.status is not CampaignRunStatus.SUCCEEDED
+            or run.mission_execution_id is None
+        ):
             return False
         review = next(
             (
@@ -1273,7 +1372,8 @@ class CampaignService:
         case_run_ids = {
             item.run_id
             for item in self._state.runs
-            if item.locked_inputs.case_id == run.locked_inputs.case_id
+            if item.superseded_at_utc is None
+            and item.locked_inputs.case_id == run.locked_inputs.case_id
             and item.locked_inputs.case_sha256 == run.locked_inputs.case_sha256
         }
         retained_case_bytes = sum(
@@ -1374,7 +1474,9 @@ class CampaignService:
         run_ids = {
             run.run_id
             for run in self._state.runs
-            if run.locked_inputs.case_id == case_id and run.locked_inputs.case_sha256 == case_sha256
+            if run.superseded_at_utc is None
+            and run.locked_inputs.case_id == case_id
+            and run.locked_inputs.case_sha256 == case_sha256
         }
         timestamp = datetime.now(UTC)
         purged = 0
@@ -1402,7 +1504,9 @@ class CampaignService:
         run_ids = {
             run.run_id
             for run in self._state.runs
-            if run.locked_inputs.case_id == case_id and run.locked_inputs.case_sha256 == case_sha256
+            if run.superseded_at_utc is None
+            and run.locked_inputs.case_id == case_id
+            and run.locked_inputs.case_sha256 == case_sha256
         }
         unassessed = tuple(
             snapshot.snapshot_id
@@ -1531,16 +1635,21 @@ class CampaignService:
         lifecycle = self._state.lifecycle[case.case_id]
         if lifecycle.state is not LifecycleState.BASELINED:
             raise ValueError("promotion requires a BASELINED active case")
+        run_by_id = {
+            run.run_id: run
+            for run in self._state.runs
+            if run.superseded_at_utc is None
+        }
         approved = [
             review
             for review in self._state.reviews
-            if review.case_id == case.case_id
+            if review.run_id in run_by_id
+            and review.case_id == case.case_id
             and review.case_sha256 == case.case_sha256
             and review.status is CampaignRunStatus.SUCCEEDED
             and review.approval is not None
             and review.approval.decision is ReviewDecision.APPROVE
         ]
-        run_by_id = {run.run_id: run for run in self._state.runs}
         modes = {run_by_id[review.run_id].mode for review in approved if review.run_id in run_by_id}
         required = _required_modes(case.execution_eligibility)
         if not required.issubset(modes):
@@ -1768,6 +1877,7 @@ class CampaignService:
             if review.case_sha256 == case.case_sha256
             and review.status is CampaignRunStatus.SUCCEEDED
             and run_by_id.get(review.run_id) is not None
+            and run_by_id[review.run_id].superseded_at_utc is None
             and run_by_id[review.run_id].mode is opposite_mode
             and run_by_id[review.run_id].locked_inputs.submission_id
             == run.locked_inputs.submission_id
@@ -1885,6 +1995,7 @@ class CampaignService:
                 (other, review, other_case, other_evaluation)
                 for other in reversed(self._state.runs)
                 if other.run_id != run.run_id
+                and other.superseded_at_utc is None
                 and other.status is CampaignRunStatus.SUCCEEDED
                 and other.mode is run.mode
                 and other.locked_inputs.submission_id == submission_id
@@ -1938,6 +2049,7 @@ class CampaignService:
         for candidate in reversed(self._state.runs):
             if (
                 candidate.run_id == subject.run_id
+                or candidate.superseded_at_utc is not None
                 or candidate.status is not CampaignRunStatus.SUCCEEDED
                 or candidate.mode is not subject.mode
                 or candidate.locked_inputs.case_sha256 != case_sha256

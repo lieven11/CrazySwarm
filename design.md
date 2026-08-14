@@ -164,6 +164,9 @@ Apply `[CMP-01]` and `[CMP-02]`.
   `Not started`, `Ready`, `In progress`, `In review`, `Completed`, `Blocked`.
 - Success is usually communicated by the completed result or a temporary notice, not
   a permanent green badge on every surface.
+- Superseded run evidence uses a plain `Old` label and one full-width historical
+  divider. Keep those rows inspectable and quieter than current runs; violet may
+  reinforce their historical meaning but never replaces the text label.
 
 ### Details and evidence
 

@@ -1343,16 +1343,20 @@ body, .control-center, .workspace, .room-stage { background: #000; }
 .campaign-run-history > header, .campaign-review-detail > header { min-height: 28px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .campaign-run-history > header strong { min-width: 22px; padding: 4px 6px; border-radius: 999px; color: var(--muted); background: rgba(255,255,255,.07); font: 700 8px/1 var(--font-mono); text-align: center; }
 .campaign-run-history-list { min-height: 0; overflow-y: auto; display: grid; align-content: start; gap: 6px; padding-right: 4px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.2) transparent; }
+.campaign-run-history-divider { min-width: 0; display: grid; grid-template-columns: minmax(12px,1fr) auto minmax(12px,1fr); align-items: center; gap: 8px; padding: 7px 2px 1px; color: var(--replay); font: 700 7px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.campaign-run-history-divider::before, .campaign-run-history-divider::after { content: ""; height: 1px; background: rgba(167,139,250,.3); }
 .campaign-run-history-list article { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) 31px 31px; align-items: stretch; border: 1px solid transparent; border-radius: 12px; background: rgba(255,255,255,.025); }
 .campaign-run-history-list article.is-selected { border-color: rgba(76,201,232,.28); background: rgba(76,201,232,.065); }
 .campaign-run-history-list article > button:not(.campaign-delete-run) { min-width: 0; min-height: 55px; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 7px; padding: 7px 5px 7px 10px; border: 0; color: var(--soft); text-align: left; }
 .campaign-run-history-list article > button > span { min-width: 0; display: grid; gap: 3px; }
+.campaign-run-history-list article > button > .campaign-run-state { display: flex; align-items: flex-end; flex-direction: column; gap: 3px; }
 .campaign-run-history-list article > button strong { overflow: hidden; color: var(--white); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .campaign-run-history-list article > button small { overflow: hidden; color: var(--muted); font: 8px/1.2 var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
 .campaign-run-history-list article > button em { padding: 4px 5px; border-radius: 999px; color: var(--muted); background: rgba(255,255,255,.06); font: 700 7px/1 var(--font-mono); font-style: normal; white-space: nowrap; }
 .campaign-run-history-list article > button em.state-succeeded { color: var(--healthy); background: rgba(96,216,155,.1); }
 .campaign-run-history-list article > button em.state-running, .campaign-run-history-list article > button em.state-queued { color: var(--observed); background: rgba(76,201,232,.1); }
 .campaign-run-history-list article > button em.state-failed, .campaign-run-history-list article > button em.state-aborted { color: var(--danger); background: rgba(255,93,104,.1); }
+.campaign-run-history-list article > button em.state-old { color: var(--replay); background: rgba(167,139,250,.1); }
 .campaign-run-history-list article > a, .campaign-delete-run { display: grid; place-items: center; border: 0; border-left: 1px solid rgba(255,255,255,.06); border-radius: 0; color: var(--muted); }
 .campaign-run-history-list article > a { grid-column: 2; }
 .campaign-delete-run { grid-column: 3; }

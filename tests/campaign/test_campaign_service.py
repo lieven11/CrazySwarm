@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from crazyswarm_app.campaign.catalog import CampaignCatalog
-from crazyswarm_app.campaign.models import LifecycleState
+from crazyswarm_app.campaign.models import LifecycleState, LockedDevelopmentInputs
 from crazyswarm_app.campaign.service import (
     CampaignExecutionRequest,
     CampaignRunMode,
@@ -160,6 +160,72 @@ def test_cancelling_queued_run_immediately_releases_operator_workflow(
     cancelled = service.state.runs[0]
     assert cancelled.status is CampaignRunStatus.CANCELLED_BEFORE_LAUNCH
     assert cancelled.finished_at_utc is not None
+
+
+def test_mark_runs_old_persists_only_the_selected_evidence_generation(
+    tmp_path: Path,
+) -> None:
+    state_directory = tmp_path / "campaign"
+    catalog = CampaignCatalog(Path("missions/campaigns/sim/cases"))
+    service = CampaignService(catalog=catalog, state_directory=state_directory)
+    one_drone_lock = LockedDevelopmentInputs.from_case(
+        catalog.get("1d.takeoff_hover_land.canonical_nominal")
+    )
+    two_drone_lock = LockedDevelopmentInputs.from_case(
+        catalog.get("2d.bottleneck.canonical_nominal")
+    )
+    requested_at = datetime(2026, 8, 14, tzinfo=UTC)
+
+    def retained_run(run_id: str, lock: LockedDevelopmentInputs) -> CampaignRunRecord:
+        return CampaignRunRecord(
+            run_id=run_id,
+            mode=CampaignRunMode.AUTOMATED_ACCELERATED,
+            status=CampaignRunStatus.SUCCEEDED,
+            locked_inputs=lock,
+            requested_at_utc=requested_at,
+            finished_at_utc=requested_at,
+            plan_sha256="1" * 64,
+            schedule_sha256="2" * 64,
+            trajectory_set_sha256="3" * 64,
+        )
+
+    service._state = service.state.model_copy(
+        update={
+            "runs": (
+                retained_run("campaign-run-one", one_drone_lock),
+                retained_run("campaign-run-two", two_drone_lock),
+            )
+        }
+    )
+    service._persist()
+
+    changed = service.mark_runs_old(
+        case_ids=(one_drone_lock.case_id,),
+        revision_id="9621591e3558a8a46d2a1a3b1b119e4584cb735f",
+        actor_id="operator",
+        reason="1D implementation revision applied",
+        marked_at_utc=requested_at + timedelta(hours=1),
+    )
+
+    assert tuple(run.run_id for run in changed) == ("campaign-run-one",)
+    assert service.state.runs[0].superseded_at_utc == requested_at + timedelta(hours=1)
+    assert service.state.runs[0].superseded_by_revision == (
+        "9621591e3558a8a46d2a1a3b1b119e4584cb735f"
+    )
+    assert service.state.runs[1].superseded_at_utc is None
+    assert service.mark_runs_old(
+        case_ids=(one_drone_lock.case_id,),
+        revision_id="9621591e3558a8a46d2a1a3b1b119e4584cb735f",
+        actor_id="operator",
+        reason="1D implementation revision applied",
+    ) == ()
+
+    restored = CampaignService(
+        catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
+        state_directory=state_directory,
+    )
+    assert restored.state.runs[0].superseded_reason == "1D implementation revision applied"
+    assert restored.state.runs[1].superseded_at_utc is None
 
 
 @pytest.mark.asyncio

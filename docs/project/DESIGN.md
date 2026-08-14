@@ -348,6 +348,11 @@ catalog inside the narrow mission panel.
   the local service while the UI polls persisted status; a long accelerated or
   realtime run must never be reported as an offline simulator merely because it
   outlives a proxy request timeout.
+- Review orders current runs first. When an applied implementation revision supersedes
+  retained evidence, each affected row is labeled `Old` and the first old row follows
+  one quiet violet `Old runs` divider. Old rows remain selectable and downloadable,
+  while the persisted revision boundary prevents them from qualifying or comparing
+  later runs.
 
 ### Digital-twin session inspection
 

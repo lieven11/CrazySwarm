@@ -34,6 +34,22 @@ type CampaignTelemetryLoadState =
   | { status: "ready"; value: CampaignTelemetryChartView }
   | { status: "error"; message: string };
 
+type CampaignRunEntry = {
+  run: CampaignWorkspaceView["runs"][number];
+  review?: CampaignWorkspaceView["reviews"][number];
+  number: number;
+};
+
+export function campaignRunHistoryRows(entries: CampaignRunEntry[]) {
+  return entries.map((entry, index) => ({
+    ...entry,
+    showOldDivider: Boolean(
+      entry.run.superseded_at_utc
+      && (index === 0 || !entries[index - 1]?.run.superseded_at_utc)
+    ),
+  }));
+}
+
 const CAMPAIGN_WORKSPACE_PREFERENCES_KEY = "crazyswarm.campaign-workspace.v1";
 const CAMPAIGN_WORKSPACE_TABS: ReadonlyArray<{ id: CampaignWorkspaceTab; label: string }> = [
   { id: "catalog", label: "Catalog" },
@@ -919,9 +935,7 @@ export function CampaignLab({
     ))
     .map((run, index) => ({ run, review: reviewByRunId.get(run.run_id), number: index + 1 }))
     .toReversed();
-  // Runs are an operator's chronological investigation journal. A changed planner
-  // version or lock hash is evidence to compare, not proof that a work-package
-  // implementation was completed and a new iteration began.
+  const campaignRunRows = campaignRunHistoryRows(campaignRunEntries);
   const selectedRunEntry = campaignRunEntries.find(
     ({ run }) => run.run_id === selectedReviewRunId,
   ) ?? campaignRunEntries[0];
@@ -933,7 +947,10 @@ export function CampaignLab({
     (snapshot) => snapshot.run_id === selectedRunEntry?.run.run_id,
   );
   const selectedCaseRunIds = new Set((workspace?.runs ?? [])
-    .filter((run) => run.locked_inputs.case_id === selected?.case_id)
+    .filter((run) => (
+      !run.superseded_at_utc
+      && run.locked_inputs.case_id === selected?.case_id
+    ))
     .map((run) => run.run_id));
   const unassessedSnapshotCount = (workspace?.snapshots ?? []).filter((snapshot) => (
     selectedCaseRunIds.has(snapshot.run_id)
@@ -1506,12 +1523,22 @@ export function CampaignLab({
                       <strong>{campaignRunEntries.length}</strong>
                     </header>
                     <div className="campaign-run-history-list">
-                      {campaignRunEntries.map(({ run, number }) => (
+                      {campaignRunRows.map(({ run, number, showOldDivider }) => (
                         <Fragment key={run.run_id}>
+                          {showOldDivider ? (
+                            <div
+                              className="campaign-run-history-divider"
+                              role="separator"
+                              aria-label="Old runs"
+                            ><span>Old runs</span></div>
+                          ) : null}
                           <article className={run.run_id === selectedRunEntry.run.run_id ? "is-selected" : ""}>
                           <button type="button" aria-pressed={run.run_id === selectedRunEntry.run.run_id} onClick={() => setSelectedReviewRunId(run.run_id)}>
                             <span><strong>Run {number}</strong><small>{run.locked_inputs.submission_id ? `${humanizeCampaignValue(run.locked_inputs.submission_id)} · ` : ""}{formatCampaignRunDate(run.finished_at_utc ?? run.requested_at_utc)}</small></span>
-                            <em className={`state-${run.status.toLowerCase()}`}>{humanizeCampaignValue(run.status)}</em>
+                            <span className="campaign-run-state">
+                              {run.superseded_at_utc ? <em className="state-old">Old</em> : null}
+                              <em className={`state-${run.status.toLowerCase()}`}>{humanizeCampaignValue(run.status)}</em>
+                            </span>
                           </button>
                           {run.mission_execution_id ? (
                             <a href={api.campaignTelemetryCsvUrl(run.mission_execution_id)} download aria-label={`Download telemetry CSV for run ${number}`} title="Download telemetry CSV"><Download size={13} /></a>

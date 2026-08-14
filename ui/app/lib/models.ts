@@ -492,6 +492,10 @@ export interface CampaignRunView extends CampaignRunSummary {
   mission_execution_id?: string;
   artifact_set_sha256?: string;
   analysis_sha256?: string;
+  superseded_at_utc?: string;
+  superseded_by_revision?: string;
+  superseded_by_actor?: string;
+  superseded_reason?: string;
 }
 
 export interface CampaignRunStartView extends CampaignRunSummary {

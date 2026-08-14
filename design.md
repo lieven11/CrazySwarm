@@ -180,6 +180,29 @@ Apply `[CMP-01]` and `[CMP-02]`.
   a text alternative, keyboard operation, and expands in place without losing review
   context.
 
+### Digital-twin evidence
+
+- Keep twin evidence inside the existing flight/Campaign review hierarchy. The room
+  remains the spatial overview, the expanded flight `Evidence` disclosure owns the
+  current session summary, and Campaign `Review` owns retained run/session comparison.
+  Do not introduce a competing dashboard shell.
+- In the room, observed/received paths are cyan, model predictions are orange, and
+  replay or historical comparison is violet. Planned authority remains grey/dashed.
+  Every color has a visible text legend and source label.
+- A twin timeline is a review graph set, not live command authority. It uses one shared
+  source-time cursor across actual/predicted path, sensor, motor, residual, obstacle,
+  and replan channels. Missing, stale, incompatible, and unqualified channels remain
+  explicit and are never bridged with invented values.
+- Start with outcome, actual-versus-predicted path, and the primary residual. Put
+  channel provenance, hashes, frames, calibration identity, and raw timing inside a
+  closed evidence disclosure. Individual motors remain separately inspectable.
+- Desktop and narrow layouts preserve graph units, source labels, cursor time, and
+  quality state. Wide graph grids become one vertical sequence rather than shrinking
+  text or clipping controls.
+- The served surface requires loading, empty, unavailable, stale, error,
+  expanded/collapsed, keyboard/focus, and reduced-motion states. Canvas/SVG plots have
+  equivalent text summaries and never use color alone to communicate a result.
+
 ### Empty, loading, and error states
 
 - Loading copy says what is loading, without a paragraph of explanation.

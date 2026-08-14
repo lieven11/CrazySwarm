@@ -349,6 +349,31 @@ catalog inside the narrow mission panel.
   realtime run must never be reported as an offline simulator merely because it
   outlives a proxy request timeout.
 
+### Digital-twin session inspection
+
+- `Digital twin` in the existing mission selector changes source context; it does not
+  create a second navigation system. The 3D room overlays actual cyan and predicted
+  orange paths, the expanded flight `Evidence` disclosure shows the active session,
+  and Campaign `Review` links retained sessions to their immutable run evidence.
+- The active-session summary leads with actual-versus-predicted path and the named
+  primary residual. A visible action opens the full source-time timeline in place.
+  Technical provenance, frames, raw hashes, model/calibration identity, and receive
+  timing remain in a closed native disclosure.
+- One keyboard-operable cursor controls all visible graphs. Channel selection includes
+  pose, velocity, attitude, IMU, battery, individual motors, estimator health,
+  perception objects, commands, plan/replan identity, safety state, and residuals when
+  actually available. A channel is labeled `Unavailable`, `Stale`, `Incompatible`,
+  `Modeled`, `Measured`, or `Test`; the interface never fills a missing measurement
+  with its prediction.
+- Observed cyan (`#58D5EE`), modeled orange (`#FF7A45`), replay violet (`#B49BFF`),
+  and planned grey/dashed retain their established meanings. Legends and textual
+  summaries repeat those meanings so color is not the only carrier.
+- On narrow screens, graph groups become a single vertical sequence with source,
+  timestamp, unit, and quality visible. Loading, empty, disconnected, stale, partial-
+  sensor, backend-error, expanded/collapsed, focus, reduced-motion, and simulator-only
+  states are required. Every canvas or SVG graph exposes a text-equivalent metric and
+  ordered sample summary.
+
 ### Dense selection menus
 
 Catalog selectors use the same dense-black language as Run files rather than the

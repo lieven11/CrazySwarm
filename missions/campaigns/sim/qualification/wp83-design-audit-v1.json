@@ -1,0 +1,2661 @@
+{
+  "boundaries": [
+    {
+      "classification": "IMPLEMENTATION_OWNED",
+      "path": "docs/project/REQUIREMENTS_CHANGELOG.md",
+      "preimage_sha256": "68303842c574b1998ef6f464648215f48c65632aefb1e03e7181c7df13b6c721"
+    },
+    {
+      "classification": "IMPLEMENTATION_OWNED",
+      "path": "docs/project/requirements/EVIDENCE_AND_REVIEW.md",
+      "preimage_sha256": "3c800960dda12c49727b9a87a88c6c4882d22a4a4d5c08d58f9903cd6d32a593"
+    },
+    {
+      "classification": "IMPLEMENTATION_OWNED",
+      "path": "docs/reference/LANDING_GOAL_REGION_V1.md",
+      "preimage_sha256": "4c5990707a0a46b065feb20dec016b0cfc2d97b234275ea30551a3a1de90a811"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "scripts/audit_wp81_design.py",
+      "preimage_sha256": "ab79b8c5415992d1fa8b9003670d3e802f58a5dde0d8cd4f2036c308228ebbb7"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "scripts/audit_wp82_design.py",
+      "preimage_sha256": "a18d5a5908fd269c2f179896dc29514b3eb204a5ca8530c6cf5da7f242812050"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "scripts/check_requirement_catalog.py",
+      "preimage_sha256": "414deb7996819ecd371bf46a5e79b420bec3309c1100d7a336064ec9103fce56"
+    },
+    {
+      "classification": "IMPLEMENTATION_OWNED",
+      "path": "src/crazyswarm_app/domain/commands.py",
+      "preimage_sha256": "6aba9415f010bad81db33c2dd67c67117e2281292f459d7eb870fe24991d0373"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/domain/errors.py",
+      "preimage_sha256": "64113a37dacf413065ea1f0897a94087bc1a2817f052b3732bf4e395a2dfb73a"
+    },
+    {
+      "classification": "IMPLEMENTATION_OWNED",
+      "path": "src/crazyswarm_app/domain/goals.py",
+      "preimage_sha256": "e06479bb50efa16ee1985b8ab199e075fc7ecf6cff27b299d583383738ad3422"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/domain/models.py",
+      "preimage_sha256": "a298a1f7958239c3ae260e2df21a455cf188a5588395b9222095b3377eb9fcff"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/domain/simulation.py",
+      "preimage_sha256": "393fb0f83bde414d2088ad749e13c5308f6d267a8725344c05fc726147aa1d76"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/domain/telemetry.py",
+      "preimage_sha256": "741a4aa9cc4a405588960eece156b82e85348bf124e61fcb16f66ebb97376f99"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/domain/trajectory.py",
+      "preimage_sha256": "5d48ba0f3bc01d4280887a340408bb99c05bd3156de24823ff543e75a21354ef"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/fleet/artifacts.py",
+      "preimage_sha256": "67380de6c08f72add380047daa695d2936af8e07e2f6868854cc7269087ea77a"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/fleet/planning.py",
+      "preimage_sha256": "21e16c5da99d4eba7d8e9ab38859c022efd9be5f8a28b0c3e2e8e803ddcf7981"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/fleet/zones.py",
+      "preimage_sha256": "1b48f9c6591d12dfc3e803b5a31c701005469cc47b9b71e34a09a99c4eee042d"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/missions/authority.py",
+      "preimage_sha256": "86832cf77ba259ffde485a9a5576f0462f05e7b21eab21abf280de7c3690f3ff"
+    },
+    {
+      "classification": "IMPLEMENTATION_OWNED",
+      "path": "src/crazyswarm_app/missions/base.py",
+      "preimage_sha256": "c9d163a49a8dbbecee4ca5a82f32f1430ed578b5744c0c8ebecdf786bcab0542"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/missions/observation.py",
+      "preimage_sha256": "0675b0897501a0f9aa8a87b97406be132e2e113e6c6ea5da6843b26431e74d3f"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/missions/planning.py",
+      "preimage_sha256": "0fbb21cd1fed76868220f4618f6c6476fefbdbee06fd789e819bed38a6b53685"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/missions/registry.py",
+      "preimage_sha256": "9b8cd1415e7ddbbbfbd0a01a0e0d074fa7fa1d1d0bd95b6243e881c9c9c004f2"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/missions/runner.py",
+      "preimage_sha256": "0363679e48b5327cf8314123e7e7c035a348c460e99bf934ee09711153f536df"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/missions/script.py",
+      "preimage_sha256": "fc27a997120858048b617f45afe24042170315ae11ac911869438ca256470b59"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/planning/builtins.py",
+      "preimage_sha256": "20f82ca054a2513c59c62a0863b90fdb3100c83b473d32de1d050231a26ec307"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/planning/contracts.py",
+      "preimage_sha256": "f1dd7392db34e6d68323f85f9d3aed48b44961eb509e2346f137c3405b678766"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/planning/deconfliction.py",
+      "preimage_sha256": "009b149d0108a7fa4981806226211fc9eb8058053673c41c0d7644ae26b6afa2"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/planning/intent.py",
+      "preimage_sha256": "46ee4ff55181ce315bd4e2d5a6b1f41295b7d172dc579700b5d74baf9dea60dc"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/planning/multidrone.py",
+      "preimage_sha256": "5f6c8c9f924c040299dc3ba65abe7d7aa62f3d440d6439d28819c50831c79d53"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/planning/registry.py",
+      "preimage_sha256": "597cf4e7ffd93543c0432d35b21abf01d357c5ac73b25ca5b66bd6d05a7db242"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/planning/safety.py",
+      "preimage_sha256": "cafa7ddf8fca4be4a3331a8ca896b79e192d8c8bb55b40aa35e6678927bb81b4"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/planning/service.py",
+      "preimage_sha256": "9002ec5c1c04065ec87cb992129be8e8eecef8b548a9b0e053a3924856d8ec06"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/provenance.py",
+      "preimage_sha256": "5750430a94c185c583d615a0ecab69b5d91b05c922c3e7e9d719d06f4a21d6d2"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/safety/policy.py",
+      "preimage_sha256": "f534665ec00c33991026f93ec3562edc957cf7075883860bff5205cf5fe16e69"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/safety/state_machine.py",
+      "preimage_sha256": "c342cb737f7d93e84617baad0abd4ff50908c7d4deea60b9cb96d4ab2fb33fe6"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/safety/supervisor.py",
+      "preimage_sha256": "35355186a1bed44fe812abab09d1163a4e09b35fc2fbb7cdb5ebbc35163a9cae"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/simulation/clock.py",
+      "preimage_sha256": "722c45cb3be4fded5719bdf678674c7cbf013dd6cbc6df68878e471789628f1f"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/simulation/faults.py",
+      "preimage_sha256": "1c72cbc96b25db97b20821a15142e7e49ba7657dbaa656d4730914c650724646"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/simulation/models.py",
+      "preimage_sha256": "a978d58e2e3a9e4a867f79bab743b4fcb981279b2a7b057012c5cae50f95785b"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/simulation/physics.py",
+      "preimage_sha256": "60a372d2b3f9493e595f55941dfe1f1d619006f714018451e2e42bdb77ccbb97"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/simulation/powertrain.py",
+      "preimage_sha256": "65c7eb993fe0879dbd314f0aa7d5606a254ddfa44cca02b0951c53116a63c0c2"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/simulation/sensors.py",
+      "preimage_sha256": "707060cd2c2010a598a28e5a9357ecda3f0b7adbe00ecc37a42047b83d06e0f6"
+    },
+    {
+      "classification": "IMPLEMENTATION_OWNED",
+      "path": "src/crazyswarm_app/simulation/vehicle.py",
+      "preimage_sha256": "4c979b67bca972a06ec9bd1540c8f5205c34015440fb753eda8a118115e00f10"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/simulation/world.py",
+      "preimage_sha256": "b465609f1d3b3a024b18448ba07aba20ce0b4ee58f21eb63d21318e2360de1d9"
+    },
+    {
+      "classification": "IMPLEMENTATION_OWNED",
+      "path": "tests/missions/test_trajectory_execution.py",
+      "preimage_sha256": "565cbe6192e65d22a50ce184ab834dd66e0e9bc6936fb3af0eed74dbae26baf5"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "region_native_landing_accelerated",
+      "clock_evidence": "ACCELERATED",
+      "environment": "FAST_SIM",
+      "execution_boundary": "INTEGRATION"
+    },
+    {
+      "claim_id": "region_native_landing_realtime",
+      "clock_evidence": "OBSERVED_REALTIME",
+      "environment": "FAST_SIM",
+      "execution_boundary": "INTEGRATION"
+    }
+  ],
+  "historical_schema_parse_results": [
+    {
+      "attempt_v3_values": {
+        "source_clock_epoch": null,
+        "source_clock_id": null,
+        "source_sequence": null,
+        "source_timestamp_s": null
+      },
+      "record_v3_values": {
+        "alignment_duration_s": null,
+        "authorized_capture_position_m": null,
+        "commanded_pre_descent_horizontal_adjustment_m": null,
+        "contact_source_clock_epoch": null,
+        "contact_source_clock_id": null,
+        "contact_source_sequence": null,
+        "descent_target_position_m": null
+      },
+      "schema_version": 1
+    },
+    {
+      "attempt_v3_values": {
+        "source_clock_epoch": null,
+        "source_clock_id": null,
+        "source_sequence": null,
+        "source_timestamp_s": null
+      },
+      "record_v3_values": {
+        "alignment_duration_s": null,
+        "authorized_capture_position_m": null,
+        "commanded_pre_descent_horizontal_adjustment_m": null,
+        "contact_source_clock_epoch": null,
+        "contact_source_clock_id": null,
+        "contact_source_sequence": null,
+        "descent_target_position_m": null
+      },
+      "schema_version": 2
+    }
+  ],
+  "historical_schema_payloads": [
+    {
+      "alignment_completed_source_timestamp_s": 6.0,
+      "attempt_count": 1,
+      "attempts": [
+        {
+          "aligned": true,
+          "attempt": 1,
+          "estimated_position_m": {
+            "x": 1.3,
+            "y": 0.0,
+            "z": 0.3
+          },
+          "horizontal_capture_margin_m": 0.01,
+          "horizontal_error_m": 0.05,
+          "speed_capture_margin_m_s": 0.2,
+          "speed_m_s": 0.0,
+          "truth_position_m": {
+            "x": 1.3,
+            "y": 0.0,
+            "z": 0.3
+          },
+          "vertical_capture_margin_m": 0.05,
+          "vertical_error_m": 0.0
+        }
+      ],
+      "contact_source_timestamp_s": 7.0,
+      "correction_count": 0,
+      "descent_authorized": true,
+      "disarmed_source_timestamp_s": 7.1,
+      "goal": {
+        "approach_point_m": {
+          "x": 1.35,
+          "y": 0.0,
+          "z": 0.3
+        },
+        "correction_duration_s": 1.0,
+        "diversion_target_m": null,
+        "failure_action": "ABORT_AND_LAND",
+        "frame": "world",
+        "goal_id": "historical-v1",
+        "horizontal_tolerance_m": 0.06,
+        "landing_target_m": {
+          "x": 1.35,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "maximum_capture_speed_m_s": 0.2,
+        "maximum_correction_attempts": 2,
+        "role_id": "lead",
+        "schema_version": 1,
+        "vehicle_id": "sim01",
+        "vertical_tolerance_m": 0.05
+      },
+      "motors_cut_after_contact": true,
+      "outcome": "CAPTURED",
+      "post_contact_settling_s": 0.1,
+      "pre_contact_vertical_speed_m_s": 0.1,
+      "schema_version": 1,
+      "target_center_horizontal_error_m": 0.05,
+      "terminal_contact": "SIMULATED_GROUND_CONTACT",
+      "terminal_estimated_position_m": {
+        "x": 1.3,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "terminal_speed_m_s": 0.0,
+      "terminal_state": "LANDED",
+      "terminal_truth_position_m": {
+        "x": 1.3,
+        "y": 0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "alignment_completed_source_timestamp_s": 6.0,
+      "attempt_count": 1,
+      "attempts": [
+        {
+          "aligned": true,
+          "attempt": 1,
+          "estimated_position_m": {
+            "x": 1.3,
+            "y": 0.0,
+            "z": 0.3
+          },
+          "horizontal_capture_margin_m": 0.01,
+          "horizontal_error_m": 0.05,
+          "speed_capture_margin_m_s": 0.2,
+          "speed_m_s": 0.0,
+          "truth_position_m": {
+            "x": 1.3,
+            "y": 0.0,
+            "z": 0.3
+          },
+          "vertical_capture_margin_m": 0.05,
+          "vertical_error_m": 0.0
+        }
+      ],
+      "contact_source_timestamp_s": 7.0,
+      "correction_count": 0,
+      "descent_authorized": true,
+      "disarmed_source_timestamp_s": 7.1,
+      "goal": {
+        "approach_point_m": {
+          "x": 1.35,
+          "y": 0.0,
+          "z": 0.3
+        },
+        "correction_duration_s": 1.0,
+        "diversion_target_m": null,
+        "failure_action": "ABORT_AND_LAND",
+        "frame": "world",
+        "goal_id": "historical-v2",
+        "horizontal_tolerance_m": 0.06,
+        "landing_target_m": {
+          "x": 1.35,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "maximum_capture_speed_m_s": 0.2,
+        "maximum_correction_attempts": 2,
+        "role_id": "lead",
+        "schema_version": 1,
+        "vehicle_id": "sim01",
+        "vertical_tolerance_m": 0.05
+      },
+      "motors_cut_after_contact": true,
+      "outcome": "CAPTURED",
+      "post_contact_settling_s": 0.1,
+      "pre_contact_vertical_speed_m_s": 0.1,
+      "schema_version": 2,
+      "target_center_horizontal_error_m": 0.05,
+      "terminal_contact": "SIMULATED_GROUND_CONTACT",
+      "terminal_estimated_position_m": {
+        "x": 1.3,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "terminal_speed_m_s": 0.0,
+      "terminal_state": "LANDED",
+      "terminal_truth_position_m": {
+        "x": 1.3,
+        "y": 0.0,
+        "z": 0.0
+      }
+    }
+  ],
+  "inherited_capture_witness_results": [
+    {
+      "capture_to_target_xy_m": 0.0,
+      "command_valid": true,
+      "descent_authorized": true,
+      "id": "accepted_offset"
+    },
+    {
+      "capture_to_target_xy_m": 0.0,
+      "command_valid": true,
+      "descent_authorized": true,
+      "id": "inclusive_edge"
+    },
+    {
+      "capture_to_target_xy_m": 0.0,
+      "command_valid": false,
+      "descent_authorized": false,
+      "id": "outside_edge"
+    },
+    {
+      "capture_to_target_xy_m": 0.0,
+      "command_valid": true,
+      "descent_authorized": false,
+      "id": "overspeed"
+    },
+    {
+      "capture_to_target_xy_m": 0.0,
+      "command_valid": false,
+      "descent_authorized": true,
+      "id": "wrong_landing_height"
+    },
+    {
+      "capture_to_target_xy_m": 0.0,
+      "command_valid": true,
+      "descent_authorized": true,
+      "id": "declared_diversion_point"
+    },
+    {
+      "capture_to_target_xy_m": 1.000000000001e-06,
+      "command_valid": false,
+      "descent_authorized": true,
+      "id": "off_diversion_point"
+    },
+    {
+      "capture_to_target_xy_m": 0.0,
+      "command_valid": true,
+      "descent_authorized": false,
+      "id": "vertical_outside"
+    },
+    {
+      "capture_to_target_xy_m": 0.0,
+      "command_valid": true,
+      "descent_authorized": false,
+      "id": "invalid_observation"
+    },
+    {
+      "capture_to_target_xy_m": 0.0,
+      "command_valid": true,
+      "descent_authorized": true,
+      "id": "divert_goal_nominal_region_capture"
+    }
+  ],
+  "inherited_capture_witnesses": [
+    {
+      "capture": [
+        1.3,
+        0.0,
+        0.3
+      ],
+      "center": [
+        1.35,
+        0.0,
+        0.0
+      ],
+      "expected_capture_to_target_xy_m": 0.0,
+      "expected_command_valid": true,
+      "expected_descent_authorized": true,
+      "horizontal_tolerance_m": 0.1,
+      "id": "accepted_offset",
+      "kind": "NOMINAL_REGION",
+      "maximum_capture_speed_m_s": 0.1,
+      "observed_speed_m_s": 0.1,
+      "target": [
+        1.3,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "capture": [
+        1.45,
+        0.0,
+        0.3
+      ],
+      "center": [
+        1.35,
+        0.0,
+        0.0
+      ],
+      "expected_capture_to_target_xy_m": 0.0,
+      "expected_command_valid": true,
+      "expected_descent_authorized": true,
+      "horizontal_tolerance_m": 0.1,
+      "id": "inclusive_edge",
+      "kind": "NOMINAL_REGION",
+      "maximum_capture_speed_m_s": 0.1,
+      "observed_speed_m_s": 0.1,
+      "target": [
+        1.45,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "capture": [
+        1.450001,
+        0.0,
+        0.3
+      ],
+      "center": [
+        1.35,
+        0.0,
+        0.0
+      ],
+      "expected_capture_to_target_xy_m": 0.0,
+      "expected_command_valid": false,
+      "expected_descent_authorized": false,
+      "horizontal_tolerance_m": 0.1,
+      "id": "outside_edge",
+      "kind": "NOMINAL_REGION",
+      "maximum_capture_speed_m_s": 0.1,
+      "observed_speed_m_s": 0.1,
+      "target": [
+        1.450001,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "capture": [
+        1.3,
+        0.0,
+        0.3
+      ],
+      "center": [
+        1.35,
+        0.0,
+        0.0
+      ],
+      "expected_capture_to_target_xy_m": 0.0,
+      "expected_command_valid": true,
+      "expected_descent_authorized": false,
+      "horizontal_tolerance_m": 0.1,
+      "id": "overspeed",
+      "kind": "NOMINAL_REGION",
+      "maximum_capture_speed_m_s": 0.1,
+      "observed_speed_m_s": 0.100001,
+      "target": [
+        1.3,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "capture": [
+        1.3,
+        0.0,
+        0.3
+      ],
+      "center": [
+        1.35,
+        0.0,
+        0.0
+      ],
+      "expected_capture_to_target_xy_m": 0.0,
+      "expected_command_valid": false,
+      "expected_descent_authorized": true,
+      "horizontal_tolerance_m": 0.1,
+      "id": "wrong_landing_height",
+      "kind": "NOMINAL_REGION",
+      "maximum_capture_speed_m_s": 0.1,
+      "observed_speed_m_s": 0.0,
+      "target": [
+        1.3,
+        0.0,
+        1e-06
+      ]
+    },
+    {
+      "capture": [
+        0.25,
+        0.0,
+        0.3
+      ],
+      "center": [
+        1.35,
+        0.0,
+        0.0
+      ],
+      "diversion": [
+        0.25,
+        0.0,
+        0.0
+      ],
+      "expected_capture_to_target_xy_m": 0.0,
+      "expected_command_valid": true,
+      "expected_descent_authorized": true,
+      "horizontal_tolerance_m": 0.1,
+      "id": "declared_diversion_point",
+      "kind": "DIVERSION_POINT",
+      "maximum_capture_speed_m_s": 0.1,
+      "observed_speed_m_s": 0.0,
+      "target": [
+        0.25,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "capture": [
+        0.25,
+        0.0,
+        0.3
+      ],
+      "center": [
+        1.35,
+        0.0,
+        0.0
+      ],
+      "diversion": [
+        0.25,
+        0.0,
+        0.0
+      ],
+      "expected_capture_to_target_xy_m": 1e-06,
+      "expected_command_valid": false,
+      "expected_descent_authorized": true,
+      "horizontal_tolerance_m": 0.1,
+      "id": "off_diversion_point",
+      "kind": "DIVERSION_POINT",
+      "maximum_capture_speed_m_s": 0.1,
+      "observed_speed_m_s": 0.0,
+      "target": [
+        0.249999,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "capture": [
+        1.3,
+        0.0,
+        0.350001
+      ],
+      "center": [
+        1.35,
+        0.0,
+        0.0
+      ],
+      "expected_capture_to_target_xy_m": 0.0,
+      "expected_command_valid": true,
+      "expected_descent_authorized": false,
+      "horizontal_tolerance_m": 0.1,
+      "id": "vertical_outside",
+      "kind": "NOMINAL_REGION",
+      "maximum_capture_speed_m_s": 0.1,
+      "observed_speed_m_s": 0.0,
+      "target": [
+        1.3,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "capture": [
+        1.3,
+        0.0,
+        0.3
+      ],
+      "center": [
+        1.35,
+        0.0,
+        0.0
+      ],
+      "expected_capture_to_target_xy_m": 0.0,
+      "expected_command_valid": true,
+      "expected_descent_authorized": false,
+      "horizontal_tolerance_m": 0.1,
+      "id": "invalid_observation",
+      "kind": "NOMINAL_REGION",
+      "maximum_capture_speed_m_s": 0.1,
+      "observation_valid": false,
+      "observed_speed_m_s": 0.0,
+      "target": [
+        1.3,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "capture": [
+        1.3,
+        0.0,
+        0.3
+      ],
+      "center": [
+        1.35,
+        0.0,
+        0.0
+      ],
+      "diversion": [
+        0.25,
+        0.0,
+        0.0
+      ],
+      "expected_capture_to_target_xy_m": 0.0,
+      "expected_command_valid": true,
+      "expected_descent_authorized": true,
+      "horizontal_tolerance_m": 0.1,
+      "id": "divert_goal_nominal_region_capture",
+      "kind": "DIVERT_GOAL_NOMINAL_REGION",
+      "maximum_capture_speed_m_s": 0.1,
+      "observed_speed_m_s": 0.0,
+      "target": [
+        1.3,
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "originating_request": "ok continue with the p1",
+  "packet_id": "WP-83",
+  "predecessor": "WP-82 BLOCKED_WITH_FINDINGS",
+  "requirements": [
+    "REQ-EVI-005",
+    "REQ-MOT-010",
+    "REQ-MOT-011",
+    "REQ-WFL-014",
+    "REQ-WFL-017",
+    "REQ-WFL-018",
+    "REQ-WFL-020",
+    "REQ-WFL-023",
+    "REQ-WFL-029",
+    "REQ-WFL-034",
+    "REQ-WFL-036",
+    "REQ-WFL-039",
+    "REQ-WFL-042",
+    "REQ-WFL-046",
+    "REQ-WFL-047",
+    "REQ-WFL-003"
+  ],
+  "runtime_transit_calls_by_clock": {
+    "ACCELERATED": {
+      "src/crazyswarm_app/domain/commands.py": [
+        "CommandAcknowledgement.completion_is_ordered_and_explicit",
+        "CommandAcknowledgement.completion_is_ordered_and_explicit.<locals>.<genexpr>",
+        "CommandEnvelope.<lambda>",
+        "CommandEnvelope.replay_cannot_command",
+        "ExecuteTrajectoryCommand.identities_match_payload",
+        "LandCommand.target_height_agrees",
+        "MoveRelativeCommand.require_motion"
+      ],
+      "src/crazyswarm_app/domain/errors.py": [
+        "CrazySwarmError.__init__"
+      ],
+      "src/crazyswarm_app/domain/goals.py": [
+        "GoalCaptureRecord.attempts_and_outcome_agree",
+        "LandingGoalRegion.valid_approach_and_fallback"
+      ],
+      "src/crazyswarm_app/domain/models.py": [
+        "VehicleCapabilities.supports"
+      ],
+      "src/crazyswarm_app/domain/simulation.py": [
+        "BatteryParameters.ordered_voltage",
+        "SensorParameters.ordered_range",
+        "SimulationRunIdentity.sha256",
+        "VehicleParameterSchema.sha256",
+        "_canonical_value",
+        "_canonical_value.<locals>.<lambda>",
+        "canonical_json",
+        "canonical_sha256"
+      ],
+      "src/crazyswarm_app/domain/telemetry.py": [
+        "TelemetryEnvelope.<lambda>",
+        "TelemetryEnvelope.receive_time_is_ordered",
+        "VehicleTelemetry.spatial_values_require_frame",
+        "VehicleTelemetry.spatial_values_require_frame.<locals>.<genexpr>"
+      ],
+      "src/crazyswarm_app/domain/trajectory.py": [
+        "AcceptedExecutionProgram.coherent_schedule",
+        "AcceptedExecutionProgram.coherent_schedule.<locals>.<genexpr>",
+        "AcceptedExecutionProgram.sha256",
+        "AcceptedExecutionProgram.trajectory_sha256s",
+        "AcceptedExecutionProgram.trajectory_sha256s.<locals>.<genexpr>",
+        "LandExecutionOperation.goal_matches_descent",
+        "TimeParameterizedTrajectory.duration_s",
+        "TimeParameterizedTrajectory.ordered_and_continuous",
+        "TimeParameterizedTrajectory.ordered_and_continuous.<locals>.<genexpr>",
+        "TimeParameterizedTrajectory.sha256",
+        "TrajectoryExecutionOperation.identity_matches",
+        "TrajectoryPoint.finite_values",
+        "TrajectoryPoint.finite_values.<locals>.<genexpr>",
+        "_canonical_sha256",
+        "_length",
+        "quintic_sample",
+        "sample_trajectory_segment",
+        "sample_trajectory_segment.<locals>.<genexpr>"
+      ],
+      "src/crazyswarm_app/fleet/artifacts.py": [
+        "BackendBindingProfile.bindings_are_unique_and_not_crossed",
+        "BackendBindingProfile.bindings_are_unique_and_not_crossed.<locals>.<genexpr>",
+        "DeploymentManifest.references_are_unique_and_complete",
+        "DeploymentManifest.references_are_unique_and_complete.<locals>.<genexpr>",
+        "DeploymentManifest.sha256",
+        "FleetConstraints.separation_thresholds_are_ordered",
+        "ZoneGeometry.bounds_are_ordered",
+        "_require_unique"
+      ],
+      "src/crazyswarm_app/fleet/planning.py": [
+        "_backend_identifier",
+        "_validate_homes",
+        "_vector",
+        "mission_role_estimated_energy_percent",
+        "plan_mission_deployment",
+        "plan_mission_deployment.<locals>.<genexpr>"
+      ],
+      "src/crazyswarm_app/fleet/zones.py": [
+        "ZoneTaskPlanner.__init__"
+      ],
+      "src/crazyswarm_app/missions/authority.py": [
+        "MissionFleetAuthority.__init__",
+        "MissionFleetAuthority.evaluate_health",
+        "MissionFleetAuthority.execute",
+        "MissionFleetAuthority.receipts"
+      ],
+      "src/crazyswarm_app/missions/base.py": [
+        "MissionContext._goal_capture_attempt",
+        "MissionContext._record_intent",
+        "MissionContext._wait_for_command_permission",
+        "MissionContext.capture_and_land",
+        "MissionContext.checkpoint",
+        "MissionContext.execute_trajectory",
+        "MissionContext.execute_trajectory.<locals>.<lambda>",
+        "MissionContext.land",
+        "MissionContext.land.<locals>.<lambda>",
+        "MissionContext.observe",
+        "MissionContext.takeoff",
+        "MissionContext.takeoff.<locals>.<lambda>",
+        "_vector_norm"
+      ],
+      "src/crazyswarm_app/missions/observation.py": [
+        "MissionObservation.from_telemetry"
+      ],
+      "src/crazyswarm_app/missions/planning.py": [
+        "MissionPlanReceipt.sha256",
+        "_check_move_dynamics",
+        "_check_takeoff_dynamics",
+        "_compile_continuous_trajectory",
+        "_compile_continuous_trajectory.<locals>.<genexpr>",
+        "_compile_execution_program",
+        "_compile_execution_program.<locals>.<genexpr>",
+        "_compile_role",
+        "_distance",
+        "_plan_status",
+        "_plan_status.<locals>.<genexpr>",
+        "_starting_separation_findings",
+        "_step_duration",
+        "build_mission_plan",
+        "build_mission_plan.<locals>.<genexpr>",
+        "build_mission_plan.<locals>.<genexpr>.<genexpr>",
+        "build_mission_plan.<locals>.<lambda>"
+      ],
+      "src/crazyswarm_app/missions/registry.py": [
+        "MissionRegistry.__init__",
+        "MissionRegistry.get",
+        "MissionRegistry.register",
+        "MissionRegistry.validate_parameters"
+      ],
+      "src/crazyswarm_app/missions/runner.py": [
+        "MissionRunner.__init__",
+        "MissionRunner._cleanup",
+        "MissionRunner._configuration_hash",
+        "MissionRunner._empty_execution_authority_fields",
+        "MissionRunner._execute_behavior",
+        "MissionRunner._execute_flight_path",
+        "MissionRunner._execute_with_health_watchdog",
+        "MissionRunner._health_watchdog",
+        "MissionRunner._health_watchdog.<locals>.<lambda>",
+        "MissionRunner._health_watchdog.<locals>.assess_landing",
+        "MissionRunner._lease_heartbeat",
+        "MissionRunner._notify",
+        "MissionRunner._phase",
+        "MissionRunner._receipt_fields",
+        "MissionRunner._receipt_fields.<locals>.<genexpr>",
+        "MissionRunner._result",
+        "MissionRunner._validate_execution_authority",
+        "MissionRunner._validate_execution_authority.<locals>.<genexpr>",
+        "MissionRunner.run",
+        "MissionRunner.run.<locals>.<lambda>"
+      ],
+      "src/crazyswarm_app/missions/script.py": [
+        "ScriptMission.__init__",
+        "ScriptMission.__init__.<locals>.<genexpr>",
+        "ScriptMission.execute",
+        "_BoundedMissionValidator.__init__",
+        "_BoundedMissionValidator.generic_visit",
+        "_BoundedMissionValidator.visit_Attribute",
+        "_BoundedMissionValidator.visit_Call",
+        "_BoundedMissionValidator.visit_For",
+        "_all_steps",
+        "_cleanup_worker_directory",
+        "_direct_steps",
+        "_estimate_block",
+        "_is_mission_declaration",
+        "_literal_keywords",
+        "_mission_function",
+        "_mission_package",
+        "_parse_direct_step",
+        "_require_awaited_drone_calls",
+        "_require_lifecycle",
+        "_start_worker",
+        "_validate_arguments",
+        "_write_worker",
+        "execute_accepted_program",
+        "parse_python_mission",
+        "preview_isolated_mission_role",
+        "preview_isolated_mission_role.<locals>.<genexpr>"
+      ],
+      "src/crazyswarm_app/planning/builtins.py": [
+        "DeterministicFleetPolicy.decide",
+        "DirectRoutePlanner.plan",
+        "DirectRoutePlanner.plan.<locals>.<genexpr>",
+        "ZoneRoutePlanner.__init__",
+        "_distance",
+        "_inside_volume",
+        "_manifest",
+        "_plan_polyline",
+        "_plan_polyline.<locals>.<genexpr>",
+        "_reservation",
+        "_reservation.<locals>.<genexpr>",
+        "_route_artifact",
+        "default_fleet_policy_registry",
+        "default_recovery_registry",
+        "default_route_planner_registry"
+      ],
+      "src/crazyswarm_app/planning/contracts.py": [
+        "FleetPolicyDecision.canonical_payload",
+        "PluginManifest.sha256",
+        "PluginManifest.valid_capabilities",
+        "PluginSelection.from_manifest",
+        "RoutePlanArtifact.canonical_payload",
+        "RoutePlanRequest.bounded_request",
+        "RouteWaypoint.departure_after_arrival",
+        "SafetyCaseReceipt.canonical_payload",
+        "TemporalReservation.ordered"
+      ],
+      "src/crazyswarm_app/planning/deconfliction.py": [
+        "plan_crossing_deconfliction"
+      ],
+      "src/crazyswarm_app/planning/intent.py": [
+        "ExecutionGraph.canonical_payload",
+        "IntentPhase.complete_and_owned",
+        "IntentTransition.bounded_retry",
+        "MissionIntent.sha256",
+        "MissionIntent.valid_shape",
+        "compile_execution_graph",
+        "compile_execution_graph.<locals>.<genexpr>",
+        "compile_execution_graph.<locals>.<genexpr>.<genexpr>",
+        "compile_execution_graph.<locals>.visit"
+      ],
+      "src/crazyswarm_app/planning/multidrone.py": [
+        "plan_multi_drone_conflicts"
+      ],
+      "src/crazyswarm_app/planning/registry.py": [
+        "PluginRegistry.__init__",
+        "PluginRegistry.manifests",
+        "PluginRegistry.manifests.<locals>.<genexpr>",
+        "PluginRegistry.register",
+        "PluginRegistry.resolve"
+      ],
+      "src/crazyswarm_app/planning/safety.py": [
+        "SafetyKernel.compile_safety_case",
+        "SafetyKernel.compile_safety_case.<locals>.<genexpr>"
+      ],
+      "src/crazyswarm_app/planning/service.py": [
+        "PlanningBundle.canonical_payload",
+        "_path_length",
+        "_path_length.<locals>.<genexpr>",
+        "_policy_capability",
+        "_policy_capability.<locals>.<genexpr>",
+        "_selections",
+        "_selections.<locals>.<genexpr>",
+        "_selections.<locals>.<lambda>",
+        "compile_operational_planning_bundle",
+        "compile_operational_planning_bundle.<locals>.<genexpr>",
+        "compile_operational_planning_bundle.<locals>.<lambda>"
+      ],
+      "src/crazyswarm_app/provenance.py": [
+        "RepositoryProvenance.as_dict",
+        "repository_provenance"
+      ],
+      "src/crazyswarm_app/safety/policy.py": [
+        "FlightVolume.<lambda>",
+        "FlightVolume.contains",
+        "FlightVolume.valid_bounds",
+        "SafetyPolicy.thresholds_are_consistent",
+        "SafetyPolicy.tighten"
+      ],
+      "src/crazyswarm_app/safety/state_machine.py": [
+        "can_transition",
+        "require_transition"
+      ],
+      "src/crazyswarm_app/safety/supervisor.py": [
+        "SafetySupervisor.__init__",
+        "SafetySupervisor._event",
+        "SafetySupervisor._highest_action",
+        "SafetySupervisor._highest_action.<locals>.<genexpr>",
+        "SafetySupervisor._is_armed_or_flying",
+        "SafetySupervisor._next_command_sequence",
+        "SafetySupervisor._notify",
+        "SafetySupervisor._now",
+        "SafetySupervisor._preflight_checks",
+        "SafetySupervisor._preflight_checks.<locals>.<genexpr>",
+        "SafetySupervisor._refresh",
+        "SafetySupervisor._require_command_ready",
+        "SafetySupervisor._require_flying",
+        "SafetySupervisor._require_owner",
+        "SafetySupervisor._require_preflight",
+        "SafetySupervisor._require_real_authority",
+        "SafetySupervisor._send",
+        "SafetySupervisor._simulation_low_battery_override",
+        "SafetySupervisor._transition",
+        "SafetySupervisor._transport_quality",
+        "SafetySupervisor._validate_takeoff",
+        "SafetySupervisor._validate_trajectory",
+        "SafetySupervisor.arm",
+        "SafetySupervisor.claim_control",
+        "SafetySupervisor.connect",
+        "SafetySupervisor.disconnect",
+        "SafetySupervisor.enforce_health",
+        "SafetySupervisor.evaluate_health",
+        "SafetySupervisor.execute_trajectory",
+        "SafetySupervisor.land",
+        "SafetySupervisor.observe",
+        "SafetySupervisor.preflight",
+        "SafetySupervisor.preflight.<locals>.<genexpr>",
+        "SafetySupervisor.receive_telemetry",
+        "SafetySupervisor.refresh_and_enforce_health",
+        "SafetySupervisor.register_vehicle",
+        "SafetySupervisor.release_control",
+        "SafetySupervisor.renew_control",
+        "SafetySupervisor.session",
+        "SafetySupervisor.takeoff",
+        "SafetySupervisor.validate_trajectory_command"
+      ],
+      "src/crazyswarm_app/simulation/clock.py": [
+        "SimulationClock.__post_init__",
+        "SimulationClock.advance",
+        "SimulationClock.reset"
+      ],
+      "src/crazyswarm_app/simulation/faults.py": [
+        "FaultInjector.__init__",
+        "FaultInjector.active",
+        "FaultInjector.active.<locals>.<genexpr>",
+        "FaultInjector.actuator_health_scales"
+      ],
+      "src/crazyswarm_app/simulation/models.py": [
+        "FlowEnvironmentConfig.modeled_quality_scale",
+        "SimulationConfig.legacy_energy_drain_is_v1_only",
+        "SimulationConfig.legacy_energy_drain_is_v1_only.<locals>.<genexpr>",
+        "SimulationConfig.vehicle_parameters",
+        "SimulationConfig.vehicle_parameters.<locals>.<genexpr>"
+      ],
+      "src/crazyswarm_app/simulation/physics.py": [
+        "PhysicsModelConfig.<lambda>",
+        "PhysicsModelConfig._parallel_axis_inertia",
+        "PhysicsModelConfig.combined_center_of_mass_body_m",
+        "PhysicsModelConfig.effective_battery_capacity_ah",
+        "PhysicsModelConfig.total_inertia_x_kg_m2",
+        "PhysicsModelConfig.total_inertia_y_kg_m2",
+        "PhysicsModelConfig.total_inertia_z_kg_m2",
+        "PhysicsModelConfig.total_mass_kg",
+        "PhysicsModelConfig.validate_thrust_and_voltage",
+        "PhysicsModelConfig.validate_thrust_and_voltage.<locals>.<genexpr>",
+        "PhysicsState.<lambda>",
+        "Quaternion.euler",
+        "Quaternion.from_euler",
+        "Quaternion.from_yaw",
+        "Quaternion.integrate",
+        "Quaternion.normalized",
+        "Quaternion.rotate_body_to_world",
+        "Quaternion.rotate_world_to_body",
+        "SixDofPhysics.__init__",
+        "SixDofPhysics.motor_commands_for_control_state",
+        "SixDofPhysics.motor_commands_for_control_state.<locals>.<genexpr>",
+        "SixDofPhysics.reset",
+        "SixDofPhysics.step",
+        "SixDofPhysics.step.<locals>.<genexpr>",
+        "_clamp",
+        "_crazyflie_21_plus_ocv_curve",
+        "_crazyflie_21_plus_ocv_curve.<locals>.<genexpr>",
+        "_crazyflie_21_plus_thrust_curve",
+        "_crazyflie_x_rotor_positions",
+        "_cross",
+        "_default_parameter_provenance",
+        "_upward_rotor_axes",
+        "_wrap_angle"
+      ],
+      "src/crazyswarm_app/simulation/powertrain.py": [
+        "MotorVoltageThrustCurve.ordered_voltage_range",
+        "MotorVoltageThrustCurve.thrust_n",
+        "MotorVoltageThrustCurve.voltage_for_thrust",
+        "open_circuit_voltage",
+        "solve_coupled_powertrain",
+        "solve_coupled_powertrain.<locals>.<genexpr>",
+        "solve_coupled_powertrain.<locals>.evaluate",
+        "solve_coupled_powertrain.<locals>.evaluate.<locals>.with_pwm_scale",
+        "validate_ocv_curve"
+      ],
+      "src/crazyswarm_app/simulation/sensors.py": [
+        "ImuModelConfig.nonnegative_standard_deviations",
+        "ImuModelConfig.nonnegative_standard_deviations.<locals>.<genexpr>",
+        "SampledImuModel.__init__",
+        "SampledImuModel._measure",
+        "SampledImuModel._noise",
+        "SampledImuModel._walk_bias",
+        "SampledImuModel.reset",
+        "SampledImuModel.update",
+        "_add",
+        "_clip",
+        "_cross"
+      ],
+      "src/crazyswarm_app/simulation/vehicle.py": [
+        "SimulatedVehicle.__init__",
+        "SimulatedVehicle._build_telemetry",
+        "SimulatedVehicle._control_position",
+        "SimulatedVehicle._control_yaw",
+        "SimulatedVehicle._cut_motors",
+        "SimulatedVehicle._elapse",
+        "SimulatedVehicle._execute_trajectory",
+        "SimulatedVehicle._flow_reading",
+        "SimulatedVehicle._imu_reading",
+        "SimulatedVehicle._land",
+        "SimulatedVehicle._localization_quality_percent",
+        "SimulatedVehicle._motor_commands",
+        "SimulatedVehicle._motor_telemetry",
+        "SimulatedVehicle._motor_telemetry.<locals>.<genexpr>",
+        "SimulatedVehicle._move_to",
+        "SimulatedVehicle._publish",
+        "SimulatedVehicle._range_readings",
+        "SimulatedVehicle._require_state",
+        "SimulatedVehicle._reset_sampled_observations",
+        "SimulatedVehicle._restore_pose_and_dynamics",
+        "SimulatedVehicle._sample_flow_reading",
+        "SimulatedVehicle._sample_range_readings",
+        "SimulatedVehicle._select_flow_sample",
+        "SimulatedVehicle._select_range_sample",
+        "SimulatedVehicle._step",
+        "SimulatedVehicle._step.<locals>.<genexpr>",
+        "SimulatedVehicle._sync_physics_state",
+        "SimulatedVehicle._takeoff",
+        "SimulatedVehicle._truth_imu_vectors",
+        "SimulatedVehicle._update_estimator",
+        "SimulatedVehicle._update_sampled_observations",
+        "SimulatedVehicle._validate_absolute_trajectory",
+        "SimulatedVehicle._validate_motion_limits",
+        "SimulatedVehicle._validate_run_binding",
+        "SimulatedVehicle.backend_profile",
+        "SimulatedVehicle.battery_percent",
+        "SimulatedVehicle.bind_run",
+        "SimulatedVehicle.capabilities",
+        "SimulatedVehicle.connect",
+        "SimulatedVehicle.disconnect",
+        "SimulatedVehicle.execute",
+        "SimulatedVehicle.execution_metadata",
+        "SimulatedVehicle.identity",
+        "SimulatedVehicle.reset",
+        "SimulatedVehicle.snapshot",
+        "_vector_length"
+      ],
+      "src/crazyswarm_app/simulation/world.py": [
+        "IndoorWorld.__init__",
+        "IndoorWorld._room_exit_distance",
+        "IndoorWorld.contains",
+        "IndoorWorld.contains.<locals>.<genexpr>",
+        "IndoorWorld.first_swept_obstacle_contact",
+        "IndoorWorld.obstacles_at",
+        "IndoorWorld.ray_distance",
+        "IndoorWorld.ray_distance.<locals>.<genexpr>"
+      ]
+    },
+    "OBSERVED_REALTIME": {
+      "src/crazyswarm_app/domain/commands.py": [
+        "CommandAcknowledgement.completion_is_ordered_and_explicit",
+        "CommandAcknowledgement.completion_is_ordered_and_explicit.<locals>.<genexpr>",
+        "CommandEnvelope.<lambda>",
+        "CommandEnvelope.replay_cannot_command",
+        "ExecuteTrajectoryCommand.identities_match_payload",
+        "LandCommand.target_height_agrees",
+        "MoveRelativeCommand.require_motion"
+      ],
+      "src/crazyswarm_app/domain/errors.py": [
+        "CrazySwarmError.__init__"
+      ],
+      "src/crazyswarm_app/domain/goals.py": [
+        "GoalCaptureRecord.attempts_and_outcome_agree",
+        "LandingGoalRegion.valid_approach_and_fallback"
+      ],
+      "src/crazyswarm_app/domain/models.py": [
+        "VehicleCapabilities.supports"
+      ],
+      "src/crazyswarm_app/domain/simulation.py": [
+        "BatteryParameters.ordered_voltage",
+        "SensorParameters.ordered_range",
+        "SimulationRunIdentity.sha256",
+        "VehicleParameterSchema.sha256",
+        "_canonical_value",
+        "_canonical_value.<locals>.<lambda>",
+        "canonical_json",
+        "canonical_sha256"
+      ],
+      "src/crazyswarm_app/domain/telemetry.py": [
+        "TelemetryEnvelope.<lambda>",
+        "TelemetryEnvelope.receive_time_is_ordered",
+        "VehicleTelemetry.spatial_values_require_frame",
+        "VehicleTelemetry.spatial_values_require_frame.<locals>.<genexpr>"
+      ],
+      "src/crazyswarm_app/domain/trajectory.py": [
+        "AcceptedExecutionProgram.coherent_schedule",
+        "AcceptedExecutionProgram.coherent_schedule.<locals>.<genexpr>",
+        "AcceptedExecutionProgram.sha256",
+        "AcceptedExecutionProgram.trajectory_sha256s",
+        "AcceptedExecutionProgram.trajectory_sha256s.<locals>.<genexpr>",
+        "LandExecutionOperation.goal_matches_descent",
+        "TimeParameterizedTrajectory.duration_s",
+        "TimeParameterizedTrajectory.ordered_and_continuous",
+        "TimeParameterizedTrajectory.ordered_and_continuous.<locals>.<genexpr>",
+        "TimeParameterizedTrajectory.sha256",
+        "TrajectoryExecutionOperation.identity_matches",
+        "TrajectoryPoint.finite_values",
+        "TrajectoryPoint.finite_values.<locals>.<genexpr>",
+        "_canonical_sha256",
+        "_length",
+        "quintic_sample",
+        "sample_trajectory_segment",
+        "sample_trajectory_segment.<locals>.<genexpr>"
+      ],
+      "src/crazyswarm_app/fleet/artifacts.py": [
+        "BackendBindingProfile.bindings_are_unique_and_not_crossed",
+        "BackendBindingProfile.bindings_are_unique_and_not_crossed.<locals>.<genexpr>",
+        "DeploymentManifest.references_are_unique_and_complete",
+        "DeploymentManifest.references_are_unique_and_complete.<locals>.<genexpr>",
+        "DeploymentManifest.sha256",
+        "FleetConstraints.separation_thresholds_are_ordered",
+        "ZoneGeometry.bounds_are_ordered",
+        "_require_unique"
+      ],
+      "src/crazyswarm_app/fleet/planning.py": [
+        "_backend_identifier",
+        "_validate_homes",
+        "_vector",
+        "mission_role_estimated_energy_percent",
+        "plan_mission_deployment",
+        "plan_mission_deployment.<locals>.<genexpr>"
+      ],
+      "src/crazyswarm_app/fleet/zones.py": [
+        "ZoneTaskPlanner.__init__"
+      ],
+      "src/crazyswarm_app/missions/authority.py": [
+        "MissionFleetAuthority.__init__",
+        "MissionFleetAuthority.evaluate_health",
+        "MissionFleetAuthority.execute",
+        "MissionFleetAuthority.receipts"
+      ],
+      "src/crazyswarm_app/missions/base.py": [
+        "MissionContext._goal_capture_attempt",
+        "MissionContext._record_intent",
+        "MissionContext._wait_for_command_permission",
+        "MissionContext.capture_and_land",
+        "MissionContext.checkpoint",
+        "MissionContext.execute_trajectory",
+        "MissionContext.execute_trajectory.<locals>.<lambda>",
+        "MissionContext.land",
+        "MissionContext.land.<locals>.<lambda>",
+        "MissionContext.observe",
+        "MissionContext.takeoff",
+        "MissionContext.takeoff.<locals>.<lambda>",
+        "_vector_norm"
+      ],
+      "src/crazyswarm_app/missions/observation.py": [
+        "MissionObservation.from_telemetry"
+      ],
+      "src/crazyswarm_app/missions/planning.py": [
+        "MissionPlanReceipt.sha256",
+        "_check_move_dynamics",
+        "_check_takeoff_dynamics",
+        "_compile_continuous_trajectory",
+        "_compile_continuous_trajectory.<locals>.<genexpr>",
+        "_compile_execution_program",
+        "_compile_execution_program.<locals>.<genexpr>",
+        "_compile_role",
+        "_distance",
+        "_plan_status",
+        "_plan_status.<locals>.<genexpr>",
+        "_starting_separation_findings",
+        "_step_duration",
+        "build_mission_plan",
+        "build_mission_plan.<locals>.<genexpr>",
+        "build_mission_plan.<locals>.<genexpr>.<genexpr>",
+        "build_mission_plan.<locals>.<lambda>"
+      ],
+      "src/crazyswarm_app/missions/registry.py": [
+        "MissionRegistry.__init__",
+        "MissionRegistry.get",
+        "MissionRegistry.register",
+        "MissionRegistry.validate_parameters"
+      ],
+      "src/crazyswarm_app/missions/runner.py": [
+        "MissionRunner.__init__",
+        "MissionRunner._cleanup",
+        "MissionRunner._configuration_hash",
+        "MissionRunner._empty_execution_authority_fields",
+        "MissionRunner._execute_behavior",
+        "MissionRunner._execute_flight_path",
+        "MissionRunner._execute_with_health_watchdog",
+        "MissionRunner._health_watchdog",
+        "MissionRunner._health_watchdog.<locals>.<lambda>",
+        "MissionRunner._health_watchdog.<locals>.assess_landing",
+        "MissionRunner._lease_heartbeat",
+        "MissionRunner._notify",
+        "MissionRunner._phase",
+        "MissionRunner._receipt_fields",
+        "MissionRunner._receipt_fields.<locals>.<genexpr>",
+        "MissionRunner._result",
+        "MissionRunner._validate_execution_authority",
+        "MissionRunner._validate_execution_authority.<locals>.<genexpr>",
+        "MissionRunner.run",
+        "MissionRunner.run.<locals>.<lambda>"
+      ],
+      "src/crazyswarm_app/missions/script.py": [
+        "ScriptMission.__init__",
+        "ScriptMission.__init__.<locals>.<genexpr>",
+        "ScriptMission.execute",
+        "_BoundedMissionValidator.__init__",
+        "_BoundedMissionValidator.generic_visit",
+        "_BoundedMissionValidator.visit_Attribute",
+        "_BoundedMissionValidator.visit_Call",
+        "_BoundedMissionValidator.visit_For",
+        "_all_steps",
+        "_cleanup_worker_directory",
+        "_direct_steps",
+        "_estimate_block",
+        "_is_mission_declaration",
+        "_literal_keywords",
+        "_mission_function",
+        "_mission_package",
+        "_parse_direct_step",
+        "_require_awaited_drone_calls",
+        "_require_lifecycle",
+        "_start_worker",
+        "_validate_arguments",
+        "_write_worker",
+        "execute_accepted_program",
+        "parse_python_mission",
+        "preview_isolated_mission_role",
+        "preview_isolated_mission_role.<locals>.<genexpr>"
+      ],
+      "src/crazyswarm_app/planning/builtins.py": [
+        "DeterministicFleetPolicy.decide",
+        "DirectRoutePlanner.plan",
+        "DirectRoutePlanner.plan.<locals>.<genexpr>",
+        "ZoneRoutePlanner.__init__",
+        "_distance",
+        "_inside_volume",
+        "_manifest",
+        "_plan_polyline",
+        "_plan_polyline.<locals>.<genexpr>",
+        "_reservation",
+        "_reservation.<locals>.<genexpr>",
+        "_route_artifact",
+        "default_fleet_policy_registry",
+        "default_recovery_registry",
+        "default_route_planner_registry"
+      ],
+      "src/crazyswarm_app/planning/contracts.py": [
+        "FleetPolicyDecision.canonical_payload",
+        "PluginManifest.sha256",
+        "PluginManifest.valid_capabilities",
+        "PluginSelection.from_manifest",
+        "RoutePlanArtifact.canonical_payload",
+        "RoutePlanRequest.bounded_request",
+        "RouteWaypoint.departure_after_arrival",
+        "SafetyCaseReceipt.canonical_payload",
+        "TemporalReservation.ordered"
+      ],
+      "src/crazyswarm_app/planning/deconfliction.py": [
+        "plan_crossing_deconfliction"
+      ],
+      "src/crazyswarm_app/planning/intent.py": [
+        "ExecutionGraph.canonical_payload",
+        "IntentPhase.complete_and_owned",
+        "IntentTransition.bounded_retry",
+        "MissionIntent.sha256",
+        "MissionIntent.valid_shape",
+        "compile_execution_graph",
+        "compile_execution_graph.<locals>.<genexpr>",
+        "compile_execution_graph.<locals>.<genexpr>.<genexpr>",
+        "compile_execution_graph.<locals>.visit"
+      ],
+      "src/crazyswarm_app/planning/multidrone.py": [
+        "plan_multi_drone_conflicts"
+      ],
+      "src/crazyswarm_app/planning/registry.py": [
+        "PluginRegistry.__init__",
+        "PluginRegistry.manifests",
+        "PluginRegistry.manifests.<locals>.<genexpr>",
+        "PluginRegistry.register",
+        "PluginRegistry.resolve"
+      ],
+      "src/crazyswarm_app/planning/safety.py": [
+        "SafetyKernel.compile_safety_case",
+        "SafetyKernel.compile_safety_case.<locals>.<genexpr>"
+      ],
+      "src/crazyswarm_app/planning/service.py": [
+        "PlanningBundle.canonical_payload",
+        "_path_length",
+        "_path_length.<locals>.<genexpr>",
+        "_policy_capability",
+        "_policy_capability.<locals>.<genexpr>",
+        "_selections",
+        "_selections.<locals>.<genexpr>",
+        "_selections.<locals>.<lambda>",
+        "compile_operational_planning_bundle",
+        "compile_operational_planning_bundle.<locals>.<genexpr>",
+        "compile_operational_planning_bundle.<locals>.<lambda>"
+      ],
+      "src/crazyswarm_app/provenance.py": [
+        "RepositoryProvenance.as_dict",
+        "repository_provenance"
+      ],
+      "src/crazyswarm_app/safety/policy.py": [
+        "FlightVolume.<lambda>",
+        "FlightVolume.contains",
+        "FlightVolume.valid_bounds",
+        "SafetyPolicy.thresholds_are_consistent",
+        "SafetyPolicy.tighten"
+      ],
+      "src/crazyswarm_app/safety/state_machine.py": [
+        "can_transition",
+        "require_transition"
+      ],
+      "src/crazyswarm_app/safety/supervisor.py": [
+        "SafetySupervisor.__init__",
+        "SafetySupervisor._event",
+        "SafetySupervisor._highest_action",
+        "SafetySupervisor._highest_action.<locals>.<genexpr>",
+        "SafetySupervisor._is_armed_or_flying",
+        "SafetySupervisor._next_command_sequence",
+        "SafetySupervisor._notify",
+        "SafetySupervisor._now",
+        "SafetySupervisor._preflight_checks",
+        "SafetySupervisor._preflight_checks.<locals>.<genexpr>",
+        "SafetySupervisor._refresh",
+        "SafetySupervisor._require_command_ready",
+        "SafetySupervisor._require_flying",
+        "SafetySupervisor._require_owner",
+        "SafetySupervisor._require_preflight",
+        "SafetySupervisor._require_real_authority",
+        "SafetySupervisor._send",
+        "SafetySupervisor._simulation_low_battery_override",
+        "SafetySupervisor._transition",
+        "SafetySupervisor._transport_quality",
+        "SafetySupervisor._validate_takeoff",
+        "SafetySupervisor._validate_trajectory",
+        "SafetySupervisor.arm",
+        "SafetySupervisor.claim_control",
+        "SafetySupervisor.connect",
+        "SafetySupervisor.disconnect",
+        "SafetySupervisor.enforce_health",
+        "SafetySupervisor.evaluate_health",
+        "SafetySupervisor.execute_trajectory",
+        "SafetySupervisor.land",
+        "SafetySupervisor.observe",
+        "SafetySupervisor.preflight",
+        "SafetySupervisor.preflight.<locals>.<genexpr>",
+        "SafetySupervisor.receive_telemetry",
+        "SafetySupervisor.refresh_and_enforce_health",
+        "SafetySupervisor.register_vehicle",
+        "SafetySupervisor.release_control",
+        "SafetySupervisor.renew_control",
+        "SafetySupervisor.session",
+        "SafetySupervisor.takeoff",
+        "SafetySupervisor.validate_trajectory_command"
+      ],
+      "src/crazyswarm_app/simulation/clock.py": [
+        "SimulationClock.__post_init__",
+        "SimulationClock.advance",
+        "SimulationClock.reset"
+      ],
+      "src/crazyswarm_app/simulation/faults.py": [
+        "FaultInjector.__init__",
+        "FaultInjector.active",
+        "FaultInjector.active.<locals>.<genexpr>",
+        "FaultInjector.actuator_health_scales"
+      ],
+      "src/crazyswarm_app/simulation/models.py": [
+        "FlowEnvironmentConfig.modeled_quality_scale",
+        "SimulationConfig.legacy_energy_drain_is_v1_only",
+        "SimulationConfig.legacy_energy_drain_is_v1_only.<locals>.<genexpr>",
+        "SimulationConfig.vehicle_parameters",
+        "SimulationConfig.vehicle_parameters.<locals>.<genexpr>"
+      ],
+      "src/crazyswarm_app/simulation/physics.py": [
+        "PhysicsModelConfig.<lambda>",
+        "PhysicsModelConfig._parallel_axis_inertia",
+        "PhysicsModelConfig.combined_center_of_mass_body_m",
+        "PhysicsModelConfig.effective_battery_capacity_ah",
+        "PhysicsModelConfig.total_inertia_x_kg_m2",
+        "PhysicsModelConfig.total_inertia_y_kg_m2",
+        "PhysicsModelConfig.total_inertia_z_kg_m2",
+        "PhysicsModelConfig.total_mass_kg",
+        "PhysicsModelConfig.validate_thrust_and_voltage",
+        "PhysicsModelConfig.validate_thrust_and_voltage.<locals>.<genexpr>",
+        "PhysicsState.<lambda>",
+        "Quaternion.euler",
+        "Quaternion.from_euler",
+        "Quaternion.from_yaw",
+        "Quaternion.integrate",
+        "Quaternion.normalized",
+        "Quaternion.rotate_body_to_world",
+        "Quaternion.rotate_world_to_body",
+        "SixDofPhysics.__init__",
+        "SixDofPhysics.motor_commands_for_control_state",
+        "SixDofPhysics.motor_commands_for_control_state.<locals>.<genexpr>",
+        "SixDofPhysics.reset",
+        "SixDofPhysics.step",
+        "SixDofPhysics.step.<locals>.<genexpr>",
+        "_clamp",
+        "_crazyflie_21_plus_ocv_curve",
+        "_crazyflie_21_plus_ocv_curve.<locals>.<genexpr>",
+        "_crazyflie_21_plus_thrust_curve",
+        "_crazyflie_x_rotor_positions",
+        "_cross",
+        "_default_parameter_provenance",
+        "_upward_rotor_axes",
+        "_wrap_angle"
+      ],
+      "src/crazyswarm_app/simulation/powertrain.py": [
+        "MotorVoltageThrustCurve.ordered_voltage_range",
+        "MotorVoltageThrustCurve.thrust_n",
+        "MotorVoltageThrustCurve.voltage_for_thrust",
+        "open_circuit_voltage",
+        "solve_coupled_powertrain",
+        "solve_coupled_powertrain.<locals>.<genexpr>",
+        "solve_coupled_powertrain.<locals>.evaluate",
+        "solve_coupled_powertrain.<locals>.evaluate.<locals>.with_pwm_scale",
+        "validate_ocv_curve"
+      ],
+      "src/crazyswarm_app/simulation/sensors.py": [
+        "ImuModelConfig.nonnegative_standard_deviations",
+        "ImuModelConfig.nonnegative_standard_deviations.<locals>.<genexpr>",
+        "SampledImuModel.__init__",
+        "SampledImuModel._measure",
+        "SampledImuModel._noise",
+        "SampledImuModel._walk_bias",
+        "SampledImuModel.reset",
+        "SampledImuModel.update",
+        "_add",
+        "_clip",
+        "_cross"
+      ],
+      "src/crazyswarm_app/simulation/vehicle.py": [
+        "SimulatedVehicle.__init__",
+        "SimulatedVehicle._build_telemetry",
+        "SimulatedVehicle._control_position",
+        "SimulatedVehicle._control_yaw",
+        "SimulatedVehicle._cut_motors",
+        "SimulatedVehicle._elapse",
+        "SimulatedVehicle._execute_trajectory",
+        "SimulatedVehicle._flow_reading",
+        "SimulatedVehicle._imu_reading",
+        "SimulatedVehicle._land",
+        "SimulatedVehicle._localization_quality_percent",
+        "SimulatedVehicle._motor_commands",
+        "SimulatedVehicle._motor_telemetry",
+        "SimulatedVehicle._motor_telemetry.<locals>.<genexpr>",
+        "SimulatedVehicle._move_to",
+        "SimulatedVehicle._publish",
+        "SimulatedVehicle._range_readings",
+        "SimulatedVehicle._require_state",
+        "SimulatedVehicle._reset_sampled_observations",
+        "SimulatedVehicle._restore_pose_and_dynamics",
+        "SimulatedVehicle._sample_flow_reading",
+        "SimulatedVehicle._sample_range_readings",
+        "SimulatedVehicle._select_flow_sample",
+        "SimulatedVehicle._select_range_sample",
+        "SimulatedVehicle._step",
+        "SimulatedVehicle._step.<locals>.<genexpr>",
+        "SimulatedVehicle._sync_physics_state",
+        "SimulatedVehicle._takeoff",
+        "SimulatedVehicle._truth_imu_vectors",
+        "SimulatedVehicle._update_estimator",
+        "SimulatedVehicle._update_sampled_observations",
+        "SimulatedVehicle._validate_absolute_trajectory",
+        "SimulatedVehicle._validate_motion_limits",
+        "SimulatedVehicle._validate_run_binding",
+        "SimulatedVehicle.backend_profile",
+        "SimulatedVehicle.battery_percent",
+        "SimulatedVehicle.bind_run",
+        "SimulatedVehicle.capabilities",
+        "SimulatedVehicle.connect",
+        "SimulatedVehicle.disconnect",
+        "SimulatedVehicle.execute",
+        "SimulatedVehicle.execution_metadata",
+        "SimulatedVehicle.identity",
+        "SimulatedVehicle.reset",
+        "SimulatedVehicle.snapshot",
+        "_vector_length"
+      ],
+      "src/crazyswarm_app/simulation/world.py": [
+        "IndoorWorld.__init__",
+        "IndoorWorld._room_exit_distance",
+        "IndoorWorld.contains",
+        "IndoorWorld.contains.<locals>.<genexpr>",
+        "IndoorWorld.first_swept_obstacle_contact",
+        "IndoorWorld.obstacles_at",
+        "IndoorWorld.ray_distance",
+        "IndoorWorld.ray_distance.<locals>.<genexpr>"
+      ]
+    }
+  },
+  "runtime_transit_source": "executed tests/missions/test_trajectory_execution.py::_run_route under sys.setprofile in ACCELERATED and REALTIME modes",
+  "schema_version": 1,
+  "telemetry_oracle": {
+    "inclusive_end": true,
+    "maximum_horizontal_displacement_from_capture_m": 0.015,
+    "maximum_progress_toward_exact_center_m": 0.01,
+    "maximum_terminal_z_m": 0.01,
+    "minimum_sample_count": 4,
+    "required_capture_endpoint_relation": "first selected timestamp and sequence equal accepted capture",
+    "required_sequence_relation": "strictly increasing capture-through-contact",
+    "required_source_clock_relation": "capture == every sample == contact",
+    "required_source_epoch_relation": "capture == every sample == contact",
+    "required_timestamp_relation": "nondecreasing capture-through-contact",
+    "signal": "retained estimated position_m",
+    "window_end": "goal_capture_record.contact_source_timestamp_s",
+    "window_start": "accepted_goal_capture_attempt.source_timestamp_s"
+  },
+  "telemetry_witness_results": [
+    {
+      "clock_consistent": true,
+      "covers_capture": true,
+      "covers_contact": true,
+      "epoch_consistent": true,
+      "guards": {
+        "center_progress_pass": true,
+        "clock_consistent": true,
+        "covers_capture": true,
+        "covers_contact": true,
+        "displacement_pass": true,
+        "epoch_consistent": true,
+        "sample_count_pass": true,
+        "sequence_ordered": true,
+        "terminal_z_pass": true,
+        "timestamp_ordered": true
+      },
+      "id": "stationary_capture_through_contact",
+      "maximum_horizontal_displacement_from_capture_m": 0.0014142135623731742,
+      "maximum_progress_toward_exact_center_m": 0.0009999999999998899,
+      "passed": true,
+      "sample_count": 5,
+      "sequence_ordered": true,
+      "terminal_z_m": 0.0,
+      "timestamp_ordered": true
+    },
+    {
+      "clock_consistent": true,
+      "covers_capture": true,
+      "covers_contact": true,
+      "epoch_consistent": true,
+      "guards": {
+        "center_progress_pass": false,
+        "clock_consistent": true,
+        "covers_capture": true,
+        "covers_contact": true,
+        "displacement_pass": false,
+        "epoch_consistent": true,
+        "sample_count_pass": true,
+        "sequence_ordered": true,
+        "terminal_z_pass": true,
+        "timestamp_ordered": true
+      },
+      "id": "center_seek_before_descent",
+      "maximum_horizontal_displacement_from_capture_m": 0.050000000000000044,
+      "maximum_progress_toward_exact_center_m": 0.050000000000000044,
+      "passed": false,
+      "sample_count": 5,
+      "sequence_ordered": true,
+      "terminal_z_m": 0.0,
+      "timestamp_ordered": true
+    },
+    {
+      "clock_consistent": true,
+      "covers_capture": true,
+      "covers_contact": true,
+      "epoch_consistent": true,
+      "guards": {
+        "center_progress_pass": false,
+        "clock_consistent": true,
+        "covers_capture": true,
+        "covers_contact": true,
+        "displacement_pass": false,
+        "epoch_consistent": true,
+        "sample_count_pass": true,
+        "sequence_ordered": true,
+        "terminal_z_pass": true,
+        "timestamp_ordered": true
+      },
+      "id": "center_seek_during_descent",
+      "maximum_horizontal_displacement_from_capture_m": 0.050000000000000044,
+      "maximum_progress_toward_exact_center_m": 0.050000000000000044,
+      "passed": false,
+      "sample_count": 5,
+      "sequence_ordered": true,
+      "terminal_z_m": 0.0,
+      "timestamp_ordered": true
+    },
+    {
+      "clock_consistent": true,
+      "covers_capture": true,
+      "covers_contact": true,
+      "epoch_consistent": true,
+      "guards": {
+        "center_progress_pass": true,
+        "clock_consistent": true,
+        "covers_capture": true,
+        "covers_contact": true,
+        "displacement_pass": true,
+        "epoch_consistent": true,
+        "sample_count_pass": false,
+        "sequence_ordered": true,
+        "terminal_z_pass": true,
+        "timestamp_ordered": true
+      },
+      "id": "sample_count_only_failure",
+      "maximum_horizontal_displacement_from_capture_m": 0.0,
+      "maximum_progress_toward_exact_center_m": 0.0,
+      "passed": false,
+      "sample_count": 3,
+      "sequence_ordered": true,
+      "terminal_z_m": 0.0,
+      "timestamp_ordered": true
+    },
+    {
+      "clock_consistent": true,
+      "covers_capture": true,
+      "covers_contact": false,
+      "epoch_consistent": true,
+      "guards": {
+        "center_progress_pass": true,
+        "clock_consistent": true,
+        "covers_capture": true,
+        "covers_contact": false,
+        "displacement_pass": true,
+        "epoch_consistent": true,
+        "sample_count_pass": true,
+        "sequence_ordered": true,
+        "terminal_z_pass": true,
+        "timestamp_ordered": true
+      },
+      "id": "contact_coverage_only_failure",
+      "maximum_horizontal_displacement_from_capture_m": 0.0,
+      "maximum_progress_toward_exact_center_m": 0.0,
+      "passed": false,
+      "sample_count": 4,
+      "sequence_ordered": true,
+      "terminal_z_m": 0.0,
+      "timestamp_ordered": true
+    },
+    {
+      "clock_consistent": true,
+      "covers_capture": true,
+      "covers_contact": true,
+      "epoch_consistent": true,
+      "guards": {
+        "center_progress_pass": true,
+        "clock_consistent": true,
+        "covers_capture": true,
+        "covers_contact": true,
+        "displacement_pass": false,
+        "epoch_consistent": true,
+        "sample_count_pass": true,
+        "sequence_ordered": true,
+        "terminal_z_pass": true,
+        "timestamp_ordered": true
+      },
+      "id": "displacement_only_failure",
+      "maximum_horizontal_displacement_from_capture_m": 0.020000000000000018,
+      "maximum_progress_toward_exact_center_m": 0.0,
+      "passed": false,
+      "sample_count": 4,
+      "sequence_ordered": true,
+      "terminal_z_m": 0.0,
+      "timestamp_ordered": true
+    },
+    {
+      "clock_consistent": true,
+      "covers_capture": true,
+      "covers_contact": true,
+      "epoch_consistent": true,
+      "guards": {
+        "center_progress_pass": false,
+        "clock_consistent": true,
+        "covers_capture": true,
+        "covers_contact": true,
+        "displacement_pass": true,
+        "epoch_consistent": true,
+        "sample_count_pass": true,
+        "sequence_ordered": true,
+        "terminal_z_pass": true,
+        "timestamp_ordered": true
+      },
+      "id": "center_progress_only_failure",
+      "maximum_horizontal_displacement_from_capture_m": 0.01200000000000001,
+      "maximum_progress_toward_exact_center_m": 0.01200000000000001,
+      "passed": false,
+      "sample_count": 4,
+      "sequence_ordered": true,
+      "terminal_z_m": 0.0,
+      "timestamp_ordered": true
+    },
+    {
+      "clock_consistent": true,
+      "covers_capture": true,
+      "covers_contact": true,
+      "epoch_consistent": true,
+      "guards": {
+        "center_progress_pass": true,
+        "clock_consistent": true,
+        "covers_capture": true,
+        "covers_contact": true,
+        "displacement_pass": true,
+        "epoch_consistent": true,
+        "sample_count_pass": true,
+        "sequence_ordered": true,
+        "terminal_z_pass": false,
+        "timestamp_ordered": true
+      },
+      "id": "terminal_z_only_failure",
+      "maximum_horizontal_displacement_from_capture_m": 0.0,
+      "maximum_progress_toward_exact_center_m": 0.0,
+      "passed": false,
+      "sample_count": 4,
+      "sequence_ordered": true,
+      "terminal_z_m": 0.011,
+      "timestamp_ordered": true
+    },
+    {
+      "clock_consistent": true,
+      "covers_capture": true,
+      "covers_contact": true,
+      "epoch_consistent": true,
+      "guards": {
+        "center_progress_pass": true,
+        "clock_consistent": true,
+        "covers_capture": true,
+        "covers_contact": true,
+        "displacement_pass": true,
+        "epoch_consistent": true,
+        "sample_count_pass": true,
+        "sequence_ordered": true,
+        "terminal_z_pass": true,
+        "timestamp_ordered": true
+      },
+      "id": "all_numeric_equalities",
+      "maximum_horizontal_displacement_from_capture_m": 0.015,
+      "maximum_progress_toward_exact_center_m": 0.010000000000000009,
+      "passed": true,
+      "sample_count": 4,
+      "sequence_ordered": true,
+      "terminal_z_m": 0.01,
+      "timestamp_ordered": true
+    },
+    {
+      "clock_consistent": false,
+      "covers_capture": true,
+      "covers_contact": true,
+      "epoch_consistent": true,
+      "guards": {
+        "center_progress_pass": true,
+        "clock_consistent": false,
+        "covers_capture": true,
+        "covers_contact": true,
+        "displacement_pass": true,
+        "epoch_consistent": true,
+        "sample_count_pass": true,
+        "sequence_ordered": true,
+        "terminal_z_pass": true,
+        "timestamp_ordered": true
+      },
+      "id": "wrong_clock_only_failure",
+      "maximum_horizontal_displacement_from_capture_m": 0.0,
+      "maximum_progress_toward_exact_center_m": 0.0,
+      "passed": false,
+      "sample_count": 4,
+      "sequence_ordered": true,
+      "terminal_z_m": 0.0,
+      "timestamp_ordered": true
+    },
+    {
+      "clock_consistent": true,
+      "covers_capture": true,
+      "covers_contact": true,
+      "epoch_consistent": false,
+      "guards": {
+        "center_progress_pass": true,
+        "clock_consistent": true,
+        "covers_capture": true,
+        "covers_contact": true,
+        "displacement_pass": true,
+        "epoch_consistent": false,
+        "sample_count_pass": true,
+        "sequence_ordered": true,
+        "terminal_z_pass": true,
+        "timestamp_ordered": true
+      },
+      "id": "epoch_reset_only_failure",
+      "maximum_horizontal_displacement_from_capture_m": 0.0,
+      "maximum_progress_toward_exact_center_m": 0.0,
+      "passed": false,
+      "sample_count": 4,
+      "sequence_ordered": true,
+      "terminal_z_m": 0.0,
+      "timestamp_ordered": true
+    },
+    {
+      "clock_consistent": true,
+      "covers_capture": true,
+      "covers_contact": true,
+      "epoch_consistent": true,
+      "guards": {
+        "center_progress_pass": true,
+        "clock_consistent": true,
+        "covers_capture": true,
+        "covers_contact": true,
+        "displacement_pass": true,
+        "epoch_consistent": true,
+        "sample_count_pass": true,
+        "sequence_ordered": false,
+        "terminal_z_pass": true,
+        "timestamp_ordered": true
+      },
+      "id": "sequence_reorder_only_failure",
+      "maximum_horizontal_displacement_from_capture_m": 0.0,
+      "maximum_progress_toward_exact_center_m": 0.0,
+      "passed": false,
+      "sample_count": 4,
+      "sequence_ordered": false,
+      "terminal_z_m": 0.0,
+      "timestamp_ordered": true
+    },
+    {
+      "clock_consistent": true,
+      "covers_capture": true,
+      "covers_contact": true,
+      "epoch_consistent": true,
+      "guards": {
+        "center_progress_pass": true,
+        "clock_consistent": true,
+        "covers_capture": true,
+        "covers_contact": true,
+        "displacement_pass": true,
+        "epoch_consistent": true,
+        "sample_count_pass": true,
+        "sequence_ordered": true,
+        "terminal_z_pass": true,
+        "timestamp_ordered": false
+      },
+      "id": "timestamp_reorder_only_failure",
+      "maximum_horizontal_displacement_from_capture_m": 0.0,
+      "maximum_progress_toward_exact_center_m": 0.0,
+      "passed": false,
+      "sample_count": 4,
+      "sequence_ordered": true,
+      "terminal_z_m": 0.0,
+      "timestamp_ordered": false
+    },
+    {
+      "clock_consistent": true,
+      "covers_capture": false,
+      "covers_contact": true,
+      "epoch_consistent": true,
+      "guards": {
+        "center_progress_pass": true,
+        "clock_consistent": true,
+        "covers_capture": false,
+        "covers_contact": true,
+        "displacement_pass": true,
+        "epoch_consistent": true,
+        "sample_count_pass": true,
+        "sequence_ordered": true,
+        "terminal_z_pass": true,
+        "timestamp_ordered": true
+      },
+      "id": "capture_coverage_only_failure",
+      "maximum_horizontal_displacement_from_capture_m": 0.0,
+      "maximum_progress_toward_exact_center_m": 0.0,
+      "passed": false,
+      "sample_count": 4,
+      "sequence_ordered": true,
+      "terminal_z_m": 0.0,
+      "timestamp_ordered": true
+    }
+  ],
+  "telemetry_witnesses": [
+    {
+      "capture_source_s": 5.0,
+      "capture_xy_m": [
+        1.3,
+        0.0
+      ],
+      "contact_source_s": 7.0,
+      "contact_source_sequence": 104,
+      "expected_pass": true,
+      "goal_center_xy_m": [
+        1.35,
+        0.0
+      ],
+      "id": "stationary_capture_through_contact",
+      "sample_source_sequences": [
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105
+      ],
+      "samples": [
+        [
+          4.9,
+          1.34,
+          0.0,
+          0.3
+        ],
+        [
+          5.0,
+          1.3,
+          0.0,
+          0.3
+        ],
+        [
+          5.5,
+          1.301,
+          0.0,
+          0.22
+        ],
+        [
+          6.0,
+          1.299,
+          0.001,
+          0.12
+        ],
+        [
+          6.5,
+          1.301,
+          0.0,
+          0.04
+        ],
+        [
+          7.0,
+          1.3,
+          0.0,
+          0.0
+        ],
+        [
+          7.1,
+          1.35,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    {
+      "capture_source_s": 5.0,
+      "capture_xy_m": [
+        1.3,
+        0.0
+      ],
+      "contact_source_s": 7.0,
+      "expected_pass": false,
+      "goal_center_xy_m": [
+        1.35,
+        0.0
+      ],
+      "id": "center_seek_before_descent",
+      "samples": [
+        [
+          5.0,
+          1.3,
+          0.0,
+          0.3
+        ],
+        [
+          5.2,
+          1.325,
+          0.0,
+          0.3
+        ],
+        [
+          5.4,
+          1.35,
+          0.0,
+          0.299
+        ],
+        [
+          6.0,
+          1.35,
+          0.0,
+          0.15
+        ],
+        [
+          7.0,
+          1.35,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    {
+      "capture_source_s": 5.0,
+      "capture_xy_m": [
+        1.3,
+        0.0
+      ],
+      "contact_source_s": 7.0,
+      "expected_pass": false,
+      "goal_center_xy_m": [
+        1.35,
+        0.0
+      ],
+      "id": "center_seek_during_descent",
+      "samples": [
+        [
+          5.0,
+          1.3,
+          0.0,
+          0.3
+        ],
+        [
+          5.4,
+          1.3,
+          0.0,
+          0.25
+        ],
+        [
+          5.8,
+          1.325,
+          0.0,
+          0.18
+        ],
+        [
+          6.2,
+          1.35,
+          0.0,
+          0.1
+        ],
+        [
+          7.0,
+          1.35,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    {
+      "capture_source_s": 5.0,
+      "capture_xy_m": [
+        1.3,
+        0.0
+      ],
+      "contact_source_s": 7.0,
+      "expected_pass": false,
+      "goal_center_xy_m": [
+        1.35,
+        0.0
+      ],
+      "id": "sample_count_only_failure",
+      "samples": [
+        [
+          5.0,
+          1.3,
+          0.0,
+          0.3
+        ],
+        [
+          6.0,
+          1.3,
+          0.0,
+          0.12
+        ],
+        [
+          7.0,
+          1.3,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    {
+      "capture_source_s": 5.0,
+      "capture_xy_m": [
+        1.3,
+        0.0
+      ],
+      "contact_source_s": 7.0,
+      "contact_source_sequence": 104,
+      "expected_pass": false,
+      "goal_center_xy_m": [
+        1.35,
+        0.0
+      ],
+      "id": "contact_coverage_only_failure",
+      "samples": [
+        [
+          5.0,
+          1.3,
+          0.0,
+          0.3
+        ],
+        [
+          5.5,
+          1.3,
+          0.0,
+          0.22
+        ],
+        [
+          6.0,
+          1.3,
+          0.0,
+          0.12
+        ],
+        [
+          6.9,
+          1.3,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    {
+      "capture_source_s": 5.0,
+      "capture_xy_m": [
+        1.3,
+        0.0
+      ],
+      "contact_source_s": 7.0,
+      "expected_pass": false,
+      "goal_center_xy_m": [
+        1.35,
+        0.0
+      ],
+      "id": "displacement_only_failure",
+      "samples": [
+        [
+          5.0,
+          1.3,
+          0.0,
+          0.3
+        ],
+        [
+          5.5,
+          1.28,
+          0.0,
+          0.22
+        ],
+        [
+          6.0,
+          1.3,
+          0.0,
+          0.12
+        ],
+        [
+          7.0,
+          1.3,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    {
+      "capture_source_s": 5.0,
+      "capture_xy_m": [
+        1.3,
+        0.0
+      ],
+      "contact_source_s": 7.0,
+      "expected_pass": false,
+      "goal_center_xy_m": [
+        1.35,
+        0.0
+      ],
+      "id": "center_progress_only_failure",
+      "samples": [
+        [
+          5.0,
+          1.3,
+          0.0,
+          0.3
+        ],
+        [
+          5.5,
+          1.312,
+          0.0,
+          0.22
+        ],
+        [
+          6.0,
+          1.3,
+          0.0,
+          0.12
+        ],
+        [
+          7.0,
+          1.3,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    {
+      "capture_source_s": 5.0,
+      "capture_xy_m": [
+        1.3,
+        0.0
+      ],
+      "contact_source_s": 7.0,
+      "expected_pass": false,
+      "goal_center_xy_m": [
+        1.35,
+        0.0
+      ],
+      "id": "terminal_z_only_failure",
+      "samples": [
+        [
+          5.0,
+          1.3,
+          0.0,
+          0.3
+        ],
+        [
+          5.5,
+          1.3,
+          0.0,
+          0.22
+        ],
+        [
+          6.0,
+          1.3,
+          0.0,
+          0.12
+        ],
+        [
+          7.0,
+          1.3,
+          0.0,
+          0.011
+        ]
+      ]
+    },
+    {
+      "capture_source_s": 5.0,
+      "capture_xy_m": [
+        1.3,
+        0.0
+      ],
+      "contact_source_s": 7.0,
+      "expected_pass": true,
+      "goal_center_xy_m": [
+        1.35,
+        0.0
+      ],
+      "id": "all_numeric_equalities",
+      "samples": [
+        [
+          5.0,
+          1.3,
+          0.0,
+          0.3
+        ],
+        [
+          5.5,
+          1.31,
+          0.0,
+          0.22
+        ],
+        [
+          6.0,
+          1.3,
+          0.015,
+          0.12
+        ],
+        [
+          7.0,
+          1.3,
+          0.0,
+          0.01
+        ]
+      ]
+    },
+    {
+      "capture_source_s": 5.0,
+      "capture_xy_m": [
+        1.3,
+        0.0
+      ],
+      "contact_source_s": 7.0,
+      "expected_pass": false,
+      "goal_center_xy_m": [
+        1.35,
+        0.0
+      ],
+      "id": "wrong_clock_only_failure",
+      "sample_source_clock_ids": [
+        "fast-sim-sim01",
+        "wrong-clock",
+        "fast-sim-sim01",
+        "fast-sim-sim01"
+      ],
+      "samples": [
+        [
+          5.0,
+          1.3,
+          0.0,
+          0.3
+        ],
+        [
+          5.5,
+          1.3,
+          0.0,
+          0.22
+        ],
+        [
+          6.0,
+          1.3,
+          0.0,
+          0.12
+        ],
+        [
+          7.0,
+          1.3,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    {
+      "capture_source_s": 5.0,
+      "capture_xy_m": [
+        1.3,
+        0.0
+      ],
+      "contact_source_s": 7.0,
+      "expected_pass": false,
+      "goal_center_xy_m": [
+        1.35,
+        0.0
+      ],
+      "id": "epoch_reset_only_failure",
+      "sample_source_clock_epochs": [
+        0,
+        0,
+        1,
+        0
+      ],
+      "samples": [
+        [
+          5.0,
+          1.3,
+          0.0,
+          0.3
+        ],
+        [
+          5.5,
+          1.3,
+          0.0,
+          0.22
+        ],
+        [
+          6.0,
+          1.3,
+          0.0,
+          0.12
+        ],
+        [
+          7.0,
+          1.3,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    {
+      "capture_source_s": 5.0,
+      "capture_xy_m": [
+        1.3,
+        0.0
+      ],
+      "contact_source_s": 7.0,
+      "expected_pass": false,
+      "goal_center_xy_m": [
+        1.35,
+        0.0
+      ],
+      "id": "sequence_reorder_only_failure",
+      "sample_source_sequences": [
+        100,
+        102,
+        101,
+        103
+      ],
+      "samples": [
+        [
+          5.0,
+          1.3,
+          0.0,
+          0.3
+        ],
+        [
+          5.5,
+          1.3,
+          0.0,
+          0.22
+        ],
+        [
+          6.0,
+          1.3,
+          0.0,
+          0.12
+        ],
+        [
+          7.0,
+          1.3,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    {
+      "capture_source_s": 5.0,
+      "capture_xy_m": [
+        1.3,
+        0.0
+      ],
+      "contact_source_s": 7.0,
+      "expected_pass": false,
+      "goal_center_xy_m": [
+        1.35,
+        0.0
+      ],
+      "id": "timestamp_reorder_only_failure",
+      "samples": [
+        [
+          5.0,
+          1.3,
+          0.0,
+          0.3
+        ],
+        [
+          6.0,
+          1.3,
+          0.0,
+          0.22
+        ],
+        [
+          5.5,
+          1.3,
+          0.0,
+          0.12
+        ],
+        [
+          7.0,
+          1.3,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    {
+      "capture_source_s": 5.0,
+      "capture_source_sequence": 100,
+      "capture_xy_m": [
+        1.3,
+        0.0
+      ],
+      "contact_source_s": 7.0,
+      "contact_source_sequence": 104,
+      "expected_pass": false,
+      "goal_center_xy_m": [
+        1.35,
+        0.0
+      ],
+      "id": "capture_coverage_only_failure",
+      "sample_source_sequences": [
+        101,
+        102,
+        103,
+        104
+      ],
+      "samples": [
+        [
+          5.1,
+          1.3,
+          0.0,
+          0.3
+        ],
+        [
+          5.7,
+          1.3,
+          0.0,
+          0.22
+        ],
+        [
+          6.3,
+          1.3,
+          0.0,
+          0.12
+        ],
+        [
+          7.0,
+          1.3,
+          0.0,
+          0.0
+        ]
+      ]
+    }
+  ]
+}

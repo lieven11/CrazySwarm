@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import json
 from collections.abc import Callable
 from contextlib import suppress
 from typing import TYPE_CHECKING
@@ -18,13 +17,14 @@ from crazyswarm_app.campaign.planner import (
     DEFAULT_STABILIZATION_S,
     DEFAULT_TAKEOFF_DURATION_S,
 )
-from crazyswarm_app.campaign.scenario import compile_scenario_trace
+from crazyswarm_app.campaign.scenario import CampaignScenarioTrace, compile_scenario_trace
 from crazyswarm_app.campaign.service import (
     CampaignExecutionRequest,
     CampaignRunMode,
     RunArtifactSet,
 )
-from crazyswarm_app.domain.models import OperatingMode, VehicleCapability, VehicleState
+from crazyswarm_app.domain.errors import CrazySwarmError
+from crazyswarm_app.domain.models import OperatingMode, Vector3, VehicleCapability, VehicleState
 from crazyswarm_app.domain.simulation import canonical_sha256
 from crazyswarm_app.fleet.artifacts import (
     BackendBindingProfile,
@@ -55,6 +55,7 @@ from crazyswarm_app.simulation.sensors import (
     PerceptionModelConfig,
     SimulatedPerceptionObservationSource,
 )
+from crazyswarm_app.simulation.vehicle import SimulatedVehicle
 from crazyswarm_app.simulation.world import (
     DynamicWorldTimeline,
     ObstacleConfig,
@@ -101,10 +102,54 @@ class FastSimCampaignExecutor:
         execution_head = CampaignExecutionHead(
             case=request.case,
             planning_submission=request.resolved_package.planning_submission,
+            execution_profile=request.resolved_package.execution_profile,
+            capability_resolution=request.resolved_package.capability_resolution,
             perception_source=perception_source,
             mission_id=record.mission_id,
             run_id=request.run_id,
         )
+        try:
+            return await self._execute(
+                request,
+                scenario_trace=scenario_trace,
+                record=record,
+                execution_head=execution_head,
+            )
+        finally:
+            preparation = runtime.fleet_preparations.pop(request.run_id, None)
+            coordinator = runtime.fleet_coordinators.pop(request.run_id, None)
+            runtime.fleet_results.pop(request.run_id, None)
+            runtime.fleet_tasks.pop(request.run_id, None)
+            if coordinator is not None:
+                with suppress(Exception):
+                    await coordinator.shutdown()
+            if preparation is not None:
+                with suppress(Exception):
+                    await preparation.disconnect_all_safe()
+            # Planner warm-up happens before mission registration.  Preserve that
+            # original failure instead of masking it with the registry's wrapped
+            # NOT_FOUND error during unconditional cleanup.
+            with suppress(CrazySwarmError):
+                runtime.missions.unregister(record.mission_id)
+            for vehicle_id in tuple(runtime.active_vehicle_ids):
+                vehicle = runtime.vehicles.get(vehicle_id)
+                if isinstance(vehicle, SimulatedVehicle):
+                    vehicle.world.dynamic_timeline = None
+            runtime.dynamic_obstacles.clear()
+            await execution_head.close()
+
+    async def _execute(
+        self,
+        request: CampaignExecutionRequest,
+        *,
+        scenario_trace: CampaignScenarioTrace,
+        record: MissionFileRecord,
+        execution_head: CampaignExecutionHead,
+    ) -> RunArtifactSet:
+        runtime = self.runtime
+        # Process startup/import can take longer than the in-flight freshness bound.
+        # Warm the isolated dynamic planner before fleet preparation and takeoff.
+        await execution_head.prepare()
         mission = _HeadAwareCampaignMission(record, execution_head)
         runtime.missions.register(mission, replace=True)
         programs = compile_campaign_execution_programs(
@@ -115,7 +160,17 @@ class FastSimCampaignExecutor:
             mission_source_sha256=record.source_sha256,
         )
         deployment, binding, assignments = _deployment(request, record.mission_id)
-        provider = SoftwareBackendVehicleProvider(runtime.scenario)
+        provider = SoftwareBackendVehicleProvider(
+            runtime.scenario,
+            dynamic_world_timeline=(
+                execution_head.perception_source.timeline
+                if isinstance(
+                    execution_head.perception_source,
+                    SimulatedPerceptionObservationSource,
+                )
+                else None
+            ),
+        )
         provisioned = provider.provision(deployment, binding, existing=runtime.vehicles)
         runtime.attach_execution_vehicles(request.run_id, provisioned)
         for vehicle in provisioned.vehicles:
@@ -133,7 +188,13 @@ class FastSimCampaignExecutor:
                 # event, which is useful for batch simulation but invalid for an
                 # in-flight reaction-horizon qualification.
                 controls.clock.mode = ClockMode.REALTIME
-                controls.clock.speed = 20.0
+                # Keep the dynamic regression on the same source/wall-time basis
+                # as the qualifying realtime mode. Even a modest multiplier can
+                # move the vehicle inside the protected obstacle envelope while
+                # the isolated A* process is still certifying the earlier state,
+                # creating an accelerated-only fallback rather than testing the
+                # production reaction path.
+                controls.clock.speed = 1.0
             else:
                 controls.clock.mode = (
                     ClockMode.ACCELERATED
@@ -148,6 +209,9 @@ class FastSimCampaignExecutor:
             binding=binding,
             supervisor=runtime.supervisor,
         )
+        # Register cleanup ownership before any connection/preflight operation can
+        # fail so the outer runtime boundary can always drain this preparation.
+        runtime.fleet_preparations[request.run_id] = preparation
         preparation.discover(provisioned.vehicles)
         await preparation.connect_all()
         await preparation.start_observation()
@@ -185,7 +249,6 @@ class FastSimCampaignExecutor:
             accepted_plan_sha256=request.plan.plan_sha256,
             accepted_execution_programs={item.role_id: item for item in programs},
         )
-        runtime.fleet_preparations[request.run_id] = preparation
         runtime.fleet_coordinators[request.run_id] = coordinator
         cancel_event = asyncio.Event()
         self._cancel_events[request.run_id] = cancel_event
@@ -196,6 +259,7 @@ class FastSimCampaignExecutor:
         cancellation_task = asyncio.create_task(
             cancel_event.wait(), name=f"campaign-cancel-{request.run_id}"
         )
+        runtime.recorder.service_managed_execution_ids.add(request.run_id)
         try:
             done, _ = await asyncio.wait(
                 {execution_task, cancellation_task},
@@ -210,12 +274,9 @@ class FastSimCampaignExecutor:
                 await cancellation_task
             self._cancel_events.pop(request.run_id, None)
             await runtime.recorder.flush()
-            with suppress(Exception):
-                await preparation.disconnect_all_safe()
-            with suppress(KeyError):
-                runtime.missions.unregister(record.mission_id)
-            runtime.dynamic_obstacles.clear()
+            runtime.recorder.service_managed_execution_ids.discard(request.run_id)
 
+        dynamic_world_trace = _dynamic_world_trace(execution_head.perception_source)
         context = {
             "campaign_locked_inputs": request.locked_inputs.model_dump(mode="json"),
             "campaign_case": request.case.model_dump(mode="json"),
@@ -225,6 +286,7 @@ class FastSimCampaignExecutor:
             "campaign_trajectories": request.trajectories.model_dump(mode="json"),
             "campaign_scenario_trace": scenario_trace.model_dump(mode="json"),
             "campaign_execution_head_trace": execution_head.trace(),
+            "campaign_dynamic_world_trace": dynamic_world_trace,
             "deployment": deployment.model_dump(mode="json"),
             "binding": binding.model_dump(mode="json"),
             "assignments": assignments,
@@ -241,25 +303,40 @@ class FastSimCampaignExecutor:
             request.run_id,
             context,
         )
-        manifest = await asyncio.to_thread(
-            runtime.store.materialize_mission_execution,
+        evaluation_report = await asyncio.to_thread(
+            runtime.store.evaluate_mission_execution,
             request.run_id,
         )
-        bundle_reference = await asyncio.to_thread(
-            runtime.store.get_persisted_execution_bundle,
-            request.run_id,
-        )
-        evaluation_reference = await asyncio.to_thread(
-            runtime.store.get_persisted_execution_evaluation,
-            request.run_id,
-        )
-        bundle = json.loads(bundle_reference["path"].read_bytes())
-        evaluation = json.loads(evaluation_reference["path"].read_bytes())
         csv_artifact = await asyncio.to_thread(
             runtime.store.export_mission_telemetry_csv,
             request.run_id,
         )
         status = "SUCCEEDED" if result.status is FleetStatus.SUCCEEDED else result.status.value
+        csv_sha256 = hashlib.sha256(csv_artifact.content).hexdigest()
+        manifest = {
+            "schema_version": 1,
+            "artifact_kind": "CAMPAIGN_SERVICE_MANAGED_EVIDENCE",
+            "mission_execution_id": request.run_id,
+            "status": status,
+            "evaluation_report_sha256": evaluation_report.report_sha256,
+            "evaluation_evidence_complete": evaluation_report.evidence.complete,
+            "dynamic_world_trace_sha256": (
+                canonical_sha256(dynamic_world_trace) if dynamic_world_trace is not None else None
+            ),
+            "telemetry": {
+                "filename": csv_artifact.filename,
+                "row_count": csv_artifact.row_count,
+                "size_bytes": len(csv_artifact.content),
+                "sha256": csv_sha256,
+            },
+        }
+        bundle = {
+            "schema_version": 1,
+            "contract": "campaign-service-managed-execution-bundle-v1",
+            "mission_execution_id": request.run_id,
+            "status": status,
+            "context": context,
+        }
         return RunArtifactSet(
             mission_execution_id=request.run_id,
             status=status,
@@ -267,6 +344,7 @@ class FastSimCampaignExecutor:
                 **manifest,
                 "case_sha256": request.case.case_sha256,
                 "plan_sha256": request.plan.plan_sha256,
+                "campaign_execution_head_trace": execution_head.trace(),
                 "planning_submission_id": request.locked_inputs.planning_submission_id,
                 "planning_submission_sha256": (request.locked_inputs.planning_submission_sha256),
                 "resolved_planning_package_sha256": (
@@ -283,8 +361,8 @@ class FastSimCampaignExecutor:
                     request.locked_inputs.resolved_planning_package_sha256
                 ),
             },
-            evaluation=evaluation,
-            csv_bytes_sha256=hashlib.sha256(csv_artifact.content).hexdigest(),
+            evaluation=evaluation_report.model_dump(mode="json"),
+            csv_bytes_sha256=csv_sha256,
             csv_content=csv_artifact.content,
         )
 
@@ -396,6 +474,19 @@ def _perception_source(
     )
 
 
+def _dynamic_world_trace(
+    source: object,
+) -> dict[str, object] | None:
+    if not isinstance(source, SimulatedPerceptionObservationSource):
+        return None
+    timeline = source.timeline
+    payload = timeline.canonical_payload()
+    return {
+        **payload,
+        "timeline_sha256": canonical_sha256(payload),
+    }
+
+
 def _show_perceived_obstacle(
     runtime: ApplicationRuntime,
     observation: PerceptionObservation,
@@ -451,7 +542,15 @@ def _deployment(
         FleetMemberDefinition(
             vehicle_id=drone.role_id,
             display_name=drone.role_id,
-            home=drone.start_region.center_m,
+            # Authored launch regions have vertical tolerance, but a disarmed Fast
+            # Sim body must start on the floor. Starting at the region centre made
+            # it free-fall during preparation and falsely violate the raw 0.3 m/s
+            # vertical-speed gate before takeoff authority existed.
+            home=Vector3(
+                x=drone.start_region.center_m.x,
+                y=drone.start_region.center_m.y,
+                z=drone.start_region.minimum_m.z,
+            ),
             initial_role=InitialFleetRole.ACTIVE,
             required_capabilities=capabilities,
         )
@@ -493,9 +592,7 @@ def _deployment(
         constraints=FleetConstraints(
             warning_separation_m=request.case.hard_constraints.warning_separation_m,
             critical_separation_m=request.case.hard_constraints.critical_separation_m,
-            observation_freshness_s=max(
-                1.0, request.case.hard_constraints.observation_freshness_limit_s
-            ),
+            observation_freshness_s=request.case.hard_constraints.observation_freshness_limit_s,
         ),
     )
     binding = BackendBindingProfile(

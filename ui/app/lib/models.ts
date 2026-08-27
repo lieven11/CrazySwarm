@@ -377,7 +377,7 @@ export interface CampaignCaseView {
   case_id: string;
   case_sha256: string;
   execution_semantics_sha256: string;
-  cluster: "BASIC_FLIGHT_AND_ROUTE_FOLLOWING" | "GEOMETRIC_CONFLICT_RESOLUTION" | "CONSTRAINTS_AND_OPTIMIZATION" | "COORDINATION_AND_ALLOCATION" | "FAILURE_RECOVERY_AND_REPLANNING";
+  cluster: "BASIC_FLIGHT_AND_ROUTE_FOLLOWING" | "DYNAMIC_REPLANNING" | "GEOMETRIC_CONFLICT_RESOLUTION" | "CONSTRAINTS_AND_OPTIMIZATION" | "COORDINATION_AND_ALLOCATION" | "FAILURE_RECOVERY_AND_REPLANNING";
   family: string;
   variation_name: string;
   purpose: string;
@@ -452,11 +452,66 @@ export interface CampaignCaseView {
     relationship: "IMMUTABLE_CASE_VARIATION";
     legacy_named_variations: string[];
   };
+  motion_preparation_limits?: {
+    accuracy_min_m: number;
+    accuracy_max_m: number;
+    accuracy_binding: string;
+  };
 }
 
 export interface CampaignCatalogView {
+  major_missions: {
+    schema_version: 1;
+    curriculum_id: "1d-major-missions-v1" | "1d-major-missions-v2";
+    groups: Array<{
+      label: "Flight" | "Target" | "Level path" | "3D path" | "Shape";
+      variants: Array<{
+        label: string;
+        case_id: string;
+        status: "EXECUTABLE" | "PLANNED_NOT_EXECUTABLE";
+        disabled_reason?: string | null;
+        future_fixture_source?: string | null;
+      }>;
+    }>;
+  };
+  two_drone_missions: {
+    schema_version: 1;
+    curriculum_id: "2d-conflict-missions-v1";
+    groups: Array<{
+      label: "Crossing" | "Traffic" | "Merge" | "Coordination" | "Recovery";
+      variants: Array<{
+        label: string;
+        case_id: string;
+        status: "EXECUTABLE" | "PLANNED_NOT_EXECUTABLE";
+        disabled_reason?: string | null;
+      }>;
+    }>;
+  };
   cases: CampaignCaseView[];
   hierarchy: Record<string, Record<string, Record<string, Record<string, string[]>>>>;
+}
+
+export interface CampaignMotionPreparationRequest {
+  balance: number;
+  speed_m_s?: number;
+  accuracy_m?: number;
+  smoothness?: number;
+}
+
+export interface CampaignCoordinationPreparationRequest {
+  launch_gap_s: number;
+}
+
+export interface CampaignReviewCursorView {
+  vehicleId: string;
+  sourceTimestampS: number;
+  receivedTimestampS?: number;
+  sourceSequence: number;
+  sourceClockId?: string;
+  sourceClockEpoch?: number;
+  correlationId?: string;
+  positionM?: Vec3;
+  groundTruthPositionM?: Vec3;
 }
 
 export type CampaignRunStatus = "QUEUED" | "RUNNING" | "SUCCEEDED" | "ABORTED" | "FAILED" | "CANCELLED_BEFORE_LAUNCH";
@@ -780,6 +835,347 @@ export interface FidelityManifest {
   modeledOutputs: string[];
   omittedOutputs: string[];
   limitations: string[];
+}
+
+export interface PhysicalTwinStatusView {
+  state: "UNCONFIGURED" | "DISCONNECTED" | "CONNECTING" | "PENDING_CONFIRMATION" | "PAIRED" | "SUSPENDED" | "ERROR" | "CONFIGURATION_INVALID";
+  configured: boolean;
+  autoConnectEnabled?: boolean;
+  vehicleLabel?: string;
+  redactedUri?: string;
+  uriSha256?: string;
+  connectionNonce?: string;
+  observedIdentitySha256?: string;
+  commandReadiness: "NOT_ASSESSED" | "UNQUALIFIED";
+  commandReadinessIssues: string[];
+  sessionId?: string;
+  observedSourceClass?: "MEASURED_REAL" | "TEST";
+  predictedSourceClass?: "SIMULATED_MODEL" | "TEST";
+  provenance?: "MEASURED_REAL" | "TEST";
+  testOnly: boolean;
+  sampleCount: number;
+  pairedCycleCount: number;
+  observed?: PhysicalTwinSourceStatusView;
+  predicted?: PhysicalTwinSourceStatusView;
+  lastErrorCode?: string;
+  lastErrorMessage?: string;
+  lastFailureKind?: RadioFailureKindView;
+  lastFailureAtUtc?: string;
+  reconnectAttempt?: number;
+  reconnectMode?: "IDLE" | "FAST" | "LOW_DUTY";
+  nextReconnectAtUtc?: string;
+  suspensionReason?: string;
+  suspensionOwner?: string;
+  suspendedAtUtc?: string;
+  telemetryOwner?: "OBSERVER" | "PHYSICAL_OPERATION";
+  operationSampleCount?: number;
+}
+
+export interface PhysicalTwinLiveFrameView {
+  state: PhysicalTwinStatusView["state"];
+  vehicleLabel?: string;
+  liveSequence: number;
+  pairedCycleCount: number;
+  channelRecordCount: number;
+  observed?: PhysicalTwinSourceStatusView;
+  telemetryOwner?: "OBSERVER" | "PHYSICAL_OPERATION";
+  operationSampleCount?: number;
+}
+
+export interface PhysicalTwinSourceStatusView {
+  role: "OBSERVED" | "PREDICTED";
+  vehicleId: string;
+  sourceClass: "MEASURED_REAL" | "SIMULATED_MODEL" | "TEST";
+  freshness: "CURRENT" | "STALE" | "MISSING";
+  frame?: "world" | "home" | "body" | "sensor";
+  sourceClockId?: string;
+  sourceEpoch?: number;
+  rawSourceTimestampS?: number;
+  sourceTimestampS?: number;
+  pairSequence?: number;
+  alignmentEpoch?: number;
+  positionAvailability: "AVAILABLE" | "MISSING" | "INCOMPATIBLE";
+  position?: Vec3;
+  batteryAvailability: "AVAILABLE" | "MISSING";
+  batteryVoltage?: number;
+  armed?: boolean;
+  flying?: boolean;
+  faults?: string[];
+  attitude?: { rollRad: number; pitchRad: number; yawRad: number };
+  imu?: { acceleration: Vec3; angularVelocity: Vec3 };
+  flow?: {
+    velocity?: Vec3;
+    groundDistanceM?: number;
+    qualityPercent: number;
+    status: string;
+  };
+  ranges?: {
+    frontM?: number;
+    backM?: number;
+    leftM?: number;
+    rightM?: number;
+    upM?: number;
+    downM?: number;
+    statuses: Record<string, string>;
+  };
+  estimator?: {
+    converged?: boolean;
+    positionVariance?: Vec3;
+    qualityMetricId?: string;
+  };
+  motorPwmPercent?: [number, number, number, number];
+  transport?: {
+    kind: "physical_radio" | "modeled_transport" | "replay";
+    deliveryQualityPercent?: number;
+    latencyMs?: number;
+    packetLossPercent?: number;
+    radio?: RadioTransportDiagnosticsView;
+  };
+  familyAvailability: Record<string, "AVAILABLE" | "MISSING" | "STALE" | "REJECTED" | "INCOMPATIBLE">;
+}
+
+export type RadioFailureKindView = "NONE" | "USB_UNAVAILABLE" | "TARGET_OFFLINE" | "RF_ACK_LOSS" | "OUTBOUND_QUEUE_SATURATED" | "TELEMETRY_STALE" | "PROTOCOL_SETUP_FAILED" | "UNKNOWN";
+
+export interface RadioTransportDiagnosticsView {
+  connectionEpoch: number;
+  state: "HEALTHY" | "DEGRADED" | "STALE" | "DISCONNECTED";
+  failureKind: RadioFailureKindView;
+  ackedPacketCount: number;
+  lostPacketCount: number;
+  packetLossPercent?: number;
+  consecutiveLostPacketCount: number;
+  maximumConsecutiveLostPacketCount: number;
+  retryQualityPercent?: number;
+  uplinkRssiRaw?: number;
+  uplinkRateHz?: number;
+  downlinkRateHz?: number;
+  uplinkCongestionPercent?: number;
+  downlinkCongestionPercent?: number;
+  outboundQueueDepth: number;
+  outboundQueueCapacity: number;
+  queueSaturationCount: number;
+  usbErrorCount: number;
+  lastAckAgeMs?: number;
+  lastEventAtUtc?: string;
+  lastEventMessage?: string;
+}
+
+export interface TwinBasicFlightStepView {
+  stepId: string;
+  title: string;
+  behavior: string;
+  containment: string;
+}
+
+export interface TwinBasicFlightMotionView {
+  motionId: string;
+  clusterId: string;
+  majorMission: string;
+  variant: string;
+  placementMarker?: "A" | "B" | "C" | "D" | "E";
+  motion: string;
+  summary: string;
+  physicalScope: "PROPS_OFF_BENCH" | "FIXTURE_OBSERVATION" | "CONTAINED_FLIGHT";
+  physicalExecution: "NOT_ENABLED" | "OPERATOR_GATED";
+  catalogVisibility: boolean;
+  implementationState: "READY" | "SETUP_REQUIRED" | "RAW";
+  blockReason?: string;
+  steps: TwinBasicFlightStepView[];
+  learningSignals: string[];
+}
+
+export interface TwinMissionClusterView {
+  clusterId: string;
+  clusterName: string;
+  purpose: string;
+  state: "READY" | "SETUP_REQUIRED";
+  detail?: string;
+}
+
+export interface ControllerTuningFixtureStatusView {
+  fixtureId: string;
+  fixtureVersion: string;
+  artifactPath: string;
+  state: "AWAITING_MEASUREMENTS" | "READY" | "INVALID";
+  implementedFlightsAvailable: boolean;
+  missingFields: string[];
+  detail: string;
+}
+
+export interface TwinBasicFlightCatalogView {
+  clusterId: string;
+  clusterName: string;
+  purpose: string;
+  qualificationClaim: "NONE";
+  clusters: TwinMissionClusterView[];
+  controllerTuningFixture?: ControllerTuningFixtureStatusView;
+  motions: TwinBasicFlightMotionView[];
+}
+
+export interface TwinBasicFlightRunView {
+  runId: string;
+  motionId: string;
+  status: "COMPLETED" | "FAILED";
+  executionBackend: "FAST_SIM" | "REAL_CRAZYFLIE";
+  evidenceClass: "SIMULATED_MODEL" | "MEASURED_REAL";
+  learningDisposition: "SIMULATOR_INPUT_CANDIDATE";
+  qualificationClaim: "NONE";
+  steps: { stepId: string; status: "COMPLETED" | "MODELED_ONLY"; detail: string }[];
+  learningSample: {
+    batteryStartPercent: number;
+    batteryMinimumPercent: number;
+    batteryEndPercent: number;
+    batteryDeltaPercent: number;
+    minimumVoltageV?: number;
+    maximumCurrentA?: number;
+    peakMotorCommandPercent?: number;
+    hoverRmsDriftM?: number;
+    maximumAltitudeM: number;
+    landingContactObserved: boolean;
+    finalState: string;
+  };
+  artifactPath: string;
+  telemetryRowCount?: number;
+  telemetryCsvSha256?: string;
+  controllerTuningPreparation?: ControllerTuningRunPreparationView;
+  controllerTuningRangeSummary?: {
+    fixtureId: string;
+    fixtureVersion: string;
+    modelStatus: "EVALUATED" | "RAW_ONLY";
+    predictionSource: "CONFIGURED_PLACEMENT" | "ESTIMATOR_POSE" | "UNAVAILABLE";
+    validRangeValueCount: number;
+    posePredictionResidualRmsM?: number;
+    opposingRangeSumResidualRmsM?: number;
+    fittedPoseSampleCount: number;
+    estimatorToRangeXyRmsM?: number;
+    continuityConstrained: true;
+    qualificationClaim: "NONE";
+    detail: string;
+  };
+}
+
+export interface ControllerTuningRunPreparationView {
+  fixtureId: string;
+  fixtureVersion: string;
+  fixtureSha256: string;
+  stationId: "A" | "B" | "C" | "D" | "E";
+  headingDeg: number;
+  targetHeightM?: number;
+}
+
+export interface ControllerTuningPreparationInput {
+  stationId: "A" | "B" | "C" | "D" | "E";
+  headingDeg: number;
+  targetHeightM?: number;
+}
+
+export type PhysicalBasicFlightMotionId =
+  | "commissioning-baseline"
+  | "arm-disarm"
+  | "hover-12s"
+  | "forward-10cm-return"
+  | "left-10cm-return"
+  | "right-10cm-return"
+  | "forward-20cm-return"
+  | "land-forward-10cm"
+  | "land-forward-20cm"
+  | "land-diagonal-20cm"
+  | "l-shape-stops"
+  | "square-stops"
+  | "triangle-stops"
+  | "l-shape-stops-40cm"
+  | "square-stops-40cm"
+  | "triangle-stops-40cm"
+  | "straight-out-back-continuous"
+  | "tuning-a-floor-start"
+  | "tuning-a-raised-center"
+  | "tuning-a-station-a"
+  | "tuning-a-station-b"
+  | "tuning-a-station-c"
+  | "tuning-a-station-d"
+  | "tuning-a-station-e"
+  | "tuning-a-yaw-minus-45"
+  | "tuning-a-yaw-minus-30"
+  | "tuning-a-yaw-minus-15"
+  | "tuning-a-yaw-zero"
+  | "tuning-a-yaw-plus-15"
+  | "tuning-a-yaw-plus-30"
+  | "tuning-a-yaw-plus-45"
+  | "tuning-a-height-low"
+  | "tuning-a-height-nominal"
+  | "tuning-a-height-high"
+  | "tuning-a-holdout-one"
+  | "tuning-a-holdout-two"
+  | "tuning-b-center-hover"
+  | "tuning-c-x-plus-05"
+  | "tuning-c-x-minus-05"
+  | "tuning-c-y-plus-05"
+  | "tuning-c-y-minus-05"
+  | "tuning-c-x-plus-15"
+  | "tuning-c-x-minus-15"
+  | "tuning-c-y-plus-15"
+  | "tuning-c-y-minus-15"
+  | "tuning-c-x-plus-30"
+  | "tuning-c-x-minus-30"
+  | "tuning-c-y-plus-30"
+  | "tuning-c-y-minus-30"
+  | "tuning-d-yaw-zero"
+  | "tuning-d-yaw-plus-15"
+  | "tuning-d-yaw-minus-15"
+  | "tuning-d-yaw-plus-30"
+  | "tuning-d-yaw-minus-30"
+  | "tuning-d-slow-sweep"
+  | "tuning-d-off-center"
+  | "tuning-e-slow-x"
+  | "tuning-e-stress-x"
+  | "tuning-e-hold-x-positive"
+  | "tuning-e-hold-x-negative"
+  | "tuning-e-hold-y-positive"
+  | "tuning-e-hold-y-negative"
+  | "acro-single-roll";
+
+export interface PhysicalFlightOperationStatusView {
+  state: "IDLE" | "STARTING" | "RUNNING" | "HOVERING_READY" | "FLIPPING" | "ABORTING" | "STOP_UNCONFIRMED" | "COMPLETED" | "ABORTED" | "FAILED";
+  stopRequired: boolean;
+  operationId?: string;
+  motionId?: PhysicalBasicFlightMotionId;
+  startedAtUtc?: string;
+  detail?: string;
+  result?: TwinBasicFlightRunView;
+  controllerTuningPreparation?: ControllerTuningRunPreparationView;
+  availableAction?: "FLIP";
+}
+
+export type MotorBenchSelection = "all" | "m1" | "m2" | "m3" | "m4";
+
+export interface MotorBenchSessionView {
+  sessionId: string;
+  status: "ACTIVE" | "STOPPED" | "FAILED";
+  motorSelection: MotorBenchSelection;
+  outputPercent: number;
+  measuredPwmPercent?: [number, number, number, number];
+  maximumOutputPercent: 70;
+  watchdogTimeoutMs: 750;
+  firmwareWatchdogArmed: boolean;
+  rebootRequired: boolean;
+  telemetryRowCount: number;
+  telemetryArtifactPath?: string;
+  motorCsvPath?: string;
+  motorCsvSha256?: string;
+  error?: string;
+}
+
+export interface MotorActuationStatusView {
+  state: "IDLE" | "ACTIVE" | "POSSIBLY_ACTIVE" | "STOPPING" | "STOP_FAILED";
+  stopRequired: boolean;
+  sessionId?: string;
+  motorSelection?: MotorBenchSelection;
+  commandedOutputPercent?: number;
+  measuredPwmPercent?: [number, number, number, number];
+  measuredOutputActive?: boolean;
+  firmwareWatchdogArmed?: boolean;
+  rebootRequired?: boolean;
+  detail?: string;
 }
 
 export interface FleetVehicleLifecycleView {

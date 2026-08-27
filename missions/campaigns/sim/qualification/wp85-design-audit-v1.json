@@ -1,0 +1,3322 @@
+{
+  "affected_boundary_manifest": {
+    "base_manifest_artifact_sha256": "8140602daeb08845dc242f5e3be94620e37b3fcbedab83c87e8d31e05bfbabab",
+    "base_path_count": 76,
+    "delta_paths": [
+      "docs/project/REQUIREMENTS_CHANGELOG.md",
+      "docs/project/requirements/README.md",
+      "docs/project/requirements/workflow/COST_SCOPE_AND_HANDOFF.md",
+      "missions/campaigns/sim/qualification/wp85-design-audit-v1.json",
+      "scripts/audit_wp85_design.py",
+      "scripts/check_requirement_catalog.py"
+    ],
+    "expected_path_count": 170,
+    "paths": {
+      "config/app.yaml": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "explicit_public_or_test_boundary"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "490d4a3542e966d1e9f478413c66e0876eb3166e331a6bddf1c186bff1e99cf3",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "config/worlds/one_drone.yaml": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "explicit_public_or_test_boundary"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "80e023ee8349081664197e3fba87af3ebba87f46ed1e162b36bb2e728644f88a",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "design.md": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "99b95cd62ba6db0794cb763f75a6ed6fb6c9f858ec4b71ea946edc84d2620499",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "docs/project/DESIGN.md": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "cc7d64cedab94c5cf663c20d66cf6ac6a4d60aadef235483495e2e8af960b145",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "docs/project/REQUIREMENTS_CHANGELOG.md": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "WP84_FINAL_FINDING_BOUNDARY",
+          "REQ_WFL_054_DURABLE_FEEDBACK",
+          "WP85_FOCUSED_AUDIT_OWNER"
+        ],
+        "sha256": "d24e0426bc93f5d00caf9245311a165fffd33085da5ad50e0e1dd6e2ffee1ebf",
+        "state": "EXISTING"
+      },
+      "docs/project/requirements/README.md": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "WP84_FINAL_FINDING_BOUNDARY",
+          "REQ_WFL_054_DURABLE_FEEDBACK",
+          "WP85_FOCUSED_AUDIT_OWNER"
+        ],
+        "sha256": "6e4995ede722a9302cae51a81885ee4ea007f5efa8197416b3cdd47d9c7285ed",
+        "state": "EXISTING"
+      },
+      "docs/project/requirements/workflow/COST_SCOPE_AND_HANDOFF.md": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "WP84_FINAL_FINDING_BOUNDARY",
+          "REQ_WFL_054_DURABLE_FEEDBACK",
+          "WP85_FOCUSED_AUDIT_OWNER"
+        ],
+        "sha256": "790358ffc3d55f1fcae3d3cd669ebcb5bdf4d6d90921b56a01b121c8617c5a6f",
+        "state": "EXISTING"
+      },
+      "docs/system/README.md": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "276279bde4736cfe11d14b2a41938402510b4ae7a87a3bef796917d434499ba4",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "docs/work-packages/ACTIVE.md": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "explicit_public_or_test_boundary"
+        ],
+        "external_identity_owner": "WP84 design verification handoff",
+        "runtime_functions": [],
+        "sha256": null,
+        "state": "DELIMITED_EXTERNAL_PACKET_HASH",
+        "static_anchors": []
+      },
+      "missions/campaigns/sim/cases/dynamic-replanning/1d-cases-v1.yaml": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "explicit_public_or_test_boundary"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "4f460bbeee2761857830f6ed1beefd87e2a2152cee783a003bced564f2d41b57",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "missions/campaigns/sim/qualification/wp84-design-audit-v1.json": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "explicit_public_or_test_boundary"
+        ],
+        "external_identity_owner": "WP84 design verification handoff",
+        "runtime_functions": [],
+        "sha256": null,
+        "state": "SELF_OUTPUT_EXTERNAL_PACKET_HASH",
+        "static_anchors": []
+      },
+      "missions/campaigns/sim/qualification/wp85-design-audit-v1.json": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "WP84_FINAL_FINDING_BOUNDARY",
+          "REQ_WFL_054_DURABLE_FEEDBACK",
+          "WP85_FOCUSED_AUDIT_OWNER"
+        ],
+        "sha256": null,
+        "state": "SELF_OUTPUT_EXTERNAL_PACKET_HASH"
+      },
+      "scripts/audit_wp52_56_r6_design.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "e1fcfc5582fa8af6d217ce23c060a825e751ade24b3f08f698fbbeae088097da",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "resolve_planning_package",
+            "line": 32
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 369
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 660
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 661
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 740
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 865
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 910
+          }
+        ]
+      },
+      "scripts/audit_wp57_61_r2_design.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "961d157e05a3293dbd9feef371167af070188c19e2a5eccf65a0499b47f8ec87",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "CampaignRunRequest",
+            "line": 678
+          },
+          {
+            "anchor": "CampaignRunRequest",
+            "line": 682
+          },
+          {
+            "anchor": "CampaignExecutionHead",
+            "line": 685
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 184
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 467
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 523
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 561
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 604
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 647
+          }
+        ]
+      },
+      "scripts/audit_wp62_66_design.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "6fe8e3646008be372bbe0b661915d0039a4c8bd18a1165bb6bbf8185dd931dfd",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "CampaignLab",
+            "line": 96
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 111
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 153
+          }
+        ]
+      },
+      "scripts/audit_wp67_70_design.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "b4224a7ca06789f8355385730d0e863d6cda44cff24b8b1173238a527939b747",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "CampaignLab",
+            "line": 61
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 110
+          }
+        ]
+      },
+      "scripts/audit_wp67_70_r2_design.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "895866b2a450485f7368b3f819c7f02e16091780b60f0d5ab6cf1f5797316e58",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 123
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 124
+          },
+          {
+            "anchor": "CampaignRunRequest",
+            "line": 125
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 126
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 127
+          },
+          {
+            "anchor": "CampaignExecutionHead",
+            "line": 130
+          },
+          {
+            "anchor": "search_goal_corridor",
+            "line": 12
+          },
+          {
+            "anchor": "search_goal_corridor",
+            "line": 131
+          },
+          {
+            "anchor": "search_goal_corridor",
+            "line": 351
+          },
+          {
+            "anchor": "plan_changed_world_replacement",
+            "line": 132
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 136
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 166
+          },
+          {
+            "anchor": "previewActiveCampaign",
+            "line": 138
+          },
+          {
+            "anchor": "runActiveCampaign",
+            "line": 137
+          }
+        ]
+      },
+      "scripts/audit_wp71_75_design_r1.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "d32baddf64ab6d164715a48016618f0c7c20f59c32badcb0456f1c473fd99d10",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "CampaignLab",
+            "line": 56
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 78
+          }
+        ]
+      },
+      "scripts/audit_wp76_79_design.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "75d11524954cfbc783454888b068bbbb774e0bbcb71f93fe4266f05b00d22cb6",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "CampaignLab",
+            "line": 352
+          }
+        ]
+      },
+      "scripts/audit_wp84_design.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "38b61ff58f203cf34953a98ef5dbe72eb639ac93206ed35902baf34c289e555b",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 898
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 899
+          },
+          {
+            "anchor": "CampaignRunRequest",
+            "line": 900
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 901
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 51
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 558
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 902
+          },
+          {
+            "anchor": "CampaignExecutionHead",
+            "line": 836
+          },
+          {
+            "anchor": "CampaignExecutionHead",
+            "line": 903
+          },
+          {
+            "anchor": "search_goal_corridor",
+            "line": 26
+          },
+          {
+            "anchor": "search_goal_corridor",
+            "line": 513
+          },
+          {
+            "anchor": "search_goal_corridor",
+            "line": 904
+          },
+          {
+            "anchor": "plan_changed_world_replacement",
+            "line": 43
+          },
+          {
+            "anchor": "plan_changed_world_replacement",
+            "line": 599
+          },
+          {
+            "anchor": "plan_changed_world_replacement",
+            "line": 905
+          },
+          {
+            "anchor": "commit_changed_world_replacement",
+            "line": 42
+          },
+          {
+            "anchor": "commit_changed_world_replacement",
+            "line": 693
+          },
+          {
+            "anchor": "commit_changed_world_replacement",
+            "line": 906
+          },
+          {
+            "anchor": "prepare_trajectory_replacement",
+            "line": 907
+          },
+          {
+            "anchor": "replace_prepared_trajectory",
+            "line": 908
+          },
+          {
+            "anchor": "mark_runs_old",
+            "line": 909
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 910
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 969
+          },
+          {
+            "anchor": "previewActiveCampaign",
+            "line": 911
+          },
+          {
+            "anchor": "runActiveCampaign",
+            "line": 912
+          }
+        ]
+      },
+      "scripts/audit_wp85_design.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "WP84_FINAL_FINDING_BOUNDARY",
+          "REQ_WFL_054_DURABLE_FEEDBACK",
+          "WP85_FOCUSED_AUDIT_OWNER"
+        ],
+        "sha256": "f2b7828aa00a0de61b30d0b1e4aec496d403934c337c8535a0246e1bdbe90caf",
+        "state": "EXISTING"
+      },
+      "scripts/check_requirement_catalog.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "WP84_FINAL_FINDING_BOUNDARY",
+          "REQ_WFL_054_DURABLE_FEEDBACK",
+          "WP85_FOCUSED_AUDIT_OWNER"
+        ],
+        "sha256": "bcc12ab5f58e1757adab3ce7a97f4990929883510b7763b70b43abd0f9cefeea",
+        "state": "EXISTING"
+      },
+      "scripts/export_openapi.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "explicit_public_or_test_boundary"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "821e27fd8a36e7e893ee4a6a5fa0fed4304d462dec1cdc6758961c6cd4c2bafa",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "scripts/mark_campaign_runs_old.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "explicit_public_or_test_boundary",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "9a526c00e26a062ff056b97e7e8595ee3521b9a90b994d4a45e889e7867cbe65",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "mark_runs_old",
+            "line": 52
+          }
+        ]
+      },
+      "scripts/qualify_submission_registry.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "2f02e17bf33f334234e07af39aab683245f9ba4d97e94686e6f004292cf61538",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "resolve_planning_package",
+            "line": 37
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 343
+          }
+        ]
+      },
+      "scripts/qualify_submission_registry_r6.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "a5e31a749045f9b59c7e60b3d2d23205b6118220a7ed57dc39967a14f9b2f797",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "resolve_planning_package",
+            "line": 32
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 120
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 160
+          }
+        ]
+      },
+      "scripts/qualify_wp62_66_runtime.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "d8f3edd3cff62979e5305b177c650c77b412506b994224907aa506f8e8c1a322",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 24
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 45
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 49
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 54
+          },
+          {
+            "anchor": "prepare_trajectory_replacement",
+            "line": 608
+          }
+        ]
+      },
+      "src/crazyswarm_app/__init__.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "e450c007b3667482bbacb354abc0016588b8d0e71818f629f016a22b48fa6a66",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/api/app.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "ff8173e244d6d4b130a1fe21ec60b8da9d2431729e28532877b7f4add4ede4aa",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 80
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 178
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 181
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 194
+          },
+          {
+            "anchor": "CampaignRunRequest",
+            "line": 57
+          },
+          {
+            "anchor": "CampaignRunRequest",
+            "line": 948
+          },
+          {
+            "anchor": "CampaignRunRequest",
+            "line": 2911
+          }
+        ]
+      },
+      "src/crazyswarm_app/api/models.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "ae78fa0502d73b28625e01df41364b9517237838b574ec28daf714eda151026e",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/api/runtime.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "explicit_public_or_test_boundary",
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "64dcf8b92acc1b9757238dbd4be990c98e82c917d5ac8e1999b932eb9d0703f5",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "src/crazyswarm_app/api/security.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "adc1443db1b30d3b13d11c62c89fe2f855f707fd5d7bb05c0235fb734ae56e11",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/campaign/analyzer.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "2a7a70bbd7fb88765a5096de5b702137ff4d9caf7905f4f15e92e3eb052a0884",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "src/crazyswarm_app/campaign/api_models.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "a1d5e1a804737cc7e083f033f209d09e9082d87b8816952c3435f2c77ef10ccc",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 16
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 46
+          },
+          {
+            "anchor": "CampaignRunRequest",
+            "line": 39
+          }
+        ]
+      },
+      "src/crazyswarm_app/campaign/catalog.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "64aaa10fd065b39657ebae28e76e01512528637dc1eaca3970b93b3ed76634be",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "src/crazyswarm_app/campaign/corridor.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "4cda334f3d25cb381cf1fb812bce8de2d23e255916e0d7dbdc2e3cee12e9fd23",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "search_goal_corridor",
+            "line": 70
+          }
+        ]
+      },
+      "src/crazyswarm_app/campaign/dynamic_obstacles.py": {
+        "classification": "NEW",
+        "discovery_sources": [
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": null,
+        "state": "INTENDED_NEW",
+        "static_anchors": []
+      },
+      "src/crazyswarm_app/campaign/execution.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "d6d7b335dbe97633badab7245a5cd21862c0eb5c52e9f981f4a1192afb997f16",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/campaign/execution_head.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "ba87347101f1b8153bfdb16e3f36ec592f78456e63a94ab9adbc99781f2133a4",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "CampaignExecutionHead",
+            "line": 90
+          },
+          {
+            "anchor": "plan_changed_world_replacement",
+            "line": 33
+          },
+          {
+            "anchor": "plan_changed_world_replacement",
+            "line": 72
+          },
+          {
+            "anchor": "commit_changed_world_replacement",
+            "line": 32
+          },
+          {
+            "anchor": "commit_changed_world_replacement",
+            "line": 654
+          }
+        ]
+      },
+      "src/crazyswarm_app/campaign/geometry.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "f011ece2306fb5a2505818eb7dac8771a21bb72a6dffc62a8f3bcb9c30d21802",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/campaign/models.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "b8164e332e48184e6b92dd19d4b7200e7915d5180f64109ea38ce2942b1a5827",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "src/crazyswarm_app/campaign/perception.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "e8b39b2f753c5550b41b52c4eb1ae58e48ab8449d563a08498443978431fb565",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/campaign/physical_truth.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "e34b9c75527a7e3a3c55a1a4fb673d2a49e012816362929b7799062003eba4c9",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/campaign/planner.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "b6ab6b8bf05f3ad706e6d35959384db9e8f78174b382464e4f8d8ca0b08d8f0d",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "src/crazyswarm_app/campaign/qualification.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "18190b7f62ceb0079e339fd9829f0030a2627ffea970e42862a046ebdf24cb67",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "plan_changed_world_replacement",
+            "line": 36
+          },
+          {
+            "anchor": "plan_changed_world_replacement",
+            "line": 659
+          }
+        ]
+      },
+      "src/crazyswarm_app/campaign/replanning.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "5f4227270538482cd3b6c491d71135e828d0dcdcf5fac6411f72f8519c2c804f",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "search_goal_corridor",
+            "line": 15
+          },
+          {
+            "anchor": "search_goal_corridor",
+            "line": 935
+          },
+          {
+            "anchor": "plan_changed_world_replacement",
+            "line": 851
+          },
+          {
+            "anchor": "commit_changed_world_replacement",
+            "line": 1844
+          }
+        ]
+      },
+      "src/crazyswarm_app/campaign/runtime_executor.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "3835eba7f9732e2103a8c92fa2a69088ac27115cf29275e6c7997198aaaa2669",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 22
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 84
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 143
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 396
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 513
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 529
+          },
+          {
+            "anchor": "CampaignExecutionHead",
+            "line": 10
+          },
+          {
+            "anchor": "CampaignExecutionHead",
+            "line": 102
+          },
+          {
+            "anchor": "CampaignExecutionHead",
+            "line": 147
+          },
+          {
+            "anchor": "CampaignExecutionHead",
+            "line": 374
+          }
+        ]
+      },
+      "src/crazyswarm_app/campaign/scenario.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "c7e3ddeee88b235551ba2c31c639ef73da0edddfc46eb94cd5a83c24d96ef221",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "src/crazyswarm_app/campaign/scheduling.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "521aa0fe9d019c8ccbabf0f2204e463458bf1754f7a76da851ea60a66d1c97a8",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "src/crazyswarm_app/campaign/semantic_audit.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "78420241b129477f8e623acab8ee2e79040604266835dc01d92a17ca2c658158",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/campaign/service.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "794a13c31d51fa095120efe80a198424d343dc78d27f0ac91977795d5f52d32e",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 49
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 522
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 898
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 922
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 990
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 1081
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 51
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 114
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 471
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 525
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 925
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 948
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 957
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 992
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 110
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 121
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 238
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 1198
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 55
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 532
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 993
+          },
+          {
+            "anchor": "mark_runs_old",
+            "line": 599
+          }
+        ]
+      },
+      "src/crazyswarm_app/campaign/submissions.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "43a8630857e093fa4b58f350d9c943c2af3f8f1eef91b451b65627b351a97976",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 755
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 838
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 2255
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 2368
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 657
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 673
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 2257
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 2360
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 2247
+          }
+        ]
+      },
+      "src/crazyswarm_app/campaign/timing.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "33b3bb5ff60381353c7dcffa9f86003dc19a7cbc767f90fb00a8a448f6bc610e",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/campaign/trajectory.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "ea425ad2f477e4e980cdd51ac67616c8fb44528fb50a8ad6163279fc5f8323c0",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "src/crazyswarm_app/config.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "11055020c3aa32f2b4286b1f329137f0a7265a11c2de0f7d255187a25094721c",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/domain/commands.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "86ff7d9fcf374f60d42cf6499d36a6567f3675e867587bc4ed79d188dbeb7ff6",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/domain/errors.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "64113a37dacf413065ea1f0897a94087bc1a2817f052b3732bf4e395a2dfb73a",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/domain/goals.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "04f7214150335df745b3b85dd0477df5e6cb4594e28334c1ba3fa23d10de837b",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/domain/models.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "a298a1f7958239c3ae260e2df21a455cf188a5588395b9222095b3377eb9fcff",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/domain/simulation.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "393fb0f83bde414d2088ad749e13c5308f6d267a8725344c05fc726147aa1d76",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/domain/telemetry.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "741a4aa9cc4a405588960eece156b82e85348bf124e61fcb16f66ebb97376f99",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/domain/trajectory.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "5d48ba0f3bc01d4280887a340408bb99c05bd3156de24823ff543e75a21354ef",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/engineering.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "ab2d3a02a50233a759fbd65fd9f8f37185b03b2a94477fa6cfa05738cc4b10e0",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/fleet/artifacts.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "67380de6c08f72add380047daa695d2936af8e07e2f6868854cc7269087ea77a",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/fleet/backends.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "1e54d0186f69ae3542539e07db1c2dbdc7a477212a056731291fd326ea21dcb2",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/fleet/coordination.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "687d5e74cf105970ffdd16a49b329ab9de5532d2a062c48ee4f76feb57171cc3",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/fleet/coordinator.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "d241ab3a18210720c5138fe302d8922120e39c4d4dc8e619c5f57dec8eb849cd",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "src/crazyswarm_app/fleet/docks.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "6577dfff382fed3219a680936eb7be5ef8788cdcef9622dc15273057d1ef73a6",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/fleet/execution.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "57fc67bbd7a3714312ed66139146c7cf08a0f371542ddc6740a295ba8146eedc",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/fleet/metrics.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "be868dbf3a0a74ebb25e9ef94ef46ddafd68183ecae1cd327c77e94eb2f686ea",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/fleet/persistent.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "3e680dd799cb7a1a0033340361c4c69c7badaf441f7f3d06ccecba2adec11cf7",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/fleet/planning.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "21e16c5da99d4eba7d8e9ab38859c022efd9be5f8a28b0c3e2e8e803ddcf7981",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/fleet/preparation.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "a8916b916e4bbe77de2b47bbba48a721456c5dac6a80a9a489c9d1be53822d43",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/fleet/qualification.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "3341e9b90f842d9632b352bc71e3f6056366cafc68354f7549e74dcee35ff728",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/fleet/tasks.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "b46ba308c1a7770d25fc83400d159384ca95419d73bb293e2dcbdbf4f71675b4",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/fleet/zones.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "1b48f9c6591d12dfc3e803b5a31c701005469cc47b9b71e34a09a99c4eee042d",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/hardware/models.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "cb101bcc2056db0a6d013f30eee790c46c16f8d467aa534919b2cfc11d6eaf5c",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/hardware/observation_twin.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "5d19e50e6713ba66282cb8d27f4bbcfda69ac8022f598eeba4b0109fbc0fdfe9",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/isaac/protocol.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "176ff67a2d4f00c9bb9c8bf01379e607e67b89715dc64a53a8627c00b255b008",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/missions/authority.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "86832cf77ba259ffde485a9a5576f0462f05e7b21eab21abf280de7c3690f3ff",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/missions/base.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "e99dec4ee72c419e13e9f32cd4396874e0dfb35fe2e9c7f5062e8cfeaa9735b5",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "prepare_trajectory_replacement",
+            "line": 452
+          },
+          {
+            "anchor": "replace_prepared_trajectory",
+            "line": 417
+          }
+        ]
+      },
+      "src/crazyswarm_app/missions/catalog.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "c055d112a690204c109b6966afc31783ce0cf7eb3f788f547ffdc923233344a2",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/missions/coordination.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "d37cb990b5881e40fae5423e59ce5e29a41c6ac5fab3a562c4a177a21149e83e",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/missions/models.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "e7655602a5ce72761a36b1aef49145a338f032fd292f9aa26ee574d55a0ebf27",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/missions/observation.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "0675b0897501a0f9aa8a87b97406be132e2e113e6c6ea5da6843b26431e74d3f",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/missions/planning.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "0fbb21cd1fed76868220f4618f6c6476fefbdbee06fd789e819bed38a6b53685",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/missions/registry.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "9b8cd1415e7ddbbbfbd0a01a0e0d074fa7fa1d1d0bd95b6243e881c9c9c004f2",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/missions/runner.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "0363679e48b5327cf8314123e7e7c035a348c460e99bf934ee09711153f536df",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/missions/script.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "fc27a997120858048b617f45afe24042170315ae11ac911869438ca256470b59",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/observability/bridge.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "b676bbc35a2a6598eb80f55dbd6c266767803bb71e067c8efa9e0310cc884977",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/observability/bus.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "1fcfbb4bc8db8e0021676b3428c57b59408529e8614e46b347fc40ab31d8f2c9",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/observability/csv_export.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "07702a86a9adb529dbdc3f309d15d5e8a256b6f89bf2a133460b090de7563126",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/observability/evaluation.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "f94e6ad3da7a1024e316615c1ce565f19a67223f1fe3517e480dd397513b7f46",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "src/crazyswarm_app/observability/events.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "d94c135959f160bca7c25e3158c2fe705386831cc1f36888e1604a4b1a5c3cba",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/observability/recorder.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "2daa135fffd7326a1510c437e6263a68297ef45db987658a23edd92cb66c1369",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/observability/replay.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "496bb5cab3c7ad68ebe082b22ab6c1aa2abcc78be07ea3f1b55af778aec845bb",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/observability/storage.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "aa3e3abc76751e4f840145500c50dc419867a0120de53dfe3c9d0223a50dc689",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "src/crazyswarm_app/planning/approval.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "5bfb08c3b08849ca3dcdebb7e5a6027e610df2bf57875c9cd216eac5dc33cf74",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/planning/builtins.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "20f82ca054a2513c59c62a0863b90fdb3100c83b473d32de1d050231a26ec307",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/planning/contracts.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "f1dd7392db34e6d68323f85f9d3aed48b44961eb509e2346f137c3405b678766",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/planning/curriculum.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "8049a93d198af766db868a0ee5b2f4d5c85448f34e894fa18a959b84181cd4ac",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/planning/deconfliction.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "009b149d0108a7fa4981806226211fc9eb8058053673c41c0d7644ae26b6afa2",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/planning/intent.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "46ee4ff55181ce315bd4e2d5a6b1f41295b7d172dc579700b5d74baf9dea60dc",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/planning/multidrone.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "5f6c8c9f924c040299dc3ba65abe7d7aa62f3d440d6439d28819c50831c79d53",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/planning/qualification.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "2bee8c73bd30e4ad5bef58f2b18dcbdc5cc0e4261ba53703ecc71ff13197c5a5",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/planning/registry.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "597cf4e7ffd93543c0432d35b21abf01d357c5ac73b25ca5b66bd6d05a7db242",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/planning/release.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "47fbdece819f6c82924ad0b27a9ac6a5f42e01a0130132d37120468da8c01c88",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/planning/robustness.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "59761fa53d67e0a757ccaee4932e33a7572a0c20de583667f7f869a2c1082074",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/planning/safety.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "cafa7ddf8fca4be4a3331a8ca896b79e192d8c8bb55b40aa35e6678927bb81b4",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/planning/service.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "9002ec5c1c04065ec87cb992129be8e8eecef8b548a9b0e053a3924856d8ec06",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/provenance.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "5750430a94c185c583d615a0ecab69b5d91b05c922c3e7e9d719d06f4a21d6d2",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/safety/audit.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "86a7f6be9c53e1dd5ec491ca07226c37641722cbd327f61f79a676845bb00740",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/safety/models.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "02aa4abd318d3af8b32a83a96a61789af5669a6743b703c68f9aca365de3d478",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/safety/policy.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "f534665ec00c33991026f93ec3562edc957cf7075883860bff5205cf5fe16e69",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/safety/state_machine.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "c342cb737f7d93e84617baad0abd4ff50908c7d4deea60b9cb96d4ab2fb33fe6",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/safety/supervisor.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "35355186a1bed44fe812abab09d1163a4e09b35fc2fbb7cdb5ebbc35163a9cae",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "prepare_trajectory_replacement",
+            "line": 523
+          },
+          {
+            "anchor": "replace_prepared_trajectory",
+            "line": 616
+          }
+        ]
+      },
+      "src/crazyswarm_app/simulation/clock.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "722c45cb3be4fded5719bdf678674c7cbf013dd6cbc6df68878e471789628f1f",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/simulation/factory.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "a49b3e5c8ca84de75c2afd25fc4c5ce4e94cedf61c500ef9b563e210ba6993f3",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/simulation/faults.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "1c72cbc96b25db97b20821a15142e7e49ba7657dbaa656d4730914c650724646",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/simulation/models.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "a978d58e2e3a9e4a867f79bab743b4fcb981279b2a7b057012c5cae50f95785b",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/simulation/parameters.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "9f9d7a3bb0ef125cfa5de60f69b832398a539752d170533ae9a40a000873a3d4",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/simulation/physics.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "60a372d2b3f9493e595f55941dfe1f1d619006f714018451e2e42bdb77ccbb97",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/simulation/powertrain.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "65c7eb993fe0879dbd314f0aa7d5606a254ddfa44cca02b0951c53116a63c0c2",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/simulation/sensors.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "707060cd2c2010a598a28e5a9357ecda3f0b7adbe00ecc37a42047b83d06e0f6",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "src/crazyswarm_app/simulation/vehicle.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "f425662a16c197936e697359e672297c97cee4d8eeba29fdd8b42b6db8c9d808",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "src/crazyswarm_app/simulation/world.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT",
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "b465609f1d3b3a024b18448ba07aba20ce0b4ee58f21eb63d21318e2360de1d9",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "src/crazyswarm_app/twin/calibration.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "874327c22a05ace974b5ea030b9620f5b22541cea559120cc772eeb9410649b6",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/twin/coordinator.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "93083658a33dbb191d26d262f4f98852206b39a063626e4b271585390fbd5564",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/twin/curriculum.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "b14fcce7ec8b364fb5595a1939143e481e07f2b315cd69a10e1963293ac4d2d8",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/twin/ingestion.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "4aac3e897f17ff3a88c6870bc8e2d6c50c6e57a11dcc319456142cb048a22228",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/twin/models.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "e7e39b9079712e26f3183bacc4fc13bc33c253f536de793124efba3abd2815de",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/twin/physical_handoff.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "052618a55b599a1fb1daecb15026ca8b9e8c0c9e040aa9be324eba8653f44396",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/twin/pipeline.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "15210e6418160e0882b6b489f41d07a87a8ab4079af831e2d3f474b4cd9be254",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/twin/replay.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "b92dc01245d4c95ed372ac474871b9afafcaaf3b53e81df65d10396714c39f08",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/twin/storage.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "f4dec7be3cece3f6d0d9f6309ab4031358a99cb9a1737768d2557ea2d0c39016",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/vehicles/_cflib_link.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "7df448504b85cd179f27df5c142caa819029317e5bfb7b69a2369966bf27be85",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/vehicles/base.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "c2f977ea470d70b8a4a424c36cac1b9de5d4b3ad04f28d61afaab5c0d0b9f37f",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/vehicles/crazyflie.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "09a2df7c6781439c62a2ed41c404dfa5f5724b833ac2daddbd2bd1d9ea455524",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/vehicles/crazyflie_link.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "b9839ba65d2404d8482f842e9975f8c6396244676757ebe586bab62d5896fe56",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/vehicles/mock_isaac.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "9111d1603eab870fd84359e465e08348fe3812be56a3af595015799e6dfa1475",
+        "state": "EXISTING"
+      },
+      "src/crazyswarm_app/vehicles/providers.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "TRANSITIVE_PRODUCTION_IMPORT"
+        ],
+        "sha256": "8c9742742559330d4b588fe64b191ecbfcad380cfe8c679dab557bef8ba78282",
+        "state": "EXISTING"
+      },
+      "tests/api/test_campaign.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "explicit_public_or_test_boundary",
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "b5d271e026fc3efa7ba544e35c17af76cf9bbd2355016bde8b6bbfaedaf973e5",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "tests/api/test_contract.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "8b768efaf0b468b20c0494cf7a871cd8dffe0893801e24b2fb6e73d078a4ea1d",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "tests/campaign/test_campaign_execution.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "ca4cc87f982ac6a84c2583324b0f6041f8d8ec10d6771ded924f0185c7431486",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 29
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 115
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 191
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 22
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 80
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 86
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 98
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 127
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 321
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 511
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 29
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 42
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 113
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 302
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 478
+          }
+        ]
+      },
+      "tests/campaign/test_campaign_service.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "e0a5c45cb00d9cf70cfd53511e63f0d0ba7147e4fe129aca9f416250389c3ef3",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 25
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 48
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 15
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 73
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 152
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 223
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 271
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 409
+          },
+          {
+            "anchor": "CampaignExecutionRequest",
+            "line": 428
+          },
+          {
+            "anchor": "mark_runs_old",
+            "line": 375
+          },
+          {
+            "anchor": "mark_runs_old",
+            "line": 389
+          }
+        ]
+      },
+      "tests/campaign/test_dynamic_guard_oracle.py": {
+        "classification": "NEW",
+        "discovery_sources": [
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": null,
+        "state": "INTENDED_NEW",
+        "static_anchors": []
+      },
+      "tests/campaign/test_dynamic_perception_replanning.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "explicit_public_or_test_boundary",
+          "implementation_owner",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "d3a8fa0a9b6b4254e97938459ced5072b6e6cf5fc0ca98567fa4933e857d4f12",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 19
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 114
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 20
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 112
+          },
+          {
+            "anchor": "CampaignExecutionHead",
+            "line": 7
+          },
+          {
+            "anchor": "CampaignExecutionHead",
+            "line": 94
+          },
+          {
+            "anchor": "plan_changed_world_replacement",
+            "line": 16
+          },
+          {
+            "anchor": "plan_changed_world_replacement",
+            "line": 148
+          },
+          {
+            "anchor": "commit_changed_world_replacement",
+            "line": 15
+          },
+          {
+            "anchor": "commit_changed_world_replacement",
+            "line": 104
+          }
+        ]
+      },
+      "tests/campaign/test_dynamic_preparation.py": {
+        "classification": "NEW",
+        "discovery_sources": [
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": null,
+        "state": "INTENDED_NEW",
+        "static_anchors": []
+      },
+      "tests/campaign/test_dynamic_replanning.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "implementation_owner",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "822bc3ac835d8db081b80be61a4c0a09eed1800622c5bebe80e991610943961e",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "plan_changed_world_replacement",
+            "line": 27
+          },
+          {
+            "anchor": "plan_changed_world_replacement",
+            "line": 279
+          },
+          {
+            "anchor": "commit_changed_world_replacement",
+            "line": 26
+          },
+          {
+            "anchor": "commit_changed_world_replacement",
+            "line": 346
+          },
+          {
+            "anchor": "commit_changed_world_replacement",
+            "line": 356
+          },
+          {
+            "anchor": "commit_changed_world_replacement",
+            "line": 362
+          }
+        ]
+      },
+      "tests/campaign/test_goal_corridor.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "implementation_owner",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "887150e3b835bb57467dd4e4619045e0941c92257f5e36cab8176434772a6445",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "search_goal_corridor",
+            "line": 9
+          },
+          {
+            "anchor": "search_goal_corridor",
+            "line": 43
+          },
+          {
+            "anchor": "search_goal_corridor",
+            "line": 71
+          },
+          {
+            "anchor": "search_goal_corridor",
+            "line": 97
+          },
+          {
+            "anchor": "search_goal_corridor",
+            "line": 116
+          },
+          {
+            "anchor": "search_goal_corridor",
+            "line": 140
+          },
+          {
+            "anchor": "search_goal_corridor",
+            "line": 266
+          }
+        ]
+      },
+      "tests/campaign/test_major_mission_curriculum.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "ce839ebc8e342f62d427b1708e1bdb450d4ac2b35012ba7bb563404c1e682333",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 12
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 151
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 155
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 159
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 211
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 249
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 279
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 14
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 149
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 153
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 157
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 209
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 247
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 277
+          }
+        ]
+      },
+      "tests/campaign/test_one_drone_execution_head.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "implementation_owner",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "efa5c889c2036f4d1e2e41ae1b2009fb6ac9caceb19f13043432b82d179189b8",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "CampaignExecutionHead",
+            "line": 8
+          },
+          {
+            "anchor": "CampaignExecutionHead",
+            "line": 56
+          },
+          {
+            "anchor": "CampaignExecutionHead",
+            "line": 60
+          },
+          {
+            "anchor": "CampaignExecutionHead",
+            "line": 82
+          }
+        ]
+      },
+      "tests/campaign/test_reality_mission_e2e.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "implementation_owner",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "e58e5265eca90c9192d6b40e363b788851d31ff1b0e5e44d0ef7e8fd9fd2fc8b",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 18
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 85
+          }
+        ]
+      },
+      "tests/campaign/test_submissions.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "1f9657bb1d3b2fad9393d327a5af7c3cd2857dfb11171715bb16c01d6dd071a9",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 27
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 1453
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 31
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 967
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 1043
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 1064
+          },
+          {
+            "anchor": "ResolvedPlanningPackage",
+            "line": 1084
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 40
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 102
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 218
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 225
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 323
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 380
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 425
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 482
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 519
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 763
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 871
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 873
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 931
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 945
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 959
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 978
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 979
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 1026
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 1032
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 1056
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 1071
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 1451
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 1562
+          }
+        ]
+      },
+      "tests/campaign/test_whole_route_smoother.py": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "e0e55e19a28dbb14976433d6d938e071bbbe3a025458c410f5280fd0d8f28507",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 12
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 80
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 115
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 120
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 145
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 281
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 13
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 77
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 112
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 117
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 142
+          },
+          {
+            "anchor": "resolve_planning_package",
+            "line": 279
+          }
+        ]
+      },
+      "tests/observability/test_evaluation.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "explicit_public_or_test_boundary",
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "19d58f5dd210f01081bb64f55a336e5bc7de214ce21e4584d33a621e8cebd4ca",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "tests/simulation/test_dynamic_obstacle_sensor.py": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "13192a0e5cf1dc4ff4cf550e39e94f19495375f29c643c93db28fc91a87b0836",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "ui/app/components/CampaignLab.tsx": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "implementation_owner",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "36af470c78078c388d46babf765aac38eec9da0e5b6c1c7b6fb9c5a1cacfac89",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "CampaignLab",
+            "line": 1096
+          },
+          {
+            "anchor": "previewActiveCampaign",
+            "line": 1465
+          },
+          {
+            "anchor": "previewActiveCampaign",
+            "line": 1469
+          }
+        ]
+      },
+      "ui/app/components/ControlCenter.tsx": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "d696abea5a6fb3ef10a15aaa07d50302b53ac5d01c386d94e094ca6a08e981fa",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "CampaignLab",
+            "line": 67
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 67
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 1664
+          },
+          {
+            "anchor": "previewActiveCampaign",
+            "line": 466
+          },
+          {
+            "anchor": "runActiveCampaign",
+            "line": 994
+          }
+        ]
+      },
+      "ui/app/lib/api.generated.ts": {
+        "classification": "GENERATED",
+        "discovery_sources": [
+          "explicit_public_or_test_boundary",
+          "generated_command",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "c95ae4dee9ea86533da52d0eaa0eaeed509948fd27ea20c1331b115ad0085a5a",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 2318
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 2683
+          },
+          {
+            "anchor": "MotionPreparationRequest",
+            "line": 2686
+          },
+          {
+            "anchor": "CampaignRunRequest",
+            "line": 2307
+          },
+          {
+            "anchor": "CampaignRunRequest",
+            "line": 2308
+          },
+          {
+            "anchor": "CampaignRunRequest",
+            "line": 4074
+          },
+          {
+            "anchor": "CampaignRunRequest",
+            "line": 7108
+          }
+        ]
+      },
+      "ui/app/lib/api.ts": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "implementation_owner",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "9fe1b707d2d44433f41fa1bd9f92a7a0e5519858e46bfd2d4825d63ff26fa189",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "previewActiveCampaign",
+            "line": 530
+          },
+          {
+            "anchor": "runActiveCampaign",
+            "line": 568
+          }
+        ]
+      },
+      "ui/app/lib/models.ts": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "implementation_owner"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "441ab365ab6371e5845a09cac7f37dab5f6fa9610eedf737a6437ef6e0d5691b",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "ui/openapi.json": {
+        "classification": "GENERATED",
+        "discovery_sources": [
+          "explicit_public_or_test_boundary",
+          "generated_command"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "1e625549c02d091c86ef03d49d40354561f6b33bd1ac4ddfce1aefa2b13a9293",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "ui/package.json": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "explicit_public_or_test_boundary"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "211bd21bf53c0640755efd9af1953a775681a3f71271c05e4700debf17fb38a8",
+        "state": "EXISTING",
+        "static_anchors": []
+      },
+      "ui/tests/api-adapter.test.ts": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "implementation_owner",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "9339d2dbde52aceb377537338e6c62dd961f10711283e55097e53513db76051c",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "previewActiveCampaign",
+            "line": 838
+          },
+          {
+            "anchor": "runActiveCampaign",
+            "line": 848
+          }
+        ]
+      },
+      "ui/tests/campaign-lab.test.tsx": {
+        "classification": "MODIFY",
+        "discovery_sources": [
+          "explicit_public_or_test_boundary",
+          "implementation_owner",
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "a355ec0b5879ea16268d9f5056dd1aa968fab49dd4b31e4e83c6d0dd730b787f",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "CampaignLab",
+            "line": 5
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 10
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 354
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 390
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 453
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 515
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 561
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 615
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 678
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 775
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 825
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 852
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 877
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 1041
+          },
+          {
+            "anchor": "CampaignLab",
+            "line": 1194
+          },
+          {
+            "anchor": "previewActiveCampaign",
+            "line": 1035
+          },
+          {
+            "anchor": "runActiveCampaign",
+            "line": 746
+          },
+          {
+            "anchor": "runActiveCampaign",
+            "line": 806
+          }
+        ]
+      },
+      "ui/tests/campaign-motion-quality.test.tsx": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "3b179acbc019dafc889f1a0ac506b1cbf79e211e9b58a9a7f9df6a70adb0bd1b",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "CampaignLab",
+            "line": 3
+          }
+        ]
+      },
+      "ui/tests/campaign-replan-timeline.test.tsx": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "b4bb1ff1edd34274c99a4327bbf041d205511f823a55c20b893ff772f7ae2b18",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "CampaignLab",
+            "line": 3
+          }
+        ]
+      },
+      "ui/tests/campaign-run-history-old.test.ts": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "30bd7a0ab476866ea70086e5198df424e8aae4e31a65aeddd357aa45a2812352",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "CampaignLab",
+            "line": 2
+          }
+        ]
+      },
+      "ui/tests/motor-truth.test.tsx": {
+        "classification": "PRESERVE",
+        "discovery_sources": [
+          "symbol_scan"
+        ],
+        "external_identity_owner": null,
+        "runtime_functions": [],
+        "sha256": "ec44e29ee944a4c4e3220f307168bd381bb4a1962c9732a1e2f9447a415d084a",
+        "state": "EXISTING",
+        "static_anchors": [
+          {
+            "anchor": "CampaignLab",
+            "line": 3
+          }
+        ]
+      }
+    },
+    "production_transit_roots": [
+      "src/crazyswarm_app/api/app.py",
+      "src/crazyswarm_app/api/runtime.py",
+      "src/crazyswarm_app/campaign/execution_head.py",
+      "src/crazyswarm_app/campaign/runtime_executor.py",
+      "src/crazyswarm_app/campaign/service.py",
+      "src/crazyswarm_app/observability/storage.py"
+    ],
+    "transitive_production_paths": [
+      "src/crazyswarm_app/__init__.py",
+      "src/crazyswarm_app/api/app.py",
+      "src/crazyswarm_app/api/models.py",
+      "src/crazyswarm_app/api/runtime.py",
+      "src/crazyswarm_app/api/security.py",
+      "src/crazyswarm_app/campaign/analyzer.py",
+      "src/crazyswarm_app/campaign/api_models.py",
+      "src/crazyswarm_app/campaign/catalog.py",
+      "src/crazyswarm_app/campaign/corridor.py",
+      "src/crazyswarm_app/campaign/execution.py",
+      "src/crazyswarm_app/campaign/execution_head.py",
+      "src/crazyswarm_app/campaign/geometry.py",
+      "src/crazyswarm_app/campaign/models.py",
+      "src/crazyswarm_app/campaign/perception.py",
+      "src/crazyswarm_app/campaign/physical_truth.py",
+      "src/crazyswarm_app/campaign/planner.py",
+      "src/crazyswarm_app/campaign/replanning.py",
+      "src/crazyswarm_app/campaign/runtime_executor.py",
+      "src/crazyswarm_app/campaign/scenario.py",
+      "src/crazyswarm_app/campaign/scheduling.py",
+      "src/crazyswarm_app/campaign/semantic_audit.py",
+      "src/crazyswarm_app/campaign/service.py",
+      "src/crazyswarm_app/campaign/submissions.py",
+      "src/crazyswarm_app/campaign/timing.py",
+      "src/crazyswarm_app/campaign/trajectory.py",
+      "src/crazyswarm_app/config.py",
+      "src/crazyswarm_app/domain/commands.py",
+      "src/crazyswarm_app/domain/errors.py",
+      "src/crazyswarm_app/domain/goals.py",
+      "src/crazyswarm_app/domain/models.py",
+      "src/crazyswarm_app/domain/simulation.py",
+      "src/crazyswarm_app/domain/telemetry.py",
+      "src/crazyswarm_app/domain/trajectory.py",
+      "src/crazyswarm_app/engineering.py",
+      "src/crazyswarm_app/fleet/artifacts.py",
+      "src/crazyswarm_app/fleet/backends.py",
+      "src/crazyswarm_app/fleet/coordination.py",
+      "src/crazyswarm_app/fleet/coordinator.py",
+      "src/crazyswarm_app/fleet/docks.py",
+      "src/crazyswarm_app/fleet/execution.py",
+      "src/crazyswarm_app/fleet/metrics.py",
+      "src/crazyswarm_app/fleet/persistent.py",
+      "src/crazyswarm_app/fleet/planning.py",
+      "src/crazyswarm_app/fleet/preparation.py",
+      "src/crazyswarm_app/fleet/qualification.py",
+      "src/crazyswarm_app/fleet/tasks.py",
+      "src/crazyswarm_app/fleet/zones.py",
+      "src/crazyswarm_app/hardware/models.py",
+      "src/crazyswarm_app/hardware/observation_twin.py",
+      "src/crazyswarm_app/isaac/protocol.py",
+      "src/crazyswarm_app/missions/authority.py",
+      "src/crazyswarm_app/missions/base.py",
+      "src/crazyswarm_app/missions/catalog.py",
+      "src/crazyswarm_app/missions/coordination.py",
+      "src/crazyswarm_app/missions/models.py",
+      "src/crazyswarm_app/missions/observation.py",
+      "src/crazyswarm_app/missions/planning.py",
+      "src/crazyswarm_app/missions/registry.py",
+      "src/crazyswarm_app/missions/runner.py",
+      "src/crazyswarm_app/missions/script.py",
+      "src/crazyswarm_app/observability/bridge.py",
+      "src/crazyswarm_app/observability/bus.py",
+      "src/crazyswarm_app/observability/csv_export.py",
+      "src/crazyswarm_app/observability/evaluation.py",
+      "src/crazyswarm_app/observability/events.py",
+      "src/crazyswarm_app/observability/recorder.py",
+      "src/crazyswarm_app/observability/replay.py",
+      "src/crazyswarm_app/observability/storage.py",
+      "src/crazyswarm_app/planning/approval.py",
+      "src/crazyswarm_app/planning/builtins.py",
+      "src/crazyswarm_app/planning/contracts.py",
+      "src/crazyswarm_app/planning/curriculum.py",
+      "src/crazyswarm_app/planning/deconfliction.py",
+      "src/crazyswarm_app/planning/intent.py",
+      "src/crazyswarm_app/planning/multidrone.py",
+      "src/crazyswarm_app/planning/qualification.py",
+      "src/crazyswarm_app/planning/registry.py",
+      "src/crazyswarm_app/planning/release.py",
+      "src/crazyswarm_app/planning/robustness.py",
+      "src/crazyswarm_app/planning/safety.py",
+      "src/crazyswarm_app/planning/service.py",
+      "src/crazyswarm_app/provenance.py",
+      "src/crazyswarm_app/safety/audit.py",
+      "src/crazyswarm_app/safety/models.py",
+      "src/crazyswarm_app/safety/policy.py",
+      "src/crazyswarm_app/safety/state_machine.py",
+      "src/crazyswarm_app/safety/supervisor.py",
+      "src/crazyswarm_app/simulation/clock.py",
+      "src/crazyswarm_app/simulation/factory.py",
+      "src/crazyswarm_app/simulation/faults.py",
+      "src/crazyswarm_app/simulation/models.py",
+      "src/crazyswarm_app/simulation/parameters.py",
+      "src/crazyswarm_app/simulation/physics.py",
+      "src/crazyswarm_app/simulation/powertrain.py",
+      "src/crazyswarm_app/simulation/sensors.py",
+      "src/crazyswarm_app/simulation/vehicle.py",
+      "src/crazyswarm_app/simulation/world.py",
+      "src/crazyswarm_app/twin/calibration.py",
+      "src/crazyswarm_app/twin/coordinator.py",
+      "src/crazyswarm_app/twin/curriculum.py",
+      "src/crazyswarm_app/twin/ingestion.py",
+      "src/crazyswarm_app/twin/models.py",
+      "src/crazyswarm_app/twin/physical_handoff.py",
+      "src/crazyswarm_app/twin/pipeline.py",
+      "src/crazyswarm_app/twin/replay.py",
+      "src/crazyswarm_app/twin/storage.py",
+      "src/crazyswarm_app/vehicles/_cflib_link.py",
+      "src/crazyswarm_app/vehicles/base.py",
+      "src/crazyswarm_app/vehicles/crazyflie.py",
+      "src/crazyswarm_app/vehicles/crazyflie_link.py",
+      "src/crazyswarm_app/vehicles/mock_isaac.py",
+      "src/crazyswarm_app/vehicles/providers.py"
+    ]
+  },
+  "audit_id": "wp85-design-audit-v1",
+  "base_commit": "40cd9947f87eb9bf2719d72e7c72ea867eab9977",
+  "checks": {
+    "accepted_control_reaches_one_actual_replacement_command": true,
+    "pre_fix_regressions_are_sensitive_not_manufactured_passes": true,
+    "semantic_authority_mutations_reach_real_consumption_boundaries": true,
+    "semantic_mutations_are_invariant_to_display_label_rename": true,
+    "stable_structural_comparator_closes_wp84_p2": true,
+    "strict_seed_endpoints_pass": true,
+    "strict_seed_type_and_range_perturbations_reject": true,
+    "successor_boundary_is_exact_wp84_union_focused_delta": true
+  },
+  "command_spy_rename_perturbations": {
+    "missing_feasibility": {
+      "actual_command_method": "execute_replanned_trajectory",
+      "error_message": "",
+      "error_type": "AssertionError",
+      "expected_post_fix_replacement_command_calls": 0,
+      "fallback_command_count": 0,
+      "injection": "renamed-missing_feasibility-variant",
+      "normalized_outcome": false,
+      "pre_fix_regression_failed": true,
+      "production_head_exercised": true,
+      "replacement_command_spy_calls": 0,
+      "semantic_boundary": "FEASIBILITY",
+      "semantic_fault": "MISSING"
+    },
+    "tampered_cutover": {
+      "actual_command_method": "execute_replanned_trajectory",
+      "error_message": null,
+      "error_type": null,
+      "expected_post_fix_replacement_command_calls": 0,
+      "fallback_command_count": 0,
+      "injection": "renamed-tampered_cutover-variant",
+      "normalized_outcome": true,
+      "pre_fix_regression_failed": true,
+      "production_head_exercised": true,
+      "replacement_command_spy_calls": 1,
+      "semantic_boundary": "CUTOVER",
+      "semantic_fault": "TAMPERED"
+    },
+    "tampered_proposal": {
+      "actual_command_method": "execute_replanned_trajectory",
+      "error_message": null,
+      "error_type": null,
+      "expected_post_fix_replacement_command_calls": 0,
+      "fallback_command_count": 0,
+      "injection": "renamed-tampered_proposal-variant",
+      "normalized_outcome": true,
+      "pre_fix_regression_failed": true,
+      "production_head_exercised": true,
+      "replacement_command_spy_calls": 1,
+      "semantic_boundary": "PROPOSAL",
+      "semantic_fault": "TAMPERED"
+    }
+  },
+  "execution_head_command_spy_witnesses": {
+    "accepted": {
+      "actual_command_method": "execute_replanned_trajectory",
+      "error_message": null,
+      "error_type": null,
+      "expected_post_fix_replacement_command_calls": 1,
+      "fallback_command_count": 0,
+      "injection": "accepted",
+      "normalized_outcome": true,
+      "pre_fix_regression_failed": false,
+      "production_head_exercised": true,
+      "replacement_command_spy_calls": 1,
+      "semantic_boundary": "NONE",
+      "semantic_fault": "NONE"
+    },
+    "missing_abort": {
+      "actual_command_method": "execute_replanned_trajectory",
+      "error_message": "'NoneType' object has no attribute 'model_dump'",
+      "error_type": "AttributeError",
+      "expected_post_fix_replacement_command_calls": 0,
+      "fallback_command_count": 0,
+      "injection": "missing_abort",
+      "normalized_outcome": false,
+      "pre_fix_regression_failed": true,
+      "production_head_exercised": true,
+      "replacement_command_spy_calls": 0,
+      "semantic_boundary": "ABORT",
+      "semantic_fault": "MISSING"
+    },
+    "missing_cutover": {
+      "actual_command_method": "execute_replanned_trajectory",
+      "error_message": "'NoneType' object has no attribute 'model_dump'",
+      "error_type": "AttributeError",
+      "expected_post_fix_replacement_command_calls": 0,
+      "fallback_command_count": 0,
+      "injection": "missing_cutover",
+      "normalized_outcome": false,
+      "pre_fix_regression_failed": true,
+      "production_head_exercised": true,
+      "replacement_command_spy_calls": 0,
+      "semantic_boundary": "CUTOVER",
+      "semantic_fault": "MISSING"
+    },
+    "missing_feasibility": {
+      "actual_command_method": "execute_replanned_trajectory",
+      "error_message": "",
+      "error_type": "AssertionError",
+      "expected_post_fix_replacement_command_calls": 0,
+      "fallback_command_count": 0,
+      "injection": "missing_feasibility",
+      "normalized_outcome": false,
+      "pre_fix_regression_failed": true,
+      "production_head_exercised": true,
+      "replacement_command_spy_calls": 0,
+      "semantic_boundary": "FEASIBILITY",
+      "semantic_fault": "MISSING"
+    },
+    "missing_proposal": {
+      "actual_command_method": "execute_replanned_trajectory",
+      "error_message": "'NoneType' object has no attribute 'route_authorities'",
+      "error_type": "AttributeError",
+      "expected_post_fix_replacement_command_calls": 0,
+      "fallback_command_count": 0,
+      "injection": "missing_proposal",
+      "normalized_outcome": false,
+      "pre_fix_regression_failed": true,
+      "production_head_exercised": true,
+      "replacement_command_spy_calls": 0,
+      "semantic_boundary": "PROPOSAL",
+      "semantic_fault": "MISSING"
+    },
+    "missing_receipt": {
+      "actual_command_method": "execute_replanned_trajectory",
+      "error_message": "'NoneType' object has no attribute 'role_id'",
+      "error_type": "AttributeError",
+      "expected_post_fix_replacement_command_calls": 0,
+      "fallback_command_count": 0,
+      "injection": "missing_receipt",
+      "normalized_outcome": false,
+      "pre_fix_regression_failed": true,
+      "production_head_exercised": true,
+      "replacement_command_spy_calls": 0,
+      "semantic_boundary": "RECEIPT",
+      "semantic_fault": "MISSING"
+    },
+    "missing_safe_prefix": {
+      "actual_command_method": "execute_replanned_trajectory",
+      "error_message": "'NoneType' object has no attribute 'fallback_command'",
+      "error_type": "AttributeError",
+      "expected_post_fix_replacement_command_calls": 0,
+      "fallback_command_count": 0,
+      "injection": "missing_safe_prefix",
+      "normalized_outcome": false,
+      "pre_fix_regression_failed": true,
+      "production_head_exercised": true,
+      "replacement_command_spy_calls": 0,
+      "semantic_boundary": "SAFE_PREFIX",
+      "semantic_fault": "MISSING"
+    },
+    "tampered_abort": {
+      "actual_command_method": "execute_replanned_trajectory",
+      "error_message": null,
+      "error_type": null,
+      "expected_post_fix_replacement_command_calls": 0,
+      "fallback_command_count": 0,
+      "injection": "tampered_abort",
+      "normalized_outcome": true,
+      "pre_fix_regression_failed": true,
+      "production_head_exercised": true,
+      "replacement_command_spy_calls": 1,
+      "semantic_boundary": "ABORT",
+      "semantic_fault": "TAMPERED"
+    },
+    "tampered_cutover": {
+      "actual_command_method": "execute_replanned_trajectory",
+      "error_message": null,
+      "error_type": null,
+      "expected_post_fix_replacement_command_calls": 0,
+      "fallback_command_count": 0,
+      "injection": "tampered_cutover",
+      "normalized_outcome": true,
+      "pre_fix_regression_failed": true,
+      "production_head_exercised": true,
+      "replacement_command_spy_calls": 1,
+      "semantic_boundary": "CUTOVER",
+      "semantic_fault": "TAMPERED"
+    },
+    "tampered_feasibility": {
+      "actual_command_method": "execute_replanned_trajectory",
+      "error_message": null,
+      "error_type": null,
+      "expected_post_fix_replacement_command_calls": 0,
+      "fallback_command_count": 0,
+      "injection": "tampered_feasibility",
+      "normalized_outcome": true,
+      "pre_fix_regression_failed": true,
+      "production_head_exercised": true,
+      "replacement_command_spy_calls": 1,
+      "semantic_boundary": "FEASIBILITY",
+      "semantic_fault": "TAMPERED"
+    },
+    "tampered_proposal": {
+      "actual_command_method": "execute_replanned_trajectory",
+      "error_message": null,
+      "error_type": null,
+      "expected_post_fix_replacement_command_calls": 0,
+      "fallback_command_count": 0,
+      "injection": "tampered_proposal",
+      "normalized_outcome": true,
+      "pre_fix_regression_failed": true,
+      "production_head_exercised": true,
+      "replacement_command_spy_calls": 1,
+      "semantic_boundary": "PROPOSAL",
+      "semantic_fault": "TAMPERED"
+    },
+    "tampered_receipt": {
+      "actual_command_method": "execute_replanned_trajectory",
+      "error_message": "accepted execution program terminated by a certified changed-world fallback",
+      "error_type": "CrazySwarmError",
+      "expected_post_fix_replacement_command_calls": 0,
+      "fallback_command_count": 2,
+      "injection": "tampered_receipt",
+      "normalized_outcome": true,
+      "pre_fix_regression_failed": false,
+      "production_head_exercised": true,
+      "replacement_command_spy_calls": 0,
+      "semantic_boundary": "RECEIPT",
+      "semantic_fault": "TAMPERED"
+    },
+    "tampered_safe_prefix": {
+      "actual_command_method": "execute_replanned_trajectory",
+      "error_message": "accepted execution program terminated by a certified changed-world fallback",
+      "error_type": "CrazySwarmError",
+      "expected_post_fix_replacement_command_calls": 0,
+      "fallback_command_count": 2,
+      "injection": "tampered_safe_prefix",
+      "normalized_outcome": true,
+      "pre_fix_regression_failed": false,
+      "production_head_exercised": true,
+      "replacement_command_spy_calls": 0,
+      "semantic_boundary": "SAFE_PREFIX",
+      "semantic_fault": "TAMPERED"
+    }
+  },
+  "passed": true,
+  "predecessor_payloads": {
+    "wp84_initial": "c993df7c80b18a5fe5b4e3fe950d94ce736d1fb6c851dbb9b69cf2f2cc17d4a0",
+    "wp84_r1": "1dc093e440d8e2e624e060d8fb37370f761ca99b4d68506bc7927e0076641c73"
+  },
+  "schema_version": 1,
+  "stable_wp84_structural_witness": {
+    "accepted_atomic_commit_count": 5,
+    "configured_event_count": 5,
+    "cross_run_identity_claim": false,
+    "entry": "CampaignService.run_active -> FastSimCampaignExecutor -> CampaignExecutionHead",
+    "event_order": [
+      "online-obstacle-appear-1",
+      "online-obstacle-move-1",
+      "wp84-wall-2-appeared",
+      "wp84-wall-3-appeared",
+      "online-obstacle-remove-1"
+    ],
+    "fallback_count": 0,
+    "maximum_simultaneous_obstacle_count": 3,
+    "off_loop_methods_substituted": false,
+    "perception_observation_count": 5,
+    "preparation_receipt_count": 5,
+    "replacement_dispatch_count": 5,
+    "safe_prefix_certificate_count": 5,
+    "within_run_epoch_identities_distinct": true,
+    "witness_kind": "SINGLE_RUN_STRUCTURAL_PREIMAGE"
+  },
+  "strict_seed_boundary_witnesses": {
+    "passing": {
+      "0": 0,
+      "1": 1,
+      "34": 34
+    },
+    "rejected": {
+      "above": {
+        "error_type": "ValueError",
+        "input_type": "int",
+        "message": "variation_seed must be in 0..34"
+      },
+      "below": {
+        "error_type": "ValueError",
+        "input_type": "int",
+        "message": "variation_seed must be in 0..34"
+      },
+      "bool_false": {
+        "error_type": "TypeError",
+        "input_type": "bool",
+        "message": "variation_seed must be an exact integer"
+      },
+      "bool_true": {
+        "error_type": "TypeError",
+        "input_type": "bool",
+        "message": "variation_seed must be an exact integer"
+      },
+      "float_fractional": {
+        "error_type": "TypeError",
+        "input_type": "float",
+        "message": "variation_seed must be an exact integer"
+      },
+      "float_integral": {
+        "error_type": "TypeError",
+        "input_type": "float",
+        "message": "variation_seed must be an exact integer"
+      },
+      "none": {
+        "error_type": "TypeError",
+        "input_type": "NoneType",
+        "message": "variation_seed must be an exact integer"
+      },
+      "string": {
+        "error_type": "TypeError",
+        "input_type": "str",
+        "message": "variation_seed must be an exact integer"
+      }
+    }
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "review_unit": "WP-71..WP-75",
+  "base_commit": "40cd9947f87eb9bf2719d72e7c72ea867eab9977",
+  "active_ledger_preimage_sha256": "db07518867f2372b8e9e40968f85756dd366dc8dc968b797940acbdf0ecf1254",
+  "packets": [
+    {"packet_id": "WP-71", "dependencies": [], "minimum_value": "Observation-only exact-identity Crazyflie connection through the normal served application"},
+    {"packet_id": "WP-72", "dependencies": ["WP-71"], "minimum_value": "Preflight cannot be bypassed and emergency/controlled-landing authority remains immediate during physical operation"},
+    {"packet_id": "WP-73", "dependencies": ["WP-71", "WP-72"], "minimum_value": "Props-off sensor, health, motor-command, watchdog, disconnect, and restart evidence is retained without fabricated channels"},
+    {"packet_id": "WP-74", "dependencies": ["WP-73"], "minimum_value": "Distinct backend-neutral startup, hover, land, and short-relative-move stages execute through one real/sim evidence pipeline"},
+    {"packet_id": "WP-75", "dependencies": ["WP-74"], "minimum_value": "A served, operator-observed contained-flight gate can authorize only the first 0.3 m shakedown and retain its result"}
+  ],
+  "claims": [
+    {"claim_id": "exact_observation_entry", "packet_id": "WP-71", "boundary": "PRODUCTION_ENTRY", "environment": "HARDWARE", "clock": "OBSERVED_REALTIME"},
+    {"claim_id": "non_bypassable_physical_authority", "packet_id": "WP-72", "boundary": "PRODUCTION_ENTRY", "environment": "HARDWARE", "clock": "OBSERVED_REALTIME"},
+    {"claim_id": "props_off_truth", "packet_id": "WP-73", "boundary": "PRODUCTION_ENTRY", "environment": "HARDWARE", "clock": "OBSERVED_REALTIME"},
+    {"claim_id": "paired_simple_mission_pipeline", "packet_id": "WP-74", "boundary": "PRODUCTION_ENTRY", "environment": "HARDWARE", "clock": "OBSERVED_REALTIME"},
+    {"claim_id": "contained_first_hover", "packet_id": "WP-75", "boundary": "PRODUCTION_ENTRY", "environment": "HARDWARE", "clock": "OBSERVED_REALTIME"},
+    {"claim_id": "served_physical_ui", "packet_id": "WP-75", "boundary": "PRODUCTION_ENTRY", "environment": "HARDWARE", "clock": "OBSERVED_REALTIME"}
+  ],
+  "requirements": [
+    "REQ-XFR-001", "REQ-XFR-002", "REQ-XFR-004", "REQ-XFR-005", "REQ-XFR-006", "REQ-XFR-008",
+    "REQ-WFL-014", "REQ-WFL-017", "REQ-WFL-018", "REQ-WFL-020", "REQ-WFL-023", "REQ-WFL-024", "REQ-WFL-025",
+    "REQ-WFL-034", "REQ-WFL-038", "REQ-WFL-042", "REQ-WFL-043", "REQ-WFL-047", "REQ-WFL-053"
+  ],
+  "generated_outputs": [
+    "ui/app/lib/api.generated.ts",
+    "ui/openapi.json"
+  ],
+  "boundaries": [
+    {"path": "docs/project/requirements/FIDELITY_AND_TRANSFER.md", "classification": "RELIED_UPON_UNCHANGED", "preimage_sha256": "903232a4c188e4416f2f14660b17a4f9985c712a1f5e6a2f013387d14703c446"},
+    {"path": "docs/system/README.md", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "c8ba2f8620cacd022c58971e395a7629408932df92c301c5c2f4f37ccc145442"},
+    {"path": "design.md", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "e6b17a1fd6e4b9a070fc593014047b854bc40d892cb3d454bb451f2b1700a400"},
+    {"path": "docs/project/DESIGN.md", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "230ff0ca3ff628f6ef7ad88b0ee6945a3079a615f34ccf55fe46d0541d20a383"},
+    {"path": "src/crazyswarm_app/api/app.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "9914bd9cad279aa617a6fd7f539334fec66021090fdb14164842926c0dc5e796"},
+    {"path": "src/crazyswarm_app/api/runtime.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "64dcf8b92acc1b9757238dbd4be990c98e82c917d5ac8e1999b932eb9d0703f5"},
+    {"path": "src/crazyswarm_app/api/models.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "ae78fa0502d73b28625e01df41364b9517237838b574ec28daf714eda151026e"},
+    {"path": "src/crazyswarm_app/config.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "11055020c3aa32f2b4286b1f329137f0a7265a11c2de0f7d255187a25094721c"},
+    {"path": "src/crazyswarm_app/domain/commands.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "6aba9415f010bad81db33c2dd67c67117e2281292f459d7eb870fe24991d0373"},
+    {"path": "src/crazyswarm_app/domain/telemetry.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "741a4aa9cc4a405588960eece156b82e85348bf124e61fcb16f66ebb97376f99"},
+    {"path": "src/crazyswarm_app/fleet/preparation.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "a8916b916e4bbe77de2b47bbba48a721456c5dac6a80a9a489c9d1be53822d43"},
+    {"path": "src/crazyswarm_app/fleet/execution.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "57fc67bbd7a3714312ed66139146c7cf08a0f371542ddc6740a295ba8146eedc"},
+    {"path": "src/crazyswarm_app/fleet/coordinator.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "d241ab3a18210720c5138fe302d8922120e39c4d4dc8e619c5f57dec8eb849cd"},
+    {"path": "src/crazyswarm_app/missions/runner.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "0363679e48b5327cf8314123e7e7c035a348c460e99bf934ee09711153f536df"},
+    {"path": "src/crazyswarm_app/observability/recorder.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "2daa135fffd7326a1510c437e6263a68297ef45db987658a23edd92cb66c1369"},
+    {"path": "src/crazyswarm_app/observability/storage.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "aa3e3abc76751e4f840145500c50dc419867a0120de53dfe3c9d0223a50dc689"},
+    {"path": "src/crazyswarm_app/dashboard.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "51f312cb9baf48741b296af8409beb377c0d91feb1ff923ff5d0a97c2ca84e39"},
+    {"path": "src/crazyswarm_app/vehicles/providers.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "8c9742742559330d4b588fe64b191ecbfcad380cfe8c679dab557bef8ba78282"},
+    {"path": "src/crazyswarm_app/vehicles/crazyflie.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "e7ea1b9080c00c7ac4622fd440ecff373f62f8b8afed3750a639a299545ee5f0"},
+    {"path": "src/crazyswarm_app/vehicles/_cflib_link.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "7df448504b85cd179f27df5c142caa819029317e5bfb7b69a2369966bf27be85"},
+    {"path": "src/crazyswarm_app/vehicles/crazyflie_link.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "b9839ba65d2404d8482f842e9975f8c6396244676757ebe586bab62d5896fe56"},
+    {"path": "src/crazyswarm_app/safety/supervisor.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "35355186a1bed44fe812abab09d1163a4e09b35fc2fbb7cdb5ebbc35163a9cae"},
+    {"path": "src/crazyswarm_app/hardware/models.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "cb101bcc2056db0a6d013f30eee790c46c16f8d467aa534919b2cfc11d6eaf5c"},
+    {"path": "src/crazyswarm_app/qualification/physical.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "7a7ee3d4730533fa7674b5a5d30d6b9fd8a3781db8e9470bf42097f0385634cc"},
+    {"path": "src/crazyswarm_app/twin/physical_handoff.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "052618a55b599a1fb1daecb15026ca8b9e8c0c9e040aa9be324eba8653f44396"},
+    {"path": "src/crazyswarm_app/twin/curriculum.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "b14fcce7ec8b364fb5595a1939143e481e07f2b315cd69a10e1963293ac4d2d8"},
+    {"path": "src/crazyswarm_app/twin/ingestion.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "4aac3e897f17ff3a88c6870bc8e2d6c50c6e57a11dcc319456142cb048a22228"},
+    {"path": "src/crazyswarm_app/twin/coordinator.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "524ba0217824de4839dc4fb70c0369333571800a92b2f18fdc5e678b79f2eb44"},
+    {"path": "ui/app/components/ControlCenter.tsx", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "bcf8bee8b0be031574599de587799a132baf91c769ccf26fd0def3588b149db0"},
+    {"path": "ui/app/components/CampaignLab.tsx", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "e624f18c5cc9543fd977941d635329562c3c0c44490d4920343729ec6b1a4b70"},
+    {"path": "ui/app/lib/api.ts", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "33b2e8d5a0041d670c3a2daad9b8119473c1555652df3d82f48845c407c82d74"},
+    {"path": "ui/app/lib/models.ts", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "2c5950c51adb2ec3ebb3c573d91a8f652a698a407d18263c8413c5fb1dd9740c"},
+    {"path": "ui/app/components/TelemetryDock.tsx", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "356b1acb26d666b5cb7356ad7e9aca2dae38f1851959150fb56d7f8c6808311a"},
+    {"path": "ui/openapi.json", "classification": "GENERATED", "preimage_sha256": "687e46946f0c9d6a0e0c7b3d10c0ebd7026c2b0811c5ef79fc212e74723f0fdf"},
+    {"path": "ui/app/lib/api.generated.ts", "classification": "GENERATED", "preimage_sha256": "e56d9228080827eaa47bac9079d2744a6db467d443e25ffade444b13a497533c"},
+    {"path": "tests/hardware/test_crazyflie_adapter.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "a0127857f4eaed6ad52eabecfef3e3607adb4aca1166972f3c36246a080d2a9d"},
+    {"path": "tests/hardware/test_reality_gates.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "89e8c58a6d1ad3acb21344bdf2e2961b235b14ee6b3bcf9b4ccf8ec991d08025"},
+    {"path": "tests/twin/test_physical_handoff.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "09fd720b521cf7d76bcd5bed438d3df92081ff0a64b68466db616634abc4234a"},
+    {"path": "tests/twin/test_curriculum.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "0ada38ec6e626dce7c6860ae270e3ee01eef9e437ddcc1aa72edda2c0f77dea4"},
+    {"path": "tests/api/test_twin.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "2707ffb7354df38318129f92574a998ac7eff887755ea60157eabcd202a2d8d2"},
+    {"path": "tests/api/test_missions_and_replay.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "5aec0e14811ba7f280a43a9a91d3a1e6ed1a83f8ddcd6ce3222618c608845dc7"},
+    {"path": "tests/safety/test_supervisor.py", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "ec01429fd28162a8c25f67c90cc0bfa70eef413b6c9c7fc7314b70b62f2b0bf0"},
+    {"path": "ui/tests/components.test.tsx", "classification": "IMPLEMENTATION_OWNED", "preimage_sha256": "73d1e95652c6d4fd5935d7d94a189d09989cd4435da4162111780e75eb697999"}
+  ],
+  "intended_new_paths": [
+    "src/crazyswarm_app/hardware/service.py",
+    "tests/hardware/test_physical_production_entry.py",
+    "tests/hardware/test_emergency_watchdog.py",
+    "tests/hardware/test_props_off_curriculum.py",
+    "tests/hardware/test_contained_first_hover.py",
+    "ui/tests/physical-flight.test.tsx"
+  ]
+}

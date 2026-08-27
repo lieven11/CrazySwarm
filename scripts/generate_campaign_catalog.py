@@ -11,6 +11,7 @@ from crazyswarm_app.campaign.models import CampaignCase
 
 CLUSTER_ORDER = (
     "BASIC_FLIGHT_AND_ROUTE_FOLLOWING",
+    "DYNAMIC_REPLANNING",
     "GEOMETRIC_CONFLICT_RESOLUTION",
     "CONSTRAINTS_AND_OPTIMIZATION",
     "COORDINATION_AND_ALLOCATION",
@@ -19,6 +20,7 @@ CLUSTER_ORDER = (
 
 CLUSTER_SLUGS = {
     "BASIC_FLIGHT_AND_ROUTE_FOLLOWING": "basic-flight-and-route-following",
+    "DYNAMIC_REPLANNING": "dynamic-replanning",
     "GEOMETRIC_CONFLICT_RESOLUTION": "geometric-conflict-resolution",
     "CONSTRAINTS_AND_OPTIMIZATION": "constraints-and-optimization",
     "COORDINATION_AND_ALLOCATION": "coordination-and-allocation",
@@ -171,6 +173,12 @@ DYNAMIC_CASES = (
 )
 
 SPECIAL_VARIATIONS = {
+    "hover_endurance": ("hold_12s",),
+    "axis_nudge_return": ("forward_x_10cm", "left_y_10cm", "right_y_10cm"),
+    "short_offset_landing": ("forward_20cm", "forward_10cm", "diagonal_20cm"),
+    "checkpoint_path": ("l_shape", "u_shape", "square"),
+    "spatial_step_path": ("stair_step", "vertical_rectangle"),
+    "polygon_loop": ("triangle", "square"),
     "altitude_transition": ("canonical_nominal", "wide"),
     "planar_shape_loop": ("circle", "rounded_square", "figure_eight"),
     "perpendicular_crossing": ("nominal_equal_priority",),
@@ -197,6 +205,9 @@ def main() -> int:
     for case in cases:
         if case.get("motion_quality_contract") is None:
             case.pop("motion_quality_contract", None)
+        semantics = case.get("semantics")
+        if isinstance(semantics, dict) and semantics.get("goal_seeking") is None:
+            semantics.pop("goal_seeking", None)
     sim = args.root / "campaigns" / "sim" / "cases"
     for cluster in CLUSTER_ORDER:
         for count in (1, 2, 3):
@@ -445,13 +456,21 @@ def _semantics(
                 "region_id": goal["region_id"],
                 "mode": mode,
                 "dwell_s": (
-                    3.0
+                    12.0
+                    if family == "hover_endurance"
+                    else 3.0
                     if family == "takeoff_hover_land"
                     else 1.0
                     if mode == "CAPTURE_AND_HOLD"
                     else 0.0
                 ),
-                "capture_tolerance_m": 0.08,
+                "capture_tolerance_m": (
+                    0.03
+                    if family in {"axis_nudge_return", "short_offset_landing"}
+                    else 0.05
+                    if family == "checkpoint_path"
+                    else 0.08
+                ),
             }
             for goal, mode in zip(drone["goal_sequence"], modes, strict=True)
         ]
@@ -462,22 +481,30 @@ def _semantics(
             "no-undeclared-stop", "NO_UNDECLARED_STOP", "EXECUTION_TELEMETRY", roles, 0.0, "count"
         ),
     ]
-    if behavior_family == "takeoff_hover_land" or behavior_family == "static_multi_goal_sequence":
+    if any(
+        mode == "CAPTURE_AND_HOLD" for _start, _goals, _landing, modes in routes for mode in modes
+    ):
         oracles.append(
             _oracle("declared-hold", "HOLD_DURATION", "EXECUTION_TELEMETRY", roles, 0.15, "s")
         )
-    if behavior_family == "altitude_transition" or behavior_family in {
+    if behavior_family in {"altitude_transition", "spatial_step_path"} or behavior_family in {
         "alternative_layers_detours",
         "formation_shape_transform",
     }:
         oracles.append(
             _oracle(
-                "altitude-layers", "ALTITUDE_TRANSITION", "EXECUTION_TELEMETRY", roles, 3.0, "count"
+                "altitude-layers",
+                "ALTITUDE_TRANSITION",
+                "EXECUTION_TELEMETRY",
+                roles,
+                2.0 if behavior_family == "spatial_step_path" else 3.0,
+                "count",
             )
         )
     if behavior_family in {
         "curved_route",
         "continuous_waypoint_sequence",
+        "polygon_loop",
         "leader_follower",
         "formation_spacing",
         "formation_shape_transform",
@@ -485,7 +512,10 @@ def _semantics(
         oracles.append(
             _oracle("nonlinear-path", "CURVED_PATH", "EXECUTION_TELEMETRY", roles, 0.10, "rad")
         )
-    if behavior_family == "planar_shape_loop" or family == "persistent_coverage_reserve_handover":
+    if (
+        behavior_family in {"planar_shape_loop", "polygon_loop"}
+        or family == "persistent_coverage_reserve_handover"
+    ):
         oracles.append(
             _oracle("closed-shape", "CLOSED_SHAPE", "EXECUTION_TELEMETRY", roles, 0.10, "m")
         )
@@ -495,9 +525,19 @@ def _semantics(
         or _center(drone["start_region"])[:2] != _center(drone["landing_region"])[:2]
         for drone in drones
     ):
+        offset_threshold_m = 0.20
+        if family == "short_offset_landing":
+            offset_threshold_m = 0.08
+        elif family == "checkpoint_path":
+            offset_threshold_m = 0.10
         oracles.append(
             _oracle(
-                "offset-landing", "DISTINCT_START_AND_LANDING", "AUTHORED_ROUTE", roles, 0.20, "m"
+                "offset-landing",
+                "DISTINCT_START_AND_LANDING",
+                "AUTHORED_ROUTE",
+                roles,
+                offset_threshold_m,
+                "m",
             )
         )
     conflict_families = {
@@ -733,6 +773,34 @@ def _semantics(
     if variation == "wide" and family == "altitude_transition":
         baseline = "1d.altitude_transition.canonical_nominal"
         delta = "The stress route uses a wider 0.20 m to 0.82 m altitude envelope."
+    variation_baselines = {
+        "axis_nudge_return": "1d.axis_nudge_return.forward_x_10cm",
+        "short_offset_landing": "1d.short_offset_landing.forward_20cm",
+        "checkpoint_path": "1d.checkpoint_path.l_shape",
+        "spatial_step_path": "1d.spatial_step_path.stair_step",
+        "polygon_loop": "1d.polygon_loop.triangle",
+    }
+    if family in variation_baselines:
+        baseline_case_id = variation_baselines[family]
+        if not baseline_case_id.endswith(f".{variation}"):
+            baseline = baseline_case_id
+            delta = {
+                "axis_nudge_return": (
+                    f"The 0.10 m excursion uses the {variation.replace('_', ' ')} world axis."
+                ),
+                "short_offset_landing": (
+                    f"The landing displacement uses the {variation.replace('_', ' ')} target."
+                ),
+                "checkpoint_path": (
+                    f"The stopped route uses the {variation.replace('_', ' ')} checkpoint topology."
+                ),
+                "spatial_step_path": (
+                    f"The continuous 3D route uses the {variation.replace('_', ' ')} topology."
+                ),
+                "polygon_loop": (
+                    f"The closed continuous route uses the {variation.replace('_', ' ')} polygon."
+                ),
+            }[family]
 
     return {
         "contract_version": 1,
@@ -740,6 +808,19 @@ def _semantics(
         "learning_objective": _learning_objective(count, family, variation),
         "difficulty_rationale": _difficulty_rationale(count, family),
         "route_intent_by_role": route_intent,
+        "goal_seeking": (
+            {
+                "mode": "START_GOAL_CURRENT_WORLD",
+                "start_source": "FRESH_COMMITTED_STATE",
+                "goal_source": "CASE_GOAL_AND_LANDING",
+                "world_source": "CURRENT_PERCEIVED_WORLD_GENERATION",
+                "authored_reference_route": None,
+                "authored_centerline": None,
+                "authored_rejoin_waypoint": None,
+            }
+            if family == "online_obstacle_replan"
+            else None
+        ),
         "environment_constraints": environment,
         "coordination_constraints": coordination,
         "scenario_events": events,
@@ -789,7 +870,11 @@ def _scenario_events(count: int, family: str) -> list[dict[str, Any]]:
     if family == "online_obstacle_replan":
         first = _region("sensed-rock-1", (-0.15, -0.20, 0.10), (0.20, 0.20, 0.70))
         moved = _region("sensed-rock-1", (0.20, -0.25, 0.10), (0.50, 0.15, 0.70))
-        second = _region("sensed-wall-2", (0.55, -0.10, 0.00), (0.70, 0.55, 0.80))
+        # Keep the nominal third event outside the complete response horizon for
+        # every admitted ±0.08 m seeded X perturbation. Near/late obstacle behavior
+        # has its own fail-closed witness; the four-event nominal must remain a
+        # moving-replan qualification rather than randomly becoming that witness.
+        second = _region("sensed-wall-2", (0.85, 0.45, 0.00), (1.00, 0.90, 0.80))
         return [
             {
                 "event_id": "online-obstacle-appear-1",
@@ -814,7 +899,7 @@ def _scenario_events(count: int, family: str) -> list[dict[str, Any]]:
             {
                 "event_id": "online-obstacle-appear-2",
                 "kind": "OBSTACLE_ADDED",
-                "trigger_time_s": 9.0,
+                "trigger_time_s": 6.5,
                 "replacement_goal": second,
                 "duration_s": 3.0,
                 "sequence": 3,
@@ -949,14 +1034,19 @@ def _curriculum_level(count: int, family: str) -> int:
         return 5
     levels = {
         "takeoff_hover_land": 1,
+        "hover_endurance": 1,
         "parallel_routes": 1,
         "single_pair_conflict": 1,
         "point_to_point_relocation": 2,
         "move_return": 2,
+        "axis_nudge_return": 2,
+        "short_offset_landing": 2,
         "head_on_conflict": 2,
         "perpendicular_crossing": 2,
         "simultaneous_center_conflict": 2,
         "altitude_transition": 3,
+        "checkpoint_path": 3,
+        "spatial_step_path": 3,
         "continuous_waypoint_sequence": 3,
         "merge": 3,
         "overtake": 3,
@@ -1004,6 +1094,10 @@ def _dynamic_cases() -> list[dict[str, Any]]:
         if family == "online_obstacle_replan":
             value.update(
                 {
+                    "parent_case_sha256": (
+                        "b265e16a9b54cfc0271f38c03486244da6e1fe6558c1d6580aa47b79acdac401"
+                    ),
+                    "implementation_milestone": "WP-66",
                     "implementation_status": "EXECUTABLE",
                     "execution_eligibility": "BOTH",
                 }
@@ -1094,6 +1188,9 @@ def _real_mirror(case: dict[str, Any]) -> dict[str, Any]:
     output = CampaignCase.model_validate(mirrored).model_dump(mode="json")
     if output.get("motion_quality_contract") is None:
         output.pop("motion_quality_contract", None)
+    semantics = output.get("semantics")
+    if isinstance(semantics, dict) and semantics.get("goal_seeking") is None:
+        semantics.pop("goal_seeking", None)
     return output
 
 
@@ -1178,6 +1275,30 @@ def _behavior(family: str) -> str:
         "takeoff_hover_land": (
             "Checks a clean takeoff, stable hover, controlled descent, and landed/disarmed "
             "terminal state."
+        ),
+        "hover_endurance": (
+            "Checks a bounded 12-second stationary hold before controlled descent and landing "
+            "at home."
+        ),
+        "axis_nudge_return": (
+            "Checks a 0.10 m world-axis excursion, declared reversal, return capture, and "
+            "landing at home."
+        ),
+        "short_offset_landing": (
+            "Checks low-distance relocation, capture above a distinct landing region, and "
+            "terminal contact away from home."
+        ),
+        "checkpoint_path": (
+            "Checks ordered L, U, or square checkpoint capture with a declared one-second stop "
+            "at every vertex."
+        ),
+        "spatial_step_path": (
+            "Checks a continuous stair-step or vertical-rectangle route across multiple "
+            "altitude levels."
+        ),
+        "polygon_loop": (
+            "Checks continuous triangle or square traversal with explicit loop closure and "
+            "no undeclared stops."
         ),
         "move_return": (
             "Checks continuous outbound and return motion, route tracking, and landing at the "
@@ -1317,6 +1438,8 @@ def _cluster(family: str) -> str:
         "duplicate_assignment_rejection",
         "persistent_coverage_reserve_handover",
     }
+    if family == "online_obstacle_replan":
+        return "DYNAMIC_REPLANNING"
     if family in failure:
         return "FAILURE_RECOVERY_AND_REPLANNING"
     if family in constraints:
@@ -1347,6 +1470,12 @@ def _difficulty(count: int, cluster: str, family: str, variation: str) -> int:
 
 def _prerequisites(count: int, family: str) -> tuple[str, ...]:
     prerequisites = {
+        (1, "hover_endurance"): "1d.takeoff_hover_land.canonical_nominal",
+        (1, "axis_nudge_return"): "1d.hover_endurance.hold_12s",
+        (1, "short_offset_landing"): "1d.axis_nudge_return.forward_x_10cm",
+        (1, "checkpoint_path"): "1d.axis_nudge_return.forward_x_10cm",
+        (1, "spatial_step_path"): "1d.altitude_transition.canonical_nominal",
+        (1, "polygon_loop"): "1d.checkpoint_path.square",
         (1, "point_to_point_relocation"): "1d.takeoff_hover_land.canonical_nominal",
         (1, "move_return"): "1d.takeoff_hover_land.canonical_nominal",
         (1, "altitude_transition"): "1d.point_to_point_relocation.canonical_nominal",

@@ -243,6 +243,15 @@ class ApplicationRuntime:
                     await self.supervisor.reconcile_terminal_adapter_state(vehicle_id)
 
             await self.cleanup_session_vehicles(session_id)
+            # Campaign evidence is materialized by CampaignService before the next
+            # execution enters this boundary. Keeping completed coordinator and
+            # preparation object graphs here only retains child tasks and their
+            # high-volume event histories, increasing GC pressure inside later
+            # realtime flights without serving runtime authority or review.
+            self.fleet_preparations.pop(session_id, None)
+            self.fleet_coordinators.pop(session_id, None)
+            self.fleet_results.pop(fleet_run_id, None)
+            self.fleet_tasks.pop(fleet_run_id, None)
 
     async def _consume_telemetry(self, vehicle: Vehicle) -> None:
         last_source_timestamp_s = -float("inf")

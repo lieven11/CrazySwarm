@@ -150,6 +150,56 @@ def family_invariant_failures(case: CampaignCase) -> tuple[str, ...]:
         or any(mode is not RouteNodeMode.FLY_THROUGH for mode in all_modes)
     ):
         failures.append("CONTINUOUS_SEQUENCE_REQUIRES_THREE_FLY_THROUGH_NODES")
+    if case.family == "hover_endurance" and (
+        len(all_modes) != 1
+        or all_modes[0] is not RouteNodeMode.CAPTURE_AND_HOLD
+        or case.semantics.route_intent_by_role[case.drones[0].role_id][0].dwell_s < 10.0
+        or BehaviorOracleKind.HOLD_DURATION not in oracle_kinds
+    ):
+        failures.append("HOVER_ENDURANCE_REQUIRES_BOUNDED_TEN_SECOND_HOLD")
+    if case.family == "axis_nudge_return":
+        drone = case.drones[0]
+        route = routes[drone.role_id]
+        excursion_m = _horizontal_distance(drone.start_region.center_m, route[0])
+        if (
+            len(route) != 2
+            or not 0.09 <= excursion_m <= 0.11
+            or _horizontal_distance(drone.start_region.center_m, route[-1]) > 0.03
+            or modes[drone.role_id][0] is not RouteNodeMode.REVERSAL
+        ):
+            failures.append("AXIS_NUDGE_REQUIRES_TEN_CENTIMETRE_REVERSAL_AND_HOME_RETURN")
+    if case.family == "short_offset_landing":
+        drone = case.drones[0]
+        displacement_m = _horizontal_distance(
+            drone.start_region.center_m,
+            drone.landing_region.center_m,
+        )
+        if (
+            not 0.09 <= displacement_m <= 0.21
+            or len(routes[drone.role_id]) != 1
+            or modes[drone.role_id][0] is not RouteNodeMode.CAPTURE
+            or BehaviorOracleKind.DISTINCT_START_AND_LANDING not in oracle_kinds
+        ):
+            failures.append("SHORT_OFFSET_LANDING_REQUIRES_DISTINCT_BOUNDED_TARGET")
+    if case.family == "checkpoint_path" and (
+        len(all_points) < 2
+        or any(mode is not RouteNodeMode.CAPTURE_AND_HOLD for mode in all_modes)
+        or BehaviorOracleKind.HOLD_DURATION not in oracle_kinds
+    ):
+        failures.append("CHECKPOINT_PATH_REQUIRES_ORDERED_VERTEX_HOLDS")
+    if case.family == "spatial_step_path" and (
+        len({round(point.z, 3) for point in all_points}) < 2
+        or any(mode is not RouteNodeMode.FLY_THROUGH for mode in all_modes)
+        or BehaviorOracleKind.ALTITUDE_TRANSITION not in oracle_kinds
+    ):
+        failures.append("SPATIAL_STEP_PATH_REQUIRES_CONTINUOUS_ALTITUDE_TRANSITIONS")
+    if case.family == "polygon_loop" and (
+        not any(_integrated_turn(route) > 1.0 for route in routes.values())
+        or not any(_has_repeated_node(route) for route in routes.values())
+        or any(mode is not RouteNodeMode.FLY_THROUGH for mode in all_modes)
+        or BehaviorOracleKind.CLOSED_SHAPE not in oracle_kinds
+    ):
+        failures.append("POLYGON_LOOP_REQUIRES_CONTINUOUS_EXPLICIT_CLOSURE")
     if case.family == "altitude_transition" and (
         len({round(point.z, 3) for point in all_points}) < 3
         or BehaviorOracleKind.ALTITUDE_TRANSITION not in oracle_kinds

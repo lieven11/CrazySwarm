@@ -24,6 +24,7 @@ from crazyswarm_app.campaign.submissions import (
     CaseSubmissionRegistryRow,
     ExecutionCapabilityRequest,
     ExecutionProfileParameters,
+    MotionPreparationRequest,
     PathAdherenceMode,
     PlanningCapabilityRequest,
     PlanningSelectionOracle,
@@ -142,10 +143,10 @@ def test_literal_admission_registry_is_closed_complete_and_tamper_evident() -> N
     proposals = tuple(proposal for row in admissions.rows for proposal in row.proposals)
 
     assert admissions.source_payload_sha256 == (
-        "67202d511432a189741ee923c072589729ffbc2d3b81172e02bea2e2210ffb08"
+        "d1bdaa28f4e1403265fa15d4cf66a2cd62113c78990ac6caebc2f08ea4674c87"
     )
     assert admissions.oracle_contract_version == "wp52-56-r6-verified-oracle-v1"
-    assert len(admissions.rows) == 55
+    assert len(admissions.rows) == 69
     assert len(proposals) == 111
     assert sum("COLLAPSE_ALL" in item.qualifying_relation for item in proposals) == 21
     assert (
@@ -298,7 +299,7 @@ def test_r6_execution_profiles_and_bounded_selection_oracles_are_production_owne
             "overlap-capacity-v1",
             PlanningSelectionOracle.ARGMIN_BOUNDED_RELEASE,
             16,
-            "4b58f90649bf145d5226192d413fc03388b73510f6a159e1bdfea0743943626c",
+            "4ab920b82459cb7903760a681500574b812bad642a488e2b5e861d79ac8adc1b",
         ),
         (
             "2d.perpendicular_crossing.nominal_equal_priority",
@@ -337,7 +338,9 @@ def test_r6_execution_profiles_and_bounded_selection_oracles_are_production_owne
         assert plan.selected_candidate_sha256 == selected_sha
 
 
-def test_r6_atomic_peers_are_visible_but_all_disabled(catalog: CampaignCatalog) -> None:
+def test_r6_atomic_peers_remain_visible_with_only_certified_2d_choices_enabled(
+    catalog: CampaignCatalog,
+) -> None:
     expected = {
         "head_on.synchronized_lateral",
         "head_on.synchronized_vertical",
@@ -359,7 +362,15 @@ def test_r6_atomic_peers_are_visible_but_all_disabled(catalog: CampaignCatalog) 
         if submission.planning_submission_id in expected
     }
     assert set(observed) == expected
-    assert set(observed.values()) == {SubmissionStatus.PLANNED_NOT_EXECUTABLE}
+    assert {
+        submission_id
+        for submission_id, status in observed.items()
+        if status is SubmissionStatus.EXECUTABLE
+    } == {
+        "head_on.synchronized_lateral",
+        "merge.parallel_lanes",
+        "crossing.synchronized_vertical",
+    }
 
 
 def test_r6_sampled_discrete_oracle_rejects_stop_and_reordered_loop(
@@ -1392,6 +1403,17 @@ def test_corner_resolution_changes_for_real_geometry_stop_and_clearance_changes(
         stopped_resolution.feasibility.violated_constraints
     )
 
+    figure_eight = catalog.get("1d.planar_shape_loop.figure_eight")
+    figure_role = figure_eight.drones[0].role_id
+    figure_polyline = normalized_route_polyline(figure_eight, figure_role)
+    assert (
+        sum(
+            math.dist((point.x, point.y, point.z), (0.0, 0.0, 0.45)) <= 1e-9
+            for point in figure_polyline.normalized_points_m
+        )
+        == 3
+    )
+
     volume = source.hard_constraints.flight_volume
     reduced_volume = volume.model_copy(
         update={
@@ -1413,6 +1435,48 @@ def test_corner_resolution_changes_for_real_geometry_stop_and_clearance_changes(
     )
     assert clearance_resolution is not None
     assert clearance_resolution.protected_free_space_cap_m < baseline.protected_free_space_cap_m
+
+
+@pytest.mark.parametrize(
+    "case_id",
+    (
+        "2d.bottleneck.canonical_nominal",
+        "3d.constrained_volume.canonical_nominal",
+        "3d.formation_shape_transform.canonical_nominal",
+        "3d.bottleneck.canonical_nominal",
+    ),
+)
+def test_prepared_multidrone_motion_does_not_block_simulation_launch(
+    catalog: CampaignCatalog,
+    case_id: str,
+) -> None:
+    case = catalog.get(case_id)
+    package = resolve_planning_package(
+        case,
+        motion_preparation_request=MotionPreparationRequest(),
+    )
+    plan = BoundedJointPlanner().plan(
+        case,
+        package.execution_profile,
+        planning_submission=package.planning_submission,
+        capability_resolution=package.capability_resolution,
+        first_certified_within_budget=True,
+    )
+
+    assert package.planning_submission.path_adherence == (
+        resolve_planning_submission(case, None).path_adherence
+    )
+    assert plan.status is PlanningStatus.READY
+    assert plan.feasibility_certificate is not None
+    assert plan.feasibility_certificate.passed
+    trajectories = generate_smooth_trajectories(
+        case,
+        plan.selected,
+        submission=package.execution_profile,
+        planning_submission=package.planning_submission,
+        capability_resolution=package.capability_resolution,
+    )
+    assert len(trajectories.trajectories) == case.drone_count
 
 
 def test_object_bearing_child_retains_flexible_submission_and_plans_joint_lanes(

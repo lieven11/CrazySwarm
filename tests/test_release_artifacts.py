@@ -108,7 +108,8 @@ def test_independent_work_packet_verification_is_project_scoped_and_bounded() ->
     assert (
         "any substantive edit invalidates the verdict."
     ) in agents_normalized
-    assert "(`REQ-WFL-013` through `REQ-WFL-027`)" in agents_normalized
+    assert "requirements/workflow/WORK_PACKET_GATES.md" in agents_normalized
+    assert "requirements/workflow/COST_SCOPE_AND_HANDOFF.md" in agents_normalized
 
     verifier_path = ROOT / ".codex/agents/work-packet-verifier.toml"
     verifier = tomllib.loads(verifier_path.read_text(encoding="utf-8"))
@@ -130,7 +131,7 @@ def test_independent_work_packet_verification_is_project_scoped_and_bounded() ->
     ):
         assert required in instructions
 
-    workflow = (ROOT / "docs/project/WORKFLOW_AND_REQUIREMENTS.md").read_text(
+    workflow = (ROOT / "docs/project/requirements/workflow/WORK_PACKET_GATES.md").read_text(
         encoding="utf-8"
     )
     requirement_rows = {
@@ -171,7 +172,10 @@ def test_independent_work_packet_verification_is_project_scoped_and_bounded() ->
         assert required_clause in requirement_rows[requirement_id]
     assert "Independent work-packet verification protocol" in workflow
     assert "Author-driven iterative work-packet implementation loop" in workflow
-    assert "Learnings from repeated work-packet reviews" in workflow
+    retrospective = (
+        ROOT / "docs/project/retrospectives/REPEATED_PACKET_REVIEWS.md"
+    ).read_text(encoding="utf-8")
+    assert "Learnings from repeated work-packet reviews" in retrospective
 
     ledgers = "\n".join(
         (ROOT / "docs/work-packages" / name).read_text(encoding="utf-8")

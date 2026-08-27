@@ -18,6 +18,7 @@ from crazyswarm_app.campaign.models import (
     BehaviorOracleKind,
     CampaignCase,
     MotionQualityContract,
+    RouteNodeMode,
     ScenarioEventKind,
     ScenarioExpectedDisposition,
     TraversalMode,
@@ -111,6 +112,9 @@ def analyze_motion_quality_csv(
     motor_differential_normalized_error_p95: float | None = None,
     supervisor_safety_gate_passed: bool | None = None,
     motion_window_source_s: tuple[float, float] | None = None,
+    steady_windows_source_s: Sequence[tuple[float, float]] | None = None,
+    reference_tracking_errors_m: Sequence[float] | None = None,
+    reference_path_errors_m: Sequence[float] | None = None,
 ) -> MotionQualityAnalysis:
     """Recompute the WP-57/61 guard vector from raw run-telemetry-v1 rows.
 
@@ -170,6 +174,21 @@ def analyze_motion_quality_csv(
         velocities = _derivative_vectors(positions)
     speeds = [(timestamp, _norm(value)) for timestamp, value in velocities]
     moving_speeds = [value for _timestamp, value in speeds if value > 0.02]
+    steady_speed_windows = (
+        [
+            [
+                value
+                for timestamp, value in speeds
+                if value > 0.02 and start_s <= timestamp <= end_s
+            ]
+            for start_s, end_s in steady_windows_source_s
+        ]
+        if steady_windows_source_s is not None
+        else [moving_speeds]
+    )
+    nonempty_steady_speed_windows = [
+        values for values in steady_speed_windows if values
+    ]
     accelerations = _derivative_values(speeds)
     imu_accelerations = [
         (timestamp, value)
@@ -191,15 +210,18 @@ def analyze_motion_quality_csv(
     motor_headrooms: list[float] = []
     saturated_count = 0
     motor_count = 0
-    for row in unique:
-        pwm = [_float(row.get(f"motor_m{index}_applied_pwm_percent")) for index in range(1, 5)]
+    for motor_row in unique:
+        pwm = [
+            _float(motor_row.get(f"motor_m{index}_applied_pwm_percent"))
+            for index in range(1, 5)
+        ]
         present_pwm = [value for value in pwm if value is not None]
         if len(present_pwm) == 4:
             motor_spreads.append(max(present_pwm) - min(present_pwm))
         for index in range(1, 5):
-            thrust = _float(row.get(f"motor_m{index}_thrust_n"))
-            available = _float(row.get(f"motor_m{index}_available_thrust_n"))
-            saturated = _boolean(row.get(f"motor_m{index}_saturated"))
+            thrust = _float(motor_row.get(f"motor_m{index}_thrust_n"))
+            available = _float(motor_row.get(f"motor_m{index}_available_thrust_n"))
+            saturated = _boolean(motor_row.get(f"motor_m{index}_saturated"))
             if thrust is not None and available is not None:
                 motor_headrooms.append(available - thrust)
             if saturated is not None:
@@ -219,10 +241,23 @@ def analyze_motion_quality_csv(
     observed_positions = [
         value for row in unique if (value := _row_vector(row, "ground_truth")) is not None
     ]
-    path_errors = (
+    fallback_path_errors = (
         [_distance_to_polyline(point, planned_route_m) for point in observed_positions]
         if len(planned_route_m) >= 2
         else []
+    )
+    # Temporal tracking is never substituted with a geometric path distance. The
+    # production campaign analyzer always supplies its independent source-time
+    # trajectory oracle; a standalone caller that omits it gets a missing guard.
+    tracking_errors = (
+        list(reference_tracking_errors_m)
+        if reference_tracking_errors_m is not None
+        else []
+    )
+    path_errors = (
+        list(reference_path_errors_m)
+        if reference_path_errors_m is not None
+        else fallback_path_errors
     )
     terminal_window_size = max(3, len(speeds) // 10)
     terminal_speeds = [value for _timestamp, value in speeds[-terminal_window_size:]]
@@ -240,16 +275,26 @@ def analyze_motion_quality_csv(
         ),
     )
     speed_compliance = None
-    if contract.target_speed_m_s is not None and moving_speeds:
-        speed_compliance = sum(
-            abs(value - contract.target_speed_m_s) <= contract.speed_band_m_s
-            for value in moving_speeds
-        ) / len(moving_speeds)
+    if contract.target_speed_m_s is not None and nonempty_steady_speed_windows:
+        # The contract is per declared window.  Taking the minimum prevents a
+        # long passing segment from averaging away one bad segment.
+        speed_compliance = min(
+            sum(
+                abs(value - contract.target_speed_m_s) <= contract.speed_band_m_s
+                for value in values
+            )
+            / len(values)
+            for values in nonempty_steady_speed_windows
+        )
     payload_vector = MotionQualityVector(
         speed_compliance_fraction=speed_compliance,
         speed_ripple_m_s=(
-            _percentile(sorted(moving_speeds), 0.95) - _percentile(sorted(moving_speeds), 0.05)
-            if moving_speeds
+            max(
+                _percentile(sorted(values), 0.95)
+                - _percentile(sorted(values), 0.05)
+                for values in nonempty_steady_speed_windows
+            )
+            if nonempty_steady_speed_windows
             else None
         ),
         acceleration_p95_m_s2=(
@@ -272,8 +317,10 @@ def analyze_motion_quality_csv(
         motor_differential_normalized_error_p95=motor_differential_normalized_error_p95,
         electrical_energy_used_j=(energy if len(power) >= 2 else None),
         tracking_rms_m=(
-            math.sqrt(sum(value * value for value in path_errors) / len(path_errors))
-            if path_errors
+            math.sqrt(
+                sum(value * value for value in tracking_errors) / len(tracking_errors)
+            )
+            if tracking_errors
             else None
         ),
         path_tube_max_error_m=max(path_errors, default=None),
@@ -679,19 +726,73 @@ def analyze_execution(
         )
         physical_truth_analyses.append(physical_truth)
         planned_route = _planned_route_for_role(context, artifact_role_id)
-        knot_ratio, checkpoint_conformance = _route_semantics_observations(
-            case=case,
-            role_id=role_id,
+        drone = drones_by_role.get(role_id)
+        authored_route = (
+            (
+                drone.start_region.center_m,
+                *(goal.center_m for goal in drone.goal_sequence),
+            )
+            if drone is not None
+            else planned_route
+        )
+        retained_trajectory = trajectories_by_role.get(artifact_role_id)
+        reference_route_start_s = _trajectory_reference_start_source_s(
+            context=context,
+            role_id=artifact_role_id,
+            trajectory=retained_trajectory,
             samples=samples,
-            trajectory=trajectories_by_role.get(artifact_role_id),
-            route_points=planned_route,
-            route_start_source_s=analysis.timeline.route_start_source_s,
-            contract=contract,
+            legacy_detected_start_source_s=analysis.timeline.route_start_source_s,
         )
         trace = _mapping(
             context.get("campaign_execution_head_trace", {}),
             "execution_head_trace",
         )
+        knot_ratio, checkpoint_conformance = _route_semantics_observations(
+            case=case,
+            role_id=role_id,
+            samples=samples,
+            trajectory=retained_trajectory,
+            route_points=planned_route,
+            route_start_source_s=reference_route_start_s,
+            contract=contract,
+        )
+        # Both static and changed-world runs use the independently implemented
+        # source-time oracle below. A spatial distance-to-polyline fallback would
+        # hide temporal lag when the vehicle is on the right curve at the wrong time.
+        dynamic_tracking_errors = _dynamic_reference_tracking_errors(
+            samples=samples,
+            initial_trajectory=retained_trajectory,
+            route_start_source_s=reference_route_start_s,
+            trace=trace,
+            role_id=artifact_role_id,
+            landing_start_source_s=analysis.timeline.landing_start_source_s,
+        )
+        nominal_path_errors = _nominal_route_path_errors(
+            samples=samples,
+            nominal_route=authored_route,
+            route_start_source_s=reference_route_start_s,
+            landing_start_source_s=analysis.timeline.landing_start_source_s,
+        )
+        steady_windows = _trajectory_steady_windows(
+            retained_trajectory,
+            route_start_source_s=reference_route_start_s,
+            contract=contract,
+        )
+        if case.semantics is not None and case.semantics.goal_seeking is not None:
+            dynamic_knot_ratio = _dynamic_continuous_knot_speed_ratio(
+                samples=samples,
+                trace=trace,
+                role_id=artifact_role_id,
+            )
+            if dynamic_knot_ratio is not None:
+                knot_ratio = dynamic_knot_ratio
+            steady_windows = _dynamic_steady_windows(
+                initial_trajectory=retained_trajectory,
+                route_start_source_s=reference_route_start_s,
+                trace=trace,
+                role_id=artifact_role_id,
+                landing_start_source_s=analysis.timeline.landing_start_source_s,
+            )
         clearance = _minimum_certified_clearance(trace)
         if clearance is None:
             clearance = _minimum_route_clearance(
@@ -710,7 +811,7 @@ def analyze_execution(
                 csv_bytes,
                 contract,
                 vehicle_id=vehicle_id,
-                planned_route_m=planned_route,
+                planned_route_m=authored_route,
                 minimum_clearance_m=clearance,
                 collision_count=collision_count,
                 checkpoint_hold_conformance_fraction=checkpoint_conformance,
@@ -721,16 +822,18 @@ def analyze_execution(
                 supervisor_safety_gate_passed=supervisor_passed,
                 motion_window_source_s=(
                     (
-                        analysis.timeline.route_start_source_s,
+                        reference_route_start_s,
                         analysis.timeline.landing_start_source_s,
                     )
-                    if analysis.timeline.route_start_source_s is not None
+                    if reference_route_start_s is not None
                     and analysis.timeline.landing_start_source_s is not None
                     else None
                 ),
+                steady_windows_source_s=steady_windows,
+                reference_tracking_errors_m=dynamic_tracking_errors,
+                reference_path_errors_m=nominal_path_errors,
             )
         )
-        drone = drones_by_role.get(role_id)
         if drone is not None:
             capture = _goal_capture_for_vehicle(context, vehicle_id)
             plan = _mapping(bundle.get("accepted_plan", {}), "accepted_plan")
@@ -803,6 +906,7 @@ def analyze_execution(
         vehicle_analyses=tuple(analyses),
         minimum_truth_separation_m=min(truth_minima) if truth_minima else None,
         context=context,
+        retained_motion_contract=retained_motion_contract,
     )
     payload: dict[str, Any] = {
         "mission_execution_id": execution_id,
@@ -962,27 +1066,38 @@ def _route_semantics_observations(
     ):
         return None, None
     intents = case.semantics.route_intent_by_role.get(role_id, ())
-    if len(intents) != len(route_points) - 1:
+    if len(intents) == len(route_points):
+        semantic_points = tuple(zip(route_points[1:], intents[1:], strict=True))
+    elif len(intents) == len(route_points) - 1:
+        # Some routes retain a projected cruise-start point before the first authored
+        # goal; every following point then maps one-to-one to the semantic nodes.
+        semantic_points = tuple(zip(route_points[1:], intents, strict=True))
+    else:
         return None, None
     trajectory_points = tuple(
         value for value in trajectory.get("points", ()) if isinstance(value, Mapping)
     )
     matched: list[tuple[Any, Mapping[str, Any]]] = []
     cursor = 0
-    for route_point, intent in zip(route_points[1:], intents, strict=True):
-        match_index = next(
-            (
-                index
-                for index in range(cursor, len(trajectory_points))
-                if (
-                    (position := _optional_vector(trajectory_points[index].get("position_m")))
-                    is not None
-                    and _distance(position, route_point) <= 1e-6
-                )
-            ),
-            None,
+    for route_point, intent in semantic_points:
+        candidates = tuple(
+            (index, position)
+            for index in range(cursor, len(trajectory_points))
+            if (
+                position := _optional_vector(trajectory_points[index].get("position_m"))
+            )
+            is not None
         )
-        if match_index is None:
+        if not candidates:
+            return None, None
+        match_index, matched_position = min(
+            candidates,
+            key=lambda value: (_distance(value[1], route_point), value[0]),
+        )
+        # Corner fillets need not contain the mathematical polyline vertex. Match
+        # the nearest ordered accepted state, but fail closed if it exceeds the
+        # exact retained tube authority.
+        if _distance(matched_position, route_point) > contract.maximum_path_tube_error_m + 1e-9:
             return None, None
         matched.append((intent, trajectory_points[match_index]))
         cursor = match_index + 1
@@ -1024,6 +1139,422 @@ def _route_semantics_observations(
     return knot_ratio, checkpoint_conformance
 
 
+def _trajectory_steady_windows(
+    trajectory: Mapping[str, Any] | None,
+    *,
+    route_start_source_s: float | None,
+    contract: MotionQualityContract,
+) -> tuple[tuple[float, float], ...] | None:
+    """Recover exact constant-speed interiors from the accepted trajectory."""
+
+    target = contract.target_speed_m_s
+    if target is None:
+        return None
+    if trajectory is None or route_start_source_s is None:
+        return ()
+    points = tuple(
+        value for value in trajectory.get("points", ()) if isinstance(value, Mapping)
+    )
+    windows: list[tuple[float, float]] = []
+    for before, after in pairwise(points):
+        before_time = before.get("time_from_start_s")
+        after_time = after.get("time_from_start_s")
+        before_position = _optional_vector(before.get("position_m"))
+        after_position = _optional_vector(after.get("position_m"))
+        before_velocity = _optional_vector(before.get("velocity_m_s"))
+        after_velocity = _optional_vector(after.get("velocity_m_s"))
+        if (
+            not isinstance(before_time, (int, float))
+            or not isinstance(after_time, (int, float))
+            or before_position is None
+            or after_position is None
+            or before_velocity is None
+            or after_velocity is None
+        ):
+            continue
+        duration_s = float(after_time) - float(before_time)
+        if duration_s <= 0.0:
+            continue
+        displacement_speed = _distance(before_position, after_position) / duration_s
+        if all(
+            abs(value - target) <= 1e-5
+            for value in (
+                _norm(before_velocity),
+                _norm(after_velocity),
+                displacement_speed,
+            )
+        ):
+            boundary_margin_s = min(0.10, duration_s * 0.10)
+            start_s = route_start_source_s + float(before_time) + boundary_margin_s
+            end_s = route_start_source_s + float(after_time) - boundary_margin_s
+            if end_s > start_s:
+                windows.append((start_s, end_s))
+    return tuple(windows)
+
+
+def _constant_trajectory_windows(
+    trajectory: Mapping[str, Any],
+    *,
+    authority_start_source_s: float,
+    authority_end_source_s: float,
+) -> tuple[tuple[float, float], ...]:
+    """Return exact constant-vector-speed Hermite segment interiors.
+
+    Dynamic goal seeking has no authored scalar speed target.  Its ripple guard
+    therefore applies only where the active, hash-bound trajectory actually
+    commands constant velocity; acceleration, braking, and turn transitions are
+    quality inputs to their own guards and must not be mislabeled as ripple.
+    """
+
+    points = tuple(
+        value for value in trajectory.get("points", ()) if isinstance(value, Mapping)
+    )
+    windows: list[tuple[float, float]] = []
+    for before, after in pairwise(points):
+        before_time = before.get("time_from_start_s")
+        after_time = after.get("time_from_start_s")
+        before_position = _optional_vector(before.get("position_m"))
+        after_position = _optional_vector(after.get("position_m"))
+        before_velocity = _optional_vector(before.get("velocity_m_s"))
+        after_velocity = _optional_vector(after.get("velocity_m_s"))
+        before_acceleration = _optional_vector(before.get("acceleration_m_s2"))
+        after_acceleration = _optional_vector(after.get("acceleration_m_s2"))
+        if (
+            not isinstance(before_time, (int, float))
+            or not isinstance(after_time, (int, float))
+            or before_position is None
+            or after_position is None
+            or before_velocity is None
+            or after_velocity is None
+            or before_acceleration is None
+            or after_acceleration is None
+        ):
+            continue
+        duration_s = float(after_time) - float(before_time)
+        if duration_s <= 0.0:
+            continue
+        commanded_velocity = Vector3(
+            x=(after_position.x - before_position.x) / duration_s,
+            y=(after_position.y - before_position.y) / duration_s,
+            z=(after_position.z - before_position.z) / duration_s,
+        )
+        if any(
+            _distance(value, commanded_velocity) > 1e-5
+            for value in (before_velocity, after_velocity)
+        ) or any(_norm(value) > 1e-5 for value in (before_acceleration, after_acceleration)):
+            continue
+        boundary_margin_s = min(0.10, duration_s * 0.10)
+        start_s = authority_start_source_s + float(before_time) + boundary_margin_s
+        end_s = min(
+            authority_start_source_s + float(after_time) - boundary_margin_s,
+            authority_end_source_s,
+        )
+        if end_s > start_s:
+            windows.append((start_s, end_s))
+    return tuple(windows)
+
+
+def _dynamic_steady_windows(
+    *,
+    initial_trajectory: Mapping[str, Any] | None,
+    route_start_source_s: float | None,
+    trace: Mapping[str, Any],
+    role_id: str,
+    landing_start_source_s: float | None,
+) -> tuple[tuple[float, float], ...] | None:
+    """Compose constant-speed windows from each trajectory while it held authority."""
+
+    if initial_trajectory is None or route_start_source_s is None:
+        return None
+    cutovers = _replacement_cutovers(trace, role_id)
+    terminal_source_s = landing_start_source_s or math.inf
+    authorities: list[tuple[float, float, Mapping[str, Any]]] = []
+    first_end_s = min(cutovers[0][0], terminal_source_s) if cutovers else terminal_source_s
+    authorities.append((route_start_source_s, first_end_s, initial_trajectory))
+    for index, (cutover_source_s, _event_id, trajectory) in enumerate(cutovers):
+        next_cutover_s = (
+            cutovers[index + 1][0] if index + 1 < len(cutovers) else terminal_source_s
+        )
+        authorities.append(
+            (cutover_source_s, min(next_cutover_s, terminal_source_s), trajectory)
+        )
+    return tuple(
+        window
+        for start_s, end_s, trajectory in authorities
+        if end_s > start_s
+        for window in _constant_trajectory_windows(
+            trajectory,
+            authority_start_source_s=start_s,
+            authority_end_source_s=end_s,
+        )
+    )
+
+
+def _replacement_cutovers(
+    trace: Mapping[str, Any],
+    role_id: str,
+) -> tuple[tuple[float, str, Mapping[str, Any]], ...]:
+    records = tuple(
+        item for item in trace.get("records", ()) if isinstance(item, Mapping)
+    )
+    trajectory_by_event = {
+        str(record.get("event_id")): trajectory
+        for record in records
+        if record.get("stage") == "MOVING_CUTOVER_RECERTIFIED"
+        and isinstance(
+            by_role := record.get("replacement_trajectory_by_role"),
+            Mapping,
+        )
+        and isinstance(trajectory := by_role.get(role_id), Mapping)
+    }
+    output = []
+    for record in records:
+        if record.get("execution_disposition") != "DISPATCHED":
+            continue
+        event_id = str(record.get("event_id"))
+        trajectory = trajectory_by_event.get(event_id)
+        horizon = record.get("reaction_horizon")
+        if trajectory is None or not isinstance(horizon, Mapping):
+            continue
+        cutover = horizon.get("proposed_cutover_source_s")
+        if isinstance(cutover, (int, float)):
+            output.append((float(cutover), event_id, trajectory))
+    return tuple(sorted(output, key=lambda value: (value[0], value[1])))
+
+
+def _dynamic_reference_tracking_errors(
+    *,
+    samples: Sequence[_Sample],
+    initial_trajectory: Mapping[str, Any] | None,
+    route_start_source_s: float | None,
+    trace: Mapping[str, Any],
+    role_id: str,
+    landing_start_source_s: float | None,
+) -> tuple[float, ...] | None:
+    if initial_trajectory is None or route_start_source_s is None:
+        return None
+    initial = initial_trajectory
+    cutovers = tuple(
+        (cutover, trajectory)
+        for cutover, _event_id, trajectory in _replacement_cutovers(trace, role_id)
+    )
+    errors = []
+    for sample in sorted(samples, key=lambda item: (item.source_s, item.sequence)):
+        if sample.truth is None or sample.source_s < route_start_source_s:
+            continue
+        if landing_start_source_s is not None and sample.source_s >= landing_start_source_s:
+            continue
+        authority_start_s = route_start_source_s
+        authority: Any = initial
+        for cutover_source_s, replacement in cutovers:
+            if cutover_source_s > sample.source_s:
+                break
+            authority_start_s = cutover_source_s
+            authority = replacement
+        elapsed_s = sample.source_s - authority_start_s
+        duration_s = _trajectory_duration_s(authority)
+        if elapsed_s < -1e-9 or elapsed_s > duration_s + 1e-9:
+            continue
+        reference = _independent_trajectory_position(
+            authority,
+            max(0.0, min(duration_s, elapsed_s)),
+        )
+        errors.append(_distance(sample.truth, reference))
+    return tuple(errors)
+
+
+def _nominal_route_path_errors(
+    *,
+    samples: Sequence[_Sample],
+    nominal_route: Sequence[Vector3],
+    route_start_source_s: float | None,
+    landing_start_source_s: float | None,
+) -> tuple[float, ...] | None:
+    """Measure shortest 3-D normal distance from physical truth to the authored route.
+
+    Tracking RMS already measures the time-indexed error to the accepted trajectory.
+    Path fidelity is deliberately independent: it answers whether the actual drone
+    left the operator-authored nominal polyline, even when the generated trajectory
+    itself follows a shortcut accurately.
+    """
+
+    if len(nominal_route) < 2 or route_start_source_s is None:
+        return None
+    route = tuple(nominal_route)
+    errors: list[float] = []
+    for sample in sorted(samples, key=lambda item: (item.source_s, item.sequence)):
+        if sample.truth is None or sample.source_s < route_start_source_s:
+            continue
+        if landing_start_source_s is not None and sample.source_s >= landing_start_source_s:
+            continue
+        errors.append(_distance_to_polyline(sample.truth, route))
+    return tuple(errors)
+
+
+def _trajectory_duration_s(trajectory: Mapping[str, Any]) -> float:
+    duration = trajectory.get("duration_s")
+    if not isinstance(duration, (int, float)) or isinstance(duration, bool):
+        points = trajectory.get("points")
+        if not isinstance(points, Sequence) or not points:
+            raise ValueError("independent trajectory oracle lacks a duration")
+        final = points[-1]
+        if not isinstance(final, Mapping):
+            raise ValueError("independent trajectory oracle has malformed points")
+        duration = final.get("time_from_start_s")
+    if not isinstance(duration, (int, float)) or isinstance(duration, bool):
+        raise ValueError("independent trajectory duration is non-numeric")
+    value = float(duration)
+    if not math.isfinite(value) or value <= 0.0:
+        raise ValueError("independent trajectory duration must be finite and positive")
+    return value
+
+
+def _accepted_trajectory_horizontal_turn(
+    trajectory: Mapping[str, Any] | None,
+) -> float:
+    """Measure curvature from the accepted trajectory rather than authored labels."""
+
+    if trajectory is None:
+        return 0.0
+    duration_s = _trajectory_duration_s(trajectory)
+    sample_count = max(2, math.ceil(duration_s / 0.05))
+    dense = tuple(
+        _independent_trajectory_position(
+            trajectory,
+            duration_s * sample_index / sample_count,
+        )
+        for sample_index in range(sample_count + 1)
+    )
+    points: list[Vector3] = []
+    for point in dense:
+        if points and math.hypot(point.x - points[-1].x, point.y - points[-1].y) <= 1e-8:
+            continue
+        points.append(point)
+    return _integrated_horizontal_turn(tuple(points))
+
+
+def _independent_trajectory_position(
+    trajectory: Mapping[str, Any],
+    elapsed_s: float,
+) -> Vector3:
+    """Sample retained P/V/A points without calling the production sampler.
+
+    The duplicated quintic boundary-value calculation is intentional: qualification
+    must remain capable of detecting a production sampling or time-alignment defect.
+    """
+
+    points_value = trajectory.get("points")
+    if not isinstance(points_value, Sequence) or len(points_value) < 2:
+        raise ValueError("independent trajectory oracle requires at least two points")
+    points = tuple(
+        point if isinstance(point, Mapping) else _raise_malformed_trajectory_point()
+        for point in points_value
+    )
+    times = tuple(_strict_finite_number(point.get("time_from_start_s")) for point in points)
+    if times[0] != 0.0 or any(after <= before for before, after in pairwise(times)):
+        raise ValueError("independent trajectory times must be strictly increasing from zero")
+    bounded = max(times[0], min(times[-1], elapsed_s))
+    segment_index = next(
+        (index for index in range(len(times) - 1) if bounded <= times[index + 1]),
+        len(times) - 2,
+    )
+    start = points[segment_index]
+    end = points[segment_index + 1]
+    start_position = _required_mapping_vector(start.get("position_m"))
+    end_position = _required_mapping_vector(end.get("position_m"))
+    start_velocity = _required_mapping_vector(start.get("velocity_m_s"))
+    end_velocity = _required_mapping_vector(end.get("velocity_m_s"))
+    start_acceleration = _required_mapping_vector(start.get("acceleration_m_s2"))
+    end_acceleration = _required_mapping_vector(end.get("acceleration_m_s2"))
+    duration = times[segment_index + 1] - times[segment_index]
+    local_time = bounded - times[segment_index]
+
+    def axis(name: str) -> float:
+        position_0 = getattr(start_position, name)
+        velocity_0 = getattr(start_velocity, name)
+        acceleration_0 = getattr(start_acceleration, name)
+        position_1 = getattr(end_position, name)
+        velocity_1 = getattr(end_velocity, name)
+        acceleration_1 = getattr(end_acceleration, name)
+        a0 = position_0
+        a1 = velocity_0
+        a2 = acceleration_0 / 2.0
+        c0 = position_1 - (a0 + a1 * duration + a2 * duration**2)
+        c1 = velocity_1 - (a1 + 2.0 * a2 * duration)
+        c2 = acceleration_1 - 2.0 * a2
+        a3 = (10.0 * c0 - 4.0 * c1 * duration + 0.5 * c2 * duration**2) / duration**3
+        a4 = (-15.0 * c0 + 7.0 * c1 * duration - c2 * duration**2) / duration**4
+        a5 = (6.0 * c0 - 3.0 * c1 * duration + 0.5 * c2 * duration**2) / duration**5
+        return float(
+            a0
+            + a1 * local_time
+            + a2 * local_time**2
+            + a3 * local_time**3
+            + a4 * local_time**4
+            + a5 * local_time**5
+        )
+
+    return Vector3(x=axis("x"), y=axis("y"), z=axis("z"))
+
+
+def _raise_malformed_trajectory_point() -> Any:
+    raise ValueError("independent trajectory oracle has a malformed point")
+
+
+def _strict_finite_number(value: Any) -> float:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        raise ValueError("independent trajectory oracle received a non-numeric value")
+    result = float(value)
+    if not math.isfinite(result):
+        raise ValueError("independent trajectory oracle received a non-finite value")
+    return result
+
+
+def _required_mapping_vector(value: Any) -> Vector3:
+    if not isinstance(value, Mapping):
+        raise ValueError("independent trajectory oracle lacks a P/V/A vector")
+    return Vector3(
+        x=_strict_finite_number(value.get("x")),
+        y=_strict_finite_number(value.get("y")),
+        z=_strict_finite_number(value.get("z")),
+    )
+
+
+def _dynamic_continuous_knot_speed_ratio(
+    *,
+    samples: Sequence[_Sample],
+    trace: Mapping[str, Any],
+    role_id: str,
+) -> float | None:
+    cutovers = _replacement_cutovers(trace, role_id)
+    if not cutovers:
+        return None
+    ordered_samples = sorted(samples, key=lambda item: (item.source_s, item.sequence))
+    ratios = []
+    for index, (cutover_source_s, _event_id, trajectory) in enumerate(cutovers):
+        next_cutover_s = cutovers[index + 1][0] if index + 1 < len(cutovers) else math.inf
+        points = tuple(
+            point for point in trajectory.get("points", ()) if isinstance(point, Mapping)
+        )
+        for point in points[1:-1]:
+            offset = point.get("time_from_start_s")
+            planned_velocity = _optional_vector(point.get("velocity_m_s"))
+            if not isinstance(offset, (int, float)) or planned_velocity is None:
+                continue
+            planned_speed = _norm(planned_velocity)
+            target_source_s = cutover_source_s + float(offset)
+            if planned_speed <= 1e-6 or target_source_s >= next_cutover_s:
+                continue
+            observed = min(
+                ordered_samples,
+                key=lambda item: abs(item.source_s - target_source_s),
+                default=None,
+            )
+            if observed is not None and observed.velocity is not None:
+                ratios.append(_norm(observed.velocity) / planned_speed)
+    return min(ratios, default=None)
+
+
 def _minimum_certified_clearance(trace: Mapping[str, Any]) -> float | None:
     clearances = [
         float(certificate["certified_clearance_m"])
@@ -1043,6 +1574,7 @@ def _evaluate_behavior_oracles(
     vehicle_analyses: tuple[VehicleAnalysis, ...],
     minimum_truth_separation_m: float | None,
     context: Mapping[str, Any],
+    retained_motion_contract: MotionQualityContract | None,
 ) -> tuple[BehaviorOracleResult, ...]:
     if case.semantics is None:
         return ()
@@ -1051,6 +1583,11 @@ def _evaluate_behavior_oracles(
     }
     analyses = {item.vehicle_id: item for item in vehicle_analyses}
     trajectory_set = _mapping(context.get("campaign_trajectories", {}), "trajectories")
+    trajectory_by_role = {
+        str(value.get("role_id")): value
+        for value in trajectory_set.get("trajectories", ())
+        if isinstance(value, Mapping)
+    }
     audit_values = trajectory_set.get("audits", ())
     scenario_trace = _mapping(context.get("campaign_scenario_trace", {}), "scenario_trace")
     execution_head_trace = _mapping(
@@ -1095,26 +1632,36 @@ def _evaluate_behavior_oracles(
                 nodes = case.semantics.route_intent_by_role[role_id]
                 for region, node in zip(drone_by_role[role_id].goal_sequence, nodes, strict=True):
                     required += 1
+                    capture_tolerance_m = (
+                        max(
+                            node.capture_tolerance_m,
+                            retained_motion_contract.maximum_path_tube_error_m,
+                        )
+                        if node.mode is RouteNodeMode.FLY_THROUGH
+                        and retained_motion_contract is not None
+                        else node.capture_tolerance_m
+                    )
                     if any(
                         point is not None
-                        and _distance(point, region.center_m) <= node.capture_tolerance_m
+                        and _distance(point, region.center_m) <= capture_tolerance_m
                         for sample in samples
                         for point in (sample.truth or sample.estimate,)
                     ):
                         captured += 1
             observed = float(captured)
             passed = captured == required
-            reason = f"Captured {captured} of {required} ordered authored route regions."
-            references = ("telemetry.csv:ground_truth_position", "campaign_case:route_intent")
+            reason = (
+                f"Entered {captured} of {required} ordered route regions using each "
+                "checkpoint radius or the admitted fly-through tube."
+            )
+            references = (
+                "telemetry.csv:ground_truth_position",
+                "campaign_case:route_intent",
+                "campaign_trajectories:motion_quality_contract",
+            )
         elif oracle.kind is BehaviorOracleKind.HOLD_DURATION:
             hold_errors = []
             drone_by_role = {drone.role_id: drone for drone in case.drones}
-            trajectory_values = trajectory_set.get("trajectories", ())
-            trajectory_by_role = {
-                str(value.get("role_id")): value
-                for value in trajectory_values
-                if isinstance(value, Mapping)
-            }
             for role_id in roles:
                 samples = by_vehicle.get(role_to_vehicle[role_id], [])
                 for region, node in zip(
@@ -1144,8 +1691,13 @@ def _evaluate_behavior_oracles(
                 for item in audit_values
                 if isinstance(item, Mapping)
             ]
+            missing_analysis_roles = tuple(
+                role for role in roles if role_to_vehicle[role] not in analyses
+            )
             executed_count = sum(
-                analyses[role_to_vehicle[role]].unintended_stop_count for role in roles
+                analyses[role_to_vehicle[role]].unintended_stop_count
+                for role in roles
+                if role_to_vehicle[role] in analyses
             )
             generated_count = sum(generated_counts)
             observed = float(executed_count)
@@ -1153,6 +1705,7 @@ def _evaluate_behavior_oracles(
             passed = (
                 executed_count <= threshold
                 and generated_count <= threshold
+                and not missing_analysis_roles
                 and (not generated_counts or generated_count == executed_count)
             )
             reason = (
@@ -1160,6 +1713,11 @@ def _evaluate_behavior_oracles(
                 f"{executed_count} undeclared stops; the generated-trajectory audit found "
                 f"{generated_count}. Diagnostic takeoff, stabilization, landing-entry, and "
                 "terminal low-speed phases are outside this route window."
+                + (
+                    " Missing role analyses: " + ", ".join(missing_analysis_roles) + "."
+                    if missing_analysis_roles
+                    else ""
+                )
             )
             references = (
                 "telemetry.csv:planned_route_source_window",
@@ -1191,20 +1749,45 @@ def _evaluate_behavior_oracles(
         elif oracle.kind is BehaviorOracleKind.CURVED_PATH:
             turn = max(
                 (
-                    _integrated_horizontal_turn(
-                        tuple(goal.center_m for goal in drone.goal_sequence)
-                    )
-                    for drone in case.drones
-                    if drone.role_id in roles
+                    _accepted_trajectory_horizontal_turn(trajectory_by_role.get(role))
+                    for role in roles
                 ),
                 default=0.0,
             )
             observed = turn
-            passed = turn >= float(oracle.threshold or 0.0)
-            reason = (
-                f"The executed hash-bound route carries {turn:.3f} rad integrated horizontal turn."
+            direct_line_deviation = max(
+                (
+                    max(
+                        (
+                            _distance_to_segment(
+                                goal.center_m,
+                                drone.start_region.center_m,
+                                drone.goal_sequence[-1].center_m,
+                            )
+                            for goal in drone.goal_sequence[:-1]
+                        ),
+                        default=0.0,
+                    )
+                    for drone in case.drones
+                    if drone.role_id in roles
+                ),
+                default=float("inf"),
             )
-            references = ("campaign_plan:selected_candidate.routes", "telemetry.csv:tracking_error")
+            direct_authorized = (
+                retained_motion_contract is not None
+                and direct_line_deviation
+                <= retained_motion_contract.maximum_path_tube_error_m + 1e-12
+            )
+            passed = direct_authorized or turn >= float(oracle.threshold or 0.0)
+            reason = (
+                f"The accepted trajectory carries {turn:.3f} rad integrated horizontal turn; "
+                f"the authored route-to-direct-line bound is {direct_line_deviation:.3f} m."
+            )
+            references = (
+                "campaign_trajectories:accepted_trajectory",
+                "campaign_case:authored_route",
+                "campaign_trajectories:motion_quality_contract",
+            )
         elif oracle.kind is BehaviorOracleKind.CLOSED_SHAPE:
             closure = min(
                 (
@@ -1945,7 +2528,7 @@ def _motion_guard_verdict(
             "tracking_rms_m",
             vector.tracking_rms_m,
             vector.tracking_rms_m is not None
-            and vector.tracking_rms_m <= contract.maximum_path_tube_error_m,
+            and vector.tracking_rms_m <= 0.05,
         ),
         (
             "path_tube_max_error_m",
@@ -2071,32 +2654,29 @@ def _distance_to_polyline(point: Vector3, route: Sequence[Vector3]) -> float:
 
 
 def _distance_to_segment(point: Vector3, before: Vector3, after: Vector3) -> float:
-    segment = Vector3(
-        x=after.x - before.x,
-        y=after.y - before.y,
-        z=after.z - before.z,
-    )
-    offset = Vector3(
-        x=point.x - before.x,
-        y=point.y - before.y,
-        z=point.z - before.z,
-    )
-    denominator = segment.x**2 + segment.y**2 + segment.z**2
+    segment_x = after.x - before.x
+    segment_y = after.y - before.y
+    segment_z = after.z - before.z
+    offset_x = point.x - before.x
+    offset_y = point.y - before.y
+    offset_z = point.z - before.z
+    denominator = segment_x**2 + segment_y**2 + segment_z**2
     if denominator <= 1e-15:
-        return _distance(point, before)
+        return math.sqrt(offset_x**2 + offset_y**2 + offset_z**2)
     factor = max(
         0.0,
         min(
             1.0,
-            (offset.x * segment.x + offset.y * segment.y + offset.z * segment.z) / denominator,
+            (offset_x * segment_x + offset_y * segment_y + offset_z * segment_z)
+            / denominator,
         ),
     )
-    projection = Vector3(
-        x=before.x + factor * segment.x,
-        y=before.y + factor * segment.y,
-        z=before.z + factor * segment.z,
+    residual_x = point.x - (before.x + factor * segment_x)
+    residual_y = point.y - (before.y + factor * segment_y)
+    residual_z = point.z - (before.z + factor * segment_z)
+    return math.sqrt(
+        residual_x**2 + residual_y**2 + residual_z**2
     )
-    return _distance(point, projection)
 
 
 def _resample(
@@ -2382,12 +2962,13 @@ def _minimum_route_clearance(
 ) -> float | None:
     if start_source_s is None or end_source_s is None:
         return None
-    points = [
-        sample.truth or sample.estimate
-        for sample in samples
-        if start_source_s <= sample.source_s <= end_source_s
-        and (sample.truth is not None or sample.estimate is not None)
-    ]
+    points: list[Vector3] = []
+    for sample in samples:
+        if not start_source_s <= sample.source_s <= end_source_s:
+            continue
+        point = sample.truth if sample.truth is not None else sample.estimate
+        if point is not None:
+            points.append(point)
     if not points:
         return None
     nominal_vehicle_radius_m = 0.055
@@ -2569,6 +3150,97 @@ def _campaign_route_window(context: Mapping[str, Any], role_id: str) -> tuple[fl
             end = action.get("ends_at_source_s")
             if isinstance(start, (int, float)) and isinstance(end, (int, float)):
                 return float(start), float(end)
+    return None
+
+
+def _trajectory_reference_start_source_s(
+    *,
+    context: Mapping[str, Any],
+    role_id: str,
+    trajectory: Mapping[str, Any] | None,
+    samples: Sequence[_Sample],
+    legacy_detected_start_source_s: float | None,
+) -> float | None:
+    """Return retained source-clock authority for temporal comparison.
+
+    First-motion detection is deliberately not used for a production bundle: it
+    shifts with controller response and can turn tracking lag or lead into an
+    alignment error. A completed command uses its backend receipt; a trajectory
+    cancelled by changed-world cutover uses the exact Supervisor source-clock
+    authority snapshot retained immediately before dispatch. Legacy analyzer
+    fixtures without a fleet result retain their historical detected-start behavior,
+    while a production result missing both identities fails closed.
+    """
+
+    authority = _retained_trajectory_authority_start(context, role_id, trajectory)
+    if authority is not None:
+        source_s, clock_id, epoch = authority
+        if any(sample.clock_id == clock_id and sample.epoch == epoch for sample in samples):
+            return source_s
+        return None
+    if isinstance(context.get("fleet_result"), Mapping):
+        return None
+    return legacy_detected_start_source_s
+
+
+def _retained_trajectory_authority_start(
+    context: Mapping[str, Any],
+    role_id: str,
+    trajectory: Mapping[str, Any] | None,
+) -> tuple[float, str, int] | None:
+    if trajectory is None:
+        return None
+    trajectory_sha256 = trajectory.get("sha256") or trajectory.get("trajectory_sha256")
+    if not isinstance(trajectory_sha256, str):
+        trajectory_sha256 = canonical_sha256(trajectory)
+    fleet_result = context.get("fleet_result")
+    if not isinstance(fleet_result, Mapping):
+        return None
+    children = fleet_result.get("child_results")
+    if not isinstance(children, Sequence):
+        return None
+    for child in children:
+        if not isinstance(child, Mapping) or str(child.get("task_id")) != role_id:
+            continue
+        result = child.get("mission_result")
+        if not isinstance(result, Mapping):
+            continue
+        trace = result.get("normalized_intent_trace")
+        if not isinstance(trace, Sequence):
+            continue
+        for record in trace:
+            if not isinstance(record, Mapping) or record.get("action") != "execute_trajectory":
+                continue
+            arguments = record.get("arguments")
+            if not isinstance(arguments, Mapping) or (
+                arguments.get("trajectory_sha256") != trajectory_sha256
+            ):
+                continue
+            received_source_s = arguments.get("command_received_at_source_s")
+            source_s = (
+                received_source_s
+                if received_source_s is not None
+                else arguments.get("command_authority_at_source_s")
+            )
+            if received_source_s is not None:
+                clock_id = arguments.get("command_source_clock_id")
+                epoch = arguments.get("command_source_clock_epoch")
+            else:
+                clock_id = arguments.get("command_authority_source_clock_id")
+                epoch = arguments.get("command_authority_source_clock_epoch")
+            if (
+                not isinstance(source_s, (int, float))
+                or isinstance(source_s, bool)
+                or not math.isfinite(float(source_s))
+                or float(source_s) < 0.0
+                or not isinstance(clock_id, str)
+                or not clock_id
+                or not isinstance(epoch, int)
+                or isinstance(epoch, bool)
+                or epoch < 0
+            ):
+                return None
+            return float(source_s), clock_id, epoch
     return None
 
 

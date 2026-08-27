@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
+import threading
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -18,7 +20,178 @@ from crazyswarm_app.campaign.service import (
     ReviewDecision,
     RunArtifactSet,
     SnapshotAssessmentDisposition,
+    _assert_mode_eligible,
 )
+from crazyswarm_app.campaign.submissions import MotionPreparationRequest
+
+
+def test_every_discovered_simulation_mission_can_bind_and_prepare(tmp_path: Path) -> None:
+    service = CampaignService(
+        catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
+        state_directory=tmp_path / "campaign",
+    )
+    planned_cases = tuple(
+        case
+        for case in service.catalog.cases()
+        if case.implementation_status.value == "PLANNED_NOT_EXECUTABLE"
+    )
+    assert {case.drone_count for case in planned_cases} == {1, 2, 3}
+
+    for case in planned_cases:
+        lock = service.set_active(
+            case.case_id,
+            actor_id="operator",
+            reason="select catalog mission",
+        )
+        _assert_mode_eligible(case, CampaignRunMode.AUTOMATED_ACCELERATED)
+        package = service.resolved_active_package(
+            motion_preparation_request=MotionPreparationRequest(balance=50)
+        )
+
+        assert lock.case_id == case.case_id
+        assert package.case.case_id == case.case_id
+        assert package.planning_submission.planning_submission_id == "case_planning_authority"
+        assert package.execution_profile.display_name == "Prepared motion"
+
+
+@pytest.mark.asyncio
+async def test_terminal_campaign_evidence_finalization_does_not_block_event_loop(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    artifact_bytes = b"terminal campaign evidence"
+    artifacts = RunArtifactSet(
+        mission_execution_id="campaign-off-loop-retention",
+        status="SUCCEEDED",
+        manifest={},
+        bundle={},
+        evaluation={},
+        csv_bytes_sha256=hashlib.sha256(artifact_bytes).hexdigest(),
+        csv_content=artifact_bytes,
+    )
+
+    async def executor(_request: CampaignExecutionRequest) -> RunArtifactSet:
+        return artifacts
+
+    service = CampaignService(
+        catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
+        state_directory=tmp_path / "campaign",
+        executor=executor,
+    )
+    service.set_active(
+        "1d.takeoff_hover_land.canonical_nominal",
+        actor_id="operator",
+        reason="verify terminal evidence liveness",
+    )
+    prepared_artifacts = service.preview_active()
+
+    async def prepared_planning(*_args: object, **_kwargs: object) -> object:
+        return prepared_artifacts
+
+    monkeypatch.setattr(
+        service,
+        "_execution_artifacts_for_package_off_loop",
+        prepared_planning,
+    )
+    persistence_started = threading.Event()
+    release_persistence = threading.Event()
+    intake_started = threading.Event()
+    release_intake = threading.Event()
+
+    def blocked_persistence(*_args: object, **_kwargs: object) -> None:
+        persistence_started.set()
+        assert release_persistence.wait(2.0)
+
+    def blocked_intake(*_args: object, **_kwargs: object) -> str:
+        intake_started.set()
+        assert release_intake.wait(2.0)
+        return "review-off-loop"
+
+    monkeypatch.setattr(service, "_persist_intake_artifacts", blocked_persistence)
+
+    async def analyzed_off_loop(*_args: object, **_kwargs: object) -> object:
+        return object()
+
+    monkeypatch.setattr(service, "_analyze_execution_off_loop", analyzed_off_loop)
+    monkeypatch.setattr(service, "_intake", blocked_intake)
+
+    run = asyncio.create_task(
+        service.run_active(
+            CampaignRunMode.AUTOMATED_ACCELERATED,
+            idempotency_key="campaign-off-loop-retention",
+        )
+    )
+    try:
+        assert await asyncio.wait_for(
+            asyncio.to_thread(persistence_started.wait, 1.0),
+            timeout=1.5,
+        )
+        # Health, state polling, and telemetry share this loop. If evidence fsyncs
+        # run inline, even this short timer cannot fire until persistence releases.
+        await asyncio.wait_for(asyncio.sleep(0.01), timeout=0.10)
+        release_persistence.set()
+        assert await asyncio.wait_for(
+            asyncio.to_thread(intake_started.wait, 1.0),
+            timeout=1.5,
+        )
+        # Publishing the review and terminal run state also serializes the campaign
+        # workspace, so that finalization belongs off the request loop as well.
+        await asyncio.wait_for(asyncio.sleep(0.01), timeout=0.10)
+    finally:
+        release_persistence.set()
+        release_intake.set()
+
+    assert await run == "review-off-loop"
+
+
+@pytest.mark.asyncio
+async def test_campaign_planning_queues_before_off_loop_preparation_finishes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def executor_unreachable(_request: CampaignExecutionRequest) -> RunArtifactSet:
+        raise AssertionError("failed planning must not reach execution")
+
+    service = CampaignService(
+        catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
+        state_directory=tmp_path / "campaign",
+        executor=executor_unreachable,
+    )
+    service.set_active(
+        "1d.takeoff_hover_land.canonical_nominal",
+        actor_id="operator",
+        reason="verify queued planning liveness",
+    )
+    planning_started = threading.Event()
+    release_planning = threading.Event()
+
+    async def blocked_planning(*_args: object, **_kwargs: object) -> object:
+        planning_started.set()
+        assert await asyncio.to_thread(release_planning.wait, 2.0)
+        raise RuntimeError("bounded planning failed after queue acknowledgement")
+
+    monkeypatch.setattr(service, "_execution_artifacts_for_package_off_loop", blocked_planning)
+    run = asyncio.create_task(
+        service.run_active(
+            CampaignRunMode.AUTOMATED_ACCELERATED,
+            idempotency_key="campaign-off-loop-planning",
+        )
+    )
+    try:
+        assert await asyncio.wait_for(
+            asyncio.to_thread(planning_started.wait, 1.0),
+            timeout=1.5,
+        )
+        queued = service.state.runs[-1]
+        assert queued.status is CampaignRunStatus.QUEUED
+        assert queued.plan_sha256 is None
+        await asyncio.wait_for(asyncio.sleep(0.01), timeout=0.10)
+    finally:
+        release_planning.set()
+
+    with pytest.raises(RuntimeError, match="bounded planning failed"):
+        await run
+    assert service.state.runs[-1].status is CampaignRunStatus.FAILED
 
 
 @pytest.mark.asyncio
@@ -267,7 +440,7 @@ async def test_prelaunch_failure_does_not_leave_run_queued(
     assert service._active_execution_run_ids == set()
 
 
-def test_selecting_another_case_keeps_only_one_case_in_progress(tmp_path: Path) -> None:
+def test_selecting_another_case_does_not_rewrite_lifecycle_statuses(tmp_path: Path) -> None:
     service = CampaignService(
         catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
         state_directory=tmp_path / "campaign",
@@ -275,12 +448,66 @@ def test_selecting_another_case_keeps_only_one_case_in_progress(tmp_path: Path) 
     canonical_id = "1d.altitude_transition.canonical_nominal"
     wide_id = "1d.altitude_transition.wide"
 
+    service.set_lifecycle_state(
+        canonical_id,
+        LifecycleState.ACTIVE_DEVELOPMENT,
+        actor_id="operator",
+        reason="track canonical development",
+    )
+    service.set_lifecycle_state(
+        wide_id,
+        LifecycleState.PROMOTED,
+        actor_id="operator",
+        reason="record completed wide case",
+    )
     service.set_active(canonical_id, actor_id="operator", reason="start canonical")
     service.set_active(wide_id, actor_id="operator", reason="start wide")
 
     assert service.state.active_case_id == wide_id
-    assert service.state.lifecycle[canonical_id].state is LifecycleState.READY
-    assert service.state.lifecycle[wide_id].state is LifecycleState.ACTIVE_DEVELOPMENT
+    assert service.state.lifecycle[canonical_id].state is LifecycleState.ACTIVE_DEVELOPMENT
+    assert service.state.lifecycle[wide_id].state is LifecycleState.PROMOTED
+
+
+def test_lifecycle_status_change_does_not_select_a_mission(tmp_path: Path) -> None:
+    service = CampaignService(
+        catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
+        state_directory=tmp_path / "campaign",
+    )
+    case_id = "1d.altitude_transition.canonical_nominal"
+
+    service.set_lifecycle_state(
+        case_id,
+        LifecycleState.ACTIVE_DEVELOPMENT,
+        actor_id="operator",
+        reason="track active development status",
+    )
+
+    assert service.state.lifecycle[case_id].state is LifecycleState.ACTIVE_DEVELOPMENT
+    assert service.state.active_case_id is None
+    assert service.state.locked_inputs is None
+
+
+def test_executable_dynamic_mission_selection_ignores_prerequisite_progress(
+    tmp_path: Path,
+) -> None:
+    service = CampaignService(
+        catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
+        state_directory=tmp_path / "campaign",
+    )
+    case_id = "1d.online_obstacle_replan.dynamic_nominal"
+    prerequisite_id = "1d.point_to_point_relocation.canonical_nominal"
+
+    assert service.state.lifecycle[prerequisite_id].state is LifecycleState.DEFINED_NOT_RUN
+
+    lock = service.set_active(
+        case_id,
+        actor_id="operator",
+        reason="select executable mission directly",
+    )
+
+    assert lock.case_id == case_id
+    assert service.state.active_case_id == case_id
+    assert service.state.lifecycle[prerequisite_id].state is LifecycleState.DEFINED_NOT_RUN
 
 
 def test_child_cannot_widen_frozen_replanning_budget(tmp_path: Path) -> None:
@@ -337,7 +564,7 @@ def test_selecting_another_case_is_rejected_while_a_run_is_active(tmp_path: Path
     assert service.state.active_case_id == first_id
 
 
-def test_startup_repairs_legacy_multiple_in_progress_cases(tmp_path: Path) -> None:
+def test_startup_preserves_statuses_independently_from_selected_case(tmp_path: Path) -> None:
     state_directory = tmp_path / "campaign"
     service = CampaignService(
         catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
@@ -346,13 +573,18 @@ def test_startup_repairs_legacy_multiple_in_progress_cases(tmp_path: Path) -> No
     active_id = "1d.altitude_transition.canonical_nominal"
     stale_id = "1d.altitude_transition.wide"
     service.set_active(active_id, actor_id="operator", reason="select canonical")
+    active = service.state.lifecycle[active_id].transition(
+        LifecycleState.ACTIVE_DEVELOPMENT,
+        actor_id="operator",
+        reason="track canonical development",
+    )
     stale = service.state.lifecycle[stale_id].transition(
         LifecycleState.ACTIVE_DEVELOPMENT,
-        actor_id="legacy-client",
-        reason="legacy client retained a second in-progress case",
+        actor_id="operator",
+        reason="track wide development",
     )
     service._state = service.state.model_copy(update={
-        "lifecycle": {**service.state.lifecycle, stale_id: stale},
+        "lifecycle": {**service.state.lifecycle, active_id: active, stale_id: stale},
     })
     service._persist()
 
@@ -363,7 +595,7 @@ def test_startup_repairs_legacy_multiple_in_progress_cases(tmp_path: Path) -> No
 
     assert restored.state.active_case_id == active_id
     assert restored.state.lifecycle[active_id].state is LifecycleState.ACTIVE_DEVELOPMENT
-    assert restored.state.lifecycle[stale_id].state is LifecycleState.READY
+    assert restored.state.lifecycle[stale_id].state is LifecycleState.ACTIVE_DEVELOPMENT
 
 
 def test_comment_moves_case_to_review_and_completion_keeps_comment(tmp_path: Path) -> None:
@@ -414,7 +646,7 @@ def test_comment_moves_case_to_review_and_completion_keeps_comment(tmp_path: Pat
 
     assert commented_review.operator_observations == ("The run is ready for joint review",)
     assert service.state.lifecycle[case_id].state is LifecycleState.BASELINED
-    assert service.state.active_case_id is None
+    assert service.state.active_case_id == case_id
     retained_snapshot = service.state.snapshots[0]
     assert retained_snapshot.image_available is False
     assert retained_snapshot.operator_comment == "Drift remained visible"
@@ -482,6 +714,15 @@ def test_selected_completed_case_remains_selected_for_a_repeat_run(tmp_path: Pat
     assert service.state.lifecycle[case_id].state is LifecycleState.PROMOTED
     service.set_active(case_id, actor_id="operator", reason="repeat completed mission")
     assert service.state.lifecycle[case_id].state is LifecycleState.PROMOTED
+
+    restored = CampaignService(
+        catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
+        state_directory=tmp_path / "campaign",
+    )
+
+    assert restored.state.active_case_id == case_id
+    assert restored.active_case.case_id == case_id
+    assert restored.state.lifecycle[case_id].state is LifecycleState.PROMOTED
 
 
 def test_explicit_lifecycle_choice_can_bypass_evidence_workflow(tmp_path: Path) -> None:

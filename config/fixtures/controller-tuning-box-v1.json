@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "fixture_id": "controller-tuning-box",
+  "fixture_version": "1.1-draft",
+  "survey_status": "AWAITING_MEASUREMENTS",
+  "survey_date": null,
+  "survey_frame": {
+    "origin": "CLOSEST_INNER_CORNER",
+    "positive_x_axis": "SHORT_SIDE",
+    "positive_y_axis": "LONG_SIDE",
+    "positive_z_axis": "UP"
+  },
+  "placement_baseline": {
+    "center_reference": "DRONE_CENTER_OVER_SELECTED_FLOOR_X",
+    "heading_zero": "FRONT_TOWARD_POSITIVE_Y",
+    "heading_positive_90": "FRONT_TOWARD_POSITIVE_X",
+    "positive_heading_direction": "FROM_POSITIVE_Y_TOWARD_POSITIVE_X",
+    "body_positive_x_axis": "FRONT",
+    "body_positive_y_axis": "LEFT",
+    "body_positive_z_axis": "UP",
+    "active_range_sensors": [
+      "front",
+      "back",
+      "left",
+      "right"
+    ],
+    "excluded_range_sensors": [
+      "up",
+      "down"
+    ]
+  },
+  "dimensions": {
+    "inside_x_m": 1.062,
+    "inside_y_m": 1.26,
+    "wall_height_m": null
+  },
+  "positive_x_wall_label": null,
+  "positive_y_wall_label": null,
+  "nominal_hover_height_m": null,
+  "safety_clearance_m": null,
+  "floor_markers": [
+    {
+      "marker_id": "A",
+      "x_m": 0.295,
+      "y_m": 0.276,
+      "coordinate_source": "SCAN_DERIVED",
+      "coordinate_uncertainty_m": 0.02,
+      "fit_residual_rms_m": null
+    },
+    {
+      "marker_id": "B",
+      "x_m": 0.406,
+      "y_m": 1.058,
+      "coordinate_source": "SCAN_DERIVED",
+      "coordinate_uncertainty_m": 0.02,
+      "fit_residual_rms_m": null
+    },
+    {
+      "marker_id": "C",
+      "x_m": 0.807,
+      "y_m": 0.832,
+      "coordinate_source": "SCAN_DERIVED",
+      "coordinate_uncertainty_m": 0.02,
+      "fit_residual_rms_m": null
+    },
+    {
+      "marker_id": "D",
+      "x_m": 0.689,
+      "y_m": 0.189,
+      "coordinate_source": "SCAN_DERIVED",
+      "coordinate_uncertainty_m": 0.02,
+      "fit_residual_rms_m": null
+    },
+    {
+      "marker_id": "E",
+      "x_m": 0.603,
+      "y_m": 0.665,
+      "coordinate_source": "DISTANCE_TRILATERATED",
+      "coordinate_uncertainty_m": 0.025,
+      "fit_residual_rms_m": 0.0042
+    }
+  ],
+  "marker_distances": [
+    {
+      "first_marker_id": "E",
+      "second_marker_id": "C",
+      "distance_m": 0.268
+    },
+    {
+      "first_marker_id": "E",
+      "second_marker_id": "B",
+      "distance_m": 0.441
+    },
+    {
+      "first_marker_id": "E",
+      "second_marker_id": "A",
+      "distance_m": 0.502
+    }
+  ],
+  "stations": [],
+  "sensor_mounts": [
+    {
+      "sensor_id": "front",
+      "origin_x_m": 0.012,
+      "origin_y_m": 0.0,
+      "origin_z_m": 0.0,
+      "direction_x": 1.0,
+      "direction_y": 0.0,
+      "direction_z": 0.0,
+      "position_uncertainty_m": null,
+      "angular_uncertainty_deg": null
+    },
+    {
+      "sensor_id": "back",
+      "origin_x_m": -0.012,
+      "origin_y_m": 0.0,
+      "origin_z_m": 0.0,
+      "direction_x": -1.0,
+      "direction_y": 0.0,
+      "direction_z": 0.0,
+      "position_uncertainty_m": null,
+      "angular_uncertainty_deg": null
+    },
+    {
+      "sensor_id": "left",
+      "origin_x_m": 0.0,
+      "origin_y_m": 0.012,
+      "origin_z_m": 0.0,
+      "direction_x": 0.0,
+      "direction_y": 1.0,
+      "direction_z": 0.0,
+      "position_uncertainty_m": null,
+      "angular_uncertainty_deg": null
+    },
+    {
+      "sensor_id": "right",
+      "origin_x_m": 0.0,
+      "origin_y_m": -0.012,
+      "origin_z_m": 0.0,
+      "direction_x": 0.0,
+      "direction_y": -1.0,
+      "direction_z": 0.0,
+      "position_uncertainty_m": null,
+      "angular_uncertainty_deg": null
+    }
+  ],
+  "wall_material": "cardboard",
+  "wall_finish": null,
+  "floor_texture_id": null,
+  "lighting_configuration": null,
+  "environmental_notes": "The base footprint and A-D floor-marker centers are preliminary scan-derived values. Marker E is trilaterated from EC=0.268 m, EB=0.441 m, and EA=0.502 m. Front, back, left, and right laser optical centers are configured 0.012 m from the drone center; up is excluded because the box is open and down is excluded from wall-based PID geometry. The cardboard walls bow with height; wall height/profile, flight stations, hover heights, world-frame wall labels, and ranger angular geometry uncertainty remain unmeasured."
+}

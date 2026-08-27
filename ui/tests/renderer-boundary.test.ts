@@ -463,7 +463,7 @@ describe("3D renderer boundary", () => {
     expect(renderer).toContain('aria-label="Zoom out from selected drone"');
   });
 
-  it("keeps detailed room and provenance metadata in on-demand disclosures", async () => {
+  it("keeps the flight surface focused on current telemetry instead of evidence metadata", async () => {
     const control = await readFile(new URL("../app/components/ControlCenter.tsx", import.meta.url), "utf8");
     const renderer = await readFile(new URL("../app/components/RoomScene.tsx", import.meta.url), "utf8");
     const telemetry = await readFile(new URL("../app/components/TelemetryDock.tsx", import.meta.url), "utf8");
@@ -471,12 +471,13 @@ describe("3D renderer boundary", () => {
     expect(control).not.toContain("workspace-header");
     expect(renderer).not.toContain("room-title-overlay");
     expect(renderer).not.toContain("room-readout");
-    expect(renderer).not.toContain("scene-legend");
+    expect(renderer).not.toContain('className="scene-legend"');
     expect(renderer).not.toContain("canvas-help");
     expect(renderer).not.toContain('className="room-scene-label"');
-    expect(telemetry).toContain("World volume");
-    expect(telemetry).toContain('<summary>Evidence');
-    expect(telemetry).toContain("formatClockContext(data.provenance)");
+    expect(telemetry).not.toContain("World volume");
+    expect(telemetry).not.toContain('<summary>Evidence');
+    expect(telemetry).not.toContain("formatClockContext(data.provenance)");
+    expect(telemetry).toContain('aria-label="Telemetry category"');
   });
 
   it("uses a full-bleed scene with independent liquid surfaces instead of dashboard chrome", async () => {
@@ -484,19 +485,20 @@ describe("3D renderer boundary", () => {
     const styles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
     expect(control).toContain('className="workspace"');
     expect(control).toContain('className="mission-dock"');
-    expect(control).toContain("<RunFilesControl");
+    expect(control).not.toContain("<RunFilesControl");
     expect(control).toContain("<FlightReadout");
     expect(control).not.toContain('className="control-row"');
     expect(control).not.toContain('className="topbar"');
     expect(control).not.toContain('className="nav-rail"');
+    expect(control).not.toContain("twin-world-unavailable");
     expect(styles).toMatch(/\.workspace \{ position: absolute; inset: 0;/);
     expect(styles).toMatch(/\.room-stage \{ position: absolute; inset: 0;/);
     expect(styles).toContain(".flight-readout {");
     expect(styles).toContain(".mission-dock {");
+    expect(styles).toMatch(/\.campaign-actions \.campaign-action-active \{[^\n]*background: var\(--warning\);/);
     expect(styles).toMatch(/\.scene-controls \{ z-index: 55;[^\n]*left: 50%;[^\n]*transform: translateX\(-50%\);/);
     expect(styles).toMatch(/\.mission-dock \{[\s\S]*?left: 16px;[\s\S]*?width: min\(320px,[\s\S]*?transform: none;/);
-    expect(control.indexOf("<RunFilesControl")).toBeGreaterThan(control.indexOf('className="mission-dock"'));
-    expect(styles).toMatch(/\.run-files-control \{[\s\S]*?bottom: 16px;[\s\S]*?left: 344px;/);
+    expect(styles).toMatch(/\.mission-panel \{[\s\S]*?left: 16px;[\s\S]*?width: min\(320px,/);
     expect(control.indexOf('className="flight-quick-actions"')).toBeLessThan(control.indexOf("<FlightReadout"));
     expect(styles).toMatch(/\.flight-quick-actions \{[\s\S]*?right: 414px;[\s\S]*?bottom: 16px;/);
     expect(styles).toContain(".control-center.flight-expanded .flight-quick-actions");
@@ -508,5 +510,8 @@ describe("3D renderer boundary", () => {
     expect(fleetPanel).toContain("right: auto;");
     expect(fleetPanel).toContain("left: 16px;");
     expect(styles).toContain(".flight-readout.is-expanded { top: 80px;");
+    expect(styles).toContain(".twin-vector-grid { display: grid; grid-template-columns: 1fr; gap: 24px;");
+    expect(styles).toContain(".twin-vector-bars { padding: 0; border-radius: 0; background: transparent; }");
+    expect(styles).toContain(".twin-vector-bars .axis-meter { grid-template-columns: 24px minmax(0,1fr) minmax(96px,120px); gap: 12px; min-height: 28px; }");
   });
 });

@@ -40,6 +40,7 @@ class EvidenceRecorder:
         self.shutdown_dropped_events = 0
         self.last_error: str | None = None
         self.timing_trace: BoundedTimingTrace | None = None
+        self.service_managed_execution_ids: set[str] = set()
 
     async def start(self) -> None:
         if self._task is not None:
@@ -78,10 +79,12 @@ class EvidenceRecorder:
         while True:
             event = await self.subscription.queue.get()
             try:
-                if isinstance(event.payload, MissionResultPayload):
-                    await asyncio.to_thread(self._record, event)
-                else:
-                    self._record(event)
+                # SQLite uses FULL durability for every retained event. Running that
+                # commit on the control event loop can pause telemetry consumption
+                # long enough to trip the 0.25 s freshness watchdog, especially on
+                # later realtime repeats after filesystem pressure builds. Keep the
+                # ordered recorder queue, but move every durable write off-loop.
+                await asyncio.to_thread(self._record, event)
                 self.persisted_events += 1
                 self._record_timing(event)
             except Exception as error:
@@ -96,8 +99,11 @@ class EvidenceRecorder:
             self.store.begin_run(event.payload.run)
         self.store.append_event(event)
         if isinstance(event.payload, MissionResultPayload):
-            self.store.complete_run(event.payload.result)
-            self.store.materialize_run_files_for_run(event.payload.result.mission_run_id)
+            result = event.payload.result
+            self.store.complete_run(result)
+            execution_id = result.mission_execution_id or result.mission_run_id
+            if execution_id not in self.service_managed_execution_ids:
+                self.store.materialize_run_files_for_run(result.mission_run_id)
 
     def _record_timing(self, event: EvidenceEvent) -> None:
         trace = self.timing_trace

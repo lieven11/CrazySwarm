@@ -5,8 +5,8 @@ import json
 import secrets
 import time
 import uuid
-from collections.abc import AsyncIterator, Awaitable, Callable
-from contextlib import asynccontextmanager, suppress
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
+from contextlib import asynccontextmanager, contextmanager, suppress
 from pathlib import Path
 from typing import Any, Literal, TypeVar, cast
 from urllib.parse import quote
@@ -14,7 +14,7 @@ from urllib.parse import quote
 from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Query, Request, WebSocket
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from starlette.websockets import WebSocketDisconnect
 
 from crazyswarm_app import __version__
@@ -75,6 +75,10 @@ from crazyswarm_app.campaign.service import (
     ReviewItem,
 )
 from crazyswarm_app.campaign.submissions import (
+    BASELINE_SUBMISSION_ID,
+    CoordinationPreparationRequest,
+    MotionPreparationRequest,
+    motion_preparation_limits_for_case,
     planning_submissions_for_case,
     registry_row_for_case,
     submissions_for_case,
@@ -115,6 +119,31 @@ from crazyswarm_app.fleet.execution import ExecutionCoordinator, ExecutionStatus
 from crazyswarm_app.fleet.planning import MissionDeploymentPlan, plan_mission_deployment
 from crazyswarm_app.fleet.preparation import FleetPreparation
 from crazyswarm_app.fleet.qualification import run_persistent_fleet_qualification
+from crazyswarm_app.hardware.basic_flight_lab import (
+    BasicFlightLabCatalog,
+    BasicFlightLabRun,
+    BasicFlightLabRunRequest,
+    BasicFlightLabService,
+    MotorActuationStatus,
+    MotorBenchSession,
+    MotorBenchStartRequest,
+    MotorBenchStopRequest,
+    MotorBenchUpdateRequest,
+    PhysicalBasicFlightReadiness,
+    PhysicalBasicFlightRunRequest,
+    PhysicalFlightOperationStatus,
+)
+from crazyswarm_app.hardware.observation_twin import (
+    ObservationTwinService,
+    PhysicalCommandTarget,
+    PhysicalTwinBindingRequest,
+    PhysicalTwinConfirmRequest,
+    PhysicalTwinStatus,
+)
+from crazyswarm_app.hardware.ownership import (
+    PhysicalOperationAdmissionBusy,
+    claim_physical_operation_admission,
+)
 from crazyswarm_app.missions.planning import (
     MissionPlanReceipt,
     MissionPlanStatus,
@@ -150,11 +179,49 @@ from crazyswarm_app.twin.physical_handoff import (
     PhysicalTwinHandoffRequest,
     assess_physical_twin_handoff,
 )
+from crazyswarm_app.vehicles.crazyflie import CrazyflieVehicle
 from crazyswarm_app.vehicles.providers import SoftwareBackendVehicleProvider
 
 MutationResultT = TypeVar("MutationResultT")
 
 LIVE_STATE_HISTORY_LIMIT = 10
+CAMPAIGN_SNAPSHOT_CAPTURE_ENABLED = False
+CAMPAIGN_AUTOMATIC_TWIN_RETENTION_ENABLED = False
+
+
+def _motion_preparation_from_query(
+    *,
+    balance: int | None,
+    speed_m_s: float | None,
+    accuracy_m: float | None,
+    smoothness: int | None,
+) -> MotionPreparationRequest | None:
+    if all(value is None for value in (balance, speed_m_s, accuracy_m, smoothness)):
+        return None
+    return MotionPreparationRequest(
+        balance=50 if balance is None else balance,
+        speed_m_s=speed_m_s,
+        accuracy_m=accuracy_m,
+        smoothness=smoothness,
+    )
+
+
+async def prepare_campaign_preview_off_loop(
+    service: CampaignService,
+    submission_id: str | None,
+    planning_submission_id: str | None,
+    *,
+    motion_preparation_request: MotionPreparationRequest | None,
+    coordination_preparation_request: CoordinationPreparationRequest | None = None,
+) -> tuple[Any, Any, Any, Any]:
+    """Keep bounded planning for interactive sliders off the API event loop."""
+
+    return await service.preview_active_off_loop(
+        submission_id,
+        planning_submission_id,
+        motion_preparation_request=motion_preparation_request,
+        coordination_preparation_request=coordination_preparation_request,
+    )
 
 
 def retain_campaign_twin_evidence(
@@ -213,13 +280,43 @@ def retain_campaign_twin_evidence(
         / "telemetry.csv"
     )
     try:
-        runtime.twins.ingest_telemetry_csv(record.session_id, telemetry_path.read_bytes())
+        runtime.twins.ingest_telemetry_csv(
+            record.session_id,
+            telemetry_path.read_bytes(),
+            # The exact high-rate CSV remains the review oracle. The derived twin
+            # retains the configured evidence cadence plus causal transitions.
+            minimum_source_period_s=runtime.config.telemetry_period_s,
+        )
     except Exception:
         runtime.twins.complete(record.session_id, failed=True)
         raise
     runtime.twins.complete(record.session_id)
     service.link_twin_session(review.run_id, record.session_id)
     return record.session_id
+
+
+async def retain_campaign_twin_evidence_off_loop(
+    runtime: ApplicationRuntime,
+    service: CampaignService,
+    review: ReviewItem,
+    *,
+    curriculum_stage_id: str | None = None,
+) -> str | None:
+    """Retain terminal twin evidence without blocking API liveness.
+
+    CSV conversion, hash validation, append-only journal writes, and fsyncs can take
+    several seconds once a campaign has produced a substantial telemetry artifact.
+    They are terminal evidence work, not control-loop work, so keep them away from
+    the event loop that serves health checks and live simulator telemetry.
+    """
+
+    return await asyncio.to_thread(
+        retain_campaign_twin_evidence,
+        runtime,
+        service,
+        review,
+        curriculum_stage_id=curriculum_stage_id,
+    )
 
 
 def generate_local_token() -> str:
@@ -231,15 +328,76 @@ def create_app(
     *,
     local_token: str,
     manage_runtime: bool = True,
+    observation_twin_service: ObservationTwinService | None = None,
+    physical_hardware_enabled: bool | None = None,
 ) -> FastAPI:
     authenticator = LocalAuthenticator(local_token)
     idempotency = IdempotencyStore()
     campaign_run_tasks: set[asyncio.Task[None]] = set()
+    # Repository identity is process metadata, not a liveness dependency. Running
+    # three Git subprocesses on every supervisor probe can block the API event loop
+    # while terminal evidence is being flushed, which makes a healthy simulator look
+    # offline and can cause the dashboard supervisor to restart it. Capture the
+    # process-start snapshot once and keep /health bounded to in-memory state.
+    health_provenance = repository_provenance()
+
+    hardware_enabled = (
+        observation_twin_service is not None
+        if physical_hardware_enabled is None
+        else physical_hardware_enabled
+    )
+    physical_twin = observation_twin_service or ObservationTwinService(runtime)
+
+    async def borrow_physical_flight_vehicle(
+        vehicle_id: str,
+        target: PhysicalCommandTarget,
+    ) -> CrazyflieVehicle:
+        return await physical_twin.borrow_command_vehicle(
+            vehicle_id=vehicle_id,
+            selected_uri=target.selected_uri,
+            telemetry_listener=physical_twin.accept_operation_sample,
+        )
+
+    basic_flight_lab = BasicFlightLabService(
+        runtime,
+        motor_bench_terminal_callback=physical_twin.resume,
+        physical_flight_terminal_callback=physical_twin.resume,
+        physical_telemetry_callback=physical_twin.accept_operation_sample,
+        physical_vehicle_provider=borrow_physical_flight_vehicle,
+    )
+
+    def require_physical_hardware() -> None:
+        if hardware_enabled:
+            return
+        raise CrazySwarmError(
+            ErrorCode.INVALID_STATE,
+            "physical hardware is disabled in this isolated runtime; use the "
+            "operator-owned dashboard service",
+        )
+
+    @contextmanager
+    def admit_physical_operation() -> Iterator[None]:
+        try:
+            with claim_physical_operation_admission(runtime.config.cache_directory):
+                yield
+        except PhysicalOperationAdmissionBusy as error:
+            raise CrazySwarmError(ErrorCode.INVALID_STATE, str(error)) from error
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         if manage_runtime:
             await runtime.start()
+        # A direct-PWM parameter survives loss of the client process and radio
+        # disconnect. Recover a persisted unconfirmed session before observation
+        # can reacquire the Crazyradio and before the API reports an idle actuator.
+        if hardware_enabled:
+            fallback_target = None
+            with suppress(CrazySwarmError):
+                fallback_target = physical_twin.command_target()
+            await basic_flight_lab.recover_stale_motor_output(
+                fallback_target=fallback_target,
+            )
+            await physical_twin.start()
         try:
             yield
         finally:
@@ -247,6 +405,9 @@ def create_app(
                 task.cancel()
             if campaign_run_tasks:
                 await asyncio.gather(*campaign_run_tasks, return_exceptions=True)
+            await basic_flight_lab.shutdown()
+            if hardware_enabled:
+                await physical_twin.shutdown()
             if manage_runtime:
                 await runtime.stop()
 
@@ -259,6 +420,9 @@ def create_app(
         lifespan=lifespan,
     )
     app.state.runtime = runtime
+    app.state.observation_twin_service = physical_twin
+    app.state.basic_flight_lab_service = basic_flight_lab
+    app.state.physical_hardware_enabled = hardware_enabled
     campaign_timing = BoundedTimingTrace("campaign-runtime-v1", retention_limit=20_000)
     app.state.campaign_timing = campaign_timing
     runtime.recorder.timing_trace = campaign_timing
@@ -266,7 +430,7 @@ def create_app(
         CORSMiddleware,
         allow_origins=list(runtime.config.api.allowed_origins),
         allow_credentials=False,
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "PUT"],
         allow_headers=["X-Local-Token", "X-Client-ID", "Idempotency-Key", "Content-Type"],
     )
 
@@ -422,15 +586,495 @@ def create_app(
     async def schema() -> dict[str, Any]:
         return app.openapi()
 
+    @router.get("/physical-twin/status", response_model=PhysicalTwinStatus)
+    async def physical_twin_status() -> PhysicalTwinStatus:
+        return physical_twin.status()
+
+    @router.get("/physical-twin/lab/catalog", response_model=BasicFlightLabCatalog)
+    async def physical_twin_lab_catalog() -> BasicFlightLabCatalog:
+        return basic_flight_lab.catalog()
+
+    @router.post("/physical-twin/lab/runs", response_model=BasicFlightLabRun)
+    async def run_physical_twin_lab_rehearsal(
+        body: BasicFlightLabRunRequest,
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> BasicFlightLabRun:
+        async def operation() -> BasicFlightLabRun:
+            try:
+                return await basic_flight_lab.run(body)
+            except ValueError as error:
+                raise CrazySwarmError(ErrorCode.INVALID_COMMAND, str(error)) from error
+
+        return await mutate(
+            request,
+            context,
+            action="run_basic_flight_fast_sim_rehearsal",
+            vehicle_id="twin-lab-fast-sim",
+            operation=operation,
+        )
+
+    @router.post("/physical-twin/lab/physical-runs", response_model=BasicFlightLabRun)
+    async def run_physical_twin_lab_motion(
+        body: PhysicalBasicFlightRunRequest,
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> BasicFlightLabRun:
+        require_physical_hardware()
+        async def operation() -> BasicFlightLabRun:
+            target = physical_twin.command_target()
+            await physical_twin.suspend(
+                reason="Physical mission owns the radio",
+                owner=context.client_id,
+                retain_connection=True,
+            )
+            try:
+                return await basic_flight_lab.run_physical(
+                    body,
+                    target=target,
+                    operator_id=context.client_id,
+                )
+            except RuntimeError as error:
+                raise CrazySwarmError(ErrorCode.PREFLIGHT_FAILED, str(error)) from error
+            finally:
+                with suppress(Exception):
+                    await physical_twin.resume()
+
+        return await mutate(
+            request,
+            context,
+            action="run_basic_flight_contained_physical",
+            vehicle_id="configured-physical-twin",
+            operation=operation,
+        )
+
+    @router.get(
+        "/physical-twin/lab/physical-flight",
+        response_model=PhysicalFlightOperationStatus,
+    )
+    async def physical_flight_status() -> PhysicalFlightOperationStatus:
+        twin_status = physical_twin.status()
+        observed = twin_status.observed
+        fallback_target = None
+        with suppress(CrazySwarmError):
+            candidate = physical_twin.command_target()
+            if candidate.observed_identity_sha256 is not None:
+                fallback_target = candidate
+        return await basic_flight_lab.reconcile_physical_flight_stop(
+            observation_current=observed is not None and observed.freshness == "CURRENT",
+            armed=None if observed is None else observed.armed,
+            flying=None if observed is None else observed.flying,
+            auto_arming=physical_twin.supervisor_auto_arming(),
+            fallback_target=fallback_target,
+        )
+
+    @router.post(
+        "/physical-twin/lab/physical-flight/start",
+        response_model=PhysicalFlightOperationStatus,
+    )
+    async def start_physical_flight(
+        body: PhysicalBasicFlightRunRequest,
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> PhysicalFlightOperationStatus:
+        require_physical_hardware()
+
+        async def operation() -> PhysicalFlightOperationStatus:
+            with admit_physical_operation():
+                twin_status = physical_twin.status()
+                observed = twin_status.observed
+                actuation = await basic_flight_lab.reconcile_motor_reboot_required(
+                    observation_current=(
+                        twin_status.state.value == "PAIRED"
+                        and observed is not None
+                        and observed.freshness == "CURRENT"
+                    ),
+                    faults=() if observed is None else observed.faults,
+                )
+                if actuation.stop_required:
+                    raise CrazySwarmError(
+                        ErrorCode.PREFLIGHT_FAILED,
+                        "Play is blocked until direct motor output is confirmed stopped",
+                    )
+                if actuation.reboot_required:
+                    raise CrazySwarmError(
+                        ErrorCode.PREFLIGHT_FAILED,
+                        "Power cycle the Crazyflie before starting another physical action",
+                    )
+                if (
+                    twin_status.state.value != "PAIRED"
+                    or observed is None
+                    or observed.freshness != "CURRENT"
+                    or observed.armed is None
+                    or observed.flying is not False
+                ):
+                    raise CrazySwarmError(
+                        ErrorCode.PREFLIGHT_FAILED,
+                        "Play is blocked until fresh supervisor telemetry confirms the "
+                        "paired physical drone is not flying and reports a known arm state",
+                    )
+                target = physical_twin.command_target()
+                await physical_twin.suspend(
+                    reason="Physical mission owns the radio",
+                    owner=context.client_id,
+                    retain_connection=True,
+                )
+                try:
+                    return await basic_flight_lab.start_physical_flight(
+                        body,
+                        target=target,
+                        operator_id=context.client_id,
+                    )
+                except RuntimeError as error:
+                    with suppress(Exception):
+                        await physical_twin.resume()
+                    raise CrazySwarmError(ErrorCode.PREFLIGHT_FAILED, str(error)) from error
+                except Exception:
+                    with suppress(Exception):
+                        await physical_twin.resume()
+                    raise
+
+        return await mutate(
+            request,
+            context,
+            action="start_basic_flight_contained_physical",
+            vehicle_id="configured-physical-twin",
+            operation=operation,
+        )
+
+    @router.post(
+        "/physical-twin/lab/physical-flight/flip",
+        response_model=PhysicalFlightOperationStatus,
+    )
+    async def trigger_acrobatics_flip(
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> PhysicalFlightOperationStatus:
+        require_physical_hardware()
+
+        async def operation() -> PhysicalFlightOperationStatus:
+            with admit_physical_operation():
+                try:
+                    return await basic_flight_lab.request_acrobatics_flip()
+                except RuntimeError as error:
+                    raise CrazySwarmError(ErrorCode.PREFLIGHT_FAILED, str(error)) from error
+
+        return await mutate(
+            request,
+            context,
+            action="trigger_cushioned_acrobatics_flip",
+            vehicle_id="configured-physical-twin",
+            operation=operation,
+        )
+
+    @router.post(
+        "/physical-twin/lab/physical-flight/abort",
+        response_model=PhysicalFlightOperationStatus,
+    )
+    async def abort_physical_flight(
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> PhysicalFlightOperationStatus:
+        require_physical_hardware()
+
+        async def operation() -> PhysicalFlightOperationStatus:
+            with admit_physical_operation():
+                await physical_twin.suspend(
+                    reason="Abort and land owns the radio",
+                    owner=context.client_id,
+                )
+                try:
+                    status = await basic_flight_lab.request_physical_flight_abort(
+                        reason="operator requested abort and land",
+                    )
+                    if not status.stop_required:
+                        with suppress(Exception):
+                            await physical_twin.resume()
+                    return status
+                except Exception:
+                    with suppress(Exception):
+                        await physical_twin.resume()
+                    raise
+
+        return await mutate(
+            request,
+            context,
+            action="abort_basic_flight_contained_physical",
+            vehicle_id="configured-physical-twin",
+            operation=operation,
+        )
+
+    @router.post(
+        "/physical-twin/lab/physical-readiness",
+        response_model=PhysicalBasicFlightReadiness,
+    )
+    async def assess_physical_twin_lab_readiness(
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> PhysicalBasicFlightReadiness:
+        require_physical_hardware()
+        async def operation() -> PhysicalBasicFlightReadiness:
+            with admit_physical_operation():
+                target = physical_twin.command_target()
+                await physical_twin.suspend(
+                    reason="Readiness check owns the radio",
+                    owner=context.client_id,
+                )
+                try:
+                    return await basic_flight_lab.assess_physical_readiness(target=target)
+                finally:
+                    with suppress(Exception):
+                        await physical_twin.resume()
+
+        return await mutate(
+            request,
+            context,
+            action="assess_basic_flight_physical_readiness",
+            vehicle_id="configured-physical-twin",
+            operation=operation,
+        )
+
+    @router.post(
+        "/physical-twin/lab/motor-bench/start",
+        response_model=MotorBenchSession,
+    )
+    async def start_physical_motor_bench(
+        body: MotorBenchStartRequest,
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> MotorBenchSession:
+        require_physical_hardware()
+        async def operation() -> MotorBenchSession:
+            with admit_physical_operation():
+                target = physical_twin.command_target()
+                await physical_twin.suspend(
+                    reason="Motor bench owns the radio",
+                    owner=context.client_id,
+                )
+                try:
+                    return await basic_flight_lab.start_motor_bench(
+                        body,
+                        target=target,
+                        operator_id=context.client_id,
+                    )
+                except RuntimeError as error:
+                    with suppress(Exception):
+                        await physical_twin.resume()
+                    raise CrazySwarmError(ErrorCode.PREFLIGHT_FAILED, str(error)) from error
+                except Exception:
+                    with suppress(Exception):
+                        await physical_twin.resume()
+                    raise
+
+        return await mutate(
+            request,
+            context,
+            action="start_props_off_motor_bench",
+            vehicle_id="configured-physical-twin",
+            operation=operation,
+        )
+
+    @router.get(
+        "/physical-twin/lab/motor-actuation",
+        response_model=MotorActuationStatus,
+    )
+    async def physical_motor_actuation_status() -> MotorActuationStatus:
+        twin_status = physical_twin.status()
+        observed = twin_status.observed
+        return await basic_flight_lab.reconcile_motor_reboot_required(
+            observation_current=(
+                twin_status.state.value == "PAIRED"
+                and observed is not None
+                and observed.freshness == "CURRENT"
+            ),
+            faults=() if observed is None else observed.faults,
+        )
+
+    @router.post(
+        "/physical-twin/lab/motor-actuation/stop",
+        response_model=MotorActuationStatus,
+    )
+    async def stop_all_physical_motor_output(
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> MotorActuationStatus:
+        require_physical_hardware()
+        async def operation() -> MotorActuationStatus:
+            with admit_physical_operation():
+                fallback_target = None
+                with suppress(CrazySwarmError):
+                    fallback_target = physical_twin.command_target()
+                await physical_twin.suspend(
+                    reason="Motor stop owns the radio",
+                    owner=context.client_id,
+                )
+                try:
+                    return await basic_flight_lab.stop_all_motor_output(
+                        fallback_target=fallback_target,
+                    )
+                finally:
+                    with suppress(Exception):
+                        await physical_twin.resume()
+
+        return await mutate(
+            request,
+            context,
+            action="stop_all_direct_motor_output",
+            vehicle_id="configured-physical-twin",
+            operation=operation,
+        )
+
+    @router.post(
+        "/physical-twin/lab/motor-bench/output",
+        response_model=MotorBenchSession,
+    )
+    async def update_physical_motor_bench(
+        body: MotorBenchUpdateRequest,
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> MotorBenchSession:
+        require_physical_hardware()
+        async def operation() -> MotorBenchSession:
+            with admit_physical_operation():
+                try:
+                    return await basic_flight_lab.update_motor_bench(body)
+                except RuntimeError as error:
+                    raise CrazySwarmError(ErrorCode.INVALID_STATE, str(error)) from error
+
+        return await mutate(
+            request,
+            context,
+            action="update_props_off_motor_bench",
+            vehicle_id="configured-physical-twin",
+            operation=operation,
+        )
+
+    @router.post(
+        "/physical-twin/lab/motor-bench/stop",
+        response_model=MotorBenchSession,
+    )
+    async def stop_physical_motor_bench(
+        body: MotorBenchStopRequest,
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> MotorBenchSession:
+        require_physical_hardware()
+        async def operation() -> MotorBenchSession:
+            with admit_physical_operation():
+                try:
+                    return await basic_flight_lab.stop_motor_bench(body)
+                except RuntimeError as error:
+                    raise CrazySwarmError(ErrorCode.INVALID_STATE, str(error)) from error
+                finally:
+                    with suppress(Exception):
+                        await physical_twin.resume()
+
+        return await mutate(
+            request,
+            context,
+            action="stop_props_off_motor_bench",
+            vehicle_id="configured-physical-twin",
+            operation=operation,
+        )
+
+    @router.get("/physical-twin/live")
+    async def physical_twin_live() -> StreamingResponse:
+        async def events() -> AsyncIterator[str]:
+            async for frame in physical_twin.live_stream():
+                payload = json.dumps(
+                    frame.model_dump(mode="json"),
+                    separators=(",", ":"),
+                )
+                yield (f"id: {frame.live_sequence}\nevent: physical-twin\ndata: {payload}\n\n")
+
+        return StreamingResponse(
+            events(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache, no-transform",
+                "X-Accel-Buffering": "no",
+            },
+        )
+
+    @router.put("/physical-twin/binding", response_model=PhysicalTwinStatus)
+    async def configure_physical_twin(
+        body: PhysicalTwinBindingRequest,
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> PhysicalTwinStatus:
+        async def operation() -> PhysicalTwinStatus:
+            return await physical_twin.configure(body)
+
+        return await mutate(
+            request,
+            context,
+            action="configure_physical_twin_binding",
+            vehicle_id="physical-twin-observer",
+            operation=operation,
+        )
+
+    @router.post("/physical-twin/connect", response_model=PhysicalTwinStatus)
+    async def connect_physical_twin(
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> PhysicalTwinStatus:
+        require_physical_hardware()
+        async def operation() -> PhysicalTwinStatus:
+            return await physical_twin.connect()
+
+        return await mutate(
+            request,
+            context,
+            action="connect_physical_twin_observer",
+            vehicle_id="physical-twin-observer",
+            operation=operation,
+        )
+
+    @router.post("/physical-twin/confirm", response_model=PhysicalTwinStatus)
+    async def confirm_physical_twin(
+        body: PhysicalTwinConfirmRequest,
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> PhysicalTwinStatus:
+        require_physical_hardware()
+        async def operation() -> PhysicalTwinStatus:
+            return await physical_twin.confirm(body)
+
+        return await mutate(
+            request,
+            context,
+            action="confirm_physical_twin_identity",
+            vehicle_id="physical-twin-observer",
+            operation=operation,
+        )
+
+    @router.post("/physical-twin/disconnect", response_model=PhysicalTwinStatus)
+    async def disconnect_physical_twin(
+        request: Request,
+        context: OperatorContext = Depends(operator_context),
+    ) -> PhysicalTwinStatus:
+        async def operation() -> PhysicalTwinStatus:
+            return await physical_twin.disconnect()
+
+        return await mutate(
+            request,
+            context,
+            action="disconnect_physical_twin_observer",
+            vehicle_id="physical-twin-observer",
+            operation=operation,
+        )
+
     @router.get("/health")
     async def health() -> dict[str, Any]:
-        provenance = repository_provenance()
         return {
             "status": "ok",
             "version": __version__,
             "mode": runtime.supervisor.mode,
             "local_only": True,
-            **provenance.as_dict(),
+            "physical_hardware_runtime": (
+                "OPERATOR_OWNED" if hardware_enabled else "DISABLED"
+            ),
+            **health_provenance.as_dict(),
             "recorder": {
                 "persisted_events": runtime.recorder.persisted_events,
                 "shutdown_dropped_events": runtime.recorder.shutdown_dropped_events,
@@ -512,6 +1156,10 @@ def create_app(
             for submission in submissions
         }
         return {
+            "major_missions": service.catalog.major_mission_curriculum().model_dump(mode="json"),
+            "two_drone_missions": service.catalog.two_drone_mission_curriculum().model_dump(
+                mode="json"
+            ),
             "cases": [
                 {
                     **case.model_dump(mode="json"),
@@ -526,6 +1174,9 @@ def create_app(
                         "relationship": "IMMUTABLE_CASE_VARIATION",
                         "legacy_named_variations": list(case.named_variations),
                     },
+                    "motion_preparation_limits": motion_preparation_limits_for_case(
+                        case
+                    ).model_dump(mode="json"),
                     "submission_registry": registry_row_for_case(case).model_dump(mode="json"),
                     "submissions": [
                         submission.model_dump(mode="json")
@@ -536,7 +1187,13 @@ def create_app(
                                 service.missing_submission_prerequisites(case, submission)
                             ),
                             "run_eligible": (
-                                submission.status.value == "EXECUTABLE"
+                                (
+                                    submission.status.value == "EXECUTABLE"
+                                    or (
+                                        case.environment.value == "SIMULATION"
+                                        and submission.submission_id == BASELINE_SUBMISSION_ID
+                                    )
+                                )
                                 and not service.missing_submission_prerequisites(case, submission)
                             ),
                             "comparison_case_ids": list(comparison_cases[submission.submission_id]),
@@ -692,16 +1349,36 @@ def create_app(
     async def campaign_preview_active(
         submission_id: str | None = None,
         planning_submission_id: str | None = None,
+        balance: int | None = Query(default=None, ge=0, le=100),
+        speed_m_s: float | None = Query(default=None, gt=0.0, le=2.0),
+        accuracy_m: float | None = Query(default=None, gt=0.0, le=100.0),
+        smoothness: int | None = Query(default=None, ge=0, le=100),
+        launch_gap_s: float | None = Query(default=None, ge=0.0, le=60.0),
     ) -> dict[str, Any]:
         service = campaign_service()
-        package = service.resolved_active_package(
-            submission_id,
-            planning_submission_id,
+        motion_preparation = _motion_preparation_from_query(
+            balance=balance,
+            speed_m_s=speed_m_s,
+            accuracy_m=accuracy_m,
+            smoothness=smoothness,
         )
-        plan, schedule, trajectories = service.preview_active(
-            submission_id,
-            planning_submission_id,
-        )
+        try:
+            package, plan, schedule, trajectories = await prepare_campaign_preview_off_loop(
+                service,
+                submission_id,
+                planning_submission_id,
+                motion_preparation_request=motion_preparation,
+                coordination_preparation_request=(
+                    CoordinationPreparationRequest(launch_gap_s=launch_gap_s)
+                    if launch_gap_s is not None
+                    else None
+                ),
+            )
+        except ValueError as error:
+            raise CrazySwarmError(
+                ErrorCode.INVALID_STATE,
+                str(error),
+            ) from error
         return {
             "resolved_package": package.model_dump(mode="json"),
             "plan": plan.model_dump(mode="json"),
@@ -713,10 +1390,26 @@ def create_app(
     async def campaign_download_active_package(
         submission_id: str | None = None,
         planning_submission_id: str | None = None,
+        balance: int | None = Query(default=None, ge=0, le=100),
+        speed_m_s: float | None = Query(default=None, gt=0.0, le=2.0),
+        accuracy_m: float | None = Query(default=None, gt=0.0, le=100.0),
+        smoothness: int | None = Query(default=None, ge=0, le=100),
+        launch_gap_s: float | None = Query(default=None, ge=0.0, le=60.0),
     ) -> JSONResponse:
         package = campaign_service().resolved_active_package(
             submission_id,
             planning_submission_id,
+            motion_preparation_request=_motion_preparation_from_query(
+                balance=balance,
+                speed_m_s=speed_m_s,
+                accuracy_m=accuracy_m,
+                smoothness=smoothness,
+            ),
+            coordination_preparation_request=(
+                CoordinationPreparationRequest(launch_gap_s=launch_gap_s)
+                if launch_gap_s is not None
+                else None
+            ),
         )
         return JSONResponse(
             content=package.model_dump(mode="json"),
@@ -754,8 +1447,18 @@ def create_app(
                         comparison_context_id=body.comparison_context_id,
                         planning_capability_request=body.planning_capability_request,
                         execution_capability_request=body.execution_capability_request,
+                        motion_preparation_request=body.motion_preparation,
+                        coordination_preparation_request=body.coordination_preparation,
                     )
-                    retain_campaign_twin_evidence(runtime, service, review)
+                    # Ordinary campaign review keeps its exact CSV and can derive a
+                    # twin on demand. Automatic all-channel expansion is temporarily
+                    # disabled while the explicit twin curriculum remains available.
+                    if CAMPAIGN_AUTOMATIC_TWIN_RETENTION_ENABLED:
+                        await retain_campaign_twin_evidence_off_loop(
+                            runtime,
+                            service,
+                            review,
+                        )
                 except asyncio.CancelledError:
                     raise
                 except Exception:
@@ -877,6 +1580,14 @@ def create_app(
         | None = Query(default=None),
         context: OperatorContext = Depends(operator_context),
     ) -> dict[str, Any]:
+        if not CAMPAIGN_SNAPSHOT_CAPTURE_ENABLED:
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "code": "CAMPAIGN_SNAPSHOT_CAPTURE_DISABLED",
+                    "message": "campaign screenshot capture is temporarily disabled",
+                },
+            )
         declared_size = request.headers.get("content-length")
         if declared_size is not None and int(declared_size) > MAX_CAMPAIGN_SNAPSHOT_BYTES:
             raise CrazySwarmError(
@@ -2716,8 +3427,10 @@ def create_app(
                         comparison_context_id=body.comparison_context_id,
                         planning_capability_request=body.planning_capability_request,
                         execution_capability_request=body.execution_capability_request,
+                        motion_preparation_request=body.motion_preparation,
+                        coordination_preparation_request=body.coordination_preparation,
                     )
-                    session_id = retain_campaign_twin_evidence(
+                    session_id = await retain_campaign_twin_evidence_off_loop(
                         runtime,
                         service,
                         review,

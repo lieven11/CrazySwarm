@@ -13,12 +13,16 @@ from crazyswarm_app import __version__
 from crazyswarm_app.api.app import create_app, generate_local_token
 from crazyswarm_app.api.runtime import create_runtime
 from crazyswarm_app.config import load_config
-from crazyswarm_app.dashboard import run_dashboard
+from crazyswarm_app.dashboard import is_git_worktree, port_available, run_dashboard
 from crazyswarm_app.dashboard_service import (
     install_service,
     restart_service,
     service_status,
     uninstall_service,
+)
+from crazyswarm_app.hardware.ownership import (
+    claim_hardware_runtime,
+    read_hardware_runtime_owner,
 )
 from crazyswarm_app.missions.models import MissionResult, MissionStatus
 from crazyswarm_app.missions.registry import default_registry
@@ -66,14 +70,18 @@ def _build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--scenario", type=Path, default=Path("config/worlds/one_drone.yaml"))
     serve.add_argument("--port", type=_port_number)
     serve.add_argument("--reload", action="store_true", help="restart when backend files change")
+    serve.add_argument(
+        "--hardware-owner",
+        help="claim the exclusive physical Crazyradio runtime for this named operator process",
+    )
 
     dashboard = subparsers.add_parser(
         "dashboard", help="start the control UI and local API as one application"
     )
     dashboard.add_argument("--config", type=Path, default=Path("config/app.yaml"))
     dashboard.add_argument("--scenario", type=Path, default=Path("config/worlds/one_drone.yaml"))
-    dashboard.add_argument("--api-port", type=_port_number, default=8011)
-    dashboard.add_argument("--ui-port", type=_port_number, default=3001)
+    dashboard.add_argument("--api-port", type=_port_number)
+    dashboard.add_argument("--ui-port", type=_port_number)
     dashboard.set_defaults(development=True)
     dashboard.add_argument(
         "--dev",
@@ -88,6 +96,16 @@ def _build_parser() -> argparse.ArgumentParser:
         help=argparse.SUPPRESS,
     )
     dashboard.add_argument("--skip-build", action="store_true", help=argparse.SUPPRESS)
+    dashboard.add_argument("--ui-release", help=argparse.SUPPRESS)
+    dashboard.add_argument(
+        "--hardware-owner",
+        help="claim the exclusive physical Crazyradio runtime; omitted means simulation-only",
+    )
+
+    hardware_owner = subparsers.add_parser(
+        "hardware-owner", help="inspect exclusive physical-runtime ownership"
+    )
+    hardware_owner.add_argument("owner_command", choices=("status",))
 
     service = subparsers.add_parser(
         "dashboard-service", help="manage the persistent macOS dashboard service"
@@ -100,6 +118,14 @@ def _build_parser() -> argparse.ArgumentParser:
     install.add_argument("--ui-port", type=_port_number, default=3001)
     status = service_commands.add_parser("status", help="check the user service")
     status.add_argument("--ui-port", type=_port_number, default=3001)
+    status.add_argument(
+        "--allow-stale-source",
+        action="store_true",
+        help=(
+            "report success when the installed service is healthy but source changes "
+            "are undeployed"
+        ),
+    )
     service_commands.add_parser("restart", help="restart the user service")
     service_commands.add_parser("uninstall", help="remove the user service")
     return parser
@@ -226,12 +252,24 @@ def _serve(
     port_override: int | None = None,
     *,
     reload: bool = False,
+    hardware_owner: str | None = None,
 ) -> int:
     import uvicorn
 
+    project_root = Path(__file__).resolve().parents[2]
+    if hardware_owner is not None and is_git_worktree(project_root):
+        raise RuntimeError(
+            "physical hardware runtime may only start from the Local checkout, never a worktree"
+        )
+    if reload and hardware_owner is not None:
+        raise RuntimeError(
+            "physical hardware runtime cannot use auto-reload; use a stable production service"
+        )
     config = load_config(config_path)
     token = os.environ.get("CRAZYSWARM_LOCAL_TOKEN") or generate_local_token()
     port = config.api.port if port_override is None else port_override
+    if not port_available(config.api.bind_host, port):
+        raise RuntimeError(f"API port {port} is already in use")
     hide_internal_service = os.environ.get("CRAZYSWARM_HIDE_LOCAL_TOKEN") == "1"
     report = {
         "status": "starting",
@@ -247,7 +285,6 @@ def _serve(
         )
         print(json.dumps(report, indent=2), file=sys.stderr)
     if reload:
-        project_root = Path(__file__).resolve().parents[2]
         os.environ.update(
             {
                 "CRAZYSWARM_CONFIG_PATH": str(config_path.resolve()),
@@ -272,15 +309,29 @@ def _serve(
         )
         return 0
 
-    runtime = create_runtime(config, scenario_path)
-    app = create_app(runtime, local_token=token)
-    uvicorn.run(
-        app,
-        host=config.api.bind_host,
-        port=port,
-        access_log=False,
-        log_level="warning" if hide_internal_service else "info",
-    )
+    if hardware_owner is None:
+        os.environ["CRAZYSWARM_PHYSICAL_HARDWARE_ENABLED"] = "0"
+        runtime = create_runtime(config, scenario_path)
+        app = create_app(runtime, local_token=token, physical_hardware_enabled=False)
+        uvicorn.run(
+            app,
+            host=config.api.bind_host,
+            port=port,
+            access_log=False,
+            log_level="warning" if hide_internal_service else "info",
+        )
+        return 0
+
+    with claim_hardware_runtime(hardware_owner, checkout=Path.cwd()):
+        runtime = create_runtime(config, scenario_path)
+        app = create_app(runtime, local_token=token, physical_hardware_enabled=True)
+        uvicorn.run(
+            app,
+            host=config.api.bind_host,
+            port=port,
+            access_log=False,
+            log_level="warning" if hide_internal_service else "info",
+        )
     return 0
 
 
@@ -320,7 +371,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "missions":
         return _missions(args)
     if args.command == "serve":
-        return _serve(args.config, args.scenario, args.port, reload=args.reload)
+        return _serve(
+            args.config,
+            args.scenario,
+            args.port,
+            reload=args.reload,
+            hardware_owner=args.hardware_owner,
+        )
     if args.command == "dashboard":
         return run_dashboard(
             args.config,
@@ -329,7 +386,30 @@ def main(argv: Sequence[str] | None = None) -> int:
             ui_port=args.ui_port,
             development=args.development,
             skip_build=args.skip_build,
+            hardware_owner=args.hardware_owner,
+            ui_release=args.ui_release,
         )
+    if args.command == "hardware-owner":
+        owner = read_hardware_runtime_owner()
+        print(
+            json.dumps(
+                {
+                    "owned": owner is not None,
+                    "owner": None
+                    if owner is None
+                    else {
+                        "name": owner.owner,
+                        "pid": owner.pid,
+                        "hostname": owner.hostname,
+                        "checkout": owner.checkout,
+                        "acquired_at_utc": owner.acquired_at_utc,
+                    },
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 0
     if args.command == "dashboard-service":
         if args.service_command == "install":
             return install_service(
@@ -339,7 +419,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 ui_port=args.ui_port,
             )
         if args.service_command == "status":
-            return service_status(ui_port=args.ui_port)
+            return service_status(
+                ui_port=args.ui_port,
+                allow_stale_source=args.allow_stale_source,
+            )
         if args.service_command == "restart":
             return restart_service()
         if args.service_command == "uninstall":

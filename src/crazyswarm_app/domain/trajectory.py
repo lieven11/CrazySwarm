@@ -190,11 +190,19 @@ class TimeParameterizedTrajectory(ContractModel):
             raise ValueError("trajectory timestamps must increase strictly")
         if self.declared_stop_sequences != tuple(sorted(set(self.declared_stop_sequences))):
             raise ValueError("declared stop sequences must be sorted and unique")
-        if not self.declared_stop_sequences or (
-            self.declared_stop_sequences[0] != 1
+        if (
+            not self.declared_stop_sequences
             or self.declared_stop_sequences[-1] != len(self.points)
         ):
-            raise ValueError("trajectory start and terminal points must be declared stops")
+            raise ValueError("trajectory terminal point must be a declared stop")
+        start_is_stopped = (
+            _length(self.points[0].velocity_m_s)
+            <= self.completion_velocity_tolerance_m_s
+        )
+        if start_is_stopped and self.declared_stop_sequences[0] != 1:
+            raise ValueError("a stationary trajectory start must be a declared stop")
+        if not start_is_stopped and 1 in self.declared_stop_sequences:
+            raise ValueError("a moving trajectory start cannot be a declared stop")
         for sequence in self.declared_stop_sequences:
             if sequence < 1 or sequence > len(self.points):
                 raise ValueError("declared trajectory stop sequence is absent")

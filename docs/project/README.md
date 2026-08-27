@@ -31,6 +31,12 @@ See the two status ledgers for the precise boundary:
 - [`../work-packages/COMPLETED.md`](../work-packages/COMPLETED.md)
 - [`../work-packages/ACTIVE.md`](../work-packages/ACTIVE.md)
 
+Use the selective [`requirements index`](requirements/README.md) to find the durable
+rules for a task without loading the complete catalog. Use the
+[`run analysis protocol`](../guides/RUN_ANALYSIS_PROTOCOL.md) and
+`python scripts/summarize_run.py <mission-folder-or-telemetry.csv>` before inspecting
+large retained CSVs row by row.
+
 ## Local setup
 
 ```bash
@@ -64,15 +70,33 @@ Open `http://localhost:3001`. Service commands are:
 
 ```bash
 .venv/bin/crazyswarm-control dashboard-service status
+.venv/bin/crazyswarm-control dashboard-service status --allow-stale-source
 .venv/bin/crazyswarm-control dashboard-service restart
 .venv/bin/crazyswarm-control dashboard-service uninstall
+.venv/bin/crazyswarm-control hardware-owner status
 ```
 
+This persistent service is the only normal owner of the physical Crazyradio. Parallel
+Codex tasks run in worktrees with simulation-only runtimes and isolated ports; they do
+not replace the service. Use the explicit
+[`hardware deployment command`](../guides/HARDWARE_RUNTIME_OWNERSHIP.md) when a tested
+change should move into the operator hardware lane:
+
+```bash
+scripts/deploy_hardware_dashboard.sh
+```
+
+The default status command is strict and also checks that the installed immutable UI
+release matches current source. `--allow-stale-source` checks service readiness only;
+the macOS restart launcher uses it so undeployed edits are reported without being
+misdiagnosed as a startup failure.
+
 For foreground development, use `.venv/bin/crazyswarm-control dashboard` and leave
-that one terminal open. The browser updates after UI edits, the API restarts after
-Python/configuration edits, and the launcher recovers either child process if it exits.
-There is no need to start Vite or Uvicorn separately. The API can still be started on
-its own with `.venv/bin/crazyswarm-control serve --reload --port 8001`.
+that terminal open. Development dashboards are deliberately simulation-only. In a
+Codex worktree they also receive deterministic alternate ports, so they cannot replace
+the Local operator service. The API can still be started on its own with
+`.venv/bin/crazyswarm-control serve --reload --port 8001`; it is simulation-only unless
+it is the explicitly named, stable production hardware owner.
 
 ## Mission boundary
 

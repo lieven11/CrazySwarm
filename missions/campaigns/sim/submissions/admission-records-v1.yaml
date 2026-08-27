@@ -601,11 +601,12 @@ rows:
     comparator_id: BASELINE(1d.moving_target.dynamic_nominal)
     comparison_context_id: null
 - case_id: 1d.online_obstacle_replan.dynamic_nominal
-  expected_case_sha256: b265e16a9b54cfc0271f38c03486244da6e1fe6558c1d6580aa47b79acdac401
+  expected_case_sha256: 24790c25d4bba4716ea63f4424335f5c7039d1bc6d3d8e9157adfac9171e713d
   lifecycle: BASELINE_ONLY
   proposed_additions_or_disposition: '`BASELINE_ONLY`'
-  causal_question: The sensed changed-world route uses the baseline accepted program; each future suffix
-    is admitted only through perception and safe-prefix authority.
+  causal_question: The sensed changed-world mission searches from the fresh committed state to the goal
+    through the current perceived-world generation; each future is admitted only through corridor, moving-cutover,
+    and safe-prefix authority.
   baseline_limitation: '`BASELINE_ONLY`'
   fixed_inputs:
   - case_hash
@@ -3051,4 +3052,4 @@ rows:
     case/run.
   learning_value: '`BASELINE_ONLY` legacy compatibility/regression'
   proposals: []
-source_payload_sha256: c3317f07c3c41b8777816ca390fa1e862d6f7a36797894bec65666e718a74308
+source_payload_sha256: ce857ae113d1162b71dd200d89e5f53a41f772fa563a078eaa76b57d6863cf6e

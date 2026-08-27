@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import Field, model_validator
 
@@ -49,10 +49,94 @@ class ImplementationStatus(StrEnum):
 
 class MissionCluster(StrEnum):
     BASIC_FLIGHT_AND_ROUTE_FOLLOWING = "BASIC_FLIGHT_AND_ROUTE_FOLLOWING"
+    DYNAMIC_REPLANNING = "DYNAMIC_REPLANNING"
     GEOMETRIC_CONFLICT_RESOLUTION = "GEOMETRIC_CONFLICT_RESOLUTION"
     CONSTRAINTS_AND_OPTIMIZATION = "CONSTRAINTS_AND_OPTIMIZATION"
     COORDINATION_AND_ALLOCATION = "COORDINATION_AND_ALLOCATION"
     FAILURE_RECOVERY_AND_REPLANNING = "FAILURE_RECOVERY_AND_REPLANNING"
+
+
+class MajorMissionVariant(ContractModel):
+    label: str = Field(min_length=1, max_length=80)
+    case_id: Identifier
+    status: ImplementationStatus
+    disabled_reason: str | None = Field(default=None, min_length=1, max_length=240)
+    future_fixture_source: str | None = Field(default=None, min_length=1, max_length=240)
+
+    @model_validator(mode="after")
+    def availability_is_explicit(self) -> MajorMissionVariant:
+        if self.status is ImplementationStatus.EXECUTABLE:
+            if self.disabled_reason is not None or self.future_fixture_source is not None:
+                raise ValueError("executable major-mission variants cannot carry disabled metadata")
+        elif self.disabled_reason is None:
+            raise ValueError("disabled major-mission variants require one concise reason")
+        return self
+
+
+class MajorMissionGroup(ContractModel):
+    label: Literal["Flight", "Target", "Level path", "3D path", "Shape"]
+    variants: tuple[MajorMissionVariant, ...] = Field(min_length=1)
+
+
+class MajorMissionCurriculum(ContractModel):
+    schema_version: Literal[1] = 1
+    curriculum_id: Literal["1d-major-missions-v1", "1d-major-missions-v2"]
+    groups: tuple[
+        MajorMissionGroup,
+        MajorMissionGroup,
+        MajorMissionGroup,
+        MajorMissionGroup,
+        MajorMissionGroup,
+    ]
+
+    @model_validator(mode="after")
+    def exact_group_order_and_unique_cases(self) -> MajorMissionCurriculum:
+        if tuple(group.label for group in self.groups) != (
+            "Flight",
+            "Target",
+            "Level path",
+            "3D path",
+            "Shape",
+        ):
+            raise ValueError("1D major missions require the frozen five-group order")
+        case_ids = tuple(variant.case_id for group in self.groups for variant in group.variants)
+        if len(case_ids) != len(set(case_ids)):
+            raise ValueError("a case may appear in only one major-mission variant")
+        return self
+
+
+class TwoDroneMissionGroup(ContractModel):
+    label: Literal["Crossing", "Traffic", "Merge", "Coordination", "Recovery"]
+    variants: tuple[MajorMissionVariant, ...] = Field(min_length=1)
+
+
+class TwoDroneMissionCurriculum(ContractModel):
+    """Behavior-focused 2D presentation over immutable case identities."""
+
+    schema_version: Literal[1] = 1
+    curriculum_id: Literal["2d-conflict-missions-v1"] = "2d-conflict-missions-v1"
+    groups: tuple[
+        TwoDroneMissionGroup,
+        TwoDroneMissionGroup,
+        TwoDroneMissionGroup,
+        TwoDroneMissionGroup,
+        TwoDroneMissionGroup,
+    ]
+
+    @model_validator(mode="after")
+    def exact_group_order_and_unique_cases(self) -> TwoDroneMissionCurriculum:
+        if tuple(group.label for group in self.groups) != (
+            "Crossing",
+            "Traffic",
+            "Merge",
+            "Coordination",
+            "Recovery",
+        ):
+            raise ValueError("2D mission groups must preserve the causal curriculum order")
+        case_ids = tuple(variant.case_id for group in self.groups for variant in group.variants)
+        if len(case_ids) != 18 or len(set(case_ids)) != len(case_ids):
+            raise ValueError("2D mission curriculum must map all 18 immutable cases exactly once")
+        return self
 
 
 class PlannerStrategy(StrEnum):
@@ -157,7 +241,10 @@ class MotionQualityContract(ContractModel):
     speed_band_m_s: float = Field(default=0.05, gt=0.0, le=0.5)
     minimum_speed_band_coverage_fraction: float = Field(default=0.95, ge=0.0, le=1.0)
     maximum_speed_ripple_m_s: float = Field(default=0.05, ge=0.0, le=1.0)
-    maximum_path_tube_error_m: float = Field(default=0.05, gt=0.0, le=1.0)
+    # This is a soft-reference/tube preference, not a relaxation of the world,
+    # obstacle, vehicle, dynamics, or terminal guards.  Large operator requests
+    # are retained truthfully and then capped by the declared flight volume.
+    maximum_path_tube_error_m: float = Field(default=0.05, gt=0.0, le=100.0)
     maximum_acceleration_m_s2: float = Field(default=1.0, gt=0.0)
     maximum_jerk_m_s3: float = Field(default=8.0, gt=0.0)
     maximum_angular_rate_p95_rad_s: float = Field(default=0.40, gt=0.0)
@@ -329,6 +416,20 @@ class EnvironmentConstraints(ContractModel):
     required_corridors: tuple[Region3D, ...] = ()
 
 
+class GoalSeekingContract(ContractModel):
+    """Start/goal/current-world authority with no authored route to rejoin."""
+
+    mode: Literal["START_GOAL_CURRENT_WORLD"] = "START_GOAL_CURRENT_WORLD"
+    start_source: Literal["FRESH_COMMITTED_STATE"] = "FRESH_COMMITTED_STATE"
+    goal_source: Literal["CASE_GOAL_AND_LANDING"] = "CASE_GOAL_AND_LANDING"
+    world_source: Literal["CURRENT_PERCEIVED_WORLD_GENERATION"] = (
+        "CURRENT_PERCEIVED_WORLD_GENERATION"
+    )
+    authored_reference_route: None = None
+    authored_centerline: None = None
+    authored_rejoin_waypoint: None = None
+
+
 class CoordinationConstraints(ContractModel):
     synchronized_route_start_required: bool = False
     maximum_route_start_skew_s: float = Field(default=0.20, ge=0.0, le=10.0)
@@ -430,12 +531,19 @@ class CaseSemantics(ContractModel):
     learning_objective: str = Field(min_length=1, max_length=1000)
     difficulty_rationale: str = Field(min_length=1, max_length=1000)
     route_intent_by_role: dict[Identifier, tuple[RouteNodeIntent, ...]]
+    goal_seeking: GoalSeekingContract | None = None
     environment_constraints: EnvironmentConstraints = EnvironmentConstraints()
     coordination_constraints: CoordinationConstraints = CoordinationConstraints()
     scenario_events: tuple[ScenarioEvent, ...] = ()
     behavior_oracles: tuple[BehaviorOracle, ...] = Field(min_length=1)
     semantic_baseline_case_id: Identifier | None = None
     intended_delta: str | None = Field(default=None, min_length=1, max_length=1000)
+
+    def canonical_payload(self) -> dict[str, Any]:
+        payload = self.model_dump(mode="python")
+        if self.goal_seeking is None:
+            payload.pop("goal_seeking", None)
+        return payload
 
 
 class MetricGate(ContractModel):
@@ -645,7 +753,24 @@ class CampaignCase(ContractModel):
             )
             if any(not self.hard_constraints.flight_volume.contains(point) for point in points):
                 raise ValueError(f"role {drone.role_id} geometry leaves the flight volume")
+        if self.cluster is MissionCluster.DYNAMIC_REPLANNING and self.semantics is None:
+            raise ValueError("dynamic replanning cases require goal-seeking semantics")
         if self.semantics is not None:
+            if self.cluster is MissionCluster.DYNAMIC_REPLANNING:
+                if (
+                    (
+                        self.case_id != "1d.online_obstacle_replan.dynamic_nominal"
+                        and not self.case_id.startswith("replan.")
+                    )
+                    or self.family != "online_obstacle_replan"
+                    or self.drone_count != 1
+                    or self.semantics.goal_seeking is None
+                ):
+                    raise ValueError(
+                        "dynamic replanning cluster is reserved for the one goal-seeking case"
+                    )
+            elif self.semantics.goal_seeking is not None:
+                raise ValueError("goal-seeking authority requires the dynamic replanning cluster")
             semantic_roles = set(self.semantics.route_intent_by_role)
             if semantic_roles != set(role_ids):
                 raise ValueError("route intent must cover every drone role exactly once")
@@ -732,16 +857,22 @@ class CampaignCase(ContractModel):
             # Preserve the identity of schema-v2 evidence produced before the semantic
             # and motion contracts were introduced. New cases include every authored
             # contract in their identity without invalidating historical catalog rows.
-            return canonical_sha256(
-                identity_case.model_dump(
-                    mode="python",
-                    exclude={
-                        "motion_quality_contract",
-                        *(() if self.semantics is not None else ("semantics",)),
-                    },
-                )
+            payload = identity_case.model_dump(
+                mode="python",
+                exclude={
+                    "motion_quality_contract",
+                    *(() if self.semantics is not None else ("semantics",)),
+                },
             )
-        return canonical_sha256(identity_case)
+            semantics = payload.get("semantics")
+            if isinstance(semantics, dict) and semantics.get("goal_seeking") is None:
+                semantics.pop("goal_seeking", None)
+            return canonical_sha256(payload)
+        payload = identity_case.model_dump(mode="python")
+        semantics = payload.get("semantics")
+        if isinstance(semantics, dict) and semantics.get("goal_seeking") is None:
+            semantics.pop("goal_seeking", None)
+        return canonical_sha256(payload)
 
     def initial_planning_view(self) -> CampaignCase:
         """Return the case surface that the initial planner is authorized to inspect.
@@ -842,9 +973,35 @@ def motion_contract_for(case: CampaignCase) -> MotionQualityContract:
     """Resolve the one accepted contract shared by a campaign trajectory set."""
 
     contracts = tuple(case.motion_contract_for(drone.role_id) for drone in case.drones)
-    if any(contract != contracts[0] for contract in contracts[1:]):
+    if all(contract == contracts[0] for contract in contracts[1:]):
+        return contracts[0]
+    # Mixed fly-through/checkpoint fleets still need one retained trajectory-set
+    # contract. Resolve that contract to the stricter role requirements; individual
+    # authored node modes remain authoritative during trajectory generation and
+    # analysis.
+    comparable_payloads = tuple(
+        contract.model_dump(
+            mode="python",
+            exclude={"traversal_mode", "minimum_continuous_knot_speed_ratio"},
+        )
+        for contract in contracts
+    )
+    if any(payload != comparable_payloads[0] for payload in comparable_payloads[1:]):
         raise ValueError("one trajectory set cannot carry conflicting role motion contracts")
-    return contracts[0]
+    return contracts[0].model_copy(
+        update={
+            "traversal_mode": (
+                TraversalMode.CHECKPOINT
+                if any(
+                    contract.traversal_mode is TraversalMode.CHECKPOINT for contract in contracts
+                )
+                else TraversalMode.CONTINUOUS_FLY_THROUGH
+            ),
+            "minimum_continuous_knot_speed_ratio": max(
+                contract.minimum_continuous_knot_speed_ratio for contract in contracts
+            ),
+        }
+    )
 
 
 class LockedDevelopmentInputs(ContractModel):

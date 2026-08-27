@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "inspection_id": "wp62-66-ui-inspection-v1",
+  "inspection_date": "2026-08-15",
+  "served_url": "http://localhost:3011/",
+  "served_api_url": "http://localhost:8021/",
+  "surface": "Aerium Control Campaign Laboratory",
+  "claim_boundary": "Built and locally served UI inspection at the actual 1280 x 720 browser viewport; narrow and reduced-motion claims are automated render/CSS coverage, not falsely claimed as separately served. No remote deployment or hardware claim.",
+  "served_view": {
+    "width_px": 1280,
+    "height_px": 720,
+    "horizontal_overflow": false,
+    "campaign_dialog_usable": true,
+    "mission_setup_and_telemetry_remain_distinct": true,
+    "viewport_override_requested": true,
+    "viewport_override_applied": false,
+    "reduced_motion_media_match": false
+  },
+  "automated_view_coverage": {
+    "narrow_layout_rendered": true,
+    "narrow_horizontal_overflow": false,
+    "reduced_motion_css_present": true
+  },
+  "curriculum": {
+    "group_counts": {
+      "Flight": 1,
+      "Target": 2,
+      "Level path": 4,
+      "3D path": 2,
+      "Shape": 3
+    },
+    "total_static_1d_cases": 12,
+    "balance_control_visible": true,
+    "tune_disclosure_visible": true,
+    "tune_labels": [
+      "Speed",
+      "Accuracy",
+      "Smoothness"
+    ],
+    "eligible_label_count": 0,
+    "internal_planner_label_count_in_normal_preparation": 0,
+    "wind_shift_disabled": true
+  },
+  "source_cursor": {
+    "selected_vehicle": "Alpha",
+    "selected_source_sequence": 1944,
+    "selected_source_timestamp_s": null,
+    "displayed_receive_timestamp_s": null,
+    "timestamp_transcription": "The exact source sequence was retained from the served browser inspection; precise timestamp text was not separately transcribed.",
+    "receive_time_used_as_selection_key": false,
+    "graph_count_checked": 6,
+    "all_graphs_reported_source_sequence": 1944,
+    "all_graphs_share_cursor": true,
+    "text_readout_reported_source_sequence": 1944,
+    "room_marker_reported_source_sequence": 1944,
+    "missing_plan_channel_display": "Unavailable in telemetry CSV"
+  },
+  "browser_console": {
+    "warning_count": 0,
+    "error_count": 0
+  },
+  "served_asset_inventory": {
+    "inventory_id": "fbd1063b-5d30-4824-869e-f69999dd13b0",
+    "script_count": 48,
+    "stylesheet_count": 5,
+    "current_campaign_lab_asset_observed": true,
+    "current_campaign_telemetry_asset_observed": true
+  },
+  "screenshots": [
+    {
+      "path": "missions/campaigns/sim/qualification/wp62-66-ui-evidence-v1/01-five-major-missions.jpg",
+      "sha256": "329efd7c1fc6a7a52f1d47d0d52c60ad1d717f53b8766cd22b8fb2d248b1e96b",
+      "size_bytes": 57591
+    },
+    {
+      "path": "missions/campaigns/sim/qualification/wp62-66-ui-evidence-v1/02-plain-motion-controls.jpg",
+      "sha256": "14a1939160b9ad293083d77349a0a8bb8cce62e96d1190dce99f8d4590a313c8",
+      "size_bytes": 47881
+    },
+    {
+      "path": "missions/campaigns/sim/qualification/wp62-66-ui-evidence-v1/03-wind-shift-disabled-reason.jpg",
+      "sha256": "4369f0c349643dd784f72a9739e539047025dd8eeb0d0c2f16f4f11a52258286",
+      "size_bytes": 59921
+    },
+    {
+      "path": "missions/campaigns/sim/qualification/wp62-66-ui-evidence-v1/04-exact-source-sequence-cursor.jpg",
+      "sha256": "920a3f013b7ff1225d92da1b7069f635b55f18bfb7adf7158b507f5c7227ce6f",
+      "size_bytes": 51279
+    },
+    {
+      "path": "missions/campaigns/sim/qualification/wp62-66-ui-evidence-v1/05-dynamic-replanning-cluster.jpg",
+      "sha256": "6cab9bbd057a8364ae317396e611a9253256599d2ec216a356a5dd798913d20a",
+      "size_bytes": 57141
+    }
+  ],
+  "automated_checks": {
+    "eslint": "PASS",
+    "typescript": "PASS",
+    "vitest_files_passed": 13,
+    "vitest_tests_passed": 133,
+    "production_build": "PASS",
+    "rendered_html_tests_passed": 3
+  },
+  "non_failing_diagnostics": [
+    "JSDOM reports that HTMLCanvasElement.getContext is unavailable without the optional canvas package.",
+    "The production build reports an existing advisory for chunks larger than 500 kB."
+  ]
+}

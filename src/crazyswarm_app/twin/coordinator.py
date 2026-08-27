@@ -166,8 +166,25 @@ class TwinCoordinator:
         )
         self._sessions[session_id] = _Session(record=record, config=config)
         if self._store is not None and self.ingestion is not None:
-            self._store.register_session(record, config)
-            self.ingestion.register_channels(session_id, default_twin_channels())
+            try:
+                self._store.register_session(record, config)
+                self.ingestion.register_channels(session_id, default_twin_channels())
+            except Exception:
+                # Session creation is a single lifecycle boundary.  If durable
+                # creation succeeded but channel registration did not, retain a
+                # FAILED tombstone instead of an orphan READY session.  If no
+                # durable record was created, remove the provisional entry.
+                try:
+                    self._store.record(session_id)
+                except KeyError:
+                    self._sessions.pop(session_id, None)
+                else:
+                    failed_record = record.model_copy(
+                        update={"status": TwinSessionStatus.FAILED}
+                    )
+                    self._sessions[session_id].record = failed_record
+                    self._store.update_session(failed_record)
+                raise
         return record
 
     def session_for_campaign_run(self, run_id: str) -> TwinSessionRecord | None:
@@ -336,6 +353,8 @@ class TwinCoordinator:
 
     def complete(self, session_id: str, *, failed: bool = False) -> TwinSessionRecord:
         session = self._require_session(session_id)
+        if session.record.status in {TwinSessionStatus.COMPLETE, TwinSessionStatus.FAILED}:
+            return session.record
         session.record = session.record.model_copy(
             update={"status": TwinSessionStatus.FAILED if failed else TwinSessionStatus.COMPLETE}
         )
@@ -352,7 +371,11 @@ class TwinCoordinator:
         return self.ingestion.ingest(batch)
 
     def ingest_telemetry_csv(
-        self, session_id: str, csv_bytes: bytes
+        self,
+        session_id: str,
+        csv_bytes: bytes,
+        *,
+        minimum_source_period_s: float | None = None,
     ) -> tuple[TwinIngestionReceipt, ...]:
         session = self._require_session(session_id)
         return tuple(
@@ -361,6 +384,7 @@ class TwinCoordinator:
                 session_id=session_id,
                 config=session.config,
                 csv_bytes=csv_bytes,
+                minimum_source_period_s=minimum_source_period_s,
             )
         )
 

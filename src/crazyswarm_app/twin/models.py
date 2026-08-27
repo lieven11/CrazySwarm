@@ -34,6 +34,7 @@ class TwinAvailability(StrEnum):
     MISSING = "MISSING"
     STALE = "STALE"
     REJECTED = "REJECTED"
+    INCOMPATIBLE = "INCOMPATIBLE"
 
 
 class TwinQuality(StrEnum):
@@ -64,12 +65,28 @@ class TwinStreamSample(ContractModel):
     vehicle_id: Identifier
     channel_id: Identifier
     sequence: int = Field(ge=1)
+    # Service-paired streams retain an exact identity shared by every observed and
+    # predicted channel emitted from one admission. Legacy samples keep these
+    # fields absent and therefore cannot produce a paired residual.
+    pair_id: Identifier | None = None
+    pair_sequence: int | None = Field(default=None, ge=1)
+    alignment_epoch: int | None = Field(default=None, ge=1)
+    # ``source_timestamp_s`` is the session-relative comparison clock.  Preserve
+    # the producer clock separately so unrelated Crazyflie and simulator clocks
+    # are never compared as though they shared an epoch.
+    source_clock_id: Identifier | None = None
+    source_epoch: int = Field(default=0, ge=0)
+    raw_source_timestamp_s: float | None = Field(default=None, ge=0.0)
     source_timestamp_s: float = Field(ge=0.0)
     received_timestamp_s: float = Field(ge=0.0)
     availability: TwinAvailability
     quality: TwinQuality
     unit: str = Field(min_length=1, max_length=40)
     frame: str = Field(min_length=1, max_length=40)
+    # The registered channel frame remains in ``frame``.  When a producer uses a
+    # different frame, retain it here and emit INCOMPATIBLE/null rather than
+    # relabelling coordinates or inventing a transform.
+    source_frame: str | None = Field(default=None, min_length=1, max_length=40)
     value: float | bool | str | Vector3 | None = None
     calibration_id: Identifier | None = None
     raw_payload_sha256: SHA256
@@ -80,6 +97,11 @@ class TwinStreamSample(ContractModel):
 
     @model_validator(mode="after")
     def causal_hash_and_availability(self) -> TwinStreamSample:
+        pair_fields = (self.pair_id, self.pair_sequence, self.alignment_epoch)
+        if any(value is not None for value in pair_fields) and any(
+            value is None for value in pair_fields
+        ):
+            raise ValueError("paired twin sample identity must be complete")
         if self.received_timestamp_s < self.source_timestamp_s:
             raise ValueError("twin sample receipt predates source")
         if self.availability is TwinAvailability.AVAILABLE and self.value is None:
@@ -87,12 +109,42 @@ class TwinStreamSample(ContractModel):
         if self.availability is not TwinAvailability.AVAILABLE and self.value is not None:
             raise ValueError("unavailable twin sample cannot fabricate a value")
         if canonical_sha256(self.canonical_payload()) != self.sample_sha256:
-            raise ValueError("twin sample hash mismatch")
+            # Samples written before the producer-clock fields were introduced
+            # retain their original causal hash.  New samples always include the
+            # fields; this branch is read compatibility, not a way to omit them
+            # from new evidence.
+            legacy_payload = self.canonical_payload()
+            for key in ("pair_id", "pair_sequence", "alignment_epoch"):
+                legacy_payload.pop(key, None)
+            if canonical_sha256(legacy_payload) == self.sample_sha256:
+                return self
+            legacy_payload.pop("source_frame", None)
+            if canonical_sha256(legacy_payload) == self.sample_sha256:
+                return self
+            for key in (
+                "source_clock_id",
+                "source_epoch",
+                "raw_source_timestamp_s",
+            ):
+                legacy_payload.pop(key, None)
+            if canonical_sha256(legacy_payload) != self.sample_sha256:
+                raise ValueError("twin sample hash mismatch")
         return self
 
     @classmethod
     def create(cls, **values: object) -> TwinStreamSample:
-        payload = {"schema_version": 1, "calibration_id": None, **values}
+        payload = {
+            "schema_version": 1,
+            "calibration_id": None,
+            "pair_id": None,
+            "pair_sequence": None,
+            "alignment_epoch": None,
+            "source_clock_id": None,
+            "source_epoch": 0,
+            "raw_source_timestamp_s": None,
+            "source_frame": None,
+            **values,
+        }
         return cls(**payload, sample_sha256=canonical_sha256(payload))
 
 
@@ -114,6 +166,11 @@ class TwinResidualSample(ContractModel):
     schema_version: Literal[1] = 1
     session_id: Identifier
     channel_id: Identifier
+    pair_id: Identifier | None = None
+    pair_sequence: int | None = Field(default=None, ge=1)
+    alignment_epoch: int | None = Field(default=None, ge=1)
+    observed_source_epoch: int | None = Field(default=None, ge=0)
+    predicted_source_epoch: int | None = Field(default=None, ge=0)
     observed_sample_sha256: SHA256
     predicted_sample_sha256: SHA256 | None = None
     source_timestamp_s: float = Field(ge=0.0)

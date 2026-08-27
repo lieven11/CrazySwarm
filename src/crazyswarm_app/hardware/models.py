@@ -270,6 +270,7 @@ class CommandPermit(ContractModel):
             CommandKind.TAKEOFF,
             CommandKind.HOVER,
             CommandKind.MOVE_RELATIVE,
+            CommandKind.BODY_RATE_THRUST,
             CommandKind.STOP_AND_HOLD,
             CommandKind.LAND,
             CommandKind.ABORT,

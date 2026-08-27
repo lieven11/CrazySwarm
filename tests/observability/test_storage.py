@@ -6,6 +6,7 @@ import hashlib
 import io
 import json
 import sqlite3
+import threading
 import zipfile
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -19,7 +20,7 @@ from crazyswarm_app.missions.runner import MissionRunner
 from crazyswarm_app.observability.bridge import EvidenceBridge
 from crazyswarm_app.observability.bus import TelemetryBus
 from crazyswarm_app.observability.csv_export import RUN_TELEMETRY_CSV_COLUMNS
-from crazyswarm_app.observability.events import EvidenceKind, TelemetryPayload
+from crazyswarm_app.observability.events import EvidenceEvent, EvidenceKind, TelemetryPayload
 from crazyswarm_app.observability.recorder import EvidenceRecorder
 from crazyswarm_app.observability.storage import (
     EvidenceCorruptionError,
@@ -183,6 +184,57 @@ async def test_legacy_motor_evidence_exports_unrecorded_fields_as_blank(
 
 
 @pytest.mark.asyncio
+async def test_physical_motor_pwm_percentages_are_retained_as_applied_pwm_only(
+    tmp_path: Path,
+) -> None:
+    store, run_id = await recorded_mission(tmp_path / "physical-motor-pwm.sqlite3")
+    event = next(
+        item
+        for item in store.query_events(run_id=run_id, kind=EvidenceKind.TELEMETRY)
+        if isinstance(item.payload, TelemetryPayload)
+    )
+    assert isinstance(event.payload, TelemetryPayload)
+    envelope = event.payload.telemetry
+    physical_telemetry = envelope.telemetry.model_copy(
+        update={
+            "motor_pwm_percent": (12.5, 25.0, 37.5, 50.0),
+            "motors": None,
+        }
+    )
+    physical_event = event.model_copy(
+        update={
+            "payload": TelemetryPayload(
+                telemetry=envelope.model_copy(update={"telemetry": physical_telemetry})
+            )
+        }
+    )
+    raw = physical_event.model_dump_json()
+    with store._lock, store._db:
+        store._db.execute(
+            "UPDATE events SET event_json = ?, sha256 = ? WHERE event_id = ?",
+            (raw, hashlib.sha256(raw.encode()).hexdigest(), event.event_id),
+        )
+
+    artifact = store.export_telemetry_csv(run_id)
+    row = next(
+        item
+        for item in csv.DictReader(io.StringIO(artifact.content.decode(), newline=""))
+        if item["event_id"] == event.event_id
+    )
+    assert [row[f"motor_m{index}_applied_pwm_percent"] for index in range(1, 5)] == [
+        "12.5",
+        "25.0",
+        "37.5",
+        "50.0",
+    ]
+    for index in range(1, 5):
+        assert row[f"motor_m{index}_command_percent"] == ""
+        assert row[f"motor_m{index}_thrust_n"] == ""
+        assert row[f"motor_m{index}_current_a"] == ""
+    store.close()
+
+
+@pytest.mark.asyncio
 async def test_incomplete_run_is_rejected_and_zero_sample_terminal_csv_has_header(
     tmp_path: Path,
 ) -> None:
@@ -258,6 +310,50 @@ async def test_recorder_shutdown_is_bounded_after_writer_failure(tmp_path: Path)
     await recorder.stop(flush_timeout_s=0.01)
     assert recorder.last_error is not None
     assert "closed" in recorder.last_error
+
+
+@pytest.mark.asyncio
+async def test_durable_recorder_write_does_not_block_control_event_loop(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bus = TelemetryBus()
+    bridge = EvidenceBridge(bus)
+    store = EvidenceStore(tmp_path / "off-loop.sqlite3")
+    recorder = EvidenceRecorder(bus, store)
+    original_record = recorder._record
+    write_started = threading.Event()
+    release_write = threading.Event()
+
+    def blocked_record(event: EvidenceEvent) -> None:
+        write_started.set()
+        if not release_write.wait(timeout=2.0):
+            raise TimeoutError("test did not release the durable writer")
+        original_record(event)
+
+    monkeypatch.setattr(recorder, "_record", blocked_record)
+    await recorder.start()
+    bridge.operator_action(
+        vehicle_id="sim01",
+        client_id="off-loop-test",
+        request_id="off-loop-test",
+        action="hold_durable_write",
+    )
+
+    try:
+        assert await asyncio.wait_for(
+            asyncio.to_thread(write_started.wait, 1.0),
+            timeout=1.5,
+        )
+        # This timer can fire only if the recorder's blocking SQLite path is not
+        # occupying the event loop that owns telemetry and freshness processing.
+        await asyncio.wait_for(asyncio.sleep(0.01), timeout=0.10)
+        assert recorder._task is not None
+        assert not recorder._task.done()
+    finally:
+        release_write.set()
+        await recorder.stop()
+        store.close()
 
 
 @pytest.mark.asyncio

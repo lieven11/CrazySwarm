@@ -9,6 +9,11 @@ from typing import Any, Literal, cast
 
 from pydantic import Field, model_validator
 
+from crazyswarm_app.campaign.corridor import (
+    GoalCorridorDisposition,
+    GoalCorridorSearchResult,
+    simplify_corridor,
+)
 from crazyswarm_app.campaign.geometry import (
     FeasibilityCertificate,
     RouteGeometry,
@@ -331,6 +336,7 @@ class BoundedJointPlanner:
         planning_submission: PlanningSubmission | None = None,
         capability_resolution: CapabilityResolution | None = None,
         first_certified_within_budget: bool = False,
+        requested_release_delay_s: float | None = None,
     ) -> BoundedPlanningResult:
         selected_submission = submission or resolve_submission(case, None, require_executable=False)
         selected_planning_submission = planning_submission or resolve_planning_submission(
@@ -357,30 +363,9 @@ class BoundedJointPlanner:
                     "execution_profile_sha256": selected_submission.profile_sha256,
                 }
             )
-        if (
-            selected_capability_resolution is not None
-            and selected_capability_resolution.feasibility is not None
-            and selected_capability_resolution.feasibility.disposition
-            is CapabilityFeasibilityDisposition.PROVEN_INFEASIBLE
-        ):
-            violated = ",".join(selected_capability_resolution.feasibility.violated_constraints)
-            return _planning_result(
-                case,
-                submission=selected_submission,
-                planning_submission=selected_planning_submission,
-                evaluations=(),
-                generated_count=0,
-                truncated=False,
-                duration_s=0.0,
-                blocking_reason=(
-                    f"complete capability compiler and independent dense oracle proved {violated}"
-                ),
-                disposition=SearchDisposition.PROVEN_INFEASIBLE_WITHIN_DECLARED_BOUNDS,
-                optimality_claim=(
-                    "exact capability infeasibility proven by complete compiler and "
-                    "independent dense deadline/dynamics oracle"
-                ),
-            )
+        # Capability feasibility is diagnostic for the authored route.  It must not
+        # short-circuit planning: a planning submission may legally retime or replace
+        # that geometry, and the selected candidate is independently certified below.
         # Only the perception-independent initial-world projection may reach search.
         # Future environment events remain available to the runtime executor, not to
         # candidate generation or feasibility certification.
@@ -409,6 +394,7 @@ class BoundedJointPlanner:
             case,
             base_routes,
             selected_planning_submission,
+            requested_release_delay_s=requested_release_delay_s,
         )
         if selected_submission.kind in {
             ExecutionProfileKind.CONSTANT_PATH_SPEED,
@@ -426,19 +412,19 @@ class BoundedJointPlanner:
                 # delay candidate; this keeps cold and warm admission inside the
                 # same immutable planning budget.
                 seed_source = (
-                    _CandidateSeed(
-                        PlannerStrategy.DIRECT,
-                        "one-drone-execution-profile-v3",
-                        {
-                            "submission_id": selected_submission.submission_id,
-                            "profile_kind": selected_submission.kind.value,
-                        },
-                        _apply_execution_profile(
-                            case,
+                    _apply_execution_profile_to_seed(
+                        case,
+                        _CandidateSeed(
+                            PlannerStrategy.DIRECT,
+                            "one-drone-execution-profile-v3",
+                            {
+                                "submission_id": selected_submission.submission_id,
+                                "profile_kind": selected_submission.kind.value,
+                            },
                             base_routes,
-                            selected_submission,
-                            selected_capability_resolution,
                         ),
+                        selected_submission,
+                        selected_capability_resolution,
                     ),
                 )
             else:
@@ -766,6 +752,8 @@ class BoundedJointPlanner:
         case: CampaignCase,
         base_routes: tuple[CandidateRoute, ...],
         planning_submission: PlanningSubmission,
+        *,
+        requested_release_delay_s: float | None = None,
     ) -> Iterable[_CandidateSeed]:
         authorized_strategies = set(planning_submission.strategy_authority)
         in_flight = planning_submission.planning_submission_id.startswith("in_flight.")
@@ -813,13 +801,26 @@ class BoundedJointPlanner:
         if PlannerStrategy.DIRECT in authorized_strategies:
             yield _CandidateSeed(PlannerStrategy.DIRECT, "direct-v1", {}, base_routes)
         if PlannerStrategy.GROUND_DELAY in authorized_strategies:
-            if case.family == "bottleneck":
+            if requested_release_delay_s is not None:
+                release_routes = (
+                    _bottleneck_staged_seed(case, base_routes).routes
+                    if case.family == "bottleneck"
+                    else base_routes
+                )
+                for role in sorted(route.role_id for route in release_routes):
+                    yield _retime_seed(
+                        release_routes,
+                        role,
+                        requested_release_delay_s,
+                        ground=True,
+                    )
+            elif case.family == "bottleneck":
                 yield from _bottleneck_serialized_candidates(
                     case,
                     base_routes,
                     planning_submission,
                 )
-            if (
+            if requested_release_delay_s is None and (
                 case.family == "constrained_volume"
                 and planning_submission.planning_submission_id
                 in {"constrained.timing_makespan", "constrained.robust_schedule"}
@@ -828,29 +829,51 @@ class BoundedJointPlanner:
                     base_routes,
                     planning_submission,
                 )
-            yield from _continuous_release_candidates(
-                base_routes,
-                planning_submission,
-                ground=True,
+            # A complete all-role precedence schedule is the cheapest safe
+            # fallback for a true single-capacity passage. Evaluate it before
+            # coarse one-role delay probes so certification remains inside the
+            # unchanged planning budget as fleet size grows.
+            joint_schedule_prioritized = requested_release_delay_s is None and (
+                len(base_routes) > 1
+                and case.drone_count >= 3
+                and case.family == "bottleneck"
             )
-            for role in sorted(route.role_id for route in base_routes):
-                for delay_s in case.search.delay_grid_s:
-                    yield _retime_seed(base_routes, role, delay_s, ground=True)
-            if len(base_routes) > 1:
+            if joint_schedule_prioritized:
                 for order in permutations(sorted(route.role_id for route in base_routes)):
                     yield _joint_retime_seed(base_routes, order, ground=True)
+            if requested_release_delay_s is None:
+                yield from _continuous_release_candidates(
+                    base_routes,
+                    planning_submission,
+                    ground=True,
+                )
+                for role in sorted(route.role_id for route in base_routes):
+                    for delay_s in case.search.delay_grid_s:
+                        yield _retime_seed(base_routes, role, delay_s, ground=True)
+                if len(base_routes) > 1 and not joint_schedule_prioritized:
+                    for order in permutations(sorted(route.role_id for route in base_routes)):
+                        yield _joint_retime_seed(base_routes, order, ground=True)
         if PlannerStrategy.AIRBORNE_STAGING in authorized_strategies:
-            yield from _continuous_release_candidates(
-                base_routes,
-                planning_submission,
-                ground=False,
-            )
-            for role in sorted(route.role_id for route in base_routes):
-                for delay_s in case.search.delay_grid_s:
-                    yield _retime_seed(base_routes, role, delay_s, ground=False)
-            if len(base_routes) > 1:
-                for order in permutations(sorted(route.role_id for route in base_routes)):
-                    yield _joint_retime_seed(base_routes, order, ground=False)
+            if requested_release_delay_s is not None:
+                for role in sorted(route.role_id for route in base_routes):
+                    yield _retime_seed(
+                        base_routes,
+                        role,
+                        requested_release_delay_s,
+                        ground=False,
+                    )
+            else:
+                yield from _continuous_release_candidates(
+                    base_routes,
+                    planning_submission,
+                    ground=False,
+                )
+                for role in sorted(route.role_id for route in base_routes):
+                    for delay_s in case.search.delay_grid_s:
+                        yield _retime_seed(base_routes, role, delay_s, ground=False)
+                if len(base_routes) > 1:
+                    for order in permutations(sorted(route.role_id for route in base_routes)):
+                        yield _joint_retime_seed(base_routes, order, ground=False)
         if PlannerStrategy.SPEED_RETIMING in authorized_strategies:
             for role in sorted(route.role_id for route in base_routes):
                 for factor in case.search.speed_factors:
@@ -933,6 +956,164 @@ class BoundedJointPlanner:
                         {**seed.parameters, "delay_s": delay_s},
                         routes,
                     )
+
+
+def plan_goal_corridor_candidate(
+    case: CampaignCase,
+    planning_submission: PlanningSubmission,
+    search_result: GoalCorridorSearchResult,
+    *,
+    role_id: str,
+    submission: ExecutionProfileSubmission | None = None,
+    capability_resolution: CapabilityResolution | None = None,
+) -> BoundedPlanningResult:
+    """Turn a bounded start-goal corridor into independently certified motion input."""
+
+    selected_submission = submission or resolve_submission(
+        case,
+        None,
+        require_executable=False,
+    )
+    if search_result.disposition is not GoalCorridorDisposition.SELECTED:
+        disposition = (
+            SearchDisposition.BUDGET_EXHAUSTED
+            if search_result.disposition is GoalCorridorDisposition.BUDGET_EXHAUSTED
+            else SearchDisposition.PROVEN_INFEASIBLE_WITHIN_DECLARED_BOUNDS
+        )
+        return _planning_result(
+            case,
+            submission=selected_submission,
+            planning_submission=planning_submission,
+            evaluations=(),
+            generated_count=0,
+            truncated=disposition is SearchDisposition.BUDGET_EXHAUSTED,
+            duration_s=0.0,
+            blocking_reason=f"goal-corridor search returned {search_result.disposition.value}",
+            disposition=disposition,
+            bounded_search_complete=disposition is not SearchDisposition.BUDGET_EXHAUSTED,
+            planner_id=search_result.planner_id,
+            planner_version="1.0.0",
+        )
+    drone = next((item for item in case.drones if item.role_id == role_id), None)
+    if drone is None or case.drone_count != 1:
+        raise ValueError("goal-corridor motion currently requires one exact case role")
+    if len(drone.goal_sequence) != 1:
+        raise ValueError("goal-corridor motion requires one goal region")
+    points = simplify_corridor(search_result.path_points_m)
+    goal = drone.goal_sequence[0]
+    landing_approach = Vector3(
+        x=drone.landing_region.center_m.x,
+        y=drone.landing_region.center_m.y,
+        z=goal.center_m.z,
+    )
+    if _distance(points[-1], landing_approach) > 1e-12:
+        points = (*points, landing_approach)
+    declared_stops = (RouteStop(position_m=landing_approach, mode=RouteNodeMode.CAPTURE),)
+    from crazyswarm_app.campaign.trajectory import allocate_trajectory_points
+
+    # Keep tracking authority in reserve for online turns and moving-state
+    # splices.  The generic allocator's 0.25 m/s nominal consumes too much of
+    # the Fast Sim controller's lateral authority once the sensed corridor
+    # bends; 0.20 m/s remains continuous while leaving physical correction
+    # margin instead of certifying a dynamically legal but poorly tracked
+    # spline.
+    corridor_speed_factor = 0.80
+    allocated = allocate_trajectory_points(
+        case,
+        points,
+        speed_factor=corridor_speed_factor,
+        declared_stops=declared_stops,
+    )
+    authored_times: list[float] = []
+    search_start = 0
+    for point in points:
+        matched = next(
+            index
+            for index in range(search_start, len(allocated))
+            if _distance(allocated[index].position_m, point) <= 1e-9
+        )
+        authored_times.append(allocated[matched].time_from_start_s)
+        search_start = matched + 1
+    route = CandidateRoute(
+        role_id=role_id,
+        points_m=points,
+        route_start_s=0.0,
+        route_duration_s=allocated[-1].time_from_start_s,
+        geometry_family=GeometryFamily.CORRIDOR_FOLLOWING,
+        geometry_parameters={
+            "corridor_result_sha256": search_result.result_sha256,
+            "expanded_state_count": search_result.expanded_state_count,
+        },
+        declared_stops=declared_stops,
+        speed_factor=corridor_speed_factor,
+        segment_durations_s=tuple(after - before for before, after in pairwise(authored_times)),
+    )
+    seed = _CandidateSeed(
+        PlannerStrategy.HORIZONTAL_DETOUR,
+        "bounded-goal-corridor-a-star-v1",
+        {
+            "role_id": role_id,
+            "corridor_result_sha256": search_result.result_sha256,
+            "expanded_state_count": search_result.expanded_state_count,
+        },
+        (route,),
+    )
+    if not (
+        case.family == "online_obstacle_replan"
+        and "source_time_changed_world" in case.named_variations
+    ):
+        seed = _apply_execution_profile_to_seed(
+            case,
+            seed,
+            selected_submission,
+            capability_resolution,
+        )
+    evaluation = _evaluate_candidate(
+        0,
+        seed,
+        case,
+        planning_submission=planning_submission,
+        trajectory_cache={},
+        position_cache={},
+        boundary_cache={},
+        dynamics_cache={},
+    )
+    certificate = (
+        certify_candidate_routes(
+            case,
+            planning_submission,
+            evaluation.candidate_sha256,
+            cast(Sequence[RouteGeometry], evaluation.routes),
+        )
+        if evaluation.status is CandidateStatus.FEASIBLE
+        else None
+    )
+    selected = certificate is not None and certificate.passed
+    return _planning_result(
+        case,
+        submission=selected_submission,
+        planning_submission=planning_submission,
+        evaluations=(evaluation,),
+        generated_count=1,
+        truncated=False,
+        duration_s=0.0,
+        selected_index=0 if selected else None,
+        blocking_reason=(
+            None if selected else "goal-corridor motion failed independent route certification"
+        ),
+        disposition=(
+            SearchDisposition.SELECTED
+            if selected
+            else SearchDisposition.INDEPENDENT_VERIFICATION_REJECTED
+        ),
+        certificate=certificate,
+        bounded_search_complete=True,
+        optimality_claim=(
+            "lexicographically optimal corridor within the completed bounded A* lattice"
+        ),
+        planner_id=search_result.planner_id,
+        planner_version="1.0.0",
+    )
 
 
 def _direct_routes(case: CampaignCase) -> tuple[CandidateRoute, ...]:
@@ -1105,11 +1286,13 @@ def _apply_execution_profile(
         elif submission.kind is ExecutionProfileKind.CORNER_TRANSITION:
             if selected_resolution is None:
                 raise ValueError("corner-transition planning requires a capability resolution")
-            assert parameters.target_path_speed_m_s is not None
-            path_speed_targets_m_s = (parameters.target_path_speed_m_s,) * len(distances)
-            durations = tuple(
-                max(0.01, distance / parameters.target_path_speed_m_s) for distance in distances
+            certified_speed = (
+                parameters.certified_path_speed_m_s or selected_resolution.certified_entry_speed_m_s
             )
+            if certified_speed is None:
+                raise ValueError("corner-transition planning lacks a certified path speed")
+            path_speed_targets_m_s = (certified_speed,) * len(distances)
+            durations = tuple(max(0.01, distance / certified_speed) for distance in distances)
         else:
             raise ValueError(
                 f"submission {submission.submission_id} has no executable trajectory time law"
@@ -1139,6 +1322,18 @@ def _apply_execution_profile(
                 and submission.kind is ExecutionProfileKind.CORNER_TRANSITION
                 else None
             ),
+            corner_cut_tolerance_m=(
+                selected_resolution.path_deviation_cap_m
+                if selected_resolution is not None
+                and submission.kind is ExecutionProfileKind.CORNER_TRANSITION
+                and case.drone_count == 1
+                else None
+            ),
+        )
+        effective_path_length_m = (
+            _sampled_trajectory_path_length(points)
+            if submission.kind is ExecutionProfileKind.CORNER_TRANSITION
+            else 0.0
         )
         duration_scale = points[-1].time_from_start_s / max(sum(durations), 1e-9)
         retimed_durations = (
@@ -1161,10 +1356,32 @@ def _apply_execution_profile(
                     "segment_durations_s": raw_segment_durations,
                     "route_duration_s": points[-1].time_from_start_s,
                     "speed_factor": 1.0,
+                    "geometry_parameters": {
+                        **route.geometry_parameters,
+                        **(
+                            {"effective_path_length_m": effective_path_length_m}
+                            if submission.kind is ExecutionProfileKind.CORNER_TRANSITION
+                            else {}
+                        ),
+                    },
                 }
             )
         )
     return tuple(output)
+
+
+def _sampled_trajectory_path_length(points: tuple[Any, ...]) -> float:
+    length = 0.0
+    for start, end in pairwise(points):
+        duration_s = end.time_from_start_s - start.time_from_start_s
+        sample_count = max(8, min(64, math.ceil(duration_s / 0.02)))
+        before = start.position_m
+        for sample_index in range(1, sample_count + 1):
+            timestamp_s = start.time_from_start_s + duration_s * sample_index / sample_count
+            after = sample_trajectory_segment(start, end, timestamp_s).position_m
+            length += _distance(before, after)
+            before = after
+    return length
 
 
 def _apply_execution_profile_to_seed(
@@ -1182,6 +1399,26 @@ def _apply_execution_profile_to_seed(
     }
     if capability_resolution is not None:
         parameters["capability_resolution_sha256"] = canonical_sha256(capability_resolution)
+        if submission.kind is ExecutionProfileKind.CORNER_TRANSITION and (
+            case.drone_count > 1
+            or (
+                capability_resolution.feasibility is not None
+                and capability_resolution.feasibility.disposition
+                is CapabilityFeasibilityDisposition.PROVEN_INFEASIBLE
+            )
+        ):
+            # The profile compiler evaluates each raw route independently before
+            # coordinated planning.  Its corner transform must not erase formation,
+            # avoidance, or timing decisions in an independently certified fleet
+            # candidate.  Execute that candidate with its native timing and retain
+            # the fallback in the plan.
+            parameters["execution_profile_fallback"] = "planner_candidate_native_timing"
+            return _CandidateSeed(
+                seed.strategy,
+                seed.generator_id,
+                parameters,
+                seed.routes,
+            )
     return _CandidateSeed(
         seed.strategy,
         seed.generator_id,
@@ -1380,16 +1617,7 @@ def _bottleneck_serialized_candidates(
     routes: tuple[CandidateRoute, ...],
     planning_submission: PlanningSubmission,
 ) -> Iterable[_CandidateSeed]:
-    staged = _joint_geometry_seed(
-        case,
-        routes,
-        {route.role_id: _outward_goal_points(case, route) for route in routes},
-        strategy=PlannerStrategy.HORIZONTAL_DETOUR,
-        generator_id="joint-clearance-lateral-v1",
-        family=GeometryFamily.CORRIDOR_FOLLOWING,
-        parameters={"passage_staging": True},
-        stop_at_authored_nodes=True,
-    )
+    staged = _bottleneck_staged_seed(case, routes)
     if planning_submission.planning_submission_id == "bottleneck.earliest_safe_release":
         # The existing serialized candidate reserves the entire prior mission,
         # including landing, and is intentionally conservative. The earliest
@@ -1411,6 +1639,24 @@ def _bottleneck_serialized_candidates(
             },
             retimed.routes,
         )
+
+
+def _bottleneck_staged_seed(
+    case: CampaignCase,
+    routes: tuple[CandidateRoute, ...],
+) -> _CandidateSeed:
+    """Build the common fly-through passage geometry before applying release timing."""
+
+    return _joint_geometry_seed(
+        case,
+        routes,
+        {route.role_id: _outward_goal_points(case, route) for route in routes},
+        strategy=PlannerStrategy.HORIZONTAL_DETOUR,
+        generator_id="joint-clearance-lateral-v1",
+        family=GeometryFamily.CORRIDOR_FOLLOWING,
+        parameters={"passage_staging": True},
+        stop_at_authored_nodes=case.drone_count >= 3,
+    )
 
 
 def _routes_with_release_delay(
@@ -1607,7 +1853,7 @@ def _joint_vertical_clearance_candidates(
                     "first_layer_m": first_layer,
                     "second_layer_m": second_layer,
                 },
-                stop_at_authored_nodes=True,
+                stop_at_authored_nodes=case.drone_count >= 3,
             )
 
 
@@ -1664,6 +1910,9 @@ def _joint_geometry_seed(
         points = replacements.get(route.role_id)
         if points is None:
             continue
+        # Geometry candidates may add staging, detour, or layer knots, but those
+        # knots are not mission checkpoints. Preserve only authored stop semantics
+        # so conflict planning cannot manufacture node-local braking.
         declared_stops = route.declared_stops
         if stop_at_authored_nodes:
             declared_stops = tuple(
@@ -2075,7 +2324,7 @@ def _fleet_solid_lane_candidates(
                         "lane_pattern": pattern_index,
                         "lane_spacing_m": required_center_separation,
                     },
-                    stop_at_authored_nodes=True,
+                    stop_at_authored_nodes=case.drone_count >= 3,
                 )
 
 
@@ -2508,7 +2757,8 @@ def _evaluate_candidate(
     total_energy = 0.0
     for route in seed.routes:
         drone = drone_by_role[route.role_id]
-        energy = route.path_length_m * 1.0 + route.airborne_wait_s * 0.25 + 1.0
+        effective_path_length_m = _effective_route_path_length(route)
+        energy = effective_path_length_m * 1.0 + route.airborne_wait_s * 0.25 + 1.0
         total_energy += energy
         battery_end[route.role_id] = drone.initial_battery_percent - energy
         if battery_end[route.role_id] < drone.minimum_reserve_battery_percent:
@@ -2522,7 +2772,7 @@ def _evaluate_candidate(
             for goal in drone.goal_sequence
         ):
             reasons.append(f"REQUIRED_GOAL_VIOLATION:{route.role_id}")
-        maximum_speed = route.path_length_m / route.route_duration_s
+        maximum_speed = effective_path_length_m / route.route_duration_s
         if maximum_speed > case.hard_constraints.dynamics.maximum_horizontal_speed_m_s:
             reasons.append(f"DYNAMICS_SPEED_VIOLATION:{route.role_id}")
     execution_overhead_s = (
@@ -2560,7 +2810,7 @@ def _evaluate_candidate(
         maximum_wait_s=max(waits, default=0.0),
         total_energy_percent=total_energy,
         airborne_hover_time_s=sum(route.airborne_wait_s for route in seed.routes),
-        path_length_m=sum(route.path_length_m for route in seed.routes),
+        path_length_m=sum(_effective_route_path_length(route) for route in seed.routes),
         acceleration_m_s2=max((item[0] for item in dynamics), default=0.0),
         jerk_m_s3=max((item[1] for item in dynamics), default=0.0),
         negative_separation_robustness_m=-(objective_separation - required),
@@ -2625,6 +2875,8 @@ def _planning_result(
     certificate: FeasibilityCertificate | None = None,
     bounded_search_complete: bool | None = None,
     optimality_claim: str | None = None,
+    planner_id: str | None = None,
+    planner_version: str | None = None,
 ) -> BoundedPlanningResult:
     status = PlanningStatus.READY if selected_index is not None else PlanningStatus.BLOCKED
     selected_sha = (
@@ -2650,8 +2902,8 @@ def _planning_result(
     motion_contract = motion_contract_for_execution_profile(case, submission)
     payload: dict[str, Any] = {
         "schema_version": 4,
-        "planner_id": case.search.implementation_id,
-        "planner_version": case.search.implementation_version,
+        "planner_id": planner_id or case.search.implementation_id,
+        "planner_version": planner_version or case.search.implementation_version,
         "case_id": case.case_id,
         "case_sha256": case.case_sha256,
         "motion_quality_contract": motion_contract,
@@ -2687,6 +2939,11 @@ def _planning_result(
         diagnostic_search_duration_s=duration_s,
         plan_sha256=digest,
     )
+
+
+def _effective_route_path_length(route: CandidateRoute) -> float:
+    retained = route.geometry_parameters.get("effective_path_length_m")
+    return float(retained) if isinstance(retained, (int, float)) else route.path_length_m
 
 
 def _representative_candidate_sha256s(

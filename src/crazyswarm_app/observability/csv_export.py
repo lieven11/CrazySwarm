@@ -249,6 +249,11 @@ def _telemetry_row(run: dict[str, Any], event: EvidenceEvent) -> list[str]:
         if motors is not None
         else {}
     )
+    physical_pwm = (
+        dict(zip(_MOTOR_IDS, telemetry.motor_pwm_percent, strict=True))
+        if telemetry.motor_pwm_percent is not None
+        else {}
+    )
 
     values: dict[str, Any] = {
         "csv_schema_version": 1,
@@ -349,15 +354,16 @@ def _telemetry_row(run: dict[str, Any], event: EvidenceEvent) -> list[str]:
         )
     for motor_id in _MOTOR_IDS:
         reading = readings.get(motor_id)
+        applied_pwm_percent = getattr(reading, "applied_pwm_percent", None)
+        if applied_pwm_percent is None:
+            applied_pwm_percent = physical_pwm.get(motor_id)
         values.update(
             {
                 f"motor_{motor_id}_command_percent": getattr(reading, "command_percent", None),
                 f"motor_{motor_id}_requested_thrust_n": getattr(
                     reading, "requested_thrust_n", None
                 ),
-                f"motor_{motor_id}_applied_pwm_percent": getattr(
-                    reading, "applied_pwm_percent", None
-                ),
+                f"motor_{motor_id}_applied_pwm_percent": applied_pwm_percent,
                 f"motor_{motor_id}_voltage_v": getattr(reading, "motor_voltage_v", None),
                 f"motor_{motor_id}_thrust_n": getattr(reading, "thrust_n", None),
                 f"motor_{motor_id}_available_thrust_n": getattr(

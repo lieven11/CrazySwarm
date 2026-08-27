@@ -41,7 +41,7 @@ cd ui && npm ci && cd ..
 scripts/qualify_fast_sim.sh
 ```
 
-Start the dashboard with one terminal command:
+Start a simulation-only development dashboard with one terminal command:
 
 ```bash
 .venv/bin/crazyswarm-control dashboard
@@ -50,6 +50,16 @@ Start the dashboard with one terminal command:
 Leave that terminal open. Frontend edits update the browser automatically, backend
 edits restart the API automatically, and either process is restarted if it exits. You
 do not need to run a separate Vite or Uvicorn command.
+
+On macOS, double-click `Restart CrazySwarm.command` in the project folder to restart
+the persistent dashboard service and open it after both the UI and API are healthy.
+Restarting keeps the installed immutable release; if local source has changed, the
+launcher reports that it is undeployed instead of waiting indefinitely. Use the
+explicit hardware deployment command from the ownership guide to build and publish
+those changes.
+That persistent service is the sole normal physical-radio owner. Parallel Codex work
+belongs in worktrees and must not restart it; see the
+[hardware runtime ownership guide](docs/guides/HARDWARE_RUNTIME_OWNERSHIP.md).
 
 The application always starts in `SIM`. Hardware discovery never arms or launches a
 vehicle. `DIGITAL_TWIN` remains disabled until a real adapter, synchronized measured

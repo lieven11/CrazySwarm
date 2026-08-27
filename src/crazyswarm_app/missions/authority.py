@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable
-from typing import TypeVar
+from typing import Any, TypeVar
 
 from crazyswarm_app.domain.commands import FleetCommandBinding
 from crazyswarm_app.domain.errors import CrazySwarmError, ErrorCode
@@ -27,6 +27,7 @@ class MissionFleetAuthority:
         self._binding = binding
         self._guard = asyncio.Lock()
         self._health_guard = asyncio.Lock()
+        self._active_preemptible_tasks: set[asyncio.Task[Any]] = set()
         self._receipts: list[FleetAuthorityTransitionReceipt] = []
 
     @property
@@ -55,6 +56,35 @@ class MissionFleetAuthority:
         async with self._health_guard:
             return await operation(self._binding)
 
+    async def execute_preemptible(
+        self,
+        operation: Callable[[FleetCommandBinding | None], Awaitable[ResultT]],
+    ) -> ResultT:
+        """Run a long command outside the health lock while retaining transition safety.
+
+        A newer replacement or fallback cancels the prior preemptible operation before
+        it snapshots the same binding. Authority transitions cancel and drain every
+        such operation before changing the adapter binding.
+        """
+
+        async with self._health_guard:
+            previous = tuple(self._active_preemptible_tasks)
+            for previous_task in previous:
+                previous_task.cancel()
+            if previous:
+                await asyncio.gather(*previous, return_exceptions=True)
+
+            async def invoke() -> ResultT:
+                return await operation(self._binding)
+
+            operation_task = asyncio.create_task(invoke())
+            self._active_preemptible_tasks.add(operation_task)
+        try:
+            return await operation_task
+        finally:
+            async with self._health_guard:
+                self._active_preemptible_tasks.discard(operation_task)
+
     async def transition(
         self,
         transition: FleetAuthorityTransition,
@@ -62,6 +92,12 @@ class MissionFleetAuthority:
         """Change adapter and command-context authority under the same serialization lock."""
 
         async with self._guard, self._health_guard:
+            active_preemptible = tuple(self._active_preemptible_tasks)
+            for task in active_preemptible:
+                task.cancel()
+            if active_preemptible:
+                await asyncio.gather(*active_preemptible, return_exceptions=True)
+                self._active_preemptible_tasks.difference_update(active_preemptible)
             binding = self._binding
             if binding is None:
                 raise CrazySwarmError(

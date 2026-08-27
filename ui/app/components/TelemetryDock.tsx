@@ -2,13 +2,19 @@
 
 import { ChevronDown, ChevronUp, Download, FileSpreadsheet, LoaderCircle, RefreshCw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { DashboardModel, RangeRay, RunFileMissionView, TwinSessionView, TwinTimelineSampleView, TwinTimelineView, Vec3, VehicleView } from "../lib/models";
-import { formatClockContext, type TwinSceneOverlay } from "./RoomScene";
+import type { DashboardModel, RunFileMissionView, TwinSessionView, TwinTimelineSampleView, TwinTimelineView, Vec3, VehicleView } from "../lib/models";
+import type { TwinSceneOverlay } from "./RoomScene";
 
 export type TelemetrySample = {
   t: number;
-  altitude?: number;
+  positionX?: number;
+  positionY?: number;
+  positionZ?: number;
+  velocityX?: number;
+  velocityY?: number;
+  velocityZ?: number;
   speed?: number;
+  nearest?: number;
   battery?: number;
   current?: number;
   localization?: number;
@@ -28,7 +34,10 @@ export type TelemetrySample = {
 };
 
 type TrendMetric = Exclude<keyof TelemetrySample, "t" | "localization">;
-type TrendGroup = "flight" | "attitude" | "acceleration" | "angularVelocity" | "motors";
+type TrendGroup = "position" | "velocity" | "acceleration" | "power" | "attitude" | "angularVelocity" | "motors";
+
+export const MOTOR_STARTUP_TRIM_SECONDS = 3;
+const MOTOR_ACTIVE_THRESHOLD_PERCENT = 1;
 
 const TREND_GROUPS: readonly {
   id: TrendGroup;
@@ -36,11 +45,20 @@ const TREND_GROUPS: readonly {
   title: string;
   metrics: readonly TrendMetric[];
 }[] = [
-  { id: "flight", label: "Flight", title: "Flight essentials", metrics: ["altitude", "speed", "battery", "current"] },
-  { id: "attitude", label: "Attitude", title: "Roll, pitch, and yaw", metrics: ["roll", "pitch", "yaw"] },
-  { id: "acceleration", label: "Accel", title: "IMU acceleration", metrics: ["accelerationX", "accelerationY", "accelerationZ"] },
-  { id: "angularVelocity", label: "Gyro", title: "IMU angular velocity", metrics: ["angularVelocityX", "angularVelocityY", "angularVelocityZ"] },
-  { id: "motors", label: "Motors", title: "Individual motor output", metrics: ["motorM1", "motorM2", "motorM3", "motorM4"] },
+  { id: "position", label: "Position", title: "Position", metrics: ["positionX", "positionY", "positionZ"] },
+  { id: "velocity", label: "Velocity", title: "Velocity", metrics: ["velocityX", "velocityY", "velocityZ"] },
+  { id: "acceleration", label: "Acceleration", title: "Acceleration", metrics: ["accelerationX", "accelerationY", "accelerationZ"] },
+  { id: "power", label: "Power", title: "Power", metrics: ["battery", "current"] },
+  { id: "attitude", label: "Attitude", title: "Attitude", metrics: ["roll", "pitch", "yaw"] },
+  { id: "angularVelocity", label: "Gyro", title: "Gyro", metrics: ["angularVelocityX", "angularVelocityY", "angularVelocityZ"] },
+  { id: "motors", label: "Motors", title: "Motors", metrics: ["motorM1", "motorM2", "motorM3", "motorM4"] },
+];
+
+const MISSION_OVERVIEW_METRICS: readonly { metric: TrendMetric; label: string }[] = [
+  { metric: "positionZ", label: "Height" },
+  { metric: "speed", label: "Speed" },
+  { metric: "battery", label: "Battery" },
+  { metric: "nearest", label: "Nearest" },
 ];
 
 export function RunFilesControl({
@@ -113,12 +131,9 @@ export function RunFilesControl({
 export function FlightReadout({
   model,
   vehicle,
-  twin,
   samples,
   expanded,
   onToggle,
-  onLoadTwinTimeline,
-  onTwinSceneOverlay,
 }: {
   model: DashboardModel;
   vehicle?: VehicleView;
@@ -129,198 +144,64 @@ export function FlightReadout({
   onLoadTwinTimeline?: (sessionId: string) => Promise<TwinTimelineView>;
   onTwinSceneOverlay?: (overlay?: TwinSceneOverlay) => void;
 }) {
-  const [trendMetric, setTrendMetric] = useState<TrendMetric>("altitude");
-  const [systemsOpen, setSystemsOpen] = useState(true);
-  const [evidenceOpen, setEvidenceOpen] = useState(true);
+  const [trendGroupId, setTrendGroupId] = useState<TrendGroup>("position");
   const data = vehicle?.telemetry;
   if (!vehicle || !data) return null;
-  const trendGroup = TREND_GROUPS.find((group) => group.metrics.includes(trendMetric)) ?? TREND_GROUPS[0];
+  const trendGroup = TREND_GROUPS.find((group) => group.id === trendGroupId) ?? TREND_GROUPS[0];
 
   const speed = data.velocity ? vectorMagnitude(data.velocity) : undefined;
-  const nearestRange = data.ranges
-    .filter((range) => range.distanceM !== null)
-    .sort((left, right) => left.distanceM! - right.distanceM!)[0];
-  const nearest = nearestRange?.distanceM ?? undefined;
   const batteryTone = data.batteryPercent !== undefined && data.batteryPercent <= 15
     ? "critical"
     : data.batteryPercent !== undefined && data.batteryPercent <= 30
       ? "warning"
       : "normal";
-  const rangeTone = nearest !== undefined && nearest < .2 ? "critical" : nearest !== undefined && nearest < .45 ? "warning" : "normal";
   const meanMotorPwm = data.motors
     ? data.motors.readings.reduce(
         (total, motor) => total + (motor.appliedPwmPercent ?? motor.commandPercent),
         0,
       ) / data.motors.readings.length
     : undefined;
+  const positionDisplayRange = Math.max(model.room?.widthM ?? 0, model.room?.depthM ?? 0, model.room?.heightM ?? 0, 1);
 
   return (
     <aside className={`flight-readout ${expanded ? "is-expanded" : ""}`} aria-label="Flight telemetry">
       <button className="flight-readout-summary" type="button" aria-expanded={expanded} onClick={onToggle}>
-        <ReadoutValue label="Battery" value={formatValue(data.batteryPercent, 0)} unit="%" tone={batteryTone} />
         <ReadoutValue label="World Z" value={formatValue(data.estimate?.z, 2)} unit="m" />
         <ReadoutValue label="Speed" value={formatValue(speed, 2)} unit="m/s" />
-        <ReadoutValue label="Nearest" value={formatValue(nearest, 2)} unit="m" tone={rangeTone} />
+        <ReadoutValue label="Battery" value={formatValue(data.batteryPercent, 0)} unit="%" tone={batteryTone} />
         <span className="readout-chevron" aria-hidden="true">{expanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}</span>
       </button>
 
       {expanded ? (
         <div className="flight-readout-detail">
-          <InstrumentCluster
-            battery={data.batteryPercent}
-            altitude={data.estimate?.z}
-            speed={speed}
-            nearest={nearest}
-            nearestMaximum={nearestRange?.maximumM}
-            roomHeight={model.room?.heightM}
-            batteryTone={batteryTone}
-            rangeTone={rangeTone}
-          />
-          <section className="trend-controls" aria-label="Telemetry history controls">
-            <div className="trend-groups" role="group" aria-label="Trend category">
-              {TREND_GROUPS.map((group) => (
-                <button
-                  key={group.id}
-                  type="button"
-                  className={group.id === trendGroup.id ? "is-active" : ""}
-                  aria-pressed={group.id === trendGroup.id}
-                  title={group.title}
-                  onClick={() => setTrendMetric(group.metrics[0])}
-                >
-                  {group.label}
-                </button>
-              ))}
-            </div>
-            <div className="trend-switch" role="group" aria-label={`${trendGroup.title} trend metric`} data-count={trendGroup.metrics.length}>
-              {trendGroup.metrics.map((metric) => (
-                <button
-                  key={metric}
-                  type="button"
-                  className={metric === trendMetric ? "is-active" : ""}
-                  aria-pressed={metric === trendMetric}
-                  onClick={() => setTrendMetric(metric)}
-                >
-                  {TREND_DEFINITIONS[metric].switchLabel}
-                </button>
-              ))}
-            </div>
+          <MissionOverview samples={samples} />
+          <section className="telemetry-category-nav" role="group" aria-label="Telemetry category">
+            {TREND_GROUPS.map((group) => (
+              <button
+                key={group.id}
+                type="button"
+                className={group.id === trendGroup.id ? "is-active" : ""}
+                aria-pressed={group.id === trendGroup.id}
+                onClick={() => setTrendGroupId(group.id)}
+              >
+                {group.label}
+              </button>
+            ))}
           </section>
-          <TrendChart samples={samples} metric={trendMetric} source={vehicle.observationClass} />
-
-          {twin && onLoadTwinTimeline ? (
-            <details
-              className="detail-disclosure twin-evidence-disclosure"
-              open={evidenceOpen}
-              onToggle={(event) => setEvidenceOpen(event.currentTarget.open)}
-            >
-              <summary>Evidence <ChevronDown size={15} /></summary>
-              <div className="disclosure-body">
-                <TwinSessionPanel twin={twin} onLoad={onLoadTwinTimeline} onSceneOverlay={onTwinSceneOverlay} />
-              </div>
-            </details>
-          ) : null}
-
-          {hasSystemDetail(vehicle) ? (
-            <details
-              className="detail-disclosure"
-              open={systemsOpen}
-              onToggle={(event) => setSystemsOpen(event.currentTarget.open)}
-            >
-              <summary>Systems <ChevronDown size={15} /></summary>
-              <div className="disclosure-body">
-                {data.motors ? (
-                  <section className="detail-group">
-                    <h3>Motors</h3>
-                    <div className="motor-lines">
-                      {data.motors.readings.map((motor) => (
-                        <div key={motor.id}>
-                          <span>{motor.id}</span>
-                          <i aria-hidden="true"><b style={{ width: `${clamp(motor.appliedPwmPercent ?? motor.commandPercent, 0, 100)}%` }} /></i>
-                          <strong>{(motor.appliedPwmPercent ?? motor.commandPercent).toFixed(2)}% · {motor.thrustN.toFixed(4)} N · {motor.currentA.toFixed(3)} A</strong>
-                          <small>{meanMotorPwm === undefined ? "" : `${(motor.appliedPwmPercent ?? motor.commandPercent) - meanMotorPwm >= 0 ? "+" : ""}${((motor.appliedPwmPercent ?? motor.commandPercent) - meanMotorPwm).toFixed(3)} pp`}{motor.saturated ? " · SATURATED" : ""}</small>
-                        </div>
-                      ))}
-                    </div>
-                    <small>{data.motors.modelId} · {data.motors.modelVersion}</small>
-                  </section>
-                ) : null}
-
-                {data.imu || data.attitude ? (
-                  <section className="detail-group">
-                    <h3>Attitude &amp; IMU</h3>
-                    {data.attitude ? <AttitudeAxes attitude={data.attitude} /> : null}
-                    {data.imu ? (
-                      <div className="imu-vectors">
-                        <VectorBars label="Acceleration" vector={data.imu.acceleration} unit="m/s²" displayRange={10} />
-                        <VectorBars label="Angular velocity" vector={data.imu.angularVelocity} unit="rad/s" displayRange={5} />
-                      </div>
-                    ) : null}
-                  </section>
-                ) : null}
-
-                {data.flow ? (
-                  <section className="detail-group">
-                    <h3>Flow</h3>
-                    {data.flow.groundDistanceM !== undefined ? <DataRow label="Ground distance" value={`${data.flow.groundDistanceM.toFixed(2)} m`} /> : null}
-                    {data.flow.qualityPercent !== undefined ? <PercentageBar label="Quality" value={data.flow.qualityPercent} /> : null}
-                    <VectorBars label="Velocity" vector={data.flow.velocity} unit="m/s" displayRange={1} />
-                    <small>Relative · drift-prone</small>
-                  </section>
-                ) : null}
-
-                {data.ranges.length ? (
-                  <section className="detail-group">
-                    <h3>Ranges</h3>
-                    <RangeBars ranges={data.ranges} />
-                  </section>
-                ) : null}
-
-                {data.radio || data.transport ? (
-                  <section className="detail-group">
-                    <h3>{data.radio ? "Radio" : "Modeled transport"}</h3>
-                    {(data.radio?.qualityPercent ?? data.transport?.deliveryQualityPercent) !== undefined ? <PercentageBar label="Quality" value={(data.radio?.qualityPercent ?? data.transport?.deliveryQualityPercent)!} /> : null}
-                    {(data.radio?.latencyMs ?? data.transport?.latencyMs) !== undefined ? <DataRow label="Latency" value={`${(data.radio?.latencyMs ?? data.transport?.latencyMs)!.toFixed(0)} ms`} /> : null}
-                    {!data.radio ? <small>Not physical radio data</small> : null}
-                  </section>
-                ) : null}
-              </div>
-            </details>
-          ) : null}
-
-          <details className="detail-disclosure">
-            <summary>Evidence <ChevronDown size={15} /></summary>
-            <div className="disclosure-body">
-              <section className="detail-group">
-                <DataRow label="Source" value={sourceLabel(vehicle.observationClass)} />
-                <DataRow label="Status" value={sentenceCase(vehicle.observationStatus)} />
-                <DataRow label="Freshness" value={sentenceCase(data.provenance.freshness)} />
-                <DataRow label="Clock" value={formatClockContext(data.provenance)} />
-                {vehicle.observationRunId ? <DataRow label="Run" value={vehicle.observationRunId} mono /> : null}
-              </section>
-              {model.room ? (
-                <section className="detail-group">
-                  <h3>{model.room.id}</h3>
-                  <DataRow label="World volume" value={`${model.room.widthM} × ${model.room.depthM} × ${model.room.heightM} m`} />
-                  <DataRow label="Version" value={String(model.room.version)} />
-                </section>
-              ) : null}
-              {model.fidelity ? (
-                <section className="detail-group">
-                  <h3>Fidelity</h3>
-                  <DataRow label="Model" value={model.fidelity.model} />
-                  <small>{model.fidelity.limitations.join(" · ")}</small>
-                </section>
-              ) : null}
-              {twin?.latestDeviation ? (
-                <section className="detail-group">
-                  <h3>Twin residual</h3>
-                  {twin.latestDeviation.positionM !== undefined ? <DataRow label="Position" value={`${twin.latestDeviation.positionM.toFixed(3)} m`} /> : null}
-                  <DataRow label="Clock alignment" value={`${twin.latestDeviation.alignmentDeltaMs.toFixed(1)} ms`} />
-                  <small>{twin.groundTruthAvailable ? "External ground truth" : "No external ground truth"}</small>
-                </section>
-              ) : null}
-            </div>
-          </details>
+          <section className="telemetry-category-panel" aria-label={`${trendGroup.title} telemetry`}>
+            <header>
+              <h2>{trendGroup.title}</h2>
+              <small>Last 60 seconds</small>
+            </header>
+            <TelemetryCategoryCurrent
+              group={trendGroup.id}
+              vehicle={vehicle}
+              batteryTone={batteryTone}
+              meanMotorPwm={meanMotorPwm}
+              positionDisplayRange={positionDisplayRange}
+            />
+            <TrendChart samples={samples} metrics={trendGroup.metrics} group={trendGroup.id} />
+          </section>
         </div>
       ) : null}
     </aside>
@@ -368,6 +249,8 @@ export function TwinSessionPanel({
       .finally(() => setLoading(false));
   }, [onLoad, twin.id]);
 
+  // The selected session is an external data source; changing it must restart loading.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(refresh, [refresh]);
   const sourceTimes = useMemo(
     () => [...new Set(timeline?.samples.map((sample) => sample.sourceTimestampS) ?? [])].sort((left, right) => left - right),
@@ -573,37 +456,74 @@ function ReadoutValue({ label, value, unit, tone = "normal" }: { label: string; 
   );
 }
 
-function InstrumentCluster({
-  battery,
-  altitude,
-  speed,
-  nearest,
-  nearestMaximum,
-  roomHeight,
+function TelemetryCategoryCurrent({
+  group,
+  vehicle,
   batteryTone,
-  rangeTone,
+  meanMotorPwm,
+  positionDisplayRange,
 }: {
-  battery?: number;
-  altitude?: number;
-  speed?: number;
-  nearest?: number;
-  nearestMaximum?: number;
-  roomHeight?: number;
+  group: TrendGroup;
+  vehicle: VehicleView;
   batteryTone: string;
-  rangeTone: string;
+  meanMotorPwm?: number;
+  positionDisplayRange: number;
 }) {
+  const data = vehicle.telemetry!;
+  if (group === "position") {
+    return data.estimate
+      ? <VectorBars label="Position" vector={data.estimate} unit="m" displayRange={positionDisplayRange} showLabel={false} />
+      : <TelemetryUnavailable label="Position" />;
+  }
+  if (group === "velocity") {
+    return data.velocity
+      ? <VectorBars label="Velocity" vector={data.velocity} unit="m/s" displayRange={1.5} showLabel={false} />
+      : <TelemetryUnavailable label="Velocity" />;
+  }
+  if (group === "acceleration") {
+    return data.imu
+      ? <VectorBars label="Acceleration" vector={data.imu.acceleration} unit="m/s²" displayRange={10} showLabel={false} />
+      : <TelemetryUnavailable label="Acceleration" />;
+  }
+  if (group === "power") {
+    return (
+      <div className="power-instruments">
+        <ArcGauge label="Battery" value={data.batteryPercent} maximum={100} decimals={0} unit="%" tone={batteryTone} />
+        <div className="power-current">
+          <small>Current</small>
+          <span><strong>{formatValue(data.batteryCurrent, 2)}</strong><i>A</i></span>
+        </div>
+      </div>
+    );
+  }
+  if (group === "attitude") {
+    return data.attitude ? <AttitudeAxes attitude={data.attitude} /> : <TelemetryUnavailable label="Attitude" />;
+  }
+  if (group === "angularVelocity") {
+    return data.imu
+      ? <VectorBars label="Gyro" vector={data.imu.angularVelocity} unit="rad/s" displayRange={5} showLabel={false} />
+      : <TelemetryUnavailable label="Gyro" />;
+  }
+  if (!data.motors) return <TelemetryUnavailable label="Motor" />;
   return (
-    <section className="instrument-cluster" aria-label="Visual flight instruments">
-      <div className="arc-gauges">
-        <ArcGauge label="Battery" value={battery} maximum={100} decimals={0} unit="%" tone={batteryTone} />
-        <ArcGauge label="Clearance" value={nearest} maximum={nearestMaximum} decimals={2} unit="m" tone={rangeTone} />
-      </div>
-      <div className="instrument-bars">
-        <LinearInstrument label="World Z" value={altitude} maximum={roomHeight} unit="m" decimals={2} />
-        <LinearInstrument label="Speed" value={speed} maximum={1.5} unit="m/s" decimals={2} />
-      </div>
-    </section>
+    <div className="motor-lines" role="group" aria-label="Current motor output">
+      {data.motors.readings.map((motor) => {
+        const output = motor.appliedPwmPercent ?? motor.commandPercent;
+        return (
+          <div key={motor.id}>
+            <span>{motor.id}</span>
+            <i aria-hidden="true"><b style={{ width: `${clamp(output, 0, 100)}%` }} /></i>
+            <strong>{output.toFixed(2)}% · {motor.thrustN.toFixed(4)} N · {motor.currentA.toFixed(3)} A</strong>
+            <small>{meanMotorPwm === undefined ? "" : `${output - meanMotorPwm >= 0 ? "+" : ""}${(output - meanMotorPwm).toFixed(3)} pp`}{motor.saturated ? " · SATURATED" : ""}</small>
+          </div>
+        );
+      })}
+    </div>
   );
+}
+
+function TelemetryUnavailable({ label }: { label: string }) {
+  return <p className="telemetry-unavailable">{label} telemetry unavailable</p>;
 }
 
 function ArcGauge({ label, value, maximum, decimals, unit, tone }: { label: string; value?: number; maximum?: number; decimals: number; unit: string; tone: string }) {
@@ -620,18 +540,6 @@ function ArcGauge({ label, value, maximum, decimals, unit, tone }: { label: stri
   );
 }
 
-function LinearInstrument({ label, value, maximum, unit, decimals }: { label: string; value?: number; maximum?: number; unit: string; decimals: number }) {
-  const validMaximum = maximum !== undefined && maximum > 0 ? maximum : undefined;
-  const percent = value === undefined || !validMaximum ? 0 : clamp(value / validMaximum * 100, 0, 100);
-  return (
-    <div className="linear-instrument">
-      <span><small>{label}</small><strong>{value === undefined ? "—" : value.toFixed(decimals)} <i>{unit}</i></strong></span>
-      <b aria-hidden="true"><i style={{ width: `${percent}%` }} /></b>
-      <em>0 — {validMaximum?.toFixed(decimals) ?? "—"} {unit}</em>
-    </div>
-  );
-}
-
 function AttitudeAxes({ attitude }: { attitude: { rollRad: number; pitchRad: number; yawRad: number } }) {
   return (
     <div className="attitude-axes" role="group" aria-label="Attitude around all axes">
@@ -642,10 +550,10 @@ function AttitudeAxes({ attitude }: { attitude: { rollRad: number; pitchRad: num
   );
 }
 
-function VectorBars({ label, vector, unit, displayRange }: { label: string; vector: Vec3; unit: string; displayRange: number }) {
+function VectorBars({ label, vector, unit, displayRange, showLabel = true }: { label: string; vector: Vec3; unit: string; displayRange: number; showLabel?: boolean }) {
   return (
     <div className="vector-bars" role="group" aria-label={`${label} on X Y and Z axes`}>
-      <h4>{label}</h4>
+      {showLabel ? <h4>{label}</h4> : null}
       <AxisMeter label="X" axis="x" value={vector.x} displayRange={displayRange} unit={unit} decimals={2} />
       <AxisMeter label="Y" axis="y" value={vector.y} displayRange={displayRange} unit={unit} decimals={2} />
       <AxisMeter label="Z" axis="z" value={vector.z} displayRange={displayRange} unit={unit} decimals={2} />
@@ -666,72 +574,176 @@ function AxisMeter({ label, axis, value, displayRange, unit, decimals }: { label
   );
 }
 
-function PercentageBar({ label, value }: { label: string; value: number }) {
+function MissionOverview({ samples }: { samples: TelemetrySample[] }) {
+  const metrics = useMemo(() => MISSION_OVERVIEW_METRICS.map((item) => item.metric), []);
+  const series = useMemo(() => buildTrendSeries(samples, metrics), [metrics, samples]);
+
   return (
-    <div className="percentage-bar">
-      <span><small>{label}</small><strong>{value.toFixed(0)}%</strong></span>
-      <i aria-hidden="true"><b style={{ width: `${clamp(value, 0, 100)}%` }} /></i>
+    <section className="mission-overview" aria-label="Mission overview telemetry">
+      <header>
+        <h2>Mission overview</h2>
+        <small>Last 60 seconds</small>
+      </header>
+      <div className="mission-overview-grid">
+        {MISSION_OVERVIEW_METRICS.map((item, index) => {
+          const trend = series[index];
+          const latest = trend?.values.at(-1)?.value;
+          const definition = trend?.definition ?? TREND_DEFINITIONS[item.metric];
+          return (
+            <article key={item.metric} className="mission-overview-card" aria-label={`${item.label} mission history`}>
+              <header>
+                <span>{item.label}</span>
+                <strong>{latest === undefined ? "—" : latest.toFixed(definition.decimals)} {definition.unit}</strong>
+              </header>
+              <TrendPlot series={trend ? [trend] : []} variant="overview" showLegend={false} />
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function TrendChart({ samples, metrics, group }: { samples: TelemetrySample[]; metrics: readonly TrendMetric[]; group: TrendGroup }) {
+  const startupCutoff = useMemo(
+    () => group === "motors" ? motorStartupCutoffTime(samples) : undefined,
+    [group, samples],
+  );
+  const series = useMemo(() => buildTrendSeries(samples, metrics, startupCutoff), [metrics, samples, startupCutoff]);
+  const unitGroups = [...new Set(series.map((item) => item.definition.unit))];
+  const groupLabel = TREND_GROUPS.find((item) => item.id === group)?.label ?? group;
+
+  return (
+    <div className={`trend-chart trend-group-${group}`}>
+      {startupCutoff !== undefined ? <p className="trend-filter-note">Startup trimmed · first {MOTOR_STARTUP_TRIM_SECONDS} s</p> : null}
+      <section className="trend-chart-block" aria-label={`${groupLabel} combined history`}>
+        <header><h3>Combined</h3></header>
+        {unitGroups.map((unit) => <TrendPlot key={unit} series={series.filter((item) => item.definition.unit === unit)} />)}
+      </section>
+      <section className="trend-chart-block" aria-label={`${groupLabel} individual history`}>
+        <header><h3>Individual</h3></header>
+        <div className="trend-individual-grid">
+          {series.map((item) => <TrendPlot key={item.metric} series={[item]} variant="individual" />)}
+        </div>
+      </section>
     </div>
   );
 }
 
-function RangeBars({ ranges }: { ranges: RangeRay[] }) {
-  return (
-    <div className="range-bars">
-      {ranges.map((range) => {
-        const percent = range.distanceM === null ? 0 : clamp(range.distanceM / range.maximumM * 100, 0, 100);
-        const tone = range.distanceM === null ? "unavailable" : range.distanceM < .2 ? "critical" : range.distanceM < .45 ? "warning" : "normal";
-        return (
-          <div className={`range-bar range-${tone}`} key={range.direction}>
-            <span><small>{sentenceCase(range.direction)}</small><strong>{range.distanceM === null ? "—" : `${range.distanceM.toFixed(2)} m`}</strong></span>
-            <i aria-hidden="true"><b style={{ width: `${percent}%` }} /></i>
-          </div>
-        );
-      })}
-    </div>
-  );
+type TrendSeries = {
+  metric: TrendMetric;
+  index: number;
+  definition: (typeof TREND_DEFINITIONS)[TrendMetric];
+  values: { t: number; value: number }[];
+};
+
+function buildTrendSeries(
+  samples: TelemetrySample[],
+  metrics: readonly TrendMetric[],
+  minimumTime?: number,
+): TrendSeries[] {
+  const latestTime = samples.at(-1)?.t;
+  const recentSamples = latestTime === undefined
+    ? []
+    : samples.filter((sample) => latestTime - sample.t <= 60 && (minimumTime === undefined || sample.t >= minimumTime));
+  return metrics.map((metric, index) => ({
+    metric,
+    index,
+    definition: TREND_DEFINITIONS[metric],
+    values: recentSamples
+      .filter((sample) => sample[metric] !== undefined)
+      .map((sample) => ({ t: sample.t, value: sample[metric] as number })),
+  }));
 }
 
-function TrendChart({ samples, metric, source }: { samples: TelemetrySample[]; metric: TrendMetric; source: VehicleView["observationClass"] }) {
-  const definition = TREND_DEFINITIONS[metric];
-  const values = useMemo(() => {
-    const latestTime = samples.at(-1)?.t;
-    if (latestTime === undefined) return [];
-    return samples
-      .filter((sample) => latestTime - sample.t <= 60 && sample[metric] !== undefined)
-      .map((sample) => ({ t: sample.t, value: sample[metric] as number }));
-  }, [metric, samples]);
-  const latest = values.at(-1)?.value;
-
-  if (values.length < 2) {
-    return <div className="trend-empty"><strong>{latest === undefined ? "—" : latest.toFixed(definition.decimals)}</strong><span>{definition.unit} · collecting</span></div>;
+export function motorStartupCutoffTime(samples: TelemetrySample[]): number | undefined {
+  const latestTime = samples.at(-1)?.t;
+  if (latestTime === undefined) return undefined;
+  let sawInactiveMotors = false;
+  for (const sample of samples) {
+    const outputs = [sample.motorM1, sample.motorM2, sample.motorM3, sample.motorM4]
+      .filter((value): value is number => value !== undefined);
+    if (!outputs.length) continue;
+    if (!outputs.some((value) => value > MOTOR_ACTIVE_THRESHOLD_PERCENT)) {
+      sawInactiveMotors = true;
+      continue;
+    }
+    if (!sawInactiveMotors) return undefined;
+    return latestTime - sample.t >= MOTOR_STARTUP_TRIM_SECONDS
+      ? sample.t + MOTOR_STARTUP_TRIM_SECONDS
+      : undefined;
   }
+  return undefined;
+}
 
-  const min = Math.min(...values.map((point) => point.value));
-  const max = Math.max(...values.map((point) => point.value));
-  const range = max - min || 1;
-  const start = values[0].t;
-  const duration = values.at(-1)!.t - start || 1;
-  const points = values.map((point) => {
-    const x = 3 + ((point.t - start) / duration) * 314;
-    const y = 88 - ((point.value - min) / range) * 72;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(" ");
+function TrendPlot({
+  series,
+  variant = "combined",
+  showLegend = true,
+}: {
+  series: TrendSeries[];
+  variant?: "combined" | "individual" | "overview";
+  showLegend?: boolean;
+}) {
+  const drawable = series.filter((item) => item.values.length >= 2);
+  const allValues = drawable.flatMap((item) => item.values.map((point) => point.value));
+  const firstTimes = drawable.map((item) => item.values[0].t);
+  const lastTimes = drawable.map((item) => item.values.at(-1)!.t);
+  const start = firstTimes.length ? Math.min(...firstTimes) : 0;
+  const end = lastTimes.length ? Math.max(...lastTimes) : start;
+  const duration = end - start || 1;
+  const minimum = allValues.length ? Math.min(...allValues) : 0;
+  const maximum = allValues.length ? Math.max(...allValues) : 0;
+  const range = maximum - minimum || 1;
+  const unit = series[0]?.definition.unit ?? "";
+  const summary = drawable.map((item) => {
+    const values = item.values.map((point) => point.value);
+    return `${item.definition.label} ${Math.min(...values).toFixed(item.definition.decimals)} to ${Math.max(...values).toFixed(item.definition.decimals)} ${unit}`;
+  }).join("; ");
 
   return (
-    <div className={`trend-chart source-${source.toLowerCase()}`}>
-      <div className="trend-current"><strong>{latest?.toFixed(definition.decimals) ?? "—"}</strong><span>{definition.unit} · {definition.label}</span></div>
-      <svg viewBox="0 0 320 94" role="img" aria-label={`${definition.label} from ${min.toFixed(definition.decimals)} to ${max.toFixed(definition.decimals)} ${definition.unit} over ${Math.min(60, Math.round(duration))} seconds`}>
-        <polyline className="trend-line" points={points} fill="none" vectorEffect="non-scaling-stroke" />
-      </svg>
-      <div className="trend-range"><span>{min.toFixed(definition.decimals)}</span><span>{max.toFixed(definition.decimals)}</span></div>
-    </div>
+    <section className={`trend-plot trend-plot-${variant} ${drawable.length ? "" : "is-collecting"}`}>
+      {showLegend ? <div className="trend-legend" aria-label={`Current ${unit} values`}>
+        {series.map((item) => {
+          const latest = item.values.at(-1)?.value;
+          return (
+            <span key={item.metric}>
+              <i className={`trend-series-${item.index}`} aria-hidden="true" />
+              <small>{item.definition.switchLabel}</small>
+              <strong>{latest === undefined ? "—" : latest.toFixed(item.definition.decimals)} {unit}</strong>
+            </span>
+          );
+        })}
+      </div> : null}
+      {drawable.length ? (
+        <>
+          <svg viewBox="0 0 320 104" role="img" aria-label={`${summary} over ${Math.min(60, Math.round(duration))} seconds`}>
+            {minimum <= 0 && maximum >= 0 ? <line className="trend-zero" x1="3" x2="317" y1={96 - ((0 - minimum) / range) * 80} y2={96 - ((0 - minimum) / range) * 80} /> : null}
+            {drawable.map((item) => {
+              const points = item.values.map((point) => {
+                const x = 3 + ((point.t - start) / duration) * 314;
+                const y = 96 - ((point.value - minimum) / range) * 80;
+                return `${x.toFixed(1)},${y.toFixed(1)}`;
+              }).join(" ");
+              return <polyline key={item.metric} className={`trend-line trend-series-${item.index}`} points={points} fill="none" vectorEffect="non-scaling-stroke" />;
+            })}
+          </svg>
+          <div className="trend-range"><span>{minimum.toFixed(series[0].definition.decimals)} {unit}</span><span>{maximum.toFixed(series[0].definition.decimals)} {unit}</span></div>
+        </>
+      ) : <small className="trend-plot-empty">Collecting {unit} history</small>}
+    </section>
   );
 }
 
 const TREND_DEFINITIONS: Record<TrendMetric, { label: string; switchLabel: string; unit: string; decimals: number }> = {
-  altitude: { label: "World Z", switchLabel: "Z", unit: "m", decimals: 2 },
+  positionX: { label: "Position X", switchLabel: "X", unit: "m", decimals: 2 },
+  positionY: { label: "Position Y", switchLabel: "Y", unit: "m", decimals: 2 },
+  positionZ: { label: "Position Z", switchLabel: "Z", unit: "m", decimals: 2 },
+  velocityX: { label: "Velocity X", switchLabel: "X", unit: "m/s", decimals: 2 },
+  velocityY: { label: "Velocity Y", switchLabel: "Y", unit: "m/s", decimals: 2 },
+  velocityZ: { label: "Velocity Z", switchLabel: "Z", unit: "m/s", decimals: 2 },
   speed: { label: "Speed", switchLabel: "Speed", unit: "m/s", decimals: 2 },
+  nearest: { label: "Nearest range", switchLabel: "Nearest", unit: "m", decimals: 2 },
   battery: { label: "Battery", switchLabel: "Battery", unit: "%", decimals: 0 },
   current: { label: "Battery current", switchLabel: "Current", unit: "A", decimals: 2 },
   roll: { label: "Roll", switchLabel: "Roll", unit: "°", decimals: 1 },
@@ -757,11 +769,20 @@ export function telemetrySample(vehicle?: VehicleView): TelemetrySample | undefi
     ?? data.provenance.sourceTimeS
     ?? data.provenance.receiveTimeS
     ?? Date.now() / 1_000;
-  const motors = new Map(data.motors?.readings.map((reading) => [reading.id, reading.commandPercent]));
+  const motors = new Map(data.motors?.readings.map((reading) => [reading.id, reading.appliedPwmPercent ?? reading.commandPercent]));
+  const nearest = data.ranges
+    .filter((range) => range.distanceM !== null)
+    .sort((left, right) => left.distanceM! - right.distanceM!)[0]?.distanceM ?? undefined;
   return {
     t: time,
-    altitude: data.estimate?.z,
+    positionX: data.estimate?.x,
+    positionY: data.estimate?.y,
+    positionZ: data.estimate?.z,
+    velocityX: data.velocity?.x,
+    velocityY: data.velocity?.y,
+    velocityZ: data.velocity?.z,
     speed: data.velocity ? vectorMagnitude(data.velocity) : undefined,
+    nearest,
     battery: data.batteryPercent,
     current: data.batteryCurrent,
     localization: data.localizationPercent,
@@ -783,26 +804,8 @@ export function telemetrySample(vehicle?: VehicleView): TelemetrySample | undefi
   };
 }
 
-function hasSystemDetail(vehicle: VehicleView) {
-  const data = vehicle.telemetry;
-  return Boolean(data?.motors || data?.attitude || data?.imu || data?.flow || data?.ranges.length || data?.radio || data?.transport);
-}
-
 function DataRow({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return <div className="data-row"><span>{label}</span><strong className={mono ? "is-mono" : ""}>{value}</strong></div>;
-}
-
-function sourceLabel(source: VehicleView["observationClass"]) {
-  const labels: Record<VehicleView["observationClass"], string> = {
-    MEASURED_REAL: "Measured real",
-    SIMULATED_MODEL: "Simulated model",
-    DERIVED: "Derived",
-    PLANNED: "Planned",
-    CONFIGURED: "Configured",
-    REPLAYED: "Replayed",
-    UNAVAILABLE: "Unavailable",
-  };
-  return labels[source];
 }
 
 function vectorMagnitude(vector: Vec3) {
@@ -823,8 +826,4 @@ function toDegrees(value: number) {
 
 function clamp(value: number, minimum: number, maximum: number) {
   return Math.max(minimum, Math.min(maximum, value));
-}
-
-function sentenceCase(value: string) {
-  return value.replaceAll("_", " ").replaceAll("-", " ").replace(/^./, (letter) => letter.toUpperCase());
 }

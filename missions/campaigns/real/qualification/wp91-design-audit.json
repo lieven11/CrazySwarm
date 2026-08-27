@@ -1,0 +1,551 @@
+{
+  "asymmetric_variance": {
+    "baseline_required_range_m": 0.25418033988749894,
+    "broken_minimum_required_range_m": 0.25418033988749894,
+    "var_px_high_required_range_m": 0.30418033988749893,
+    "var_py_high_required_range_m": 0.30418033988749893
+  },
+  "base_commit": "40cd9947f87eb9bf2719d72e7c72ea867eab9977",
+  "design_payload_sha256": "8b31bb73849ea1b9b2bffc63ded11ddf6b36e5bd67d5a95eedf89f87c8013bb6",
+  "duplicate_rule_mutation": {
+    "flattened_rule_count": 81,
+    "observed_failures": [
+      "flattened schema contains duplicate rule identities"
+    ],
+    "passed": true,
+    "rule": "speed.retime_preserves_displacement",
+    "unique_rule_count": 80
+  },
+  "errors": [],
+  "exact_evidence_vectors": [
+    {
+      "field": "decision",
+      "metric_id": "M_EVIDENCE_DECISION",
+      "mutation": "LIMIT",
+      "observed_failures": [
+        "M_EVIDENCE_DECISION"
+      ],
+      "passed": true
+    },
+    {
+      "field": "evaluation_count",
+      "metric_id": "M_EVIDENCE_COUNT",
+      "mutation": 999,
+      "observed_failures": [
+        "M_EVIDENCE_COUNT"
+      ],
+      "passed": true
+    },
+    {
+      "field": "minimum_margin",
+      "metric_id": "M_EVIDENCE_MARGIN",
+      "mutation": 999.0,
+      "observed_failures": [
+        "M_EVIDENCE_MARGIN"
+      ],
+      "passed": true
+    },
+    {
+      "field": "binding_ray",
+      "metric_id": "M_EVIDENCE_BINDING_RAY",
+      "mutation": "back",
+      "observed_failures": [
+        "M_EVIDENCE_BINDING_RAY"
+      ],
+      "passed": true
+    },
+    {
+      "field": "intervention_reason",
+      "metric_id": "M_EVIDENCE_INTERVENTION",
+      "mutation": "unsafe_closing_speed",
+      "observed_failures": [
+        "M_EVIDENCE_INTERVENTION"
+      ],
+      "passed": true
+    }
+  ],
+  "exact_evidence_whole_pass": {
+    "binding_ray": "front",
+    "decision": "CLEAR",
+    "evaluation_count": 1,
+    "intervention_reason": "none",
+    "minimum_margin": 0.0838038475772934,
+    "mode": "MONITOR_ONLY"
+  },
+  "flattened_rule_count": 80,
+  "flattened_rules": [
+    "mode.exact_enum",
+    "mode.monitor_input_output_identity",
+    "range.status_valid",
+    "range.value_present",
+    "range.value_finite",
+    "range.value_nonnegative",
+    "range.max_present",
+    "range.max_finite",
+    "range.max_positive",
+    "range.value_strictly_below_max",
+    "range.timestamp_present",
+    "range.timestamp_finite",
+    "range.age_nonnegative",
+    "range.age_at_most_0_4",
+    "measured_kinematics.yaw.present",
+    "measured_kinematics.yaw.finite",
+    "measured_kinematics.yaw.timestamp_present",
+    "measured_kinematics.yaw.timestamp_finite",
+    "measured_kinematics.yaw.age_nonnegative",
+    "measured_kinematics.yaw.age_at_most_0_4",
+    "measured_kinematics.vx.present",
+    "measured_kinematics.vx.finite",
+    "measured_kinematics.vx.timestamp_present",
+    "measured_kinematics.vx.timestamp_finite",
+    "measured_kinematics.vx.age_nonnegative",
+    "measured_kinematics.vx.age_at_most_0_4",
+    "measured_kinematics.vy.present",
+    "measured_kinematics.vy.finite",
+    "measured_kinematics.vy.timestamp_present",
+    "measured_kinematics.vy.timestamp_finite",
+    "measured_kinematics.vy.age_nonnegative",
+    "measured_kinematics.vy.age_at_most_0_4",
+    "commanded_kinematics.frame.exact_BODY_or_HOME",
+    "commanded_kinematics.vx.present",
+    "commanded_kinematics.vx.finite",
+    "commanded_kinematics.vy.present",
+    "commanded_kinematics.vy.finite",
+    "clock.evaluation_time.present",
+    "clock.evaluation_time.finite",
+    "clock.maximum_age.present",
+    "clock.maximum_age.finite",
+    "clock.maximum_age.nonnegative",
+    "variance.varPX.present",
+    "variance.varPX.finite",
+    "variance.varPX.nonnegative",
+    "variance.varPX.timestamp_present",
+    "variance.varPX.timestamp_finite",
+    "variance.varPX.age_nonnegative",
+    "variance.varPX.age_at_most_0_4",
+    "variance.varPY.present",
+    "variance.varPY.finite",
+    "variance.varPY.nonnegative",
+    "variance.varPY.timestamp_present",
+    "variance.varPY.timestamp_finite",
+    "variance.varPY.age_nonnegative",
+    "variance.varPY.age_at_most_0_4",
+    "geometry.radius_positive",
+    "geometry.sensor_offset_inside_radius",
+    "geometry.range_uncertainty_nonnegative",
+    "geometry.margin_nonnegative",
+    "latency.sample_age_nonnegative",
+    "latency.host_nonnegative",
+    "latency.transport_ack_nonnegative",
+    "latency.onboard_commit_nonnegative",
+    "braking.acceleration_positive",
+    "braking.jerk_positive",
+    "speed.cap_positive",
+    "speed.floor_inside_cap",
+    "speed.inverse_monotonic",
+    "speed.retime_preserves_displacement",
+    "speed.retime_preserves_yaw",
+    "recovery.one_land_dispatched",
+    "recovery.ground_confirmed",
+    "recovery.landing_failure_retains_stop_required",
+    "evidence.mode_exact",
+    "evidence.decision_enum",
+    "evidence.evaluation_count_positive_integer",
+    "evidence.minimum_margin_finite",
+    "evidence.binding_ray_enum",
+    "evidence.intervention_reason_enum"
+  ],
+  "frame_projection": {
+    "body_yaw_pi_2": {
+      "back": 0.0,
+      "front": 0.06,
+      "left": 0.0,
+      "right": 0.0
+    },
+    "home_yaw_pi_2": {
+      "back": 0.0,
+      "front": 3.673940397442059e-18,
+      "left": 0.0,
+      "right": 0.06
+    }
+  },
+  "inherited_wp90_r1_result": "PASS",
+  "invalid_binding_input": {
+    "binding_ray": null,
+    "decision": "BLOCK_BEFORE_DISPATCH",
+    "evaluation_count": 1,
+    "intervention_reason": "invalid_binding_input",
+    "minimum_margin": 0.0,
+    "mode": "MONITOR_ONLY"
+  },
+  "misplaced_metric_link_mutation": {
+    "observed_failures": [
+      "source/category metric identity mismatch in SRC-OP-DISTANCE/LATENCY: expected=['M_LATENCY_COMMIT_NONNEGATIVE', 'M_LATENCY_HOST_NONNEGATIVE', 'M_LATENCY_SAMPLE_AGE_NONNEGATIVE', 'M_LATENCY_TRANSPORT_NONNEGATIVE'], actual=['M_LATENCY_COMMIT_NONNEGATIVE', 'M_LATENCY_HOST_NONNEGATIVE', 'M_LATENCY_TRANSPORT_NONNEGATIVE', 'M_MODE_ENUM']"
+    ],
+    "passed": true,
+    "replacement": "M_MODE_ENUM"
+  },
+  "packet_id": "WP-91",
+  "per_ray_minimum_margin": {
+    "computed_evidence": {
+      "binding_ray": "right",
+      "decision": "BLOCK_BEFORE_DISPATCH",
+      "evaluation_count": 1,
+      "intervention_reason": "insufficient_clearance",
+      "minimum_margin": -0.03,
+      "mode": "MONITOR_ONLY"
+    },
+    "front_margin_m": 0.2838038475772934,
+    "ranges_m": {
+      "back": 0.5,
+      "front": 0.5,
+      "left": 0.5,
+      "right": 0.15
+    },
+    "right_margin_m": -0.03
+  },
+  "required_source_category_pairs": [
+    [
+      "SRC-OP-DISTANCE",
+      "BRAKING"
+    ],
+    [
+      "SRC-OP-DISTANCE",
+      "ESTIMATOR_UNCERTAINTY"
+    ],
+    [
+      "SRC-OP-DISTANCE",
+      "GEOMETRY"
+    ],
+    [
+      "SRC-OP-DISTANCE",
+      "LATENCY"
+    ],
+    [
+      "SRC-OP-LIMIT",
+      "SPEED_LIMITING"
+    ],
+    [
+      "SRC-OP-PROJECTION",
+      "KINEMATIC_FRESHNESS"
+    ],
+    [
+      "SRC-OP-PROJECTION",
+      "KINEMATIC_VALUE"
+    ],
+    [
+      "SRC-OP-SENSOR",
+      "RANGE_FRESHNESS"
+    ],
+    [
+      "SRC-OP-SENSOR",
+      "RANGE_VALIDITY"
+    ],
+    [
+      "SRC-OP-TOGGLE",
+      "MODE_AUTHORITY"
+    ],
+    [
+      "SRC-RPL-012",
+      "BRAKING"
+    ],
+    [
+      "SRC-RPL-012",
+      "GEOMETRY"
+    ],
+    [
+      "SRC-RPL-012",
+      "LATENCY"
+    ],
+    [
+      "SRC-RPL-012",
+      "SPEED_LIMITING"
+    ],
+    [
+      "SRC-WFL-017-024-048",
+      "RECOVERY_TRACE"
+    ],
+    [
+      "SRC-WFL-017-024-048",
+      "RETAINED_TRUTH"
+    ],
+    [
+      "SRC-WP89-D1",
+      "ESTIMATOR_UNCERTAINTY"
+    ],
+    [
+      "SRC-WP89-D1",
+      "KINEMATIC_FRESHNESS"
+    ],
+    [
+      "SRC-WP89-D1",
+      "KINEMATIC_VALUE"
+    ],
+    [
+      "SRC-WP89-D1",
+      "RANGE_FRESHNESS"
+    ]
+  ],
+  "result": "PASS",
+  "retime_yaw": {
+    "failing_output_yaw_rad": 0.4,
+    "input_yaw_rad": 0.3,
+    "observed_failures": [
+      "M_RETIME_YAW"
+    ],
+    "passing_output_yaw_rad": 0.3
+  },
+  "rule_to_metric": {
+    "braking.acceleration_positive": "M_ACCELERATION_POSITIVE",
+    "braking.jerk_positive": "M_JERK_POSITIVE",
+    "clock.evaluation_time.finite": "M_EVALUATION_TIME_FINITE",
+    "clock.evaluation_time.present": "M_EVALUATION_TIME_PRESENT",
+    "clock.maximum_age.finite": "M_MAXIMUM_AGE_FINITE",
+    "clock.maximum_age.nonnegative": "M_MAXIMUM_AGE_NONNEGATIVE",
+    "clock.maximum_age.present": "M_MAXIMUM_AGE_PRESENT",
+    "commanded_kinematics.frame.exact_BODY_or_HOME": "M_COMMAND_FRAME_ENUM",
+    "commanded_kinematics.vx.finite": "M_COMMAND_VX_FINITE",
+    "commanded_kinematics.vx.present": "M_COMMAND_VX_PRESENT",
+    "commanded_kinematics.vy.finite": "M_COMMAND_VY_FINITE",
+    "commanded_kinematics.vy.present": "M_COMMAND_VY_PRESENT",
+    "evidence.binding_ray_enum": "M_EVIDENCE_BINDING_RAY",
+    "evidence.decision_enum": "M_EVIDENCE_DECISION",
+    "evidence.evaluation_count_positive_integer": "M_EVIDENCE_COUNT",
+    "evidence.intervention_reason_enum": "M_EVIDENCE_INTERVENTION",
+    "evidence.minimum_margin_finite": "M_EVIDENCE_MARGIN",
+    "evidence.mode_exact": "M_EVIDENCE_MODE",
+    "geometry.margin_nonnegative": "M_MARGIN_NONNEGATIVE",
+    "geometry.radius_positive": "M_RADIUS_POSITIVE",
+    "geometry.range_uncertainty_nonnegative": "M_RANGE_UNCERTAINTY_NONNEGATIVE",
+    "geometry.sensor_offset_inside_radius": "M_SENSOR_OFFSET_BOUNDED",
+    "latency.host_nonnegative": "M_LATENCY_HOST_NONNEGATIVE",
+    "latency.onboard_commit_nonnegative": "M_LATENCY_COMMIT_NONNEGATIVE",
+    "latency.sample_age_nonnegative": "M_LATENCY_SAMPLE_AGE_NONNEGATIVE",
+    "latency.transport_ack_nonnegative": "M_LATENCY_TRANSPORT_NONNEGATIVE",
+    "measured_kinematics.vx.age_at_most_0_4": "M_VX_AGE_MAX",
+    "measured_kinematics.vx.age_nonnegative": "M_VX_AGE_NONNEGATIVE",
+    "measured_kinematics.vx.finite": "M_VX_FINITE",
+    "measured_kinematics.vx.present": "M_VX_PRESENT",
+    "measured_kinematics.vx.timestamp_finite": "M_VX_TS_FINITE",
+    "measured_kinematics.vx.timestamp_present": "M_VX_TS_PRESENT",
+    "measured_kinematics.vy.age_at_most_0_4": "M_VY_AGE_MAX",
+    "measured_kinematics.vy.age_nonnegative": "M_VY_AGE_NONNEGATIVE",
+    "measured_kinematics.vy.finite": "M_VY_FINITE",
+    "measured_kinematics.vy.present": "M_VY_PRESENT",
+    "measured_kinematics.vy.timestamp_finite": "M_VY_TS_FINITE",
+    "measured_kinematics.vy.timestamp_present": "M_VY_TS_PRESENT",
+    "measured_kinematics.yaw.age_at_most_0_4": "M_YAW_AGE_MAX",
+    "measured_kinematics.yaw.age_nonnegative": "M_YAW_AGE_NONNEGATIVE",
+    "measured_kinematics.yaw.finite": "M_YAW_FINITE",
+    "measured_kinematics.yaw.present": "M_YAW_PRESENT",
+    "measured_kinematics.yaw.timestamp_finite": "M_YAW_TS_FINITE",
+    "measured_kinematics.yaw.timestamp_present": "M_YAW_TS_PRESENT",
+    "mode.exact_enum": "M_MODE_ENUM",
+    "mode.monitor_input_output_identity": "M_MONITOR_IDENTITY",
+    "range.age_at_most_0_4": "M_RANGE_AGE_MAX",
+    "range.age_nonnegative": "M_RANGE_AGE_NONNEGATIVE",
+    "range.max_finite": "M_RANGE_MAX_FINITE",
+    "range.max_positive": "M_RANGE_MAX_POSITIVE",
+    "range.max_present": "M_RANGE_MAX_PRESENT",
+    "range.status_valid": "M_RANGE_STATUS",
+    "range.timestamp_finite": "M_RANGE_TS_FINITE",
+    "range.timestamp_present": "M_RANGE_TS_PRESENT",
+    "range.value_finite": "M_RANGE_FINITE",
+    "range.value_nonnegative": "M_RANGE_NONNEGATIVE",
+    "range.value_present": "M_RANGE_PRESENT",
+    "range.value_strictly_below_max": "M_RANGE_BELOW_MAX",
+    "recovery.ground_confirmed": "M_RECOVERY_GROUND_CONFIRM",
+    "recovery.landing_failure_retains_stop_required": "M_RECOVERY_FAILURE_STOP_REQUIRED",
+    "recovery.one_land_dispatched": "M_RECOVERY_LAND_DISPATCH",
+    "speed.cap_positive": "M_SPEED_CAP_POSITIVE",
+    "speed.floor_inside_cap": "M_SPEED_FLOOR_ORDER",
+    "speed.inverse_monotonic": "M_SAFE_SPEED_MONOTONIC",
+    "speed.retime_preserves_displacement": "M_RETIME_DISPLACEMENT",
+    "speed.retime_preserves_yaw": "M_RETIME_YAW",
+    "variance.varPX.age_at_most_0_4": "M_VAR_PX_AGE_MAX",
+    "variance.varPX.age_nonnegative": "M_VAR_PX_AGE_NONNEGATIVE",
+    "variance.varPX.finite": "M_VAR_PX_FINITE",
+    "variance.varPX.nonnegative": "M_VAR_PX_NONNEGATIVE",
+    "variance.varPX.present": "M_VAR_PX_PRESENT",
+    "variance.varPX.timestamp_finite": "M_VAR_PX_TS_FINITE",
+    "variance.varPX.timestamp_present": "M_VAR_PX_TS_PRESENT",
+    "variance.varPY.age_at_most_0_4": "M_VAR_PY_AGE_MAX",
+    "variance.varPY.age_nonnegative": "M_VAR_PY_AGE_NONNEGATIVE",
+    "variance.varPY.finite": "M_VAR_PY_FINITE",
+    "variance.varPY.nonnegative": "M_VAR_PY_NONNEGATIVE",
+    "variance.varPY.present": "M_VAR_PY_PRESENT",
+    "variance.varPY.timestamp_finite": "M_VAR_PY_TS_FINITE",
+    "variance.varPY.timestamp_present": "M_VAR_PY_TS_PRESENT"
+  },
+  "schema_version": 1,
+  "source_category_link_errors": [],
+  "source_category_links": {
+    "SRC-OP-DISTANCE": {
+      "BRAKING": [
+        "M_ACCELERATION_POSITIVE"
+      ],
+      "ESTIMATOR_UNCERTAINTY": [
+        "M_VAR_PX_NONNEGATIVE",
+        "M_VAR_PY_NONNEGATIVE"
+      ],
+      "GEOMETRY": [
+        "M_RADIUS_POSITIVE",
+        "M_SENSOR_OFFSET_BOUNDED",
+        "M_MARGIN_NONNEGATIVE"
+      ],
+      "LATENCY": [
+        "M_LATENCY_SAMPLE_AGE_NONNEGATIVE",
+        "M_LATENCY_HOST_NONNEGATIVE",
+        "M_LATENCY_TRANSPORT_NONNEGATIVE",
+        "M_LATENCY_COMMIT_NONNEGATIVE"
+      ]
+    },
+    "SRC-OP-LIMIT": {
+      "SPEED_LIMITING": [
+        "M_SPEED_CAP_POSITIVE",
+        "M_SPEED_FLOOR_ORDER",
+        "M_RETIME_DISPLACEMENT",
+        "M_RETIME_YAW"
+      ]
+    },
+    "SRC-OP-PROJECTION": {
+      "KINEMATIC_FRESHNESS": [
+        "M_YAW_TS_PRESENT",
+        "M_YAW_TS_FINITE",
+        "M_YAW_AGE_NONNEGATIVE",
+        "M_YAW_AGE_MAX",
+        "M_VX_TS_PRESENT",
+        "M_VX_TS_FINITE",
+        "M_VX_AGE_NONNEGATIVE",
+        "M_VX_AGE_MAX",
+        "M_VY_TS_PRESENT",
+        "M_VY_TS_FINITE",
+        "M_VY_AGE_NONNEGATIVE",
+        "M_VY_AGE_MAX"
+      ],
+      "KINEMATIC_VALUE": [
+        "M_YAW_PRESENT",
+        "M_YAW_FINITE",
+        "M_VX_PRESENT",
+        "M_VX_FINITE",
+        "M_VY_PRESENT",
+        "M_VY_FINITE",
+        "M_COMMAND_FRAME_ENUM",
+        "M_COMMAND_VX_PRESENT",
+        "M_COMMAND_VX_FINITE",
+        "M_COMMAND_VY_PRESENT",
+        "M_COMMAND_VY_FINITE"
+      ]
+    },
+    "SRC-OP-SENSOR": {
+      "RANGE_FRESHNESS": [
+        "M_RANGE_TS_PRESENT",
+        "M_RANGE_AGE_NONNEGATIVE",
+        "M_RANGE_AGE_MAX"
+      ],
+      "RANGE_VALIDITY": [
+        "M_RANGE_STATUS",
+        "M_RANGE_MAX_PRESENT",
+        "M_RANGE_MAX_FINITE",
+        "M_RANGE_MAX_POSITIVE",
+        "M_RANGE_PRESENT",
+        "M_RANGE_FINITE",
+        "M_RANGE_NONNEGATIVE",
+        "M_RANGE_BELOW_MAX"
+      ]
+    },
+    "SRC-OP-TOGGLE": {
+      "MODE_AUTHORITY": [
+        "M_MODE_ENUM",
+        "M_MONITOR_IDENTITY"
+      ]
+    },
+    "SRC-RPL-012": {
+      "BRAKING": [
+        "M_JERK_POSITIVE"
+      ],
+      "GEOMETRY": [
+        "M_RANGE_UNCERTAINTY_NONNEGATIVE"
+      ],
+      "LATENCY": [
+        "M_LATENCY_SAMPLE_AGE_NONNEGATIVE",
+        "M_LATENCY_HOST_NONNEGATIVE",
+        "M_LATENCY_TRANSPORT_NONNEGATIVE",
+        "M_LATENCY_COMMIT_NONNEGATIVE"
+      ],
+      "SPEED_LIMITING": [
+        "M_SAFE_SPEED_MONOTONIC"
+      ]
+    },
+    "SRC-WFL-017-024-048": {
+      "RECOVERY_TRACE": [
+        "M_RECOVERY_LAND_DISPATCH",
+        "M_RECOVERY_GROUND_CONFIRM",
+        "M_RECOVERY_FAILURE_STOP_REQUIRED"
+      ],
+      "RETAINED_TRUTH": [
+        "M_EVIDENCE_MODE",
+        "M_EVIDENCE_DECISION",
+        "M_EVIDENCE_COUNT",
+        "M_EVIDENCE_MARGIN",
+        "M_EVIDENCE_BINDING_RAY",
+        "M_EVIDENCE_INTERVENTION"
+      ]
+    },
+    "SRC-WP89-D1": {
+      "ESTIMATOR_UNCERTAINTY": [
+        "M_VAR_PX_PRESENT",
+        "M_VAR_PX_FINITE",
+        "M_VAR_PX_TS_PRESENT",
+        "M_VAR_PX_TS_FINITE",
+        "M_VAR_PX_AGE_NONNEGATIVE",
+        "M_VAR_PX_AGE_MAX",
+        "M_VAR_PY_PRESENT",
+        "M_VAR_PY_FINITE",
+        "M_VAR_PY_TS_PRESENT",
+        "M_VAR_PY_TS_FINITE",
+        "M_VAR_PY_AGE_NONNEGATIVE",
+        "M_VAR_PY_AGE_MAX"
+      ],
+      "KINEMATIC_FRESHNESS": [
+        "M_YAW_TS_PRESENT",
+        "M_YAW_TS_FINITE",
+        "M_YAW_AGE_NONNEGATIVE",
+        "M_YAW_AGE_MAX",
+        "M_VX_TS_PRESENT",
+        "M_VX_TS_FINITE",
+        "M_VX_AGE_NONNEGATIVE",
+        "M_VX_AGE_MAX",
+        "M_VY_TS_PRESENT",
+        "M_VY_TS_FINITE",
+        "M_VY_AGE_NONNEGATIVE",
+        "M_VY_AGE_MAX",
+        "M_EVALUATION_TIME_PRESENT",
+        "M_EVALUATION_TIME_FINITE"
+      ],
+      "KINEMATIC_VALUE": [
+        "M_YAW_PRESENT",
+        "M_YAW_FINITE",
+        "M_VX_PRESENT",
+        "M_VX_FINITE",
+        "M_VY_PRESENT",
+        "M_VY_FINITE"
+      ],
+      "RANGE_FRESHNESS": [
+        "M_RANGE_TS_FINITE",
+        "M_MAXIMUM_AGE_PRESENT",
+        "M_MAXIMUM_AGE_FINITE",
+        "M_MAXIMUM_AGE_NONNEGATIVE"
+      ]
+    }
+  },
+  "unknown_metric_link_mutation": {
+    "observed_failures": [
+      "source/category metric identity mismatch in SRC-OP-DISTANCE/LATENCY: expected=['M_LATENCY_COMMIT_NONNEGATIVE', 'M_LATENCY_HOST_NONNEGATIVE', 'M_LATENCY_SAMPLE_AGE_NONNEGATIVE', 'M_LATENCY_TRANSPORT_NONNEGATIVE'], actual=['M_LATENCY_COMMIT_NONNEGATIVE', 'M_LATENCY_HOST_NONNEGATIVE', 'M_LATENCY_TRANSPORT_NONNEGATIVE', 'M_NOT_A_REAL_METRIC']",
+      "unknown metric identity in SRC-OP-DISTANCE/LATENCY: ['M_NOT_A_REAL_METRIC']",
+      "linked metric identity mismatch: missing=[], extra=['M_NOT_A_REAL_METRIC']"
+    ],
+    "passed": true,
+    "replacement": "M_NOT_A_REAL_METRIC"
+  }
+}

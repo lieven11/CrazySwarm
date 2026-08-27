@@ -1,0 +1,75 @@
+schema_version: 1
+curriculum_id: 2d-conflict-missions-v1
+groups:
+  - label: Crossing
+    variants:
+      - label: Perpendicular crossing
+        case_id: 2d.perpendicular_crossing.nominal_equal_priority
+        status: EXECUTABLE
+      - label: Priority crossing
+        case_id: 2d.unequal_priority.canonical_nominal
+        status: EXECUTABLE
+      - label: No-hover crossing
+        case_id: 2d.no_hover_crossing.canonical_nominal
+        status: EXECUTABLE
+      - label: Bounded crossing
+        case_id: 2d.constrained_border_height.canonical_nominal
+        status: EXECUTABLE
+  - label: Traffic
+    variants:
+      - label: Head-on encounter
+        case_id: 2d.head_on_conflict.canonical_nominal
+        status: EXECUTABLE
+      - label: Narrow bottleneck
+        case_id: 2d.bottleneck.canonical_nominal
+        status: EXECUTABLE
+      - label: Overtake
+        case_id: 2d.overtake.canonical_nominal
+        status: PLANNED_NOT_EXECUTABLE
+        disabled_reason: Requires an independently certified moving-pass runtime.
+  - label: Merge
+    variants:
+      - label: Shared-lane merge
+        case_id: 2d.merge.canonical_nominal
+        status: EXECUTABLE
+  - label: Coordination
+    variants:
+      - label: Parallel routes
+        case_id: 2d.parallel_routes.canonical_nominal
+        status: EXECUTABLE
+      - label: Leader and follower
+        case_id: 2d.leader_follower.canonical_nominal
+        status: EXECUTABLE
+      - label: Formation spacing
+        case_id: 2d.formation_spacing.canonical_nominal
+        status: EXECUTABLE
+      - label: Role allocation
+        case_id: 2d.role_allocation.canonical_nominal
+        status: PLANNED_NOT_EXECUTABLE
+        disabled_reason: Requires retained allocation-runtime evidence.
+      - label: Duplicate assignment
+        case_id: 2d.duplicate_assignment_rejection.dynamic_nominal
+        status: PLANNED_NOT_EXECUTABLE
+        disabled_reason: Negative assignment handling is not executable yet.
+  - label: Recovery
+    variants:
+      - label: Crossing goal change
+        case_id: 2d.crossing_goal_change.dynamic_nominal
+        status: PLANNED_NOT_EXECUTABLE
+        disabled_reason: Requires a qualified atomic two-role replanning cutover.
+      - label: Conflicting updates
+        case_id: 2d.simultaneous_conflicting_updates.dynamic_nominal
+        status: PLANNED_NOT_EXECUTABLE
+        disabled_reason: Requires a qualified atomic two-role replanning cutover.
+      - label: Partial replacement failure
+        case_id: 2d.partial_replacement_failure.dynamic_nominal
+        status: PLANNED_NOT_EXECUTABLE
+        disabled_reason: Requires a certified zero-partial-commit fallback.
+      - label: Leader loss
+        case_id: 2d.leader_loss.dynamic_nominal
+        status: PLANNED_NOT_EXECUTABLE
+        disabled_reason: Requires retained peer-loss recovery evidence.
+      - label: Coordination failure
+        case_id: 2d.coordination_failure.dynamic_nominal
+        status: PLANNED_NOT_EXECUTABLE
+        disabled_reason: Requires retained coordinated-abort evidence.

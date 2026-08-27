@@ -37,16 +37,15 @@ An element earns permanent screen space only if its absence would make the curre
 | Fast Sim scenario controls | Resetting pose and setting battery state are frequent simulation setup actions. | Two independent icon pills immediately right of the mission capsule. |
 | Mission deployment | The selected mission's drones, plan, energy, geometry, and coordination constraints must remain inspectable without reopening file setup. | One collapsed-by-default left glass surface with persistent drone tiles. |
 | Controlled abort | It must remain immediately available during an active run. | One bright red action visible only while running. |
-| Essential flight values | Battery, height, speed, and nearest range materially affect immediate understanding. | One shared glass readout, not four cards. |
+| Essential flight values | Height, scalar drone speed, and remaining battery materially affect immediate understanding. | Three centered values in one shared glass readout. |
 
 ### Show only when requested
 
 | Element | Revised location |
 | --- | --- |
 | Mission library and upload | Mission popover. |
-| Trend chart | Expanded flight readout. One chart at a time. |
-| Motors, IMU, Flow, ranges, transport, decks | Expanded details sheet. |
-| Source clocks, run ID, fidelity, room version, twin residuals | Evidence section inside the details sheet. |
+| Position, velocity, acceleration, power, attitude, gyro, and motors | Expanded flight readout. One focused category with current instruments, a combined 60-second chart, and one chart per channel. |
+| Source clocks, run ID, fidelity, room version, twin residuals | Campaign Review or Engineering when that workflow requires them. |
 | Connection, authority, preflight, manual control, parameters, replay history | Engineering sheet. |
 | Camera presets and layer toggles | Two compact scene-control capsules. |
 
@@ -56,7 +55,7 @@ An element earns permanent screen space only if its absence would make the curre
 - permanent left rail background;
 - permanent telemetry dock;
 - Overview / Systems / Evidence tabs;
-- separate battery, altitude, speed, and localization tiles;
+- unstructured battery, altitude, speed, and localization metric tiles;
 - “Active vehicle,” “Ready to run,” “Current status,” and other normal-state copy;
 - repeated modeled/source chips on every value;
 - permanent room/frame label;
@@ -64,6 +63,8 @@ An element earns permanent screen space only if its absence would make the curre
 - card borders around every data group;
 - decorative status scores, generic health scores, and progress percentages;
 - duplicated mission and abort actions;
+- duplicated battery, clearance, height, and speed instruments in expanded flight telemetry;
+- flight `Systems`, range-detail, and `Evidence` disclosures;
 - persistent success, cancellation, abort, and failure messages in panels or normal app chrome;
 - labels beside familiar camera and navigation icons;
 - placeholders for absent telemetry when hiding the surface is clearer.
@@ -247,33 +248,25 @@ This is a reusable simulation-scenario control pattern for this application and 
 
 ### Essential flight readout
 
-This is one continuous glass surface containing four values with spacing rather than boxes or divider lines:
+This is one continuous glass surface containing three centered values with spacing rather than boxes or divider lines:
 
-- battery `%`;
 - world Z `m`;
-- speed `m/s`;
-- nearest valid range `m`.
+- scalar drone speed `m/s`;
+- battery `%`.
 
 Use 18–22 px tabular values and 9–10 px labels. Normal values are white. Only a threshold crossing receives semantic color. The surface is absent when there is no truthful telemetry.
 
-The readout is collapsed by default whenever truthful telemetry is available; selecting its summary expands or closes it. The expanded panel contains:
+The readout is collapsed by default whenever truthful telemetry is available; selecting its summary expands or closes it. The expanded panel first keeps a mission overview visible above the category selector. It contains individually scaled 60-second graphs for height, scalar drone speed, battery state, and nearest valid range. Scalar speed is the magnitude of the drone velocity vector, not one axis.
 
-1. the same four values;
-2. a shared visual instrument strip with battery and clearance half-gauges plus height and speed bars;
-3. a single selectable 60-second trend;
-4. an open-by-default `Systems` disclosure and a collapsed `Evidence` disclosure.
+Below that overview, one category selector switches between `Position`, `Velocity`, `Acceleration`, `Power`, `Attitude`, `Gyro`, and `Motors`. The selected category contains its current instrument, a combined 60-second history, and an individually scaled history graph for every channel underneath:
 
-It does not reproduce a grid of tiles.
+- Position and velocity use X / Y / Z bipolar meters, plot all three axes together, then show X, Y, and Z separately.
+- Acceleration and gyro use the same X / Y / Z treatment with their own units, followed by their three individual plots.
+- Power keeps the battery 0–100% half-gauge, shows current beside it, and separates battery-percent and current-amp history so unlike units are never compared on one scale; both also retain their own individual plots.
+- Attitude uses centered Roll / Pitch / Yaw meters, plots all three angles together, then shows each angle independently.
+- Motors use four aligned output bars, plot M1 through M4 together with distinguishable line patterns and a text legend, then show one plot per motor. Once three powered seconds have elapsed, the motor graphs omit the initial zero-to-hover ramp so steady-state waves control the scale; the raw samples remain retained and the graph labels the active startup trim.
 
-The visual instruments are graphical translations of existing values, never additional scores. Battery uses a 0–100% half-gauge. Clearance uses the nearest valid range normalized to that sensor's declared maximum. Height uses the configured room height. Speed uses a clearly labeled operational display range and may saturate without implying a safety limit.
-
-Inside `Systems`, visual density is preferred over repeated coordinate strings:
-
-- motor command uses four aligned progress bars;
-- attitude uses three centered Roll / Pitch / Yaw axis meters with degree values;
-- IMU acceleration and angular velocity use X / Y / Z bipolar bars;
-- Flow quality uses a percentage bar;
-- each range uses a bar normalized to the sensor's declared maximum.
+The clearance half-gauge, duplicate height and speed bars, range-detail block, `Systems` disclosure, and flight `Evidence` disclosure are absent. The expanded surface does not reproduce a grid of tiles or repeat its compact summary as decorative instruments.
 
 Axis colors remain consistent: X cyan, Y orange, Z violet. Every visualization retains a numeric value and unit, so color or bar position is never the only carrier of meaning.
 
@@ -296,11 +289,121 @@ Operation notices are temporary top-center banners rather than bottom-corner toa
 
 ### Mission popover
 
-A single dense-black liquid panel opens above the mission capsule. It contains only:
+A single dense-black liquid Mission panel opens above the mission capsule. It contains only:
 
 - Simulation / Digital twin selector;
-- mission list;
-- Add Python;
+- Simulation alone owns simulation mission rows and Add Python. Digital twin contains
+  no simulation mission representation. Once real missions exist, Digital twin uses
+  the same Campaign Laboratory launcher and workspace shell for its own catalog while
+  retaining its distinct execution authority and safety gates;
+
+When Digital twin is selected, the upper deployment position becomes a compact
+`Drone connection` surface using the same drone-card layout as Simulation. It uses
+the configured physical drone label rather than a simulated role. Its disclosure owns
+the exact URI/label, first-seen identity capture, connection error, and explicit
+process-local pause action; the Mission panel remains free of connection controls.
+
+Selecting `Digital twin` changes presentation only. A paired observer continues
+recording across Simulation/Digital twin switches. The exact-binding form requires
+one explicit URI match confirmation; saving is the pairing action. It connects,
+captures, and persists the first measured identity without a second confirmation
+panel. A later different measured identity fails closed and requires editing and
+saving the exact connection before it can replace the binding. Automatic observation
+persists
+across application restarts and temporary link failures. A physical action presents
+the observer as `Suspended` while it has exclusive use of the radio, names that
+operation as the suspension reason, then resumes the observer automatically. During
+that interval the flight readout uses clearly labeled mission telemetry from the
+command link that owns the radio, preserving received IMU, ranges, attitude, power,
+and other measured families without opening a competing connection. Build,
+simulation, and unrelated task activity never owns or suspends the radio. Reconnection
+uses bounded backoff, never scans, and never
+confirms a changed identity automatically. `Pause observer` releases the link for the
+current service process; restarting the service resumes bounded automatic observation
+for the saved binding. Between reconnect attempts the row says `RECONNECTING` and
+`Waiting for radio`, not `Enable observer`. A failed connection keeps its concise status in the drone row
+and exposes only aligned retry and exact-binding edit actions; the overview does not
+repeat the URI or backend error message. An unconfigured selection asks for one complete
+Crazyradio URI and explicit exact-match confirmation. Switching is disabled while a
+Simulation operation is active.
+
+Browser refresh preserves the operator's navigation context: the selected Simulation
+or Digital twin environment, Mission panel visibility, telemetry expansion, and each
+environment's Campaign Laboratory open state, active tab, and selected mission or
+motion. This browser-local state restores presentation only. It never restores an
+active physical command, radio authority, arming, or motor output, and invalid saved
+values fall back to the normal safe defaults.
+
+The paired state uses one compact connection row: `Measured drone paired` or `Test
+fixture paired`, the configured observed identity, and `Pause observer`. Source
+details, measured values, and unavailable-data explanations live in the expandable
+right-side flight readout. Pairing alone never enables the bottom Play action. Digital
+twin shows one `SHADOW` observation subject named by the configured label and `1
+observed`.
+No simulation mission, plan, fleet, target, quick-action, Engineering, or flight-control
+state appears in the observed-drone projection. Idle observation leaves the room without
+a drone marker or trace. Once a physical flight starts, its first received HOME-frame
+estimator position anchors the observed drone at the center of the scene. Later mission
+samples apply metric displacement from that origin, measured attitude, and a bounded
+observed trace. The projection disappears when the flight ends, resets when the source
+vehicle identity or physical-flight boundary changes, preserves its origin across temporary
+observer reconnects and source-clock epoch changes, and never relabels retained HOME-frame evidence as WORLD. Selecting `Simulation` restores the Simulation surfaces without
+disconnecting the observer.
+
+### Digital twin flight readout
+
+- The compact summary shows current drone measurements rather than observer identity
+  or transport bookkeeping: measured battery voltage, Roll/Pitch with Yaw, and the
+  nearest valid range with its direction. Drone name, source ownership, pairing cycles,
+  channel counts, and reconnect detail remain in Drone connection or `Link` as
+  appropriate. A stale voltage remains visible as a stale reading rather than being
+  presented as current.
+- The expanded Digital twin readout uses the same focused-category structure as the
+  simulator. Its single mission overview uses small measured-history plots for battery
+  voltage, derived tilt, and nearest valid range; it adds height only when trusted
+  position samples exist. Missing measurements remain dashes/collecting states. It
+  never adds a second Overview panel, shows a selected simulation task or model
+  comparison, or implies an assigned plan or flight authority.
+- Focused categories are `Position`, `Attitude`, `Motors`, `Ranges`, `Power`, and
+  `Link`. The selected tab is the only visible category heading; its content panel does
+  not repeat the category name or source/freshness caption. Position, orientation,
+  acceleration, gyro, motor output, valid obstacle ranges, and battery voltage add a
+  large combined measured-history chart beneath the current instrument. These charts
+  retain at most 60 seconds, decimate presentation history to roughly 10 Hz, reset at
+  telemetry owner/session/vehicle boundaries, and accept only `CURRENT` received
+  samples. They never substitute predicted/model values. Position history appears only
+  when the observer itself reports position as `AVAILABLE`; otherwise it remains an
+  explicit collecting/unavailable plot even if the scene has a transient projection.
+- During an active physical flight, Position shows the same centered displacement used
+  by the observed scene drone while the raw HOME-frame estimator position remains retained
+  in source evidence. Before and after a flight, scene position remains unavailable.
+- During a physical action the compact summary continues rendering the latest measured
+  command-link sample while Mission overview labels its history as `Physical link`.
+  `Suspended` remains the observer lifecycle state and never means that mission-owned
+  sensor data is unavailable.
+- Attitude uses a cockpit-style artificial horizon plus Roll, Pitch, and Yaw values,
+  followed by the measured acceleration and gyro readings formerly separated as IMU.
+  Acceleration and Gyro are unboxed, full-width groups with equal spacing and enlarged
+  axis tracks. Each instrument is driven only by its received sample and remains
+  explicitly unavailable when that sample is missing.
+- Motors shows four aligned M1–M4 measured PWM percentage bars in the same current-output
+  pattern as Simulation. It never infers physical thrust or current from PWM and remains
+  explicitly unavailable when the observer does not report all four motor outputs.
+- Ranges use a Top view for front/back/left/right and a Front view for up/down/left/
+  right, plus matching numeric readings. Their display scale is visibly bounded at 1 m
+  to prioritize close obstacles. Measurements beyond 2 m render violet and retain
+  their exact text values; warning/critical proximity tones retain text values and
+  source status, and absent channels remain explicit.
+- `Link` presents factual connection state, actual measured ACK/no-ACK packet loss,
+  retry quality as a separate value, packet rates, congestion, ACK age, outbound queue
+  occupancy, USB errors, reconnect mode, paired cycles, record count, source clocks,
+  and alignment. Its primary surface is an operational dashboard: radio state and the
+  observed failure boundary, a packet-success gauge, last-ACK age, separate delivery
+  meters, aligned uplink/downlink congestion lanes, and rolling quality/rate histories.
+  Exact clocks, counters, queue/USB/reconnect diagnostics, and alignment live in one
+  Technical details disclosure. It names the observed failure boundary without
+  claiming a hardware root cause and never creates a composite health score or
+  inferred stability claim.
 
 Vehicle targeting remains in the scene-level and deployment-member controls. Terminal results use the temporary operation notice banner and are never repeated persistently in this popover.
 
@@ -313,7 +416,7 @@ Vehicle targeting remains in the scene-level and deployment-member controls. Ter
 
 ### Flight details
 
-The expanded flight surface opens upward from the bottom-right and remains smaller than 380 × 620 px. `Systems` is expanded by default so live vehicle internals are immediately visible; `Evidence` remains a native disclosure closed by default. The operator can collapse either section independently.
+The expanded flight surface opens upward from the bottom-right and remains bounded to the existing 390 px readout width and viewport safe areas. Its seven category controls form two aligned rows; one focused current-plus-history surface fills the remaining space and scrolls internally when needed.
 
 ### Engineering
 
@@ -331,14 +434,97 @@ catalog inside the narrow mission panel.
 - The mission panel contains one quiet, neutral-black launcher. Opening it presents a
   centered black workspace with `Catalog`, `Active run`, and `Review` tabs; generic
   workspace chrome never uses a blue outline or blue fill.
+- Simulation and Digital twin reuse this exact launcher, workspace shell, tabs,
+  two-pane geometry, dense selection controls, focus behavior, and narrow-screen
+  reflow. Their mission catalogs, run actions, evidence sources, and authority remain
+  distinct and truthful.
+- In Digital twin, Campaign Laboratory owns mission selection, preparation, and
+  retained review only. Its selected mission projects into the ordinary bottom
+  mission capsule; that shared Play/Stop location is the only operator entry point
+  for arming, disarming, commissioning flight, bounded move/return and shape missions,
+  and offset landing. Pairing, current disarmed/not-flying
+  supervisor truth, and a selected physical mission are required before Play is enabled.
+  After takeoff, measured altitude and vertical rate must capture the hover region before
+  any horizontal task command is issued. Retained 0.10 m checkpoint L, square, and
+  triangle mission identities remain unchanged but are not physical-enabled; centered
+  0.40 m successor variants run at no more than 0.10 m/s and keep their maximum
+  authored center radius below 0.29 m.
+- The Digital Twin catalog also contains the separate `Controller characterization &
+  tuning` cluster. Major missions A–E remain selectable, and every implemented major
+  mission uses floor markers A–E as its placement variants and adds compact heading
+  and height run inputs below the common four-level hierarchy. Heading defaults to
+  `0 deg`, where the front points along
+  fixture `+Y`, and initially admits `0..90 deg` toward `+X`. Mission A provides one
+  motors-off timed fixture observation per Play action. Missions B–E provide the
+  default-PID vertical baseline, XY transitions, bounded yaw geometry, and
+  speed/position dependence as directly selectable implemented commands. Survey
+  completion, baseline acceptance, earlier results, coverage, amplitude order, and
+  mission-enable flags never unlock these flights. Show incomplete fixture
+  characterization once as a non-blocking supporting warning instead of repeating
+  generic setup copy on each placement; exact missing fields remain in technical
+  detail. Campaign Review accepts at least three post-landing
+  marker distances, retains the raw observations, and binds its trilaterated final
+  position and residuals to the exact physical run. F–H remain visible `Raw` stages
+  with no sequence or physical action. Fixture observations use `Stop observation`,
+  retain raw ranges, and never create an airborne room projection.
+- `Cushioned acrobatics` is the third Digital Twin mission cluster. Its first visible
+  motion is one immutable positive-roll 360-degree profile: hover, collective boost,
+  100 Hz body-rate stream, high-level-controller recovery, and landing over the
+  cushion. Play starts and captures a backend-owned 0.50 m hover. Only the resulting
+  `HOVERING_READY` state adds a one-shot `Flip` button beside `Abort and land`; it is
+  removed as soon as the backend accepts the trigger. Recovery is measured and landing
+  starts automatically. The captured hover point is HOME and both measured horizontal
+  axes remain bounded to ±0.50 m through the wait, roll, and recovery. Landing position
+  is a learning observation rather than a success target. The UI does not expose rate,
+  thrust, or per-motor controls and does not use a browser confirmation checkbox.
+- Contained flight start returns immediately to backend-owned operation state. While
+  that state requires a stop, the bottom Play position is replaced by the global
+  `Abort and land` action, never a noninteractive loading spinner. Closing Campaign
+  Laboratory or refreshing the browser does not remove it. Abort interrupts the
+  remaining sequence, lands, disarms, and retains aborted rather than completed
+  evidence. The click returns immediately as `ABORTING` while the backend completes
+  landing/disarm. Lost command acknowledgement remains `Stop unconfirmed`; only
+  current recovered supervisor telemetry with `armed=false` and `flying=false` clears
+  that latch automatically.
+- Direct-PWM actuation truth and stop authority are global to the Digital Twin bottom
+  dock, not owned by the selected mission, open Campaign tab, or browser session.
+  Direct-PWM Motor bench controls are absent from the Digital twin catalog and UI.
+  Retained active, stopping, unconfirmed, and failed-stop states still keep the
+  recovery-only `Stop motors` action visible. That action can only drive output toward
+  zero. A lost link is `Motor output · Unconfirmed`, never zero by inference, and the
+  stop request remains idempotent without a session ID.
 - The Catalog tab uses a two-pane layout: fleet, cluster, and case controls on the
   left; the selected case's plain-language behavior and expected outcome on the
   right. On narrow screens the panes become one vertical flow.
+- Every mission cluster uses one numbered preparation hierarchy: `1 Mission cluster`,
+  `2 Major mission`, `3 Variant`, and `4 Motion`. Choosing a discovered simulation
+  cluster, mission, or variant immediately binds its first descendant as the active
+  mission, without a separate confirmation action. The current 1D flight cluster
+  retains exactly `Flight`, `Target`, `Level path`, `3D path`, and `Shape` at layer 2.
+  Layer 2 omits variant counts. Selected values and menu choices use matching type,
+  while layer 3 carries each variant's lifecycle as a small semantic-color dot in
+  both the trigger and menu; accessible names retain the plain-language status.
+  Historical case/run identities and planner package names stay in technical detail.
+- Motion preparation permanently shows the one-word `Balance`, `Speed`, `Accuracy`,
+  and `Smoothness` sliders as a flat fourth layer without a surrounding tile or
+  disclosure. Units, requested values, and safety-resolved caps remain visible. The
+  Accuracy range ends at the selected mission's authored goal tolerance for checkpoint
+  motion. A single-drone all fly-through route instead ends at its authored
+  flight-volume route span, allowing a continuous progression from exact tracking
+  through corner cutting to a direct safe shortcut. Goal-region dimensions and the
+  flight-volume span remain the fallbacks when neither route contract is present; the
+  generic API request ceiling is never presented as an operator-selectable value.
+  World, obstacle, dynamics, and terminal guards remain hard throughout the range.
+  Mission choices do not show an `Eligible` badge and remain enabled regardless of
+  implementation or qualification metadata. Planner, backend, and hard safety checks
+  run after selection with their exact failure reason. Unavailable optional technical
+  submissions remain disabled inside technical detail.
 - The dialog traps focus, closes with Escape, returns focus to its launcher, and
   restores the operator's last tab and catalog filters.
 - `Set active` projects the immutable campaign case into the ordinary bottom mission
   capsule. Its title, fleet size, Play control, running state, and Abort-and-land
-  control use the same interaction location as a Python mission.
+  control use the same interaction location as a Python mission. Digital twin selection
+  projects into this location immediately without a separate `Set active` action.
 - Execution mode is an explicit persisted choice. `Accelerated` maps to
   `AUTOMATED_ACCELERATED` and is the one deliberate blue execution treatment;
   `Observe realtime` maps to `OPERATOR_OBSERVED_REALTIME` and uses the ordinary white
@@ -353,13 +539,18 @@ catalog inside the narrow mission panel.
   one quiet violet `Old runs` divider. Old rows remain selectable and downloadable,
   while the persisted revision boundary prevents them from qualifying or comparing
   later runs.
+- Review plots and the room/replay use one keyboard-operable source-time cursor.
+  Activating a velocity bump moves the spatial marker to the same retained sequence
+  and exposes the exact available position, plan/reference, commanded and observed
+  motion, obstacle/replan state, IMU, and individual-motor values; missing or
+  interpolated values are labeled rather than implied exact.
 
 ### Digital-twin session inspection
 
 - `Digital twin` in the existing mission selector changes source context; it does not
   create a second navigation system. The 3D room overlays actual cyan and predicted
-  orange paths, the expanded flight `Evidence` disclosure shows the active session,
-  and Campaign `Review` links retained sessions to their immutable run evidence.
+  orange paths, while Campaign `Review` links retained sessions to their immutable run
+  evidence and owns detailed source-time inspection.
 - The active-session summary leads with actual-versus-predicted path and the named
   primary residual. A visible action opens the full source-time timeline in place.
   Technical provenance, frames, raw hashes, model/calibration identity, and receive
@@ -381,8 +572,8 @@ catalog inside the narrow mission panel.
 
 ### Dense selection menus
 
-Catalog selectors use the same dense-black language as Run files rather than the
-operating system's native select window.
+Catalog selectors use the established dense-black liquid-control language rather
+than the operating system's native select window.
 
 - The closed control is a quiet 50 px black-glass row with a readable title, one line
   of secondary context, and a restrained chevron.
@@ -415,13 +606,22 @@ only carrier of meaning:
 | --- | --- | --- | --- |
 | `DEFINED_NOT_RUN` | `Not started` | Neutral gray | Registered but never run |
 | `READY` | `Ready` | Observed cyan | Static checks passed and available to begin |
-| `ACTIVE_DEVELOPMENT` | `In progress` | Warning amber | Explicitly selected development work |
-| `BASELINED` | `Reviewed` | Replay violet | Accepted evidence is bound as a baseline |
+| `ACTIVE_DEVELOPMENT` | `In progress` | Warning amber | Development work is underway |
+| `BASELINED` | `In review` | Replay violet | Accepted evidence is bound as a baseline |
 | `PROMOTED` | `Completed` | Healthy green | Qualification and promotion are complete |
 | `BLOCKED` | `Blocked` | Danger red | A recorded reason prevents progress |
 
 These meanings and colors remain consistent in selectors, summaries, review queues,
 and future campaign-history surfaces.
+
+Lifecycle is progress metadata, not mission-selection authority. The four footer
+controls—`Not started`, `In progress`, `In review`, and `Completed`—only change that
+metadata. Mission selection belongs to the catalog hierarchy and takes effect as soon
+as a discovered simulation cluster, major mission, or variant is chosen. Static
+checks may still
+record their own `Ready` or `Blocked` result. Changing a lifecycle status never
+replaces or clears the selected mission, and that binding survives campaign-state
+process restarts while the case identity and locked inputs remain current.
 
 ## 8. Scene treatment
 
@@ -452,7 +652,7 @@ Minimalism must not hide an important distinction.
 ## 10. Responsive behavior
 
 - Desktop: all five floating regions are independent.
-- Compact desktop: flight readout becomes a shorter four-value row; labels may hide but units remain.
+- Compact desktop: flight readout keeps the centered three-value row; labels may hide but units remain.
 - Tablet: mission and flight readouts sit above the bottom edge; expanded surfaces become bottom sheets.
 - Phone: observation-only or minimum-size state; manual flight control remains out of scope.
 
@@ -464,13 +664,14 @@ Minimalism must not hide an important distinction.
 - At most seven small floating surface groups are visible while idle; the two additional groups are the independent Fast Sim setup pills.
 - The center 65% of the simulation is unobstructed.
 - `Ready to run`, `Active vehicle`, normal-state status copy, repeated source chips, and persistent clock copy are absent.
-- Essential telemetry occupies one shared glass readout.
-- Expanded telemetry includes truthful half-gauges and normalized bars without adding persistent tiles.
+- Essential telemetry occupies one shared glass readout with centered World Z and scalar Speed values.
+- Expanded telemetry keeps individually scaled Height, Speed, Battery, and Nearest mission graphs above the category selector.
+- Expanded telemetry separates Position, Velocity, Acceleration, Power, Attitude, Gyro, and Motors, retaining the battery half-gauge and graphing every channel both together and individually.
 - Vehicle identity never overlaps the expanded flight panel.
 - Fast Sim home reset and battery setup exist as independent pills right of the mission capsule and not in Engineering or mission-file setup.
 - Battery setup provides 5/10/20/50/75/100% presets and a validated custom 0–100% value.
 - Pose and battery maintenance update visible telemetry immediately and never alter one another.
-- Detailed systems and evidence are closed and on demand.
+- Ranges and evidence are absent from the compact flight surface; technical inspection remains in its dedicated workflow.
 - Primary controls are visibly brighter than informational surfaces.
 - Fault, stale, emergency, snapshot, and replay remain explicit without relying on color alone.
 - Mission-failure banners show the authoritative reason code/message, remain readable for 7 seconds, and are announced as alerts.

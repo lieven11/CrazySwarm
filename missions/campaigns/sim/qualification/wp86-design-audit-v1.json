@@ -1,0 +1,933 @@
+{
+  "artifact_date_utc": "2026-08-21",
+  "base_commit": "40cd9947f87eb9bf2719d72e7c72ea867eab9977",
+  "claims": {
+    "authoritative_transition_reconciliation": {
+      "entries": [
+        "src/crazyswarm_app/api/app.py",
+        "ui/worker/index.ts"
+      ],
+      "owners": [
+        "ui/app/components/ControlCenter.tsx",
+        "ui/app/lib/api.ts"
+      ]
+    },
+    "background_observer_isolation": {
+      "entries": [
+        "src/crazyswarm_app/api/app.py",
+        "ui/worker/index.ts"
+      ],
+      "owners": [
+        "src/crazyswarm_app/hardware/observation_twin.py",
+        "ui/app/components/ControlCenter.tsx"
+      ]
+    },
+    "literal_props_off_diagnostics": {
+      "entries": [
+        "src/crazyswarm_app/api/app.py",
+        "ui/app/lib/api.ts",
+        "ui/app/components/ControlCenter.tsx"
+      ],
+      "owners": [
+        "src/crazyswarm_app/hardware/observation_twin.py",
+        "ui/app/lib/models.ts",
+        "ui/app/components/TwinObservationReadout.tsx"
+      ]
+    },
+    "paired_session_clock": {
+      "entries": [
+        "src/crazyswarm_app/api/app.py",
+        "tests/hardware/test_observation_twin_service.py"
+      ],
+      "owners": [
+        "src/crazyswarm_app/hardware/observation_twin.py",
+        "src/crazyswarm_app/twin/ingestion.py",
+        "src/crazyswarm_app/twin/models.py"
+      ]
+    },
+    "single_subject_projection": {
+      "entries": [
+        "ui/app/page.tsx",
+        "ui/app/components/TelemetryDock.tsx"
+      ],
+      "owners": [
+        "ui/app/components/ControlCenter.tsx",
+        "ui/app/components/RoomScene.tsx",
+        "ui/app/components/TwinObservationReadout.tsx"
+      ]
+    }
+  },
+  "clock_witnesses": {
+    "admission_time_perturbation": {
+      "admitted_monotonic_s": [
+        100.0,
+        100.15,
+        100.28
+      ],
+      "expected": {
+        "observed_mapped_s": [
+          0.0,
+          0.15,
+          0.28
+        ],
+        "observed_raw_source_s": [
+          1933.909,
+          1934.603,
+          1935.071
+        ],
+        "predicted_mapped_s": [
+          0.0,
+          0.15,
+          0.28
+        ],
+        "predicted_raw_source_s": [
+          0.1,
+          0.2,
+          0.3
+        ]
+      },
+      "observed_raw_source_s": [
+        1933.909,
+        1934.603,
+        1935.071
+      ],
+      "predicted_raw_source_s": [
+        0.1,
+        0.2,
+        0.3
+      ]
+    },
+    "nominal": {
+      "admitted_monotonic_s": [
+        100.0,
+        100.11,
+        100.21
+      ],
+      "expected": {
+        "observed_mapped_s": [
+          0.0,
+          0.11,
+          0.21
+        ],
+        "observed_raw_source_s": [
+          1933.909,
+          1934.603,
+          1935.071
+        ],
+        "predicted_mapped_s": [
+          0.0,
+          0.11,
+          0.21
+        ],
+        "predicted_raw_source_s": [
+          0.1,
+          0.2,
+          0.3
+        ]
+      },
+      "observed_raw_source_s": [
+        1933.909,
+        1934.603,
+        1935.071
+      ],
+      "predicted_raw_source_s": [
+        0.1,
+        0.2,
+        0.3
+      ]
+    },
+    "placeholder_rejection": {
+      "all_measured_channels_missing": true,
+      "emit_pair": false,
+      "establish_clock_origin": false
+    },
+    "raw_clock_perturbation": {
+      "admitted_monotonic_s": [
+        100.0,
+        100.11,
+        100.21
+      ],
+      "expected": {
+        "observed_mapped_s": [
+          0.0,
+          0.11,
+          0.21
+        ],
+        "observed_raw_source_s": [
+          10.0,
+          5000.0,
+          5001.0
+        ],
+        "predicted_mapped_s": [
+          0.0,
+          0.11,
+          0.21
+        ],
+        "predicted_raw_source_s": [
+          100.0,
+          200.0,
+          300.0
+        ]
+      },
+      "observed_raw_source_s": [
+        10.0,
+        5000.0,
+        5001.0
+      ],
+      "predicted_raw_source_s": [
+        100.0,
+        200.0,
+        300.0
+      ]
+    },
+    "rollback_rejection": {
+      "cross_epoch_residual_allowed": false,
+      "producer_epoch_increments": true
+    }
+  },
+  "hardware_observation": {
+    "channel_sample_count": 70784,
+    "channels_per_cycle": {
+      "observed": 28,
+      "predicted": 28
+    },
+    "clock": {
+      "first_available_observed_raw_s": 1933.909,
+      "first_observed_cycle_availability": "MISSING",
+      "observed_final_mapped_s": 2271.529,
+      "predicted_final_mapped_s": 126.30000000002777
+    },
+    "curation": {
+      "reason": "operator picked up aircraft; session-wide evidence contaminated",
+      "recovery_copy": ".cache/crazyswarm/evidence-cleanup-backup.BtAOCF/twin-journal-v1.before-pickup-removal.jsonl",
+      "removed_active_session_id": "twin-43d3f75cb2374a00ba0c63c69be472ae"
+    },
+    "estimator": {
+      "available_samples": 1263,
+      "converged_false": 1232,
+      "converged_true": 31,
+      "first_variance_m2": {
+        "x": 3.5223491191864014,
+        "y": 3.471426248550415,
+        "z": 0.008530098013579845
+      },
+      "last_variance_m2": {
+        "x": 6.781398296356201,
+        "y": 5.0028300285339355,
+        "z": 0.015330570749938488
+      }
+    },
+    "evidence_boundary": "HARDWARE / OBSERVED_REALTIME / OBSERVATION_ONLY",
+    "flow": {
+      "ground_distance_median_m": 0.018,
+      "horizontal_speed_median_m_s": 3.846194686298385,
+      "horizontal_speed_p95_m_s": 7.005320884854339,
+      "quality_median_percent": 3.5294117647058822,
+      "reported_status": "VALID",
+      "usability": "UNQUALIFIED"
+    },
+    "ground_truth_available": false,
+    "observed_battery": {
+      "available_samples": 1263,
+      "first_v": 3.906158447265625,
+      "last_v": 3.869208335876465,
+      "minimum_step_v": 0.005278587341308594,
+      "unique_values": 8
+    },
+    "observed_source_class": "MEASURED_REAL",
+    "paired_cycles": 1264,
+    "position_availability": "INCOMPATIBLE",
+    "predicted_source_class": "SIMULATED_MODEL",
+    "session_id": "twin-f33a1e55c4f2431480f1f41cd6f45a19",
+    "stationary_checks": {
+      "acceleration_norm_median_m_s2": 9.821394299592873,
+      "angular_rate_norm_p95_rad_s": 0.008422447564387064,
+      "attitude_span_rad": {
+        "x": 0.016240412757743926,
+        "y": 0.023804985612058852,
+        "z": 0.006831453067917278
+      }
+    },
+    "status": "COMPLETE",
+    "vehicle_label": "Drone#1 - Nike"
+  },
+  "intended_new_paths": [
+    "ui/app/components/TwinObservationReadout.tsx",
+    "ui/tests/twin-observation-readout.test.tsx"
+  ],
+  "intent_value_card": {
+    "minimum_useful_outcome": [
+      "Fast Simulation/Digital twin source switching reuses a paired command-inert observer.",
+      "Digital twin renders one configured-label observation subject and no simulation mission/fleet/command state."
+    ],
+    "non_goals": [
+      "Firmware mutation.",
+      "Command or flight authority.",
+      "World-frame or physical-accuracy qualification."
+    ],
+    "optional": [
+      "Firmware A/B comparison.",
+      "Flow surface and lighting experiments.",
+      "World calibration and historical chart expansion."
+    ],
+    "prerequisites": [
+      "Preserve WP-80 zero-command private adapters.",
+      "Make physical status authoritative over local edit state.",
+      "Repair paired-session time before residual use."
+    ],
+    "requested": [
+      "Keep the observer connected in Simulation for quick switch.",
+      "Use the clean second sample for sensor and battery diagnostics.",
+      "Remove the pickup-contaminated session from active evidence."
+    ]
+  },
+  "ledger_preimage_sha256": "831eb89d5681cdd0eb978f8e1c96c82ed08530024860d262fca0666ba9c5d638",
+  "manifest": {
+    "design.md": [
+      "IMPLEMENTATION_OWNED",
+      "99b95cd62ba6db0794cb763f75a6ed6fb6c9f858ec4b71ea946edc84d2620499"
+    ],
+    "docs/project/DESIGN.md": [
+      "IMPLEMENTATION_OWNED",
+      "6cde78eb22850edd39ab14de58143a175ee1d63aa02af4cdfe5fc83397ceea43"
+    ],
+    "docs/project/requirements/FIDELITY_AND_TRANSFER.md": [
+      "RELIED_UPON_UNCHANGED",
+      "903232a4c188e4416f2f14660b17a4f9985c712a1f5e6a2f013387d14703c446"
+    ],
+    "docs/project/requirements/UI_AND_CATALOG.md": [
+      "RELIED_UPON_UNCHANGED",
+      "bc2070789c3b639097c5223882895102d4feae691cfa5d1a48b1c5bdff4efded"
+    ],
+    "docs/project/requirements/workflow/COST_SCOPE_AND_HANDOFF.md": [
+      "RELIED_UPON_UNCHANGED",
+      "790358ffc3d55f1fcae3d3cd669ebcb5bdf4d6d90921b56a01b121c8617c5a6f"
+    ],
+    "docs/project/requirements/workflow/PREFREEZE_AND_ORACLES.md": [
+      "RELIED_UPON_UNCHANGED",
+      "827a6a398a57a83552cf6beada7ce3ee05e84b3df5c527079d81963eb1116f8c"
+    ],
+    "docs/project/requirements/workflow/WORK_PACKET_GATES.md": [
+      "RELIED_UPON_UNCHANGED",
+      "5c68299a457b3aff6a29224da69f4fc80d9f87d904c2af33e1939fb74c4ca172"
+    ],
+    "scripts/audit_wp86_design.py": [
+      "RELIED_UPON_UNCHANGED",
+      "13ed0de359ee8422a26b51a897a8d3d034b4c75de9cf19848e80540133d74f0c"
+    ],
+    "scripts/export_openapi.py": [
+      "RELIED_UPON_UNCHANGED",
+      "821e27fd8a36e7e893ee4a6a5fa0fed4304d462dec1cdc6758961c6cd4c2bafa"
+    ],
+    "src/crazyswarm_app/__init__.py": [
+      "RELIED_UPON_UNCHANGED",
+      "e450c007b3667482bbacb354abc0016588b8d0e71818f629f016a22b48fa6a66"
+    ],
+    "src/crazyswarm_app/api/app.py": [
+      "IMPLEMENTATION_OWNED",
+      "ff8173e244d6d4b130a1fe21ec60b8da9d2431729e28532877b7f4add4ede4aa"
+    ],
+    "src/crazyswarm_app/api/models.py": [
+      "RELIED_UPON_UNCHANGED",
+      "ae78fa0502d73b28625e01df41364b9517237838b574ec28daf714eda151026e"
+    ],
+    "src/crazyswarm_app/api/runtime.py": [
+      "IMPLEMENTATION_OWNED",
+      "64dcf8b92acc1b9757238dbd4be990c98e82c917d5ac8e1999b932eb9d0703f5"
+    ],
+    "src/crazyswarm_app/api/security.py": [
+      "RELIED_UPON_UNCHANGED",
+      "adc1443db1b30d3b13d11c62c89fe2f855f707fd5d7bb05c0235fb734ae56e11"
+    ],
+    "src/crazyswarm_app/campaign/analyzer.py": [
+      "RELIED_UPON_UNCHANGED",
+      "2a7a70bbd7fb88765a5096de5b702137ff4d9caf7905f4f15e92e3eb052a0884"
+    ],
+    "src/crazyswarm_app/campaign/api_models.py": [
+      "RELIED_UPON_UNCHANGED",
+      "a1d5e1a804737cc7e083f033f209d09e9082d87b8816952c3435f2c77ef10ccc"
+    ],
+    "src/crazyswarm_app/campaign/catalog.py": [
+      "RELIED_UPON_UNCHANGED",
+      "64aaa10fd065b39657ebae28e76e01512528637dc1eaca3970b93b3ed76634be"
+    ],
+    "src/crazyswarm_app/campaign/corridor.py": [
+      "RELIED_UPON_UNCHANGED",
+      "4cda334f3d25cb381cf1fb812bce8de2d23e255916e0d7dbdc2e3cee12e9fd23"
+    ],
+    "src/crazyswarm_app/campaign/execution.py": [
+      "RELIED_UPON_UNCHANGED",
+      "d6d7b335dbe97633badab7245a5cd21862c0eb5c52e9f981f4a1192afb997f16"
+    ],
+    "src/crazyswarm_app/campaign/execution_head.py": [
+      "RELIED_UPON_UNCHANGED",
+      "ba87347101f1b8153bfdb16e3f36ec592f78456e63a94ab9adbc99781f2133a4"
+    ],
+    "src/crazyswarm_app/campaign/geometry.py": [
+      "RELIED_UPON_UNCHANGED",
+      "f011ece2306fb5a2505818eb7dac8771a21bb72a6dffc62a8f3bcb9c30d21802"
+    ],
+    "src/crazyswarm_app/campaign/models.py": [
+      "RELIED_UPON_UNCHANGED",
+      "b8164e332e48184e6b92dd19d4b7200e7915d5180f64109ea38ce2942b1a5827"
+    ],
+    "src/crazyswarm_app/campaign/perception.py": [
+      "RELIED_UPON_UNCHANGED",
+      "e8b39b2f753c5550b41b52c4eb1ae58e48ab8449d563a08498443978431fb565"
+    ],
+    "src/crazyswarm_app/campaign/physical_truth.py": [
+      "RELIED_UPON_UNCHANGED",
+      "e34b9c75527a7e3a3c55a1a4fb673d2a49e012816362929b7799062003eba4c9"
+    ],
+    "src/crazyswarm_app/campaign/planner.py": [
+      "RELIED_UPON_UNCHANGED",
+      "0341feb0cc79fbd241212e551f5b0d69e7e2aa80a14517a69c7e761c7bb99398"
+    ],
+    "src/crazyswarm_app/campaign/replanning.py": [
+      "RELIED_UPON_UNCHANGED",
+      "5f4227270538482cd3b6c491d71135e828d0dcdcf5fac6411f72f8519c2c804f"
+    ],
+    "src/crazyswarm_app/campaign/runtime_executor.py": [
+      "RELIED_UPON_UNCHANGED",
+      "3835eba7f9732e2103a8c92fa2a69088ac27115cf29275e6c7997198aaaa2669"
+    ],
+    "src/crazyswarm_app/campaign/scenario.py": [
+      "RELIED_UPON_UNCHANGED",
+      "c7e3ddeee88b235551ba2c31c639ef73da0edddfc46eb94cd5a83c24d96ef221"
+    ],
+    "src/crazyswarm_app/campaign/scheduling.py": [
+      "RELIED_UPON_UNCHANGED",
+      "521aa0fe9d019c8ccbabf0f2204e463458bf1754f7a76da851ea60a66d1c97a8"
+    ],
+    "src/crazyswarm_app/campaign/semantic_audit.py": [
+      "RELIED_UPON_UNCHANGED",
+      "78420241b129477f8e623acab8ee2e79040604266835dc01d92a17ca2c658158"
+    ],
+    "src/crazyswarm_app/campaign/service.py": [
+      "RELIED_UPON_UNCHANGED",
+      "794a13c31d51fa095120efe80a198424d343dc78d27f0ac91977795d5f52d32e"
+    ],
+    "src/crazyswarm_app/campaign/submissions.py": [
+      "RELIED_UPON_UNCHANGED",
+      "43a8630857e093fa4b58f350d9c943c2af3f8f1eef91b451b65627b351a97976"
+    ],
+    "src/crazyswarm_app/campaign/timing.py": [
+      "RELIED_UPON_UNCHANGED",
+      "33b3bb5ff60381353c7dcffa9f86003dc19a7cbc767f90fb00a8a448f6bc610e"
+    ],
+    "src/crazyswarm_app/campaign/trajectory.py": [
+      "RELIED_UPON_UNCHANGED",
+      "ea425ad2f477e4e980cdd51ac67616c8fb44528fb50a8ad6163279fc5f8323c0"
+    ],
+    "src/crazyswarm_app/config.py": [
+      "RELIED_UPON_UNCHANGED",
+      "11055020c3aa32f2b4286b1f329137f0a7265a11c2de0f7d255187a25094721c"
+    ],
+    "src/crazyswarm_app/dashboard.py": [
+      "IMPLEMENTATION_OWNED",
+      "51f312cb9baf48741b296af8409beb377c0d91feb1ff923ff5d0a97c2ca84e39"
+    ],
+    "src/crazyswarm_app/dashboard_service.py": [
+      "IMPLEMENTATION_OWNED",
+      "64c0556da834323fc7869c4fbb72ff24e93e0a4b6cd24e4b2fd21a9158c1f97b"
+    ],
+    "src/crazyswarm_app/domain/commands.py": [
+      "RELIED_UPON_UNCHANGED",
+      "86ff7d9fcf374f60d42cf6499d36a6567f3675e867587bc4ed79d188dbeb7ff6"
+    ],
+    "src/crazyswarm_app/domain/errors.py": [
+      "RELIED_UPON_UNCHANGED",
+      "64113a37dacf413065ea1f0897a94087bc1a2817f052b3732bf4e395a2dfb73a"
+    ],
+    "src/crazyswarm_app/domain/goals.py": [
+      "RELIED_UPON_UNCHANGED",
+      "04f7214150335df745b3b85dd0477df5e6cb4594e28334c1ba3fa23d10de837b"
+    ],
+    "src/crazyswarm_app/domain/models.py": [
+      "RELIED_UPON_UNCHANGED",
+      "a298a1f7958239c3ae260e2df21a455cf188a5588395b9222095b3377eb9fcff"
+    ],
+    "src/crazyswarm_app/domain/simulation.py": [
+      "RELIED_UPON_UNCHANGED",
+      "393fb0f83bde414d2088ad749e13c5308f6d267a8725344c05fc726147aa1d76"
+    ],
+    "src/crazyswarm_app/domain/telemetry.py": [
+      "RELIED_UPON_UNCHANGED",
+      "741a4aa9cc4a405588960eece156b82e85348bf124e61fcb16f66ebb97376f99"
+    ],
+    "src/crazyswarm_app/domain/trajectory.py": [
+      "RELIED_UPON_UNCHANGED",
+      "5d48ba0f3bc01d4280887a340408bb99c05bd3156de24823ff543e75a21354ef"
+    ],
+    "src/crazyswarm_app/engineering.py": [
+      "RELIED_UPON_UNCHANGED",
+      "ab2d3a02a50233a759fbd65fd9f8f37185b03b2a94477fa6cfa05738cc4b10e0"
+    ],
+    "src/crazyswarm_app/fleet/artifacts.py": [
+      "RELIED_UPON_UNCHANGED",
+      "67380de6c08f72add380047daa695d2936af8e07e2f6868854cc7269087ea77a"
+    ],
+    "src/crazyswarm_app/fleet/backends.py": [
+      "RELIED_UPON_UNCHANGED",
+      "1e54d0186f69ae3542539e07db1c2dbdc7a477212a056731291fd326ea21dcb2"
+    ],
+    "src/crazyswarm_app/fleet/coordination.py": [
+      "RELIED_UPON_UNCHANGED",
+      "687d5e74cf105970ffdd16a49b329ab9de5532d2a062c48ee4f76feb57171cc3"
+    ],
+    "src/crazyswarm_app/fleet/coordinator.py": [
+      "RELIED_UPON_UNCHANGED",
+      "d241ab3a18210720c5138fe302d8922120e39c4d4dc8e619c5f57dec8eb849cd"
+    ],
+    "src/crazyswarm_app/fleet/docks.py": [
+      "RELIED_UPON_UNCHANGED",
+      "6577dfff382fed3219a680936eb7be5ef8788cdcef9622dc15273057d1ef73a6"
+    ],
+    "src/crazyswarm_app/fleet/execution.py": [
+      "RELIED_UPON_UNCHANGED",
+      "57fc67bbd7a3714312ed66139146c7cf08a0f371542ddc6740a295ba8146eedc"
+    ],
+    "src/crazyswarm_app/fleet/metrics.py": [
+      "RELIED_UPON_UNCHANGED",
+      "be868dbf3a0a74ebb25e9ef94ef46ddafd68183ecae1cd327c77e94eb2f686ea"
+    ],
+    "src/crazyswarm_app/fleet/persistent.py": [
+      "RELIED_UPON_UNCHANGED",
+      "3e680dd799cb7a1a0033340361c4c69c7badaf441f7f3d06ccecba2adec11cf7"
+    ],
+    "src/crazyswarm_app/fleet/planning.py": [
+      "RELIED_UPON_UNCHANGED",
+      "21e16c5da99d4eba7d8e9ab38859c022efd9be5f8a28b0c3e2e8e803ddcf7981"
+    ],
+    "src/crazyswarm_app/fleet/preparation.py": [
+      "RELIED_UPON_UNCHANGED",
+      "a8916b916e4bbe77de2b47bbba48a721456c5dac6a80a9a489c9d1be53822d43"
+    ],
+    "src/crazyswarm_app/fleet/qualification.py": [
+      "RELIED_UPON_UNCHANGED",
+      "3341e9b90f842d9632b352bc71e3f6056366cafc68354f7549e74dcee35ff728"
+    ],
+    "src/crazyswarm_app/fleet/tasks.py": [
+      "RELIED_UPON_UNCHANGED",
+      "b46ba308c1a7770d25fc83400d159384ca95419d73bb293e2dcbdbf4f71675b4"
+    ],
+    "src/crazyswarm_app/fleet/zones.py": [
+      "RELIED_UPON_UNCHANGED",
+      "1b48f9c6591d12dfc3e803b5a31c701005469cc47b9b71e34a09a99c4eee042d"
+    ],
+    "src/crazyswarm_app/hardware/models.py": [
+      "RELIED_UPON_UNCHANGED",
+      "cb101bcc2056db0a6d013f30eee790c46c16f8d467aa534919b2cfc11d6eaf5c"
+    ],
+    "src/crazyswarm_app/hardware/observation_twin.py": [
+      "IMPLEMENTATION_OWNED",
+      "5d19e50e6713ba66282cb8d27f4bbcfda69ac8022f598eeba4b0109fbc0fdfe9"
+    ],
+    "src/crazyswarm_app/isaac/protocol.py": [
+      "RELIED_UPON_UNCHANGED",
+      "176ff67a2d4f00c9bb9c8bf01379e607e67b89715dc64a53a8627c00b255b008"
+    ],
+    "src/crazyswarm_app/missions/authority.py": [
+      "RELIED_UPON_UNCHANGED",
+      "86832cf77ba259ffde485a9a5576f0462f05e7b21eab21abf280de7c3690f3ff"
+    ],
+    "src/crazyswarm_app/missions/base.py": [
+      "RELIED_UPON_UNCHANGED",
+      "e99dec4ee72c419e13e9f32cd4396874e0dfb35fe2e9c7f5062e8cfeaa9735b5"
+    ],
+    "src/crazyswarm_app/missions/catalog.py": [
+      "RELIED_UPON_UNCHANGED",
+      "c055d112a690204c109b6966afc31783ce0cf7eb3f788f547ffdc923233344a2"
+    ],
+    "src/crazyswarm_app/missions/coordination.py": [
+      "RELIED_UPON_UNCHANGED",
+      "d37cb990b5881e40fae5423e59ce5e29a41c6ac5fab3a562c4a177a21149e83e"
+    ],
+    "src/crazyswarm_app/missions/models.py": [
+      "RELIED_UPON_UNCHANGED",
+      "e7655602a5ce72761a36b1aef49145a338f032fd292f9aa26ee574d55a0ebf27"
+    ],
+    "src/crazyswarm_app/missions/observation.py": [
+      "RELIED_UPON_UNCHANGED",
+      "0675b0897501a0f9aa8a87b97406be132e2e113e6c6ea5da6843b26431e74d3f"
+    ],
+    "src/crazyswarm_app/missions/planning.py": [
+      "RELIED_UPON_UNCHANGED",
+      "0fbb21cd1fed76868220f4618f6c6476fefbdbee06fd789e819bed38a6b53685"
+    ],
+    "src/crazyswarm_app/missions/registry.py": [
+      "RELIED_UPON_UNCHANGED",
+      "9b8cd1415e7ddbbbfbd0a01a0e0d074fa7fa1d1d0bd95b6243e881c9c9c004f2"
+    ],
+    "src/crazyswarm_app/missions/runner.py": [
+      "RELIED_UPON_UNCHANGED",
+      "0363679e48b5327cf8314123e7e7c035a348c460e99bf934ee09711153f536df"
+    ],
+    "src/crazyswarm_app/missions/script.py": [
+      "RELIED_UPON_UNCHANGED",
+      "fc27a997120858048b617f45afe24042170315ae11ac911869438ca256470b59"
+    ],
+    "src/crazyswarm_app/observability/bridge.py": [
+      "RELIED_UPON_UNCHANGED",
+      "b676bbc35a2a6598eb80f55dbd6c266767803bb71e067c8efa9e0310cc884977"
+    ],
+    "src/crazyswarm_app/observability/bus.py": [
+      "RELIED_UPON_UNCHANGED",
+      "1fcfbb4bc8db8e0021676b3428c57b59408529e8614e46b347fc40ab31d8f2c9"
+    ],
+    "src/crazyswarm_app/observability/csv_export.py": [
+      "RELIED_UPON_UNCHANGED",
+      "07702a86a9adb529dbdc3f309d15d5e8a256b6f89bf2a133460b090de7563126"
+    ],
+    "src/crazyswarm_app/observability/evaluation.py": [
+      "RELIED_UPON_UNCHANGED",
+      "f94e6ad3da7a1024e316615c1ce565f19a67223f1fe3517e480dd397513b7f46"
+    ],
+    "src/crazyswarm_app/observability/events.py": [
+      "RELIED_UPON_UNCHANGED",
+      "d94c135959f160bca7c25e3158c2fe705386831cc1f36888e1604a4b1a5c3cba"
+    ],
+    "src/crazyswarm_app/observability/recorder.py": [
+      "RELIED_UPON_UNCHANGED",
+      "2daa135fffd7326a1510c437e6263a68297ef45db987658a23edd92cb66c1369"
+    ],
+    "src/crazyswarm_app/observability/replay.py": [
+      "RELIED_UPON_UNCHANGED",
+      "496bb5cab3c7ad68ebe082b22ab6c1aa2abcc78be07ea3f1b55af778aec845bb"
+    ],
+    "src/crazyswarm_app/observability/storage.py": [
+      "RELIED_UPON_UNCHANGED",
+      "aa3e3abc76751e4f840145500c50dc419867a0120de53dfe3c9d0223a50dc689"
+    ],
+    "src/crazyswarm_app/planning/approval.py": [
+      "RELIED_UPON_UNCHANGED",
+      "5bfb08c3b08849ca3dcdebb7e5a6027e610df2bf57875c9cd216eac5dc33cf74"
+    ],
+    "src/crazyswarm_app/planning/builtins.py": [
+      "RELIED_UPON_UNCHANGED",
+      "20f82ca054a2513c59c62a0863b90fdb3100c83b473d32de1d050231a26ec307"
+    ],
+    "src/crazyswarm_app/planning/contracts.py": [
+      "RELIED_UPON_UNCHANGED",
+      "f1dd7392db34e6d68323f85f9d3aed48b44961eb509e2346f137c3405b678766"
+    ],
+    "src/crazyswarm_app/planning/curriculum.py": [
+      "RELIED_UPON_UNCHANGED",
+      "8049a93d198af766db868a0ee5b2f4d5c85448f34e894fa18a959b84181cd4ac"
+    ],
+    "src/crazyswarm_app/planning/deconfliction.py": [
+      "RELIED_UPON_UNCHANGED",
+      "009b149d0108a7fa4981806226211fc9eb8058053673c41c0d7644ae26b6afa2"
+    ],
+    "src/crazyswarm_app/planning/intent.py": [
+      "RELIED_UPON_UNCHANGED",
+      "46ee4ff55181ce315bd4e2d5a6b1f41295b7d172dc579700b5d74baf9dea60dc"
+    ],
+    "src/crazyswarm_app/planning/multidrone.py": [
+      "RELIED_UPON_UNCHANGED",
+      "5f6c8c9f924c040299dc3ba65abe7d7aa62f3d440d6439d28819c50831c79d53"
+    ],
+    "src/crazyswarm_app/planning/qualification.py": [
+      "RELIED_UPON_UNCHANGED",
+      "2bee8c73bd30e4ad5bef58f2b18dcbdc5cc0e4261ba53703ecc71ff13197c5a5"
+    ],
+    "src/crazyswarm_app/planning/registry.py": [
+      "RELIED_UPON_UNCHANGED",
+      "597cf4e7ffd93543c0432d35b21abf01d357c5ac73b25ca5b66bd6d05a7db242"
+    ],
+    "src/crazyswarm_app/planning/release.py": [
+      "RELIED_UPON_UNCHANGED",
+      "47fbdece819f6c82924ad0b27a9ac6a5f42e01a0130132d37120468da8c01c88"
+    ],
+    "src/crazyswarm_app/planning/robustness.py": [
+      "RELIED_UPON_UNCHANGED",
+      "59761fa53d67e0a757ccaee4932e33a7572a0c20de583667f7f869a2c1082074"
+    ],
+    "src/crazyswarm_app/planning/safety.py": [
+      "RELIED_UPON_UNCHANGED",
+      "cafa7ddf8fca4be4a3331a8ca896b79e192d8c8bb55b40aa35e6678927bb81b4"
+    ],
+    "src/crazyswarm_app/planning/service.py": [
+      "RELIED_UPON_UNCHANGED",
+      "9002ec5c1c04065ec87cb992129be8e8eecef8b548a9b0e053a3924856d8ec06"
+    ],
+    "src/crazyswarm_app/provenance.py": [
+      "RELIED_UPON_UNCHANGED",
+      "5750430a94c185c583d615a0ecab69b5d91b05c922c3e7e9d719d06f4a21d6d2"
+    ],
+    "src/crazyswarm_app/safety/audit.py": [
+      "RELIED_UPON_UNCHANGED",
+      "86a7f6be9c53e1dd5ec491ca07226c37641722cbd327f61f79a676845bb00740"
+    ],
+    "src/crazyswarm_app/safety/models.py": [
+      "RELIED_UPON_UNCHANGED",
+      "02aa4abd318d3af8b32a83a96a61789af5669a6743b703c68f9aca365de3d478"
+    ],
+    "src/crazyswarm_app/safety/policy.py": [
+      "RELIED_UPON_UNCHANGED",
+      "f534665ec00c33991026f93ec3562edc957cf7075883860bff5205cf5fe16e69"
+    ],
+    "src/crazyswarm_app/safety/state_machine.py": [
+      "RELIED_UPON_UNCHANGED",
+      "c342cb737f7d93e84617baad0abd4ff50908c7d4deea60b9cb96d4ab2fb33fe6"
+    ],
+    "src/crazyswarm_app/safety/supervisor.py": [
+      "RELIED_UPON_UNCHANGED",
+      "35355186a1bed44fe812abab09d1163a4e09b35fc2fbb7cdb5ebbc35163a9cae"
+    ],
+    "src/crazyswarm_app/simulation/clock.py": [
+      "RELIED_UPON_UNCHANGED",
+      "722c45cb3be4fded5719bdf678674c7cbf013dd6cbc6df68878e471789628f1f"
+    ],
+    "src/crazyswarm_app/simulation/factory.py": [
+      "RELIED_UPON_UNCHANGED",
+      "a49b3e5c8ca84de75c2afd25fc4c5ce4e94cedf61c500ef9b563e210ba6993f3"
+    ],
+    "src/crazyswarm_app/simulation/faults.py": [
+      "RELIED_UPON_UNCHANGED",
+      "1c72cbc96b25db97b20821a15142e7e49ba7657dbaa656d4730914c650724646"
+    ],
+    "src/crazyswarm_app/simulation/models.py": [
+      "RELIED_UPON_UNCHANGED",
+      "a978d58e2e3a9e4a867f79bab743b4fcb981279b2a7b057012c5cae50f95785b"
+    ],
+    "src/crazyswarm_app/simulation/parameters.py": [
+      "RELIED_UPON_UNCHANGED",
+      "9f9d7a3bb0ef125cfa5de60f69b832398a539752d170533ae9a40a000873a3d4"
+    ],
+    "src/crazyswarm_app/simulation/physics.py": [
+      "RELIED_UPON_UNCHANGED",
+      "60a372d2b3f9493e595f55941dfe1f1d619006f714018451e2e42bdb77ccbb97"
+    ],
+    "src/crazyswarm_app/simulation/powertrain.py": [
+      "RELIED_UPON_UNCHANGED",
+      "65c7eb993fe0879dbd314f0aa7d5606a254ddfa44cca02b0951c53116a63c0c2"
+    ],
+    "src/crazyswarm_app/simulation/sensors.py": [
+      "RELIED_UPON_UNCHANGED",
+      "707060cd2c2010a598a28e5a9357ecda3f0b7adbe00ecc37a42047b83d06e0f6"
+    ],
+    "src/crazyswarm_app/simulation/vehicle.py": [
+      "RELIED_UPON_UNCHANGED",
+      "f425662a16c197936e697359e672297c97cee4d8eeba29fdd8b42b6db8c9d808"
+    ],
+    "src/crazyswarm_app/simulation/world.py": [
+      "RELIED_UPON_UNCHANGED",
+      "b465609f1d3b3a024b18448ba07aba20ce0b4ee58f21eb63d21318e2360de1d9"
+    ],
+    "src/crazyswarm_app/twin/calibration.py": [
+      "RELIED_UPON_UNCHANGED",
+      "874327c22a05ace974b5ea030b9620f5b22541cea559120cc772eeb9410649b6"
+    ],
+    "src/crazyswarm_app/twin/coordinator.py": [
+      "IMPLEMENTATION_OWNED",
+      "93083658a33dbb191d26d262f4f98852206b39a063626e4b271585390fbd5564"
+    ],
+    "src/crazyswarm_app/twin/curriculum.py": [
+      "RELIED_UPON_UNCHANGED",
+      "b14fcce7ec8b364fb5595a1939143e481e07f2b315cd69a10e1963293ac4d2d8"
+    ],
+    "src/crazyswarm_app/twin/ingestion.py": [
+      "IMPLEMENTATION_OWNED",
+      "4aac3e897f17ff3a88c6870bc8e2d6c50c6e57a11dcc319456142cb048a22228"
+    ],
+    "src/crazyswarm_app/twin/models.py": [
+      "IMPLEMENTATION_OWNED",
+      "e7e39b9079712e26f3183bacc4fc13bc33c253f536de793124efba3abd2815de"
+    ],
+    "src/crazyswarm_app/twin/physical_handoff.py": [
+      "RELIED_UPON_UNCHANGED",
+      "052618a55b599a1fb1daecb15026ca8b9e8c0c9e040aa9be324eba8653f44396"
+    ],
+    "src/crazyswarm_app/twin/pipeline.py": [
+      "RELIED_UPON_UNCHANGED",
+      "15210e6418160e0882b6b489f41d07a87a8ab4079af831e2d3f474b4cd9be254"
+    ],
+    "src/crazyswarm_app/twin/replay.py": [
+      "RELIED_UPON_UNCHANGED",
+      "b92dc01245d4c95ed372ac474871b9afafcaaf3b53e81df65d10396714c39f08"
+    ],
+    "src/crazyswarm_app/twin/storage.py": [
+      "IMPLEMENTATION_OWNED",
+      "f4dec7be3cece3f6d0d9f6309ab4031358a99cb9a1737768d2557ea2d0c39016"
+    ],
+    "src/crazyswarm_app/vehicles/_cflib_link.py": [
+      "IMPLEMENTATION_OWNED",
+      "7df448504b85cd179f27df5c142caa819029317e5bfb7b69a2369966bf27be85"
+    ],
+    "src/crazyswarm_app/vehicles/base.py": [
+      "RELIED_UPON_UNCHANGED",
+      "c2f977ea470d70b8a4a424c36cac1b9de5d4b3ad04f28d61afaab5c0d0b9f37f"
+    ],
+    "src/crazyswarm_app/vehicles/crazyflie.py": [
+      "IMPLEMENTATION_OWNED",
+      "09a2df7c6781439c62a2ed41c404dfa5f5724b833ac2daddbd2bd1d9ea455524"
+    ],
+    "src/crazyswarm_app/vehicles/crazyflie_link.py": [
+      "RELIED_UPON_UNCHANGED",
+      "b9839ba65d2404d8482f842e9975f8c6396244676757ebe586bab62d5896fe56"
+    ],
+    "src/crazyswarm_app/vehicles/mock_isaac.py": [
+      "RELIED_UPON_UNCHANGED",
+      "9111d1603eab870fd84359e465e08348fe3812be56a3af595015799e6dfa1475"
+    ],
+    "src/crazyswarm_app/vehicles/providers.py": [
+      "RELIED_UPON_UNCHANGED",
+      "8c9742742559330d4b588fe64b191ecbfcad380cfe8c679dab557bef8ba78282"
+    ],
+    "tests/api/test_physical_twin.py": [
+      "IMPLEMENTATION_OWNED",
+      "fb1cd7cd3d517c1aa0642e7699736f47ef0e66c8d02173f47a9c82b9f624b704"
+    ],
+    "tests/hardware/test_crazyflie_adapter.py": [
+      "IMPLEMENTATION_OWNED",
+      "80f130ff34765c2066bf349cbfb5c9a6e7b7404b26bfe0690a3cc25f4ce206d2"
+    ],
+    "tests/hardware/test_observation_twin_service.py": [
+      "IMPLEMENTATION_OWNED",
+      "f0670927cfa6eedb937c78cb7ddf19493e2a8c246fff82dec07e57a06bf0d2c6"
+    ],
+    "tests/twin/test_ingestion.py": [
+      "IMPLEMENTATION_OWNED",
+      "32908909f9d7df0f2f74ee6bf8763bbff6d5238b5d87c106ee67092c4eed686c"
+    ],
+    "tests/twin/test_persistence.py": [
+      "IMPLEMENTATION_OWNED",
+      "c041eccf8cf9784125f2c7238f1f546bd7abe253cfede20d1146ffe2d23b5f2d"
+    ],
+    "tests/twin/test_storage.py": [
+      "IMPLEMENTATION_OWNED",
+      "56de4fdc1468c4c741db29ac7ee934e5db83a680c69c804da5eca727705b1c1e"
+    ],
+    "ui/app/components/CampaignLab.tsx": [
+      "RELIED_UPON_UNCHANGED",
+      "b6236247622af4c71ef03855816ed10b4b0b1675f9234d7884bc4b2cda9486f6"
+    ],
+    "ui/app/components/ControlCenter.tsx": [
+      "IMPLEMENTATION_OWNED",
+      "a3c9e6d37809c8e874aff45fbec5ab46455ecd5cf68bea7f61ff6da6af35ba40"
+    ],
+    "ui/app/components/RoomScene.tsx": [
+      "IMPLEMENTATION_OWNED",
+      "0f2ca6bb5364dea127c08738ed974cb669b143f31694e5972a438c1721c2351f"
+    ],
+    "ui/app/components/TelemetryDock.tsx": [
+      "IMPLEMENTATION_OWNED",
+      "356b1acb26d666b5cb7356ad7e9aca2dae38f1851959150fb56d7f8c6808311a"
+    ],
+    "ui/app/globals.css": [
+      "IMPLEMENTATION_OWNED",
+      "756274ec7f213a941cc03b998ca96b7ba1b3bd1f0c1d5ab79fac825238eaeaf9"
+    ],
+    "ui/app/layout.tsx": [
+      "IMPLEMENTATION_OWNED",
+      "d84f76788ea7f71740035a99cf6eb29fc9f735ea03fc4d85e632cd294a33f4a0"
+    ],
+    "ui/app/lib/api.generated.ts": [
+      "GENERATED",
+      "c95ae4dee9ea86533da52d0eaa0eaeed509948fd27ea20c1331b115ad0085a5a"
+    ],
+    "ui/app/lib/api.ts": [
+      "IMPLEMENTATION_OWNED",
+      "9fe1b707d2d44433f41fa1bd9f92a7a0e5519858e46bfd2d4825d63ff26fa189"
+    ],
+    "ui/app/lib/campaign-preview.ts": [
+      "RELIED_UPON_UNCHANGED",
+      "f4303e13d7fb0969d38da0948357c3e2e023b323e0e8468ac5d0579276798085"
+    ],
+    "ui/app/lib/campaign-telemetry.ts": [
+      "RELIED_UPON_UNCHANGED",
+      "bca0a82f939c04f95bd53096744ac547fd3c7ebbf9c91b020e47e5c3158b2720"
+    ],
+    "ui/app/lib/empty.ts": [
+      "RELIED_UPON_UNCHANGED",
+      "dbe1c2cb9edd09d1f0dfa45c2724bae9b3a797c76c82957731c70b0fa3f88be6"
+    ],
+    "ui/app/lib/models.ts": [
+      "IMPLEMENTATION_OWNED",
+      "441ab365ab6371e5845a09cac7f37dab5f6fa9610eedf737a6437ef6e0d5691b"
+    ],
+    "ui/app/lib/playback.ts": [
+      "RELIED_UPON_UNCHANGED",
+      "018206d9395a3eb5da8576c9929258359e14500a2a6b337c23fa78a6627d51b2"
+    ],
+    "ui/app/lib/spatial.ts": [
+      "RELIED_UPON_UNCHANGED",
+      "bf4f17c4ff97d56ddf4f388114963ff47ef770cb435496fcef8d4da99993535e"
+    ],
+    "ui/app/page.tsx": [
+      "IMPLEMENTATION_OWNED",
+      "df5abbd859b591ac2644eb9acd82d5191c377c3f351cd75310b3538f4801f752"
+    ],
+    "ui/openapi.json": [
+      "GENERATED",
+      "1e625549c02d091c86ef03d49d40354561f6b33bd1ac4ddfce1aefa2b13a9293"
+    ],
+    "ui/package.json": [
+      "RELIED_UPON_UNCHANGED",
+      "211bd21bf53c0640755efd9af1953a775681a3f71271c05e4700debf17fb38a8"
+    ],
+    "ui/tests/api-adapter.test.ts": [
+      "IMPLEMENTATION_OWNED",
+      "9339d2dbde52aceb377537338e6c62dd961f10711283e55097e53513db76051c"
+    ],
+    "ui/tests/components.test.tsx": [
+      "IMPLEMENTATION_OWNED",
+      "e35c8539c5a71707ffa26012011fd6c31cc814a771904508121a7b3452298263"
+    ],
+    "ui/tests/twin-session.test.tsx": [
+      "IMPLEMENTATION_OWNED",
+      "abbcafa856eec377b05a753f1496a62e69feeab916489afe03512806858a5f35"
+    ],
+    "ui/worker/index.ts": [
+      "IMPLEMENTATION_OWNED",
+      "e38df307397866440c457d8f05f4cc393c50965e4461eaeb52047ad0fd91a2ee"
+    ]
+  },
+  "payload": {
+    "bytes": 18386,
+    "sha256": "33aff815719a6ce14a9973b2d9f19ed58c66415f80432a63035442955aa269e4"
+  },
+  "requirements": [
+    "REQ-XFR-004",
+    "REQ-XFR-006",
+    "REQ-XFR-008",
+    "REQ-UI-001",
+    "REQ-UI-002",
+    "REQ-WFL-014",
+    "REQ-WFL-015",
+    "REQ-WFL-017",
+    "REQ-WFL-018",
+    "REQ-WFL-020",
+    "REQ-WFL-021",
+    "REQ-WFL-023",
+    "REQ-WFL-024",
+    "REQ-WFL-025",
+    "REQ-WFL-028",
+    "REQ-WFL-029",
+    "REQ-WFL-034",
+    "REQ-WFL-036",
+    "REQ-WFL-038",
+    "REQ-WFL-039",
+    "REQ-WFL-040",
+    "REQ-WFL-042",
+    "REQ-WFL-043",
+    "REQ-WFL-045",
+    "REQ-WFL-046",
+    "REQ-WFL-047",
+    "REQ-WFL-050"
+  ],
+  "review_unit": "WP-86",
+  "schema_version": 1,
+  "served_baseline": {
+    "client_entry_sha256": "ad49c10d4e353c648bf47aab5ac2675fc8f4fd82cc3696b800a734bed0332dfa",
+    "observations": [
+      "Digital twin hides the mission-library body but leaves simulation command targets, room vehicles, deployment summary, mission dock title, quick actions, and simulation flight readout derived from DashboardModel.",
+      "A paired sample displayed Bottleneck and a two-drone scene in Digital twin despite one configured measured subject.",
+      "Battery renders with two decimals."
+    ],
+    "release_id": "release-c22a1bdd6ff34c38bc21bf308e630adc",
+    "server_index_sha256": "a83e93217a2d7203ea64a9d44de66d221320999e1f77d0ceef8340c69c037eef",
+    "url": "http://127.0.0.1:3001/"
+  }
+}

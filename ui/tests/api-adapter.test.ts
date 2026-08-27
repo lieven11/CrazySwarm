@@ -829,19 +829,28 @@ describe("control API view adapter", () => {
     expect(api.campaignResolvedPackageUrl(
       "constant_path_speed.nominal",
       "constraint_directed.merge.flexible_geometry",
+      undefined,
+      { launch_gap_s: 8 },
     )).toBe(
-      "/control-api/api/v1/campaign/active/package?submission_id=constant_path_speed.nominal&planning_submission_id=constraint_directed.merge.flexible_geometry",
+      "/control-api/api/v1/campaign/active/package?submission_id=constant_path_speed.nominal&planning_submission_id=constraint_directed.merge.flexible_geometry&launch_gap_s=8",
     );
 
-    await api.previewActiveCampaign("constant_path_speed.nominal", "constraint_directed.merge.flexible_geometry");
+    await api.previewActiveCampaign(
+      "constant_path_speed.nominal",
+      "constraint_directed.merge.flexible_geometry",
+      undefined,
+      { launch_gap_s: 8 },
+    );
     expect(fetchMock.mock.calls[0][0]).toBe(
-      "/control-api/api/v1/campaign/active/preview?submission_id=constant_path_speed.nominal&planning_submission_id=constraint_directed.merge.flexible_geometry",
+      "/control-api/api/v1/campaign/active/preview?submission_id=constant_path_speed.nominal&planning_submission_id=constraint_directed.merge.flexible_geometry&launch_gap_s=8",
     );
 
     await api.runActiveCampaign(
       "AUTOMATED_ACCELERATED",
       "constant_path_speed.nominal",
       "constraint_directed.merge.flexible_geometry",
+      undefined,
+      { launch_gap_s: 8 },
     );
     expect(fetchMock.mock.calls[1][0]).toBe("/control-api/api/v1/campaign/runs");
     expect(fetchMock.mock.calls[1][1]).toMatchObject({
@@ -850,7 +859,33 @@ describe("control API view adapter", () => {
         mode: "AUTOMATED_ACCELERATED",
         submission_id: "constant_path_speed.nominal",
         planning_submission_id: "constraint_directed.merge.flexible_geometry",
+        coordination_preparation: { launch_gap_s: 8 },
       }),
     });
+  });
+
+  it("maps and posts the one-shot cushioned-acrobatics Flip action", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({
+      state: "FLIPPING",
+      stop_required: true,
+      operation_id: "twin-acrobatics-real-1",
+      motion_id: "acro-single-roll",
+      detail: "Flip triggered; executing the finite roll profile",
+      available_action: null,
+    }), { status: 200, headers: { "Content-Type": "application/json" } }));
+    const api = new ControlApi({ endpoint: "/control-api", clientId: "control-center-ui" });
+
+    const status = await api.triggerAcrobaticsFlip();
+
+    expect(status).toMatchObject({
+      state: "FLIPPING",
+      stopRequired: true,
+      operationId: "twin-acrobatics-real-1",
+      motionId: "acro-single-roll",
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/control-api/api/v1/physical-twin/lab/physical-flight/flip",
+      expect.objectContaining({ method: "POST", body: "{}" }),
+    );
   });
 });

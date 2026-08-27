@@ -1,0 +1,1479 @@
+{
+  "accepted_design_payload_sha256s": {
+    "base": "52570fcfcef8c7e5d62f79eb8c111522c236fe2a590500bcf086092bbc5e43c6",
+    "r2": "4201ea8a858e1d91b3f5877bdfacbd4716b5fa59b42cac9ac9d796cf38477806",
+    "r3": "5c24eb560133232cf5fb9e7a5105a727083f78854f07cba85c86c2d5ee6c3b5d",
+    "r4": "34d6640165a86a86ad741fbc16202f4f4ec22fe6a06f18de701bec6900a99a1b"
+  },
+  "all_required_repeats_and_retry_passed": true,
+  "authoritative_telemetry_dropout": {
+    "child_reason_code": "TELEMETRY_STALE",
+    "cleanup": {
+      "dynamic_obstacles_cleared": true,
+      "fleet_coordinators_cleared": true,
+      "fleet_preparations_cleared": true,
+      "fleet_tasks_cleared": true,
+      "no_active_run": true
+    },
+    "fault": {
+      "duration_s": 0.65,
+      "end_source_s": 5.65,
+      "freshness_limit_s": 0.25,
+      "kind": "stale_telemetry",
+      "start_source_s": 5.0
+    },
+    "mission_execution_id": "campaign-run-39021842285c7e86dac7",
+    "passed": true,
+    "retained_evidence": {
+      "analysis": {
+        "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/dropout-analysis.json",
+        "sha256": "8cafc6c54276c91a1c1908b12a891ef49ac95bb85c16fb1b7a8d6a593d89d1c2",
+        "size_bytes": 7773
+      },
+      "evaluation": {
+        "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/dropout-evaluation.json",
+        "sha256": "a1538bba75c1a92d44d491b2bad70a273e035f886817fcbbada69c11e162adb2",
+        "size_bytes": 3492
+      },
+      "execution_bundle": {
+        "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/dropout-execution-bundle.json",
+        "sha256": "0e08637a6fc379b23a6f0b5fa9927f171926961fffc4dd3f7d984e7a41a4a784",
+        "size_bytes": 190684
+      },
+      "manifest": {
+        "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/dropout-manifest.json",
+        "sha256": "8bb58745b95588cb0e2a802e503838189dee4039fa0a6bbd72e76bda5ed153f9",
+        "size_bytes": 1310
+      },
+      "telemetry_csv": {
+        "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/dropout-telemetry.csv",
+        "sha256": "b029547de4bf94e70907fdb2057b38525e15d81873a509689ee41280c6ac5b04",
+        "size_bytes": 794663
+      }
+    },
+    "run_id": "campaign-run-39021842285c7e86dac7",
+    "stale_abort_request_count": 1,
+    "stale_member_abort_count": 1,
+    "status": "FAILED"
+  },
+  "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+  "case_sha256": "24790c25d4bba4716ea63f4424335f5c7039d1bc6d3d8e9157adfac9171e713d",
+  "claim_boundary": "Normal CampaignService production entry in deterministic Fast Sim realtime mode. No hardware, physical-flight, live-Isaac, or aerodynamic-fidelity claim.",
+  "immediate_retry_count": 1,
+  "missing_preparation_acknowledgement": {
+    "atomic_commit_count": 0,
+    "cleanup": {
+      "dynamic_obstacles_cleared": true,
+      "fleet_coordinators_cleared": true,
+      "fleet_preparations_cleared": true,
+      "fleet_tasks_cleared": true,
+      "no_active_run": true
+    },
+    "injected_boundary": "SUPERVISOR_PREPARATION_ACK_MISSING",
+    "mission_execution_id": "campaign-run-ad5f2e345b8558f6413b",
+    "passed": true,
+    "replacement_dispatch_count": 0,
+    "retained_evidence": {
+      "analysis": {
+        "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/missing-ack-analysis.json",
+        "sha256": "94e11fb9b7affb7d4f24146219a68a4469954ca3b086ad7e444bb15347296d20",
+        "size_bytes": 15989
+      },
+      "evaluation": {
+        "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/missing-ack-evaluation.json",
+        "sha256": "c9f5d382aa3c75e7e3184b467a7649baeb6bd5b00d9a0156b968a83ecca6e96c",
+        "size_bytes": 3558
+      },
+      "execution_bundle": {
+        "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/missing-ack-execution-bundle.json",
+        "sha256": "80acd5f3308efa056bff8b8da57489e2219f3114ccfe1e04320da9408c38fc63",
+        "size_bytes": 185305
+      },
+      "manifest": {
+        "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/missing-ack-manifest.json",
+        "sha256": "f96738c146a7b7222ce2d71c6d1fd532f75f71dbdf6e6f0a2dd155887bb1f29b",
+        "size_bytes": 9689
+      },
+      "telemetry_csv": {
+        "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/missing-ack-telemetry.csv",
+        "sha256": "bddb8e64e6b4d32bfa1aececa82b655ba1c6c4cbd692ce265c2e918e77cc9fff",
+        "size_bytes": 3219342
+      }
+    },
+    "run_id": "campaign-run-ad5f2e345b8558f6413b",
+    "safe_fallback_records": [
+      {
+        "fallback_command": "STOP_AND_HOLD",
+        "observed_role_ids": [
+          "Alpha"
+        ],
+        "reason": "replacement command validation failed: Supervisor replacement preparation failed: INJECTED_MISSING_SUPERVISOR_PREPARATION_ACK",
+        "safe_prefix_certificate_sha256": "40814a82c68f08bc331a03ba5b7f8679b2d8203218f393a003f0602616c816ef",
+        "stage": "SAFE_FALLBACK_EXECUTED",
+        "stopped_or_landed_observation": true,
+        "supervisor_command_acknowledged_role_ids": [
+          "Alpha"
+        ]
+      }
+    ],
+    "status": "FAILED"
+  },
+  "motion_quality_runs": [
+    {
+      "case_id": "1d.curved_route.canonical_nominal",
+      "csv_stale_fault_absent": true,
+      "failed_guards": [],
+      "kinematics_gate_reconciliation": {
+        "passed": true,
+        "records": [
+          {
+            "gate_disagreement": false,
+            "maximum_horizontal_speed_m_s": 0.5,
+            "maximum_vertical_speed_m_s": 0.3,
+            "processed_gate_passed": true,
+            "processed_horizontal_speed_peak_m_s": 0.22963801856231073,
+            "processed_scope": "SMOOTHED_ROUTE_WINDOW",
+            "processed_vertical_speed_peak_m_s": 0.03850717653616857,
+            "raw_gate_passed": true,
+            "raw_horizontal_speed_peak_m_s": 0.24190377885236627,
+            "raw_scope": "ALL_RECORDED_AIRBORNE_SAMPLES",
+            "raw_vertical_speed_peak_m_s": 0.22480134404983512,
+            "vehicle_id": "Alpha"
+          }
+        ]
+      },
+      "missing_guards": [],
+      "mission_execution_id": "campaign-run-2500c84ca7bda126d6c3",
+      "mode": "AUTOMATED_ACCELERATED",
+      "motion_preparation_request": {
+        "accuracy_m": null,
+        "balance": 50,
+        "schema_version": 1,
+        "smoothness": null,
+        "speed_m_s": null
+      },
+      "ordinal": 1,
+      "packet_id": "WP-64",
+      "passed": true,
+      "retained_evidence": {
+        "analysis": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-automated_accelerated-1-analysis.json",
+          "sha256": "71c53e2030e1aa9d0abe878f630e81f7d3e91d22de1dc22310cf90dc18608891",
+          "size_bytes": 7571
+        },
+        "evaluation": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-automated_accelerated-1-evaluation.json",
+          "sha256": "2fa821fd96c4de90428156d9c7000cc5cb3a4c9c136794f9228769c99398ad92",
+          "size_bytes": 3643
+        },
+        "execution_bundle": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-automated_accelerated-1-execution-bundle.json",
+          "sha256": "9a481c54507b0108b879c1cfd7546a6b101c6d06a791465c3ef74a0b466f22f1",
+          "size_bytes": 47950
+        },
+        "manifest": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-automated_accelerated-1-manifest.json",
+          "sha256": "785792ad854662703ef130557e274b9b6d4bdffed4c64a90ca400fb4f9275d9e",
+          "size_bytes": 1307
+        },
+        "telemetry_csv": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-automated_accelerated-1-telemetry.csv",
+          "sha256": "e9d73c42e6686a35eab25ab871edeb53fbac12f3e737f62c04d47c68b10567df",
+          "size_bytes": 5279071
+        }
+      },
+      "run_id": "campaign-run-2500c84ca7bda126d6c3",
+      "status": "SUCCEEDED",
+      "tracking_oracle": "independent-source-time-quintic-pva-v1",
+      "tracking_rms_record": {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.045563611790582534
+      }
+    },
+    {
+      "case_id": "1d.curved_route.canonical_nominal",
+      "csv_stale_fault_absent": true,
+      "failed_guards": [],
+      "kinematics_gate_reconciliation": {
+        "passed": true,
+        "records": [
+          {
+            "gate_disagreement": false,
+            "maximum_horizontal_speed_m_s": 0.5,
+            "maximum_vertical_speed_m_s": 0.3,
+            "processed_gate_passed": true,
+            "processed_horizontal_speed_peak_m_s": 0.22963801856231073,
+            "processed_scope": "SMOOTHED_ROUTE_WINDOW",
+            "processed_vertical_speed_peak_m_s": 0.03850717653616857,
+            "raw_gate_passed": true,
+            "raw_horizontal_speed_peak_m_s": 0.24190377885236627,
+            "raw_scope": "ALL_RECORDED_AIRBORNE_SAMPLES",
+            "raw_vertical_speed_peak_m_s": 0.22480134404983512,
+            "vehicle_id": "Alpha"
+          }
+        ]
+      },
+      "missing_guards": [],
+      "mission_execution_id": "campaign-run-27e827a08ada5522262b",
+      "mode": "AUTOMATED_ACCELERATED",
+      "motion_preparation_request": {
+        "accuracy_m": null,
+        "balance": 50,
+        "schema_version": 1,
+        "smoothness": null,
+        "speed_m_s": null
+      },
+      "ordinal": 2,
+      "packet_id": "WP-64",
+      "passed": true,
+      "retained_evidence": {
+        "analysis": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-automated_accelerated-2-analysis.json",
+          "sha256": "dcd817a44e9dc4816467478557e8d03bb3e734dec7b7953ce98f7c02b6603b04",
+          "size_bytes": 7571
+        },
+        "evaluation": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-automated_accelerated-2-evaluation.json",
+          "sha256": "31c58c0553f8505461eba0e33adad4a962564f18e1c0d2357f28aaf0c2ed2026",
+          "size_bytes": 3643
+        },
+        "execution_bundle": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-automated_accelerated-2-execution-bundle.json",
+          "sha256": "f3390dc12d4e86ec7466390978f7df296985b02c4998cfbcd8f6fc3a2b6133f3",
+          "size_bytes": 47959
+        },
+        "manifest": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-automated_accelerated-2-manifest.json",
+          "sha256": "bb5a04a70bbc0e1d5090fa361fd3d6fb8206fa5afd0eb1c12262acc247fc1ec9",
+          "size_bytes": 1307
+        },
+        "telemetry_csv": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-automated_accelerated-2-telemetry.csv",
+          "sha256": "e3ab775476254fd77b2f998a3badad3a23182562fc74a4feccb17cabbe6b084d",
+          "size_bytes": 5279071
+        }
+      },
+      "run_id": "campaign-run-27e827a08ada5522262b",
+      "status": "SUCCEEDED",
+      "tracking_oracle": "independent-source-time-quintic-pva-v1",
+      "tracking_rms_record": {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.045563611790582534
+      }
+    },
+    {
+      "case_id": "1d.curved_route.canonical_nominal",
+      "csv_stale_fault_absent": true,
+      "failed_guards": [],
+      "kinematics_gate_reconciliation": {
+        "passed": true,
+        "records": [
+          {
+            "gate_disagreement": false,
+            "maximum_horizontal_speed_m_s": 0.5,
+            "maximum_vertical_speed_m_s": 0.3,
+            "processed_gate_passed": true,
+            "processed_horizontal_speed_peak_m_s": 0.22963801856231073,
+            "processed_scope": "SMOOTHED_ROUTE_WINDOW",
+            "processed_vertical_speed_peak_m_s": 0.03850717653616857,
+            "raw_gate_passed": true,
+            "raw_horizontal_speed_peak_m_s": 0.24190377885236627,
+            "raw_scope": "ALL_RECORDED_AIRBORNE_SAMPLES",
+            "raw_vertical_speed_peak_m_s": 0.22480134404983512,
+            "vehicle_id": "Alpha"
+          }
+        ]
+      },
+      "missing_guards": [],
+      "mission_execution_id": "campaign-run-88f66518e24d60ed2c79",
+      "mode": "AUTOMATED_ACCELERATED",
+      "motion_preparation_request": {
+        "accuracy_m": null,
+        "balance": 50,
+        "schema_version": 1,
+        "smoothness": null,
+        "speed_m_s": null
+      },
+      "ordinal": 3,
+      "packet_id": "WP-64",
+      "passed": true,
+      "retained_evidence": {
+        "analysis": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-automated_accelerated-3-analysis.json",
+          "sha256": "b325e8f9fb5b24aedf80f5b1a45eec7ef11874d3fab9a3f2317bbc95937170be",
+          "size_bytes": 7571
+        },
+        "evaluation": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-automated_accelerated-3-evaluation.json",
+          "sha256": "fb09533759f69c5f13496db2794aa6f5623acfe02ca7a06bf732f47956116e04",
+          "size_bytes": 3643
+        },
+        "execution_bundle": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-automated_accelerated-3-execution-bundle.json",
+          "sha256": "2fb428f3473e2ef16d8c0279258fe0a05e915d5838bba415494787b54e11a231",
+          "size_bytes": 47961
+        },
+        "manifest": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-automated_accelerated-3-manifest.json",
+          "sha256": "30e9041d756e2bd06b9a2c415697430452fa092a3a6239ae08766a01aaf1b843",
+          "size_bytes": 1307
+        },
+        "telemetry_csv": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-automated_accelerated-3-telemetry.csv",
+          "sha256": "1c51d7f75fd2e603f0ee989c123885a6f3ee37f0ffd977660406e4c36f578744",
+          "size_bytes": 5280400
+        }
+      },
+      "run_id": "campaign-run-88f66518e24d60ed2c79",
+      "status": "SUCCEEDED",
+      "tracking_oracle": "independent-source-time-quintic-pva-v1",
+      "tracking_rms_record": {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.045563611790582534
+      }
+    },
+    {
+      "case_id": "1d.curved_route.canonical_nominal",
+      "csv_stale_fault_absent": true,
+      "failed_guards": [],
+      "kinematics_gate_reconciliation": {
+        "passed": true,
+        "records": [
+          {
+            "gate_disagreement": false,
+            "maximum_horizontal_speed_m_s": 0.5,
+            "maximum_vertical_speed_m_s": 0.3,
+            "processed_gate_passed": true,
+            "processed_horizontal_speed_peak_m_s": 0.22963801856230942,
+            "processed_scope": "SMOOTHED_ROUTE_WINDOW",
+            "processed_vertical_speed_peak_m_s": 0.03850717653616857,
+            "raw_gate_passed": true,
+            "raw_horizontal_speed_peak_m_s": 0.24190377885236627,
+            "raw_scope": "ALL_RECORDED_AIRBORNE_SAMPLES",
+            "raw_vertical_speed_peak_m_s": 0.22480134404983512,
+            "vehicle_id": "Alpha"
+          }
+        ]
+      },
+      "missing_guards": [],
+      "mission_execution_id": "campaign-run-79c720f0734b3ceea7a1",
+      "mode": "OPERATOR_OBSERVED_REALTIME",
+      "motion_preparation_request": {
+        "accuracy_m": null,
+        "balance": 50,
+        "schema_version": 1,
+        "smoothness": null,
+        "speed_m_s": null
+      },
+      "ordinal": 1,
+      "packet_id": "WP-64",
+      "passed": true,
+      "retained_evidence": {
+        "analysis": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-operator_observed_realtime-1-analysis.json",
+          "sha256": "39eb153ff9800e6e4e5b4d0d0f56e3fad7d5d7b103cacc8896082adeb4ed8bbe",
+          "size_bytes": 7571
+        },
+        "evaluation": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-operator_observed_realtime-1-evaluation.json",
+          "sha256": "a21f6194d0243dd7f16ba17869e9b80cc660828f29faeb5585f0a49c3544c4ae",
+          "size_bytes": 3644
+        },
+        "execution_bundle": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-operator_observed_realtime-1-execution-bundle.json",
+          "sha256": "14e4fcb6a23d05bf92c0d8aeaab8fc1147b925b397d45f388fdbcc5a011a9506",
+          "size_bytes": 50857
+        },
+        "manifest": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-operator_observed_realtime-1-manifest.json",
+          "sha256": "cbc0a85369c916b7d242570c8072f58c11c9f016a101f46b6e67695d14f51504",
+          "size_bytes": 1307
+        },
+        "telemetry_csv": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-curved_route-canonical_nominal-operator_observed_realtime-1-telemetry.csv",
+          "sha256": "cf6ee88185260651e4713018df3012bfd293b5295f6ca8df30fe6c463a1dc156",
+          "size_bytes": 4900116
+        }
+      },
+      "run_id": "campaign-run-79c720f0734b3ceea7a1",
+      "status": "SUCCEEDED",
+      "tracking_oracle": "independent-source-time-quintic-pva-v1",
+      "tracking_rms_record": {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.045651132250820334
+      }
+    },
+    {
+      "case_id": "1d.planar_shape_loop.figure_eight",
+      "csv_stale_fault_absent": true,
+      "failed_guards": [],
+      "kinematics_gate_reconciliation": {
+        "passed": true,
+        "records": [
+          {
+            "gate_disagreement": false,
+            "maximum_horizontal_speed_m_s": 0.5,
+            "maximum_vertical_speed_m_s": 0.3,
+            "processed_gate_passed": true,
+            "processed_horizontal_speed_peak_m_s": 0.2927904455861659,
+            "processed_scope": "SMOOTHED_ROUTE_WINDOW",
+            "processed_vertical_speed_peak_m_s": 0.019651197629486503,
+            "raw_gate_passed": true,
+            "raw_horizontal_speed_peak_m_s": 0.30296278673795973,
+            "raw_scope": "ALL_RECORDED_AIRBORNE_SAMPLES",
+            "raw_vertical_speed_peak_m_s": 0.2846623349691127,
+            "vehicle_id": "Alpha"
+          }
+        ]
+      },
+      "missing_guards": [],
+      "mission_execution_id": "campaign-run-d81ad7dd0236d5f297f0",
+      "mode": "AUTOMATED_ACCELERATED",
+      "motion_preparation_request": {
+        "accuracy_m": 0.1,
+        "balance": 50,
+        "schema_version": 1,
+        "smoothness": 0,
+        "speed_m_s": 0.27
+      },
+      "ordinal": 1,
+      "packet_id": "WP-64",
+      "passed": true,
+      "retained_evidence": {
+        "analysis": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-automated_accelerated-1-analysis.json",
+          "sha256": "bd0cfad5640b295c3bb7a9000d2d48fc6e38d498db484660583edcc06eed637b",
+          "size_bytes": 7515
+        },
+        "evaluation": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-automated_accelerated-1-evaluation.json",
+          "sha256": "7be2dcb7f8b6396fc1279654431f87468dcdb13597cd2462382d1a6f2b0c560d",
+          "size_bytes": 3641
+        },
+        "execution_bundle": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-automated_accelerated-1-execution-bundle.json",
+          "sha256": "058075666585e2ab2f34edc2a80b0a76e0b29244f0d2b0186ff1b95c22dfc604",
+          "size_bytes": 51782
+        },
+        "manifest": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-automated_accelerated-1-manifest.json",
+          "sha256": "652cc2494c616a110adb86a92814109ec7534fe1d0c63f985f58f2ba6f97076c",
+          "size_bytes": 1307
+        },
+        "telemetry_csv": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-automated_accelerated-1-telemetry.csv",
+          "sha256": "ed0a49d65dd7c5a1a96e85b0606ce6c45ca639ecef189133cbab07fc09718e6c",
+          "size_bytes": 6149596
+        }
+      },
+      "run_id": "campaign-run-d81ad7dd0236d5f297f0",
+      "status": "SUCCEEDED",
+      "tracking_oracle": "independent-source-time-quintic-pva-v1",
+      "tracking_rms_record": {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.04914597950556958
+      }
+    },
+    {
+      "case_id": "1d.planar_shape_loop.figure_eight",
+      "csv_stale_fault_absent": true,
+      "failed_guards": [],
+      "kinematics_gate_reconciliation": {
+        "passed": true,
+        "records": [
+          {
+            "gate_disagreement": false,
+            "maximum_horizontal_speed_m_s": 0.5,
+            "maximum_vertical_speed_m_s": 0.3,
+            "processed_gate_passed": true,
+            "processed_horizontal_speed_peak_m_s": 0.2927904455861659,
+            "processed_scope": "SMOOTHED_ROUTE_WINDOW",
+            "processed_vertical_speed_peak_m_s": 0.019651197629486503,
+            "raw_gate_passed": true,
+            "raw_horizontal_speed_peak_m_s": 0.30296278673795973,
+            "raw_scope": "ALL_RECORDED_AIRBORNE_SAMPLES",
+            "raw_vertical_speed_peak_m_s": 0.2846623349691127,
+            "vehicle_id": "Alpha"
+          }
+        ]
+      },
+      "missing_guards": [],
+      "mission_execution_id": "campaign-run-225473978aacef14343f",
+      "mode": "AUTOMATED_ACCELERATED",
+      "motion_preparation_request": {
+        "accuracy_m": 0.1,
+        "balance": 50,
+        "schema_version": 1,
+        "smoothness": 0,
+        "speed_m_s": 0.27
+      },
+      "ordinal": 2,
+      "packet_id": "WP-64",
+      "passed": true,
+      "retained_evidence": {
+        "analysis": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-automated_accelerated-2-analysis.json",
+          "sha256": "d1372613fa942a06ca80dab82522f497911ba0045071eeab5d80ee16e5680974",
+          "size_bytes": 7515
+        },
+        "evaluation": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-automated_accelerated-2-evaluation.json",
+          "sha256": "ebb4edf508008de3b9c6440b88f6bd164d5b61440678e3a345ed35e9080ac6ce",
+          "size_bytes": 3641
+        },
+        "execution_bundle": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-automated_accelerated-2-execution-bundle.json",
+          "sha256": "781edaf68f37c78c5a631c33495d20e33e8a3f3d9f285fe2e38360b692f52ed0",
+          "size_bytes": 51783
+        },
+        "manifest": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-automated_accelerated-2-manifest.json",
+          "sha256": "d9c0a8d82046b6ded4d32fc00f8b46c3337bd41bd7a9875aea52e703c398be44",
+          "size_bytes": 1307
+        },
+        "telemetry_csv": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-automated_accelerated-2-telemetry.csv",
+          "sha256": "bec222c3d774da78de83092c79504bed962a1d12ec1bd1aacc5ee8e1e62f7eaa",
+          "size_bytes": 6149596
+        }
+      },
+      "run_id": "campaign-run-225473978aacef14343f",
+      "status": "SUCCEEDED",
+      "tracking_oracle": "independent-source-time-quintic-pva-v1",
+      "tracking_rms_record": {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.04914597950556958
+      }
+    },
+    {
+      "case_id": "1d.planar_shape_loop.figure_eight",
+      "csv_stale_fault_absent": true,
+      "failed_guards": [],
+      "kinematics_gate_reconciliation": {
+        "passed": true,
+        "records": [
+          {
+            "gate_disagreement": false,
+            "maximum_horizontal_speed_m_s": 0.5,
+            "maximum_vertical_speed_m_s": 0.3,
+            "processed_gate_passed": true,
+            "processed_horizontal_speed_peak_m_s": 0.2927904455861659,
+            "processed_scope": "SMOOTHED_ROUTE_WINDOW",
+            "processed_vertical_speed_peak_m_s": 0.019651197629486503,
+            "raw_gate_passed": true,
+            "raw_horizontal_speed_peak_m_s": 0.30296278673795973,
+            "raw_scope": "ALL_RECORDED_AIRBORNE_SAMPLES",
+            "raw_vertical_speed_peak_m_s": 0.2846623349691127,
+            "vehicle_id": "Alpha"
+          }
+        ]
+      },
+      "missing_guards": [],
+      "mission_execution_id": "campaign-run-47d15de8d69235aaedd1",
+      "mode": "AUTOMATED_ACCELERATED",
+      "motion_preparation_request": {
+        "accuracy_m": 0.1,
+        "balance": 50,
+        "schema_version": 1,
+        "smoothness": 0,
+        "speed_m_s": 0.27
+      },
+      "ordinal": 3,
+      "packet_id": "WP-64",
+      "passed": true,
+      "retained_evidence": {
+        "analysis": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-automated_accelerated-3-analysis.json",
+          "sha256": "edb032258b4d726618691cc78e9c0ce8247927d96ed2d431b2ea2b970de15c0e",
+          "size_bytes": 7515
+        },
+        "evaluation": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-automated_accelerated-3-evaluation.json",
+          "sha256": "f2f75a3fe31a3e4e49deee083aa456e4a66d5f1b45ffbe325bac6e6f3488a159",
+          "size_bytes": 3641
+        },
+        "execution_bundle": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-automated_accelerated-3-execution-bundle.json",
+          "sha256": "38cdd64a7ec1a8531fa683127d54a65d5d1074705df6250e40a37e5d109e20be",
+          "size_bytes": 51784
+        },
+        "manifest": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-automated_accelerated-3-manifest.json",
+          "sha256": "e8bc063517f0dd7e3835f2145b0935225f6ae657a48729558ba60938afb9aab1",
+          "size_bytes": 1307
+        },
+        "telemetry_csv": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-automated_accelerated-3-telemetry.csv",
+          "sha256": "bef6f129c9effceaf8d210e2d0971d741d3c0a30280b77e9ca92660067221fc7",
+          "size_bytes": 6149596
+        }
+      },
+      "run_id": "campaign-run-47d15de8d69235aaedd1",
+      "status": "SUCCEEDED",
+      "tracking_oracle": "independent-source-time-quintic-pva-v1",
+      "tracking_rms_record": {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.04914597950556958
+      }
+    },
+    {
+      "case_id": "1d.planar_shape_loop.figure_eight",
+      "csv_stale_fault_absent": true,
+      "failed_guards": [],
+      "kinematics_gate_reconciliation": {
+        "passed": true,
+        "records": [
+          {
+            "gate_disagreement": false,
+            "maximum_horizontal_speed_m_s": 0.5,
+            "maximum_vertical_speed_m_s": 0.3,
+            "processed_gate_passed": true,
+            "processed_horizontal_speed_peak_m_s": 0.2927904455861659,
+            "processed_scope": "SMOOTHED_ROUTE_WINDOW",
+            "processed_vertical_speed_peak_m_s": 0.019651197629483728,
+            "raw_gate_passed": true,
+            "raw_horizontal_speed_peak_m_s": 0.30296278673795973,
+            "raw_scope": "ALL_RECORDED_AIRBORNE_SAMPLES",
+            "raw_vertical_speed_peak_m_s": 0.2846623349691127,
+            "vehicle_id": "Alpha"
+          }
+        ]
+      },
+      "missing_guards": [],
+      "mission_execution_id": "campaign-run-b6a776318d2e44355f77",
+      "mode": "OPERATOR_OBSERVED_REALTIME",
+      "motion_preparation_request": {
+        "accuracy_m": 0.1,
+        "balance": 50,
+        "schema_version": 1,
+        "smoothness": 0,
+        "speed_m_s": 0.27
+      },
+      "ordinal": 1,
+      "packet_id": "WP-64",
+      "passed": true,
+      "retained_evidence": {
+        "analysis": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-operator_observed_realtime-1-analysis.json",
+          "sha256": "3edb9c567ff39d15291487e408cdcfb2435c9bdf5b90020a921343aebf9db42f",
+          "size_bytes": 7512
+        },
+        "evaluation": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-operator_observed_realtime-1-evaluation.json",
+          "sha256": "f1f4b418992444bf4295ccf9d00df91a6b3885b6df007b96b419a01f0d8cc63f",
+          "size_bytes": 3639
+        },
+        "execution_bundle": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-operator_observed_realtime-1-execution-bundle.json",
+          "sha256": "d9ebb3bfee080933a35c081cedd174b512e36ffd1e086eaedd972fceeb4467c0",
+          "size_bytes": 55156
+        },
+        "manifest": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-operator_observed_realtime-1-manifest.json",
+          "sha256": "b0bb467b6061c13c14d98e48f4fb3b5be382aa72ce0105c13a7ec93cdd941e90",
+          "size_bytes": 1307
+        },
+        "telemetry_csv": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-planar_shape_loop-figure_eight-operator_observed_realtime-1-telemetry.csv",
+          "sha256": "83965303a65dfa6aeb5c0af0aa21c51339496a98f77887405b4daadc11147703",
+          "size_bytes": 5686154
+        }
+      },
+      "run_id": "campaign-run-b6a776318d2e44355f77",
+      "status": "SUCCEEDED",
+      "tracking_oracle": "independent-source-time-quintic-pva-v1",
+      "tracking_rms_record": {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049219723299929505
+      }
+    },
+    {
+      "case_id": "1d.altitude_transition.canonical_nominal",
+      "csv_stale_fault_absent": true,
+      "failed_guards": [],
+      "kinematics_gate_reconciliation": {
+        "passed": true,
+        "records": [
+          {
+            "gate_disagreement": false,
+            "maximum_horizontal_speed_m_s": 0.5,
+            "maximum_vertical_speed_m_s": 0.3,
+            "processed_gate_passed": true,
+            "processed_horizontal_speed_peak_m_s": 0.259527577069047,
+            "processed_scope": "SMOOTHED_ROUTE_WINDOW",
+            "processed_vertical_speed_peak_m_s": 0.1712109823580091,
+            "raw_gate_passed": true,
+            "raw_horizontal_speed_peak_m_s": 0.2801969403223358,
+            "raw_scope": "ALL_RECORDED_AIRBORNE_SAMPLES",
+            "raw_vertical_speed_peak_m_s": 0.18718246065718702,
+            "vehicle_id": "Alpha"
+          }
+        ]
+      },
+      "missing_guards": [],
+      "mission_execution_id": "campaign-run-704d997d4f8829f67884",
+      "mode": "AUTOMATED_ACCELERATED",
+      "motion_preparation_request": {
+        "accuracy_m": null,
+        "balance": 50,
+        "schema_version": 1,
+        "smoothness": null,
+        "speed_m_s": null
+      },
+      "ordinal": 1,
+      "packet_id": "WP-64",
+      "passed": true,
+      "retained_evidence": {
+        "analysis": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-automated_accelerated-1-analysis.json",
+          "sha256": "a0b06f4bdcebfe52fa34989fa9bc9ce858136d0ce74f38c5102fd8c552e256ca",
+          "size_bytes": 7517
+        },
+        "evaluation": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-automated_accelerated-1-evaluation.json",
+          "sha256": "a6cca2f8d2ac822ba5f08b9d1f349587b4836f6a0e8c10e99ce4486fa45a4601",
+          "size_bytes": 3639
+        },
+        "execution_bundle": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-automated_accelerated-1-execution-bundle.json",
+          "sha256": "1c7ecf9becc79ae7a62e3268557325a01095b30b48fa072e06caa3d01aa29f24",
+          "size_bytes": 46200
+        },
+        "manifest": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-automated_accelerated-1-manifest.json",
+          "sha256": "9c3624f1460f899f7792698a6f09f9265b7a4e8f8e555145f7f463c77922ba7c",
+          "size_bytes": 1314
+        },
+        "telemetry_csv": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-automated_accelerated-1-telemetry.csv",
+          "sha256": "7c609a610933c8eb4d53b13d689f11b56220b407e24ef5f015811037ffca68bc",
+          "size_bytes": 3525745
+        }
+      },
+      "run_id": "campaign-run-704d997d4f8829f67884",
+      "status": "SUCCEEDED",
+      "tracking_oracle": "independent-source-time-quintic-pva-v1",
+      "tracking_rms_record": {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.0441882887423961
+      }
+    },
+    {
+      "case_id": "1d.altitude_transition.canonical_nominal",
+      "csv_stale_fault_absent": true,
+      "failed_guards": [],
+      "kinematics_gate_reconciliation": {
+        "passed": true,
+        "records": [
+          {
+            "gate_disagreement": false,
+            "maximum_horizontal_speed_m_s": 0.5,
+            "maximum_vertical_speed_m_s": 0.3,
+            "processed_gate_passed": true,
+            "processed_horizontal_speed_peak_m_s": 0.259527577069047,
+            "processed_scope": "SMOOTHED_ROUTE_WINDOW",
+            "processed_vertical_speed_peak_m_s": 0.1712109823580091,
+            "raw_gate_passed": true,
+            "raw_horizontal_speed_peak_m_s": 0.2801969403223358,
+            "raw_scope": "ALL_RECORDED_AIRBORNE_SAMPLES",
+            "raw_vertical_speed_peak_m_s": 0.18718246065718702,
+            "vehicle_id": "Alpha"
+          }
+        ]
+      },
+      "missing_guards": [],
+      "mission_execution_id": "campaign-run-1ba4e858317898b8f0f8",
+      "mode": "AUTOMATED_ACCELERATED",
+      "motion_preparation_request": {
+        "accuracy_m": null,
+        "balance": 50,
+        "schema_version": 1,
+        "smoothness": null,
+        "speed_m_s": null
+      },
+      "ordinal": 2,
+      "packet_id": "WP-64",
+      "passed": true,
+      "retained_evidence": {
+        "analysis": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-automated_accelerated-2-analysis.json",
+          "sha256": "88eff5a2460f074ee2d235217ee083b0f672a7236410e3543c51c2e9cd95ddd1",
+          "size_bytes": 7517
+        },
+        "evaluation": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-automated_accelerated-2-evaluation.json",
+          "sha256": "ef93734f99f3ab71d707e37c18b23be146277d598cc78e55e951953361017aff",
+          "size_bytes": 3639
+        },
+        "execution_bundle": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-automated_accelerated-2-execution-bundle.json",
+          "sha256": "b1b7e27e4a1f9177b7fbe6be026c62bbbcac50f96b6738eda85515cdbc09e0e4",
+          "size_bytes": 46208
+        },
+        "manifest": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-automated_accelerated-2-manifest.json",
+          "sha256": "108d7d7bae8a8d8f16596a4438d9a2d79b8d6c75514fdd87748264ef66e8b8f8",
+          "size_bytes": 1314
+        },
+        "telemetry_csv": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-automated_accelerated-2-telemetry.csv",
+          "sha256": "115cb8213dbd3debbece557905470b2ead75270ab51c3ab046949359449f1b5e",
+          "size_bytes": 3525745
+        }
+      },
+      "run_id": "campaign-run-1ba4e858317898b8f0f8",
+      "status": "SUCCEEDED",
+      "tracking_oracle": "independent-source-time-quintic-pva-v1",
+      "tracking_rms_record": {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.0441882887423961
+      }
+    },
+    {
+      "case_id": "1d.altitude_transition.canonical_nominal",
+      "csv_stale_fault_absent": true,
+      "failed_guards": [],
+      "kinematics_gate_reconciliation": {
+        "passed": true,
+        "records": [
+          {
+            "gate_disagreement": false,
+            "maximum_horizontal_speed_m_s": 0.5,
+            "maximum_vertical_speed_m_s": 0.3,
+            "processed_gate_passed": true,
+            "processed_horizontal_speed_peak_m_s": 0.259527577069047,
+            "processed_scope": "SMOOTHED_ROUTE_WINDOW",
+            "processed_vertical_speed_peak_m_s": 0.1712109823580091,
+            "raw_gate_passed": true,
+            "raw_horizontal_speed_peak_m_s": 0.2801969403223358,
+            "raw_scope": "ALL_RECORDED_AIRBORNE_SAMPLES",
+            "raw_vertical_speed_peak_m_s": 0.18718246065718702,
+            "vehicle_id": "Alpha"
+          }
+        ]
+      },
+      "missing_guards": [],
+      "mission_execution_id": "campaign-run-d4859dcdfecbc50799de",
+      "mode": "AUTOMATED_ACCELERATED",
+      "motion_preparation_request": {
+        "accuracy_m": null,
+        "balance": 50,
+        "schema_version": 1,
+        "smoothness": null,
+        "speed_m_s": null
+      },
+      "ordinal": 3,
+      "packet_id": "WP-64",
+      "passed": true,
+      "retained_evidence": {
+        "analysis": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-automated_accelerated-3-analysis.json",
+          "sha256": "1cab7c488ca0e596c2ba9811de43a0bccc28e588723d4ed3adfb013094f6c3dc",
+          "size_bytes": 7517
+        },
+        "evaluation": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-automated_accelerated-3-evaluation.json",
+          "sha256": "24463cc76934a28dc2b7109b65b2177805bbb0ada1392198fa319b99b7b89da0",
+          "size_bytes": 3639
+        },
+        "execution_bundle": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-automated_accelerated-3-execution-bundle.json",
+          "sha256": "387873c5fd5a5a216910a5d930b5f65bf221d87ea109205c2557201a55dc310e",
+          "size_bytes": 46215
+        },
+        "manifest": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-automated_accelerated-3-manifest.json",
+          "sha256": "aa50b1adb101cfd571c7d986beab752b6cd9ccbcf60be19c03239598b0750ede",
+          "size_bytes": 1314
+        },
+        "telemetry_csv": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-automated_accelerated-3-telemetry.csv",
+          "sha256": "7dad78701cc769649ee1c7bec849436c4ee167e54f281e8debf758fd7263d690",
+          "size_bytes": 3525745
+        }
+      },
+      "run_id": "campaign-run-d4859dcdfecbc50799de",
+      "status": "SUCCEEDED",
+      "tracking_oracle": "independent-source-time-quintic-pva-v1",
+      "tracking_rms_record": {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.0441882887423961
+      }
+    },
+    {
+      "case_id": "1d.altitude_transition.canonical_nominal",
+      "csv_stale_fault_absent": true,
+      "failed_guards": [],
+      "kinematics_gate_reconciliation": {
+        "passed": true,
+        "records": [
+          {
+            "gate_disagreement": false,
+            "maximum_horizontal_speed_m_s": 0.5,
+            "maximum_vertical_speed_m_s": 0.3,
+            "processed_gate_passed": true,
+            "processed_horizontal_speed_peak_m_s": 0.2595275770690498,
+            "processed_scope": "SMOOTHED_ROUTE_WINDOW",
+            "processed_vertical_speed_peak_m_s": 0.17121098235801466,
+            "raw_gate_passed": true,
+            "raw_horizontal_speed_peak_m_s": 0.2801969403223358,
+            "raw_scope": "ALL_RECORDED_AIRBORNE_SAMPLES",
+            "raw_vertical_speed_peak_m_s": 0.18718246065718702,
+            "vehicle_id": "Alpha"
+          }
+        ]
+      },
+      "missing_guards": [],
+      "mission_execution_id": "campaign-run-885792336deb036d0d0b",
+      "mode": "OPERATOR_OBSERVED_REALTIME",
+      "motion_preparation_request": {
+        "accuracy_m": null,
+        "balance": 50,
+        "schema_version": 1,
+        "smoothness": null,
+        "speed_m_s": null
+      },
+      "ordinal": 1,
+      "packet_id": "WP-64",
+      "passed": true,
+      "retained_evidence": {
+        "analysis": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-operator_observed_realtime-1-analysis.json",
+          "sha256": "4711a7e54a3594c16f74af66857a2204f63ed74cc1128978133043af56b535b5",
+          "size_bytes": 7506
+        },
+        "evaluation": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-operator_observed_realtime-1-evaluation.json",
+          "sha256": "ddb1f06d86a587f1dc065b9373f5e284e66b047d141af0b35a3ed0bd1c284c67",
+          "size_bytes": 3639
+        },
+        "execution_bundle": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-operator_observed_realtime-1-execution-bundle.json",
+          "sha256": "379234f59d600ec86aafa8f0628cc5ccc9d297126103d164eba3157e6b6d6a1c",
+          "size_bytes": 48136
+        },
+        "manifest": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-operator_observed_realtime-1-manifest.json",
+          "sha256": "6e9dc941680cafaf7569995ab6dc7bc863b8870ac38ce54489045b17ea6859cc",
+          "size_bytes": 1314
+        },
+        "telemetry_csv": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/wp64-1d-altitude_transition-canonical_nominal-operator_observed_realtime-1-telemetry.csv",
+          "sha256": "e1c27797d899ff8f9ccdaadc9fa34f30dbe0b6fadb269da1c8d598508e969a40",
+          "size_bytes": 3260700
+        }
+      },
+      "run_id": "campaign-run-885792336deb036d0d0b",
+      "status": "SUCCEEDED",
+      "tracking_oracle": "independent-source-time-quintic-pva-v1",
+      "tracking_rms_record": {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.04421260071574586
+      }
+    }
+  ],
+  "qualification_id": "wp62-66-runtime-qualification-v1",
+  "qualification_sha256": "6fe4bdca44610d725dbd5434e38c95d7e79f9202ba5763adb8045242d5c7ef07",
+  "required_repeat_count": 3,
+  "runs": [
+    {
+      "all_required_behavior_oracles_passed": true,
+      "cleanup": {
+        "dynamic_obstacles_cleared": true,
+        "fleet_coordinators_cleared": true,
+        "fleet_preparations_cleared": true,
+        "fleet_tasks_cleared": true,
+        "no_active_run": true
+      },
+      "csv_stale_fault_absent": true,
+      "kinematics_gate_reconciliation": {
+        "passed": true,
+        "records": [
+          {
+            "gate_disagreement": false,
+            "maximum_horizontal_speed_m_s": 0.5,
+            "maximum_vertical_speed_m_s": 0.3,
+            "processed_gate_passed": true,
+            "processed_horizontal_speed_peak_m_s": 0.24217446571430248,
+            "processed_scope": "SMOOTHED_ROUTE_WINDOW",
+            "processed_vertical_speed_peak_m_s": 0.012160594982590912,
+            "raw_gate_passed": true,
+            "raw_horizontal_speed_peak_m_s": 0.2606811855260347,
+            "raw_scope": "ALL_RECORDED_AIRBORNE_SAMPLES",
+            "raw_vertical_speed_peak_m_s": 0.2547783662864176,
+            "vehicle_id": "Alpha"
+          }
+        ]
+      },
+      "minimum_required_realtime_factor": 0.8,
+      "mission_execution_id": "campaign-run-c40198b0824dcf6b1d79",
+      "motion_quality_failed_guards": [],
+      "motion_quality_missing_guards": [],
+      "ordinal": 1,
+      "passed": true,
+      "purpose": "REQUIRED_REPEAT",
+      "realtime_factor_by_vehicle": [
+        0.9998417986306167
+      ],
+      "retained_evidence": {
+        "analysis": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-1-analysis.json",
+          "sha256": "aed6cef5b2ae33b714e65a83912636bdf5344a1ab4a88f5010de7e9c37ba33d1",
+          "size_bytes": 46683
+        },
+        "evaluation": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-1-evaluation.json",
+          "sha256": "c0ddb72f29ddc12fb4047137e770dd5041557f8e2bd60ef5fa4ed480ce403895",
+          "size_bytes": 3811
+        },
+        "execution_bundle": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-1-execution-bundle.json",
+          "sha256": "281a17b415ab9c5ebed3e1c79c31be75939e0937f70ba974387c1a929a220cbd",
+          "size_bytes": 223063
+        },
+        "manifest": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-1-manifest.json",
+          "sha256": "d416556a83c353bb63b67c5272a2fe41a83f74aaf896fc72dd71c9f118d6c4f8",
+          "size_bytes": 40334
+        },
+        "telemetry_csv": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-1-telemetry.csv",
+          "sha256": "1a661d778959618e1f9208bfee843eb71e08f58c1d8d6c4da47b9bca879a918c",
+          "size_bytes": 4987642
+        }
+      },
+      "run_id": "campaign-run-c40198b0824dcf6b1d79",
+      "status": "SUCCEEDED",
+      "trace": {
+        "all_cutover_certificates_passed": true,
+        "all_events_dispatched": true,
+        "all_events_persisted": true,
+        "all_events_recertified": true,
+        "all_safe_prefix_certificates_passed": true,
+        "dispatched_event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-move-1",
+          "online-obstacle-remove-1"
+        ],
+        "expected_event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-move-1",
+          "online-obstacle-remove-1"
+        ],
+        "persisted_event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-move-1",
+          "online-obstacle-remove-1"
+        ],
+        "recertified_event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-move-1",
+          "online-obstacle-remove-1"
+        ],
+        "stale_failure_absent": true,
+        "unqualified_emergency_absent": true
+      },
+      "tracking_oracle": "independent-source-time-quintic-pva-v1"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "cleanup": {
+        "dynamic_obstacles_cleared": true,
+        "fleet_coordinators_cleared": true,
+        "fleet_preparations_cleared": true,
+        "fleet_tasks_cleared": true,
+        "no_active_run": true
+      },
+      "csv_stale_fault_absent": true,
+      "kinematics_gate_reconciliation": {
+        "passed": true,
+        "records": [
+          {
+            "gate_disagreement": false,
+            "maximum_horizontal_speed_m_s": 0.5,
+            "maximum_vertical_speed_m_s": 0.3,
+            "processed_gate_passed": true,
+            "processed_horizontal_speed_peak_m_s": 0.239687483190592,
+            "processed_scope": "SMOOTHED_ROUTE_WINDOW",
+            "processed_vertical_speed_peak_m_s": 0.012160594982588136,
+            "raw_gate_passed": true,
+            "raw_horizontal_speed_peak_m_s": 0.25816414361890594,
+            "raw_scope": "ALL_RECORDED_AIRBORNE_SAMPLES",
+            "raw_vertical_speed_peak_m_s": 0.2547783662864176,
+            "vehicle_id": "Alpha"
+          }
+        ]
+      },
+      "minimum_required_realtime_factor": 0.8,
+      "mission_execution_id": "campaign-run-96bf899141928a98e380",
+      "motion_quality_failed_guards": [],
+      "motion_quality_missing_guards": [],
+      "ordinal": 2,
+      "passed": true,
+      "purpose": "REQUIRED_REPEAT",
+      "realtime_factor_by_vehicle": [
+        0.9998720877236424
+      ],
+      "retained_evidence": {
+        "analysis": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-2-analysis.json",
+          "sha256": "f0b22e81d70bd092c3759106cfbced587bae304ae8b563e22d1a3873276374e2",
+          "size_bytes": 46355
+        },
+        "evaluation": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-2-evaluation.json",
+          "sha256": "d9568c6037107d315aad04c4d0c407f80dbb937f0ed07522c82507329becccb3",
+          "size_bytes": 3811
+        },
+        "execution_bundle": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-2-execution-bundle.json",
+          "sha256": "cfcbdc47bfb4969635b7adbcb1fc5132c59a990a6fc666f6bb48ed272a3bbc06",
+          "size_bytes": 222755
+        },
+        "manifest": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-2-manifest.json",
+          "sha256": "776350df1d7028df46b75c652c59a891f043e4c9e376051962b3f3fe22e4fb46",
+          "size_bytes": 40049
+        },
+        "telemetry_csv": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-2-telemetry.csv",
+          "sha256": "d2bcd6e951630919bdb9e1d12d5ab3e4bc527ebe5c81dced1d7e4442a4b1c038",
+          "size_bytes": 5026172
+        }
+      },
+      "run_id": "campaign-run-96bf899141928a98e380",
+      "status": "SUCCEEDED",
+      "trace": {
+        "all_cutover_certificates_passed": true,
+        "all_events_dispatched": true,
+        "all_events_persisted": true,
+        "all_events_recertified": true,
+        "all_safe_prefix_certificates_passed": true,
+        "dispatched_event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-move-1",
+          "online-obstacle-remove-1"
+        ],
+        "expected_event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-move-1",
+          "online-obstacle-remove-1"
+        ],
+        "persisted_event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-move-1",
+          "online-obstacle-remove-1"
+        ],
+        "recertified_event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-move-1",
+          "online-obstacle-remove-1"
+        ],
+        "stale_failure_absent": true,
+        "unqualified_emergency_absent": true
+      },
+      "tracking_oracle": "independent-source-time-quintic-pva-v1"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "cleanup": {
+        "dynamic_obstacles_cleared": true,
+        "fleet_coordinators_cleared": true,
+        "fleet_preparations_cleared": true,
+        "fleet_tasks_cleared": true,
+        "no_active_run": true
+      },
+      "csv_stale_fault_absent": true,
+      "kinematics_gate_reconciliation": {
+        "passed": true,
+        "records": [
+          {
+            "gate_disagreement": false,
+            "maximum_horizontal_speed_m_s": 0.5,
+            "maximum_vertical_speed_m_s": 0.3,
+            "processed_gate_passed": true,
+            "processed_horizontal_speed_peak_m_s": 0.24095200974528647,
+            "processed_scope": "SMOOTHED_ROUTE_WINDOW",
+            "processed_vertical_speed_peak_m_s": 0.012160594982588136,
+            "raw_gate_passed": true,
+            "raw_horizontal_speed_peak_m_s": 0.2594435304047135,
+            "raw_scope": "ALL_RECORDED_AIRBORNE_SAMPLES",
+            "raw_vertical_speed_peak_m_s": 0.2547783662864176,
+            "vehicle_id": "Alpha"
+          }
+        ]
+      },
+      "minimum_required_realtime_factor": 0.8,
+      "mission_execution_id": "campaign-run-658cc8dee6b2b4cd14ac",
+      "motion_quality_failed_guards": [],
+      "motion_quality_missing_guards": [],
+      "ordinal": 3,
+      "passed": true,
+      "purpose": "REQUIRED_REPEAT",
+      "realtime_factor_by_vehicle": [
+        0.9997321248538096
+      ],
+      "retained_evidence": {
+        "analysis": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-3-analysis.json",
+          "sha256": "8cd120dd944797ff9f93b008550dced0a4c30d0d1c9e55c9f5e68407e59853aa",
+          "size_bytes": 46653
+        },
+        "evaluation": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-3-evaluation.json",
+          "sha256": "7dbd51607fdd185aaa9fba5576bcff8129ef8a48d565165148c871d6667ea33a",
+          "size_bytes": 3806
+        },
+        "execution_bundle": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-3-execution-bundle.json",
+          "sha256": "48157c328b4b758eaeaf1150540ab4082ec3cc490bbc0386abea8d0ec529e097",
+          "size_bytes": 223036
+        },
+        "manifest": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-3-manifest.json",
+          "sha256": "9a9d262e3cdbcf203a2366c4656b5292bbec80a461a0691156799e8deedf5189",
+          "size_bytes": 40313
+        },
+        "telemetry_csv": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-3-telemetry.csv",
+          "sha256": "f310e2423db1ebb18b83c50ef018484ea6bb62cf8bb9a6905dba6a2adb257c58",
+          "size_bytes": 5086517
+        }
+      },
+      "run_id": "campaign-run-658cc8dee6b2b4cd14ac",
+      "status": "SUCCEEDED",
+      "trace": {
+        "all_cutover_certificates_passed": true,
+        "all_events_dispatched": true,
+        "all_events_persisted": true,
+        "all_events_recertified": true,
+        "all_safe_prefix_certificates_passed": true,
+        "dispatched_event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-move-1",
+          "online-obstacle-remove-1"
+        ],
+        "expected_event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-move-1",
+          "online-obstacle-remove-1"
+        ],
+        "persisted_event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-move-1",
+          "online-obstacle-remove-1"
+        ],
+        "recertified_event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-move-1",
+          "online-obstacle-remove-1"
+        ],
+        "stale_failure_absent": true,
+        "unqualified_emergency_absent": true
+      },
+      "tracking_oracle": "independent-source-time-quintic-pva-v1"
+    },
+    {
+      "all_required_behavior_oracles_passed": true,
+      "cleanup": {
+        "dynamic_obstacles_cleared": true,
+        "fleet_coordinators_cleared": true,
+        "fleet_preparations_cleared": true,
+        "fleet_tasks_cleared": true,
+        "no_active_run": true
+      },
+      "csv_stale_fault_absent": true,
+      "kinematics_gate_reconciliation": {
+        "passed": true,
+        "records": [
+          {
+            "gate_disagreement": false,
+            "maximum_horizontal_speed_m_s": 0.5,
+            "maximum_vertical_speed_m_s": 0.3,
+            "processed_gate_passed": true,
+            "processed_horizontal_speed_peak_m_s": 0.27454729297640973,
+            "processed_scope": "SMOOTHED_ROUTE_WINDOW",
+            "processed_vertical_speed_peak_m_s": 0.012160594982588136,
+            "raw_gate_passed": true,
+            "raw_horizontal_speed_peak_m_s": 0.3230027841174261,
+            "raw_scope": "ALL_RECORDED_AIRBORNE_SAMPLES",
+            "raw_vertical_speed_peak_m_s": 0.2547783662864176,
+            "vehicle_id": "Alpha"
+          }
+        ]
+      },
+      "minimum_required_realtime_factor": 0.8,
+      "mission_execution_id": "campaign-run-477df0e01fa0aa8b6cb2",
+      "motion_quality_failed_guards": [],
+      "motion_quality_missing_guards": [],
+      "ordinal": 4,
+      "passed": true,
+      "purpose": "IMMEDIATE_RETRY",
+      "realtime_factor_by_vehicle": [
+        0.9964135248791902
+      ],
+      "retained_evidence": {
+        "analysis": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-4-analysis.json",
+          "sha256": "439da50eb7001130a1db8922ea1092f8fc8e446d3781e65fefb10da9bff3dad8",
+          "size_bytes": 47750
+        },
+        "evaluation": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-4-evaluation.json",
+          "sha256": "c41a32c1810cd70234290bee8a7864bdb56566cb19c20743374af8fb19ea8d61",
+          "size_bytes": 3808
+        },
+        "execution_bundle": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-4-execution-bundle.json",
+          "sha256": "3371178c8a58dab6651b98c7d54b63f8c1c72a5987be87f81ff73ec970928b0c",
+          "size_bytes": 224179
+        },
+        "manifest": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-4-manifest.json",
+          "sha256": "ca39f2b8a7876edec506e00cb9134d76c821ff15a8db0e9b225ef64c7eb346f9",
+          "size_bytes": 41438
+        },
+        "telemetry_csv": {
+          "path": "missions/campaigns/sim/qualification/wp62-66-runtime-evidence-v1/realtime-4-telemetry.csv",
+          "sha256": "fd45af18a65486aaa5c595c450d389c87da188938f21f2e9358bc2f3df99fb10",
+          "size_bytes": 5143287
+        }
+      },
+      "run_id": "campaign-run-477df0e01fa0aa8b6cb2",
+      "status": "SUCCEEDED",
+      "trace": {
+        "all_cutover_certificates_passed": true,
+        "all_events_dispatched": true,
+        "all_events_persisted": true,
+        "all_events_recertified": true,
+        "all_safe_prefix_certificates_passed": true,
+        "dispatched_event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-move-1",
+          "online-obstacle-remove-1"
+        ],
+        "expected_event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-move-1",
+          "online-obstacle-remove-1"
+        ],
+        "persisted_event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-move-1",
+          "online-obstacle-remove-1"
+        ],
+        "recertified_event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-move-1",
+          "online-obstacle-remove-1"
+        ],
+        "stale_failure_absent": true,
+        "unqualified_emergency_absent": true
+      },
+      "tracking_oracle": "independent-source-time-quintic-pva-v1"
+    }
+  ],
+  "schema_version": 1,
+  "tracking_oracle": {
+    "oracle_id": "independent-source-time-quintic-pva-v1",
+    "production_sampler_imported": false,
+    "temporal_lag_counterexample_test": "tests/campaign/test_motion_quality_contract.py::test_independent_temporal_oracle_detects_same_polyline_time_lag"
+  },
+  "tracking_rms_repeat_qualification": {
+    "expected_count": 15,
+    "failures": [],
+    "observed_record_count": 15,
+    "passed": true,
+    "schema_version": 1,
+    "threshold_m": 0.05,
+    "unique_expected_observed_count": 15
+  }
+}

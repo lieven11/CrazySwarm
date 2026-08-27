@@ -1291,6 +1291,7 @@ def _reconcile_admission_registry() -> None:
     payload["oracle_contract_version"] = "wp52-56-r6-verified-oracle-v1"
     registry_payload = yaml.safe_load(OUTPUT.read_text(encoding="utf-8"))
     registry_by_id = {row["case_id"]: row for row in registry_payload["rows"]}
+    payload["rows"] = [row for row in payload["rows"] if row["case_id"] in registry_by_id]
     for row in payload["rows"]:
         registry_row = registry_by_id.get(row["case_id"])
         if registry_row is not None:

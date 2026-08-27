@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Contract | `landing-goal-region-v1` |
-| Evidence | `goal-capture-record-v1` |
+| Evidence | `goal-capture-record-v3` (v1/v2 remain readable) |
 | Status | `FROZEN` |
 | Backend claim | Fast Sim only |
 | Physical contact or docking claim | None |
@@ -34,6 +34,13 @@ records the estimate, available simulator truth, speed, errors, and remaining ca
 margins. Descent is authorized only when localization is valid and all position and
 speed tolerances pass.
 
+An accepted nominal region is not a point-alignment instruction. Its accepted
+estimated X/Y becomes the descent target X/Y, while the immutable landing target
+continues to supply Z and the region center/tolerances continue to define terminal
+membership. The vehicle must not seek the exact region center after capture. An exact
+point target or declared diversion remains point semantics and retains its horizontal
+alignment phase.
+
 If capture fails, an absolute approach error may be converted into a bounded,
 supervisor-admitted correction. The correction remains subject to speed,
 acceleration, altitude, and flight-volume policy. A rejected correction records
@@ -52,6 +59,15 @@ outcome, and contact classification. Nominal Fast Sim success requires:
 - terminal speed at or below the goal limit;
 - terminal vehicle state `READY`; and
 - `SIMULATED_GROUND_CONTACT`.
+
+Schema v3 additionally retains the authorized capture position, descent target,
+commanded pre-descent horizontal adjustment, simulator alignment duration, and the
+capture/contact source clock ID, epoch, timestamp, and sequence identities. The
+estimated-position evidence interval is closed on those full identities: capture is
+the first selected sample and contact is the last. Source timestamps are
+nondecreasing, sequences strictly increase, and every sample remains on the same clock
+and epoch. Complete schema-v1 and schema-v2 records remain readable with all v3 fields
+absent/`None`.
 
 That contact value is simulator evidence only. It does not assert pad docking,
 charging contact, contact dynamics, or physical landing accuracy.

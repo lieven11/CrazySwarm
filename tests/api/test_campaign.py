@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import asyncio
+import importlib
 import json
+import threading
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from crazyswarm_app.api.runtime import ApplicationRuntime
@@ -16,6 +20,43 @@ from crazyswarm_app.campaign.service import (
 )
 from tests.api.conftest import auth_headers
 
+api_app = importlib.import_module("crazyswarm_app.api.app")
+
+
+@pytest.mark.asyncio
+async def test_campaign_preview_preparation_does_not_block_api_event_loop() -> None:
+    preview_started = threading.Event()
+    release_preview = threading.Event()
+
+    class BlockingPreviewService:
+        async def preview_active_off_loop(
+            self,
+            *_args: object,
+            **_kwargs: object,
+        ) -> tuple[str, str, str, str]:
+            preview_started.set()
+            assert await asyncio.to_thread(release_preview.wait, 2.0)
+            return "package", "plan", "schedule", "trajectories"
+
+    preview = asyncio.create_task(
+        api_app.prepare_campaign_preview_off_loop(
+            BlockingPreviewService(),
+            None,
+            None,
+            motion_preparation_request=None,
+        )
+    )
+    try:
+        assert await asyncio.wait_for(
+            asyncio.to_thread(preview_started.wait, 1.0),
+            timeout=1.5,
+        )
+        await asyncio.wait_for(asyncio.sleep(0.01), timeout=0.10)
+    finally:
+        release_preview.set()
+
+    assert await preview == ("package", "plan", "schedule", "trajectories")
+
 
 def test_campaign_browse_validate_select_and_preview_do_not_launch(
     api_client: tuple[TestClient, ApplicationRuntime],
@@ -27,8 +68,27 @@ def test_campaign_browse_validate_select_and_preview_do_not_launch(
     assert len(body["cases"]) >= 60
     assert len({item["execution_semantics_sha256"] for item in body["cases"]}) == len(body["cases"])
     assert set(body["hierarchy"]) == {"Real", "Simulation"}
+    planned = next(
+        item for item in body["cases"] if item["case_id"] == "1d.moving_target.dynamic_nominal"
+    )
+    baseline = next(
+        item
+        for item in planned["submissions"]
+        if item["submission_id"] == "planner_retained_baseline"
+    )
+    assert planned["implementation_status"] == "PLANNED_NOT_EXECUTABLE"
+    assert baseline["run_eligible"] is True
+    planned_selected = client.post(
+        "/api/v1/campaign/active",
+        headers=auth_headers("campaign-select-planned"),
+        json={
+            "case_id": planned["case_id"],
+            "reason": "select every discovered simulation mission",
+        },
+    )
+    assert planned_selected.status_code == 200
+    assert planned_selected.json()["case_id"] == planned["case_id"]
     assert runtime.runner.list_runs() == ()
-
     qualification = client.get("/api/v1/campaign/qualification", headers=auth_headers())
     assert qualification.status_code == 200
     assert qualification.json()["case_count"] == 55
@@ -79,6 +139,92 @@ def test_campaign_browse_validate_select_and_preview_do_not_launch(
     assert runtime.runner.list_runs() == ()
 
 
+def test_campaign_catalog_and_preview_expose_plain_major_mission_preparation(
+    api_client: tuple[TestClient, ApplicationRuntime],
+) -> None:
+    client, runtime = api_client
+    catalog = client.get("/api/v1/campaign/cases", headers=auth_headers()).json()
+    curriculum = catalog["major_missions"]
+    assert curriculum["curriculum_id"] == "1d-major-missions-v1"
+    assert [group["label"] for group in curriculum["groups"]] == [
+        "Flight",
+        "Target",
+        "Level path",
+        "3D path",
+        "Shape",
+    ]
+    assert (
+        sum(
+            variant["status"] == "EXECUTABLE"
+            for group in curriculum["groups"]
+            for variant in group["variants"]
+        )
+        == 12
+    )
+
+    two_drone_curriculum = catalog["two_drone_missions"]
+    assert two_drone_curriculum["curriculum_id"] == "2d-conflict-missions-v1"
+    assert [group["label"] for group in two_drone_curriculum["groups"]] == [
+        "Crossing",
+        "Traffic",
+        "Merge",
+        "Coordination",
+        "Recovery",
+    ]
+    two_drone_case_ids = [
+        variant["case_id"]
+        for group in two_drone_curriculum["groups"]
+        for variant in group["variants"]
+    ]
+    assert len(two_drone_case_ids) == len(set(two_drone_case_ids)) == 18
+
+    case_id = "1d.curved_route.canonical_nominal"
+    catalog_case = next(item for item in catalog["cases"] if item["case_id"] == case_id)
+    motion_limits = catalog_case["motion_preparation_limits"]
+    assert motion_limits["accuracy_min_m"] == 0.01
+    assert motion_limits["accuracy_max_m"] == pytest.approx(5.1884487084291395)
+    assert motion_limits["accuracy_binding"] == "flight-volume route span"
+    client.post(
+        "/api/v1/campaign/cases/static-validate",
+        headers=auth_headers("campaign-motion-validate"),
+        json={"case_id": case_id},
+    ).raise_for_status()
+    client.post(
+        "/api/v1/campaign/active",
+        headers=auth_headers("campaign-motion-select"),
+        json={"case_id": case_id, "reason": "plain motion API contract"},
+    ).raise_for_status()
+    preview = client.get(
+        "/api/v1/campaign/active/preview",
+        headers=auth_headers(),
+        params={
+            "balance": 100,
+            "speed_m_s": 0.5,
+            "accuracy_m": 100.0,
+            "smoothness": 0,
+        },
+    )
+    assert preview.status_code == 200
+    preparation = preview.json()["resolved_package"]["motion_preparation"]
+    controls = {item["label"]: item for item in preparation["controls"]}
+    assert controls["Accuracy"]["requested_value"] == 100.0
+    assert controls["Accuracy"]["resolved_value"] == pytest.approx(5.1884487084291395)
+    assert controls["Accuracy"]["binding_safety_cap"] == ("flight-volume route span 5.188 m")
+    assert preparation["motion_quality_contract_sha256"]
+    assert runtime.runner.list_runs() == ()
+
+
+def test_campaign_preview_without_active_case_is_a_bounded_conflict(
+    api_client: tuple[TestClient, ApplicationRuntime],
+) -> None:
+    client, _ = api_client
+
+    preview = client.get("/api/v1/campaign/active/preview", headers=auth_headers())
+
+    assert preview.status_code == 409
+    assert preview.json()["error"]["code"] == "INVALID_STATE"
+
+
 def test_campaign_run_returns_immediate_tracked_acknowledgement(
     api_client: tuple[TestClient, ApplicationRuntime],
 ) -> None:
@@ -110,6 +256,40 @@ def test_campaign_run_returns_immediate_tracked_acknowledgement(
     assert acknowledgement["status"] in {"QUEUED", "RUNNING", "SUCCEEDED"}
     workspace = client.get("/api/v1/campaign/state", headers=auth_headers()).json()
     assert any(run["run_id"] == acknowledgement["run_id"] for run in workspace["runs"])
+
+
+@pytest.mark.asyncio
+async def test_terminal_twin_retention_does_not_block_api_event_loop(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    retention_started = threading.Event()
+    release_retention = threading.Event()
+
+    def blocked_retention(*_args: object, **_kwargs: object) -> str:
+        retention_started.set()
+        assert release_retention.wait(2.0)
+        return "twin-session-off-loop"
+
+    monkeypatch.setattr(api_app, "retain_campaign_twin_evidence", blocked_retention)
+    retention = asyncio.create_task(
+        api_app.retain_campaign_twin_evidence_off_loop(
+            object(),
+            object(),
+            object(),
+        )
+    )
+    try:
+        assert await asyncio.wait_for(
+            asyncio.to_thread(retention_started.wait, 1.0),
+            timeout=1.5,
+        )
+        # A health request and telemetry callback use this same event loop. If
+        # retention runs inline, even this short timer cannot fire until release.
+        await asyncio.wait_for(asyncio.sleep(0.01), timeout=0.10)
+    finally:
+        release_retention.set()
+
+    assert await retention == "twin-session-off-loop"
 
 
 def test_campaign_selection_conflict_returns_actionable_invalid_state(
@@ -318,7 +498,7 @@ def test_campaign_case_can_move_to_review_manually_or_from_a_comment_then_comple
     assert commented.json()["operator_observations"] == ["The follow-up run is ready for review."]
     state = client.get("/api/v1/campaign/state", headers=auth_headers()).json()
     assert state["lifecycle"][case_id]["state"] == "BASELINED"
-    assert state["active_case_id"] is None
+    assert state["active_case_id"] == case_id
 
     completed = client.post(
         "/api/v1/campaign/cases/completed",
@@ -427,11 +607,29 @@ def test_campaign_run_delete_removes_campaign_state_when_archive_is_already_abse
     assert state["reviews"] == []
 
 
-def test_campaign_snapshot_upload_image_and_comment_contract(
+def test_campaign_snapshot_capture_is_temporarily_disabled(
     api_client: tuple[TestClient, ApplicationRuntime],
-    tmp_path: Path,
 ) -> None:
     client, _ = api_client
+
+    captured = client.post(
+        "/api/v1/campaign/runs/run-disabled/snapshots",
+        params={"width_px": 960, "height_px": 540},
+        headers={**auth_headers("campaign-snapshot-disabled"), "Content-Type": "image/webp"},
+        content=b"RIFF\x08\x00\x00\x00WEBPVP8 ",
+    )
+
+    assert captured.status_code == 503
+    assert captured.json()["error"]["code"] == "CAMPAIGN_SNAPSHOT_CAPTURE_DISABLED"
+
+
+def test_campaign_snapshot_upload_image_and_comment_contract_when_enabled(
+    api_client: tuple[TestClient, ApplicationRuntime],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, _ = api_client
+    monkeypatch.setattr(api_app, "CAMPAIGN_SNAPSHOT_CAPTURE_ENABLED", True)
     service = CampaignService(
         catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
         state_directory=tmp_path / "campaign-snapshots",

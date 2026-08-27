@@ -133,6 +133,24 @@ async def _run_backend(
     return preparation, result, capture
 
 
+async def test_one_drone_separation_monitor_does_not_resample_telemetry(
+    two_drone_deployment: DeploymentManifest,
+) -> None:
+    deployment = two_drone_deployment.model_copy(
+        update={
+            "fleet": (two_drone_deployment.fleet[0],),
+            "zones": (two_drone_deployment.zones[0],),
+            "tasks": (two_drone_deployment.tasks[0],),
+        }
+    )
+    coordinator = object.__new__(FleetCoordinator)
+    coordinator.deployment = deployment
+
+    # The early return intentionally needs no supervisor or adapter. Accessing
+    # either would mean a no-op one-drone pair check still generated evidence.
+    assert await coordinator.enforce_separation() == ()
+
+
 @pytest.mark.parametrize("backend", (ExecutionBackend.FAST_SIM, ExecutionBackend.MOCK_ISAAC))
 async def test_two_drone_fleet_completes_with_bound_commands(
     two_drone_deployment: DeploymentManifest,
@@ -142,6 +160,10 @@ async def test_two_drone_fleet_completes_with_bound_commands(
     try:
         assert result.status is FleetStatus.SUCCEEDED
         assert [item.vehicle_id for item in result.child_results] == ["cf01", "cf02"]
+        assert all(
+            sum(event.event_type == "TASK_LEASE_RENEWED" for event in task.events) <= 1
+            for task in result.tasks
+        )
         assert all(item.fleet is not None for item in capture.commands)
         for command in capture.commands:
             assert command.fleet is not None

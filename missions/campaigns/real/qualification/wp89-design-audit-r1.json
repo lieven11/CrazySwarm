@@ -1,0 +1,504 @@
+{
+  "base_commit": "40cd9947f87eb9bf2719d72e7c72ea867eab9977",
+  "boundary_manifest": [
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "design.md",
+      "preimage": "e146015a19a9b187c0dd255768cc845bbf89f0af6cecc9bb4886b2bba2144ba3"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "docs/system/README.md",
+      "preimage": "37171a98d1fd5a78f470be1598a0ab317aad99fefb671655f5c6a6b6fd336b87"
+    },
+    {
+      "classification": "DESIGN_ARTIFACT",
+      "path": "missions/campaigns/real/qualification/wp89-design-audit-r1.json",
+      "preimage": "SELF"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "scripts/audit_wp89_design.py",
+      "preimage": "4fb715d1abd01153226f495193e2f8fd69af7d08b339e76afb3d20e9ac065db0"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "scripts/export_openapi.py",
+      "preimage": "821e27fd8a36e7e893ee4a6a5fa0fed4304d462dec1cdc6758961c6cd4c2bafa"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/api/app.py",
+      "preimage": "206dd828d1e5be8c359d0161cb75656b624aa6dd295d866651612f2cbcf338a5"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/domain/telemetry.py",
+      "preimage": "fb508285206f367e74308bb15031d5ec283e73dfba00a0fcf22934f114bd9b5d"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/hardware/basic_flight_lab.py",
+      "preimage": "482a4e1481bf14b3d6d346b5d37075cb98d2db802f4687d28f897561857d0884"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/hardware/controller_tuning_lab.py",
+      "preimage": "663c861d18d839bd039d4e0ac621367b1fa6640645ca7e9113e207d0347e536a"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/hardware/observation_twin.py",
+      "preimage": "b2bf9d93f24cf7a6f208ec676c24b2489cf9dd97b0ee6666314eda160548cba6"
+    },
+    {
+      "classification": "NEW",
+      "path": "src/crazyswarm_app/safety/avoidance.py",
+      "preimage": "ABSENT"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/vehicles/_cflib_link.py",
+      "preimage": "9cee7837cee8fbafdcca3f183aca6dd942fc3fa3d47a81341b89714f6dbed7b1"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/vehicles/crazyflie.py",
+      "preimage": "976c8936d6a11f302ba153dc1d01ce0d102e6684dc21ff8504ca0d2d689d2b63"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/vehicles/crazyflie_link.py",
+      "preimage": "03b35add47d8b04178ae39d023b4318e0e92117b166e85297f9c6367b8c3923e"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "tests/api/test_physical_twin.py",
+      "preimage": "d60b4f175316fe52737ab3942a93903edc01a1c7b466ed5c3a03d81c80a26a29"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "tests/hardware/test_basic_flight_lab.py",
+      "preimage": "78339c6f7ac751176a4dae0b1497c5b7fe29a2a739703dc1218290d45c68ff61"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "tests/hardware/test_controller_tuning_lab.py",
+      "preimage": "41a5647b47b34cc04e427f168ab9aeaebf1868e3f5b688250198ca0f6a40ee6c"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "tests/hardware/test_crazyflie_adapter.py",
+      "preimage": "07dbbb5d8b10924d901eb74f298066640f8f46f4f875ea74c0e2fec3724bd0ef"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "tests/hardware/test_observation_twin_service.py",
+      "preimage": "0c5da7a07be4b2b163aa97fa2df2d089bada75bfcd21e0d265a810cddc994638"
+    },
+    {
+      "classification": "NEW",
+      "path": "tests/safety/test_avoidance.py",
+      "preimage": "ABSENT"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/components/ControlCenter.tsx",
+      "preimage": "fdacfe16cd92ff5893c280caebf5d1f30150a020fec11bf0138f449b784ec5d2"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/components/TwinBasicFlightLab.tsx",
+      "preimage": "3ed51613ad44e4efd44d671031de201f2418ce405c723715fb066b23185914e1"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/globals.css",
+      "preimage": "45b651b7fd0cd12d0428fd106b28df524b38cdb78d3ba2f65b46d08a94b001c5"
+    },
+    {
+      "classification": "GENERATED",
+      "path": "ui/app/lib/api.generated.ts",
+      "preimage": "32e8d9534fb176306e784a4494b5c20cd80477ddc634d89eca0bd97c10f7b934"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/lib/api.ts",
+      "preimage": "45bc875823c1cfd7dc74423b49bf6f998dbfbcab4c7cd2dae737bccf6c602cdb"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/lib/models.ts",
+      "preimage": "01b5cabd546527011e77f91c6a9f0f1d6a7bb637592198b2b1f8a1b9ecc2910a"
+    },
+    {
+      "classification": "GENERATED",
+      "path": "ui/openapi.json",
+      "preimage": "a695b513077937fa3bd6e4904ff01397984bbcfa29ce0c47bafcedcda9879c93"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/package.json",
+      "preimage": "211bd21bf53c0640755efd9af1953a775681a3f71271c05e4700debf17fb38a8"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/tests/api-adapter.test.ts",
+      "preimage": "b5109743684fb3b05ecb4b02d198991a0e6df3aee5f4306e5eb9d6d74d2b4055"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/tests/control-api-timeout.test.ts",
+      "preimage": "e13e93220a6c7f3bf03b7c36c59ce3eb278d83aeef59bae72b59786d312f8879"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/tests/twin-basic-flight-lab.test.tsx",
+      "preimage": "69a51e0aafa55899375e05d3c4c78c03bef8eb6cc45a272b40ca37c543c8b8bc"
+    }
+  ],
+  "claims_derived_from_payload": [
+    "WP89-C1-TOGGLE_TRANSIT",
+    "WP89-C2-DYNAMIC_POLICY",
+    "WP89-C3-PHYSICAL_COMMAND_GUARD",
+    "WP89-C4-RETAINED_TRUTH"
+  ],
+  "constants": {
+    "estimator_sigma_multiplier": 2.0,
+    "maximum_acceleration_m_s2": 1.0,
+    "maximum_command_speed_m_s": 0.1,
+    "maximum_jerk_m_s3": 8.0,
+    "maximum_state_age_s": 0.4,
+    "minimum_controllable_speed_m_s": 0.02,
+    "minimum_position_uncertainty_m": 0.05,
+    "policy_margin_m": 0.05,
+    "range_uncertainty_m": 0.02,
+    "sensor_origin_offset_m": 0.012,
+    "vehicle_radius_m": 0.055
+  },
+  "design_payload_sha256": "18a7d8186543ba688c52fdabe4a196998f5eecbf860827b804ce1317e3ff4089",
+  "errors": [],
+  "generated_outputs_derived_from_ui_command": [
+    "ui/app/lib/api.generated.ts",
+    "ui/openapi.json"
+  ],
+  "guard_categories_derived_from_request_and_contract": {
+    "braking_authority": "jerk-limited stop distance",
+    "estimator_uncertainty": "fresh 2-sigma estimator variance with a conservative floor",
+    "geometry": "vehicle radius and sensor-origin offset",
+    "kinematic_freshness": "yaw, vx, and vy per-variable host receive age",
+    "mode_authority": "typed mode and monitor-only command identity",
+    "range_freshness": "per-variable host receive age",
+    "range_validity": "finite VALID in-range closing-direction measurement",
+    "reaction_latency": "complete accepted-age through onboard-commit budget",
+    "recovery": "post-dispatch adverse sample selects existing abort/land",
+    "retained_truth": "mode, decision, counts, margin, and intervention identity",
+    "speed_boundary": "0.10 cap and 0.02 controllable floor"
+  },
+  "latency_budget_s": {
+    "accepted_sample_age": 0.4,
+    "command_transport_and_acknowledgement": 0.08,
+    "host_evaluation_and_poll": 0.02,
+    "onboard_commit_and_braking_onset": 0.3
+  },
+  "numerical_vectors": {
+    "clock_contract": {
+      "accepted_age_s": 0.4,
+      "budgets_s": {
+        "accepted_sample_age": 0.4,
+        "command_transport_and_acknowledgement": 0.08,
+        "host_evaluation_and_poll": 0.02,
+        "onboard_commit_and_braking_onset": 0.3
+      },
+      "complete_latency_s": 0.8,
+      "effective_evaluation_monotonic_s": 100.4,
+      "host_variable_received_monotonic_s": 100.0,
+      "just_stale_effective_time_s": 100.400001,
+      "world_or_firmware_source_time_s": 10.0
+    },
+    "command_vectors": [
+      {
+        "expected_action": "CLEAR",
+        "expected_duration_s": 1.0,
+        "front_range_m": 0.3,
+        "id": "nominal-full-speed",
+        "mode": "ENFORCED",
+        "requested_displacement_m": 0.1,
+        "requested_duration_s": 1.0
+      },
+      {
+        "expected_action": "LIMIT",
+        "expected_duration_s": 2.0,
+        "expected_safe_speed_m_s": 0.05,
+        "front_range_m": 0.20695284707521047,
+        "id": "progressive-retime",
+        "mode": "ENFORCED",
+        "requested_displacement_m": 0.1,
+        "requested_duration_s": 1.0
+      },
+      {
+        "expected_action": "BLOCK_BEFORE_DISPATCH",
+        "front_range_m": 0.179999,
+        "id": "below-controllable-floor",
+        "mode": "ENFORCED"
+      },
+      {
+        "expected_action": "RECORD_ONLY",
+        "expected_duration_s": 1.0,
+        "front_range_m": 0.05,
+        "id": "monitor-command-identity",
+        "mode": "MONITOR_ONLY",
+        "requested_displacement_m": 0.1,
+        "requested_duration_s": 1.0
+      },
+      {
+        "dispatched_outcome": "UNKNOWN",
+        "expected_action": "RECOVER_ABORT_LAND",
+        "id": "mid-command-clearance-loss",
+        "initial_front_range_m": 0.3,
+        "later_front_range_m": 0.05,
+        "mode": "ENFORCED"
+      }
+    ],
+    "invalid_and_isolated_guard_vectors": [
+      {
+        "binding": true,
+        "expected": "REJECT",
+        "id": "stale-range",
+        "range_age_s": 0.400001
+      },
+      {
+        "binding": true,
+        "distance": null,
+        "expected": "REJECT",
+        "id": "missing-range"
+      },
+      {
+        "binding": true,
+        "expected": "REJECT",
+        "id": "no-hit",
+        "status": "NO_HIT"
+      },
+      {
+        "binding": true,
+        "expected": "REJECT",
+        "id": "clipped",
+        "status": "CLIPPED"
+      },
+      {
+        "binding": true,
+        "distance": 4.0,
+        "expected": "REJECT",
+        "id": "out-of-range"
+      },
+      {
+        "expected": "REJECT",
+        "id": "stale-yaw",
+        "yaw_age_s": 0.400001
+      },
+      {
+        "expected": "REJECT",
+        "id": "stale-vx",
+        "vx_age_s": 0.400001
+      },
+      {
+        "expected": "REJECT",
+        "id": "stale-vy",
+        "vy_age_s": 0.400001
+      },
+      {
+        "expected": "REJECT",
+        "id": "stale-variance",
+        "variance_age_s": 0.400001
+      },
+      {
+        "expected": "REJECT",
+        "id": "missing-variance",
+        "variance": null
+      },
+      {
+        "binding": false,
+        "body_command_m_s": [
+          -0.05,
+          0.0
+        ],
+        "body_velocity_m_s": [
+          -0.05,
+          0.0
+        ],
+        "expected": "IGNORE_DIRECTION",
+        "id": "invalid-nonclosing-front",
+        "status": "UNAVAILABLE"
+      },
+      {
+        "command_speed_m_s": 0.0,
+        "expected": "RECOVER_ABORT_LAND",
+        "id": "hover-stale-kinematics",
+        "yaw_age_s": 0.400001
+      }
+    ],
+    "primary_relation": {
+      "equality_safe_speed_m_s": 0.1,
+      "half_speed": {
+        "complete_latency_s": 0.8,
+        "position_uncertainty_m": 0.05,
+        "required_center_distance_m": 0.21895284707521048,
+        "required_sensor_range_m": 0.20695284707521047,
+        "speed_m_s": 0.05,
+        "stop_distance_m": 0.003952847075210475,
+        "stop_time_s": 0.15811388300841897
+      },
+      "high_variance": {
+        "complete_latency_s": 0.8,
+        "position_uncertainty_m": 0.2,
+        "required_center_distance_m": 0.416180339887499,
+        "required_sensor_range_m": 0.40418033988749896,
+        "speed_m_s": 0.1,
+        "stop_distance_m": 0.011180339887498949,
+        "stop_time_s": 0.22360679774997896
+      },
+      "increased_latency_required_sensor_range_m": 0.27418033988749896,
+      "just_above_safe_speed_m_s": 0.1,
+      "just_below_safe_speed_m_s": 0.09999896662684477,
+      "maximum_speed": {
+        "complete_latency_s": 0.8,
+        "position_uncertainty_m": 0.05,
+        "required_center_distance_m": 0.26618033988749895,
+        "required_sensor_range_m": 0.25418033988749894,
+        "speed_m_s": 0.1,
+        "stop_distance_m": 0.011180339887498949,
+        "stop_time_s": 0.22360679774997896
+      },
+      "minimum_speed": {
+        "complete_latency_s": 0.8,
+        "position_uncertainty_m": 0.05,
+        "required_center_distance_m": 0.192,
+        "required_sensor_range_m": 0.18,
+        "speed_m_s": 0.02,
+        "stop_distance_m": 0.001,
+        "stop_time_s": 0.1
+      },
+      "zero_speed": {
+        "complete_latency_s": 0.8,
+        "position_uncertainty_m": 0.05,
+        "required_center_distance_m": 0.175,
+        "required_sensor_range_m": 0.16299999999999998,
+        "speed_m_s": 0.0,
+        "stop_distance_m": 0.0,
+        "stop_time_s": 0.0
+      }
+    },
+    "projection_vectors": [
+      {
+        "body_command_m_s": [
+          0.06,
+          0.0
+        ],
+        "expected_front_closing_m_s": 0.06,
+        "id": "yaw-zero-front-closing",
+        "world_velocity_m_s": [
+          0.04,
+          0.0
+        ],
+        "yaw_rad": 0.0
+      },
+      {
+        "body_command_m_s": [
+          0.0,
+          0.0
+        ],
+        "expected_front_closing_m_s": 0.04,
+        "id": "yaw-90-front-closing",
+        "world_velocity_m_s": [
+          0.0,
+          0.04
+        ],
+        "yaw_rad": 1.5707963267948966
+      },
+      {
+        "body_command_m_s": [
+          -0.05,
+          0.0
+        ],
+        "expected_front_closing_m_s": 0.0,
+        "id": "front-moving-away",
+        "world_velocity_m_s": [
+          -0.05,
+          0.0
+        ],
+        "yaw_rad": 0.0
+      }
+    ]
+  },
+  "packet_id": "WP-89-R1",
+  "payload_paths": [
+    "design.md",
+    "docs/system/README.md",
+    "missions/campaigns/real/qualification/wp89-design-audit-r1.json",
+    "scripts/audit_wp89_design.py",
+    "scripts/export_openapi.py",
+    "src/crazyswarm_app/api/app.py",
+    "src/crazyswarm_app/domain/telemetry.py",
+    "src/crazyswarm_app/hardware/basic_flight_lab.py",
+    "src/crazyswarm_app/hardware/controller_tuning_lab.py",
+    "src/crazyswarm_app/hardware/observation_twin.py",
+    "src/crazyswarm_app/safety/avoidance.py",
+    "src/crazyswarm_app/vehicles/_cflib_link.py",
+    "src/crazyswarm_app/vehicles/crazyflie.py",
+    "src/crazyswarm_app/vehicles/crazyflie_link.py",
+    "tests/api/test_physical_twin.py",
+    "tests/hardware/test_basic_flight_lab.py",
+    "tests/hardware/test_controller_tuning_lab.py",
+    "tests/hardware/test_crazyflie_adapter.py",
+    "tests/hardware/test_observation_twin_service.py",
+    "tests/safety/test_avoidance.py",
+    "ui/app/components/ControlCenter.tsx",
+    "ui/app/components/TwinBasicFlightLab.tsx",
+    "ui/app/globals.css",
+    "ui/app/lib/api.generated.ts",
+    "ui/app/lib/api.ts",
+    "ui/app/lib/models.ts",
+    "ui/openapi.json",
+    "ui/package.json",
+    "ui/tests/api-adapter.test.ts",
+    "ui/tests/control-api-timeout.test.ts",
+    "ui/tests/twin-basic-flight-lab.test.tsx"
+  ],
+  "result": "PASS",
+  "schema_version": 2,
+  "transit_paths_derived_from_production_symbols": [
+    "src/crazyswarm_app/api/app.py",
+    "src/crazyswarm_app/hardware/basic_flight_lab.py",
+    "src/crazyswarm_app/hardware/observation_twin.py",
+    "src/crazyswarm_app/vehicles/_cflib_link.py",
+    "src/crazyswarm_app/vehicles/crazyflie.py",
+    "src/crazyswarm_app/vehicles/crazyflie_link.py",
+    "tests/api/test_physical_twin.py",
+    "tests/hardware/test_basic_flight_lab.py",
+    "tests/hardware/test_controller_tuning_lab.py",
+    "tests/hardware/test_crazyflie_adapter.py",
+    "tests/hardware/test_observation_twin_service.py",
+    "ui/app/components/ControlCenter.tsx",
+    "ui/app/components/TwinBasicFlightLab.tsx",
+    "ui/app/lib/api.generated.ts",
+    "ui/app/lib/api.ts",
+    "ui/tests/control-api-timeout.test.ts",
+    "ui/tests/twin-basic-flight-lab.test.tsx"
+  ],
+  "typed_modes": {
+    "accepted": [
+      "MONITOR_ONLY",
+      "ENFORCED"
+    ],
+    "rejected": [
+      true,
+      false,
+      0,
+      1,
+      1.0,
+      "ON",
+      "OFF",
+      null
+    ]
+  }
+}

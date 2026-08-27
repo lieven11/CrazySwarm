@@ -26,7 +26,7 @@ from crazyswarm_app.domain.commands import (
     TakeoffCommand,
 )
 from crazyswarm_app.domain.errors import CrazySwarmError, ErrorCode
-from crazyswarm_app.domain.goals import LandingGoalRegion
+from crazyswarm_app.domain.goals import GoalFailureAction, LandingGoalRegion
 from crazyswarm_app.domain.models import (
     AuthorityClass,
     BackendRole,
@@ -266,10 +266,14 @@ class SimulatedVehicle(Vehicle):
         self._binding = None
         self._authority_transition_sequence = 0
         self._authority_transition_receipts.clear()
-        self.last_landing_evidence: dict[
-            str, str | float | bool | dict[str, float] | None
-        ] | None = None
+        self.last_landing_evidence: (
+            dict[str, str | float | bool | dict[str, float] | None] | None
+        ) = None
         self._landing_contact_source_timestamp_s: float | None = None
+        self._landing_contact_source_clock_id: str | None = None
+        self._landing_contact_source_clock_epoch: int | None = None
+        self._landing_contact_source_sequence: int | None = None
+        self._landing_contact_pending = False
         self._landing_pre_contact_vertical_speed_m_s: float | None = None
         self._last_published = self._build_telemetry()
 
@@ -518,7 +522,7 @@ class SimulatedVehicle(Vehicle):
             await self._execute_trajectory(payload)
         elif isinstance(payload, StopAndHoldCommand):
             self._require_state(VehicleState.FLYING)
-            await self._hold(self.config.fixed_step_s)
+            await self._stop_and_hold()
         elif isinstance(payload, LandCommand):
             await self._land(
                 payload.duration_s,
@@ -540,6 +544,10 @@ class SimulatedVehicle(Vehicle):
             status=AcknowledgementStatus.COMPLETED,
             received_at_monotonic_s=received_at_s,
             completed_at_monotonic_s=self.clock.now_s,
+            received_at_source_s=received_at_s,
+            completed_at_source_s=self.clock.now_s,
+            source_clock_id=f"fast-sim-{self.identity.vehicle_id}",
+            source_clock_epoch=self._source_clock_epoch,
             message=f"{payload.kind.value} completed",
         )
 
@@ -755,7 +763,10 @@ class SimulatedVehicle(Vehicle):
                     current,
                     sample_time_s,
                 )
-                if not self.world.contains(setpoint.position_m):
+                if not self.world.contains(
+                    setpoint.position_m,
+                    source_timestamp_s=self.clock.now_s,
+                ):
                     raise CrazySwarmError(
                         ErrorCode.GEOFENCE_BREACH,
                         "trajectory spline leaves the simulated world",
@@ -818,19 +829,53 @@ class SimulatedVehicle(Vehicle):
         )
         self.last_landing_evidence = None
         self._landing_contact_source_timestamp_s = None
+        self._landing_contact_source_clock_id = None
+        self._landing_contact_source_clock_epoch = None
+        self._landing_contact_source_sequence = None
+        self._landing_contact_pending = False
         self._landing_pre_contact_vertical_speed_m_s = None
-        alignment_duration_s = max(
-            0.5,
-            1.5
-            * math.hypot(target.x - control_position.x, target.y - control_position.y)
-            / self.config.max_horizontal_speed_m_s,
+        diversion = goal_region.diversion_target_m if goal_region is not None else None
+        exact_diversion_target = (
+            goal_region is not None
+            and goal_region.failure_action is GoalFailureAction.DIVERT
+            and diversion is not None
+            and all(
+                math.isclose(actual, expected, abs_tol=1e-9)
+                for actual, expected in zip(
+                    (target.x, target.y, target.z),
+                    (diversion.x, diversion.y, diversion.z),
+                    strict=True,
+                )
+            )
         )
-        await self._move_to(
-            Vector3(x=target.x, y=target.y, z=control_position.z),
-            self._control_yaw(),
-            alignment_duration_s,
-            VehicleState.LANDING,
+        nominal_region_target = (
+            goal_region is not None
+            and not exact_diversion_target
+            and math.hypot(
+                target.x - goal_region.landing_target_m.x,
+                target.y - goal_region.landing_target_m.y,
+            )
+            <= goal_region.horizontal_tolerance_m + 1e-12
+            and math.isclose(
+                target.z,
+                goal_region.landing_target_m.z,
+                abs_tol=1e-9,
+            )
         )
+        alignment_duration_s = 0.0
+        if not nominal_region_target:
+            alignment_duration_s = max(
+                0.5,
+                1.5
+                * math.hypot(target.x - control_position.x, target.y - control_position.y)
+                / self.config.max_horizontal_speed_m_s,
+            )
+            await self._move_to(
+                Vector3(x=target.x, y=target.y, z=control_position.z),
+                self._control_yaw(),
+                alignment_duration_s,
+                VehicleState.LANDING,
+            )
         alignment_completed_source_timestamp_s = self.clock.now_s
         await self._move_to(target, self._control_yaw(), duration_s, VehicleState.LANDING)
 
@@ -850,13 +895,13 @@ class SimulatedVehicle(Vehicle):
             speed = _vector_length(self.physics.state.velocity_m_s)
             in_contact = position.z <= 0.001
             if in_contact:
-                if contact_source_timestamp_s is None:
-                    contact_source_timestamp_s = (
-                        self._landing_contact_source_timestamp_s or self.clock.now_s
+                if self._landing_contact_source_timestamp_s is not None:
+                    contact_source_timestamp_s = self._landing_contact_source_timestamp_s
+                    settled_s = (
+                        settled_s + self.config.fixed_step_s if speed <= 0.05 else 0.0
                     )
-                settled_s = settled_s + self.config.fixed_step_s if speed <= 0.05 else 0.0
-                if settled_s >= 0.10:
-                    break
+                    if settled_s >= 0.10:
+                        break
             else:
                 settled_s = 0.0
             motor_commands = self._motor_commands(
@@ -883,17 +928,17 @@ class SimulatedVehicle(Vehicle):
             "target_position_m": target.model_dump(mode="json"),
             "landing_goal_id": goal_region.goal_id if goal_region is not None else None,
             "alignment_duration_s": alignment_duration_s,
-            "alignment_completed_source_timestamp_s": (
-                alignment_completed_source_timestamp_s
-            ),
+            "alignment_completed_source_timestamp_s": (alignment_completed_source_timestamp_s),
             "pre_contact_vertical_speed_m_s": pre_contact_vertical_speed_m_s,
             "contact_source_timestamp_s": contact_source_timestamp_s,
+            "contact_source_clock_id": self._landing_contact_source_clock_id,
+            "contact_source_clock_epoch": self._landing_contact_source_clock_epoch,
+            "contact_source_sequence": self._landing_contact_source_sequence,
             "disarmed_source_timestamp_s": disarmed_source_timestamp_s,
             "post_contact_settling_s": max(
                 0.0, disarmed_source_timestamp_s - contact_source_timestamp_s
             ),
-            "motors_cut_after_contact": disarmed_source_timestamp_s
-            >= contact_source_timestamp_s,
+            "motors_cut_after_contact": disarmed_source_timestamp_s >= contact_source_timestamp_s,
         }
         await self._publish()
 
@@ -934,6 +979,52 @@ class SimulatedVehicle(Vehicle):
             )
             await self._step(dt, motor_commands=motor_commands)
 
+    async def _stop_and_hold(self) -> None:
+        """Brake to an observed hold while continuing canonical telemetry."""
+
+        position = self._control_position()
+        velocity = self.physics.state.velocity_m_s
+        speed = _vector_length(velocity)
+        # Aim at the constant-deceleration stop point instead of commanding the
+        # current position after momentum has already carried the vehicle past it.
+        # The latter creates a reversal/oscillation and made a valid certified hold
+        # depend on the noise seed. One metre per second squared is the campaign hard
+        # limit, so this target remains inside the independently protected stop tube.
+        stop_scale_s = speed / 2.0 if speed > 1e-12 else 0.0
+        target = Vector3(
+            x=position.x + velocity.x * stop_scale_s,
+            y=position.y + velocity.y * stop_scale_s,
+            z=position.z + velocity.z * stop_scale_s,
+        )
+        if not self.world.contains(target, source_timestamp_s=self.clock.now_s):
+            target = position
+        target_yaw = self._control_yaw()
+        elapsed_s = 0.0
+        settled_samples = 0
+        maximum_settle_s = 4.0
+        while elapsed_s < maximum_settle_s:
+            motor_commands = self._motor_commands(
+                target_position_m=target,
+                target_velocity_m_s=Vector3(),
+                target_acceleration_world_m_s2=Vector3(),
+                target_yaw_rad=target_yaw,
+            )
+            await self._step(self.config.fixed_step_s, motor_commands=motor_commands)
+            elapsed_s += self.config.fixed_step_s
+            if (
+                _vector_length(self.physics.state.velocity_m_s) <= 0.02
+                and _vector_length(self._estimated_velocity) <= 0.02
+            ):
+                settled_samples += 1
+                if settled_samples >= 2:
+                    return
+            else:
+                settled_samples = 0
+        raise CrazySwarmError(
+            ErrorCode.COMMAND_TIMEOUT,
+            "simulated stop-and-hold did not settle below 0.02 m/s",
+        )
+
     async def _move_to(
         self,
         target: Vector3,
@@ -941,7 +1032,7 @@ class SimulatedVehicle(Vehicle):
         duration_s: float,
         state: VehicleState,
     ) -> None:
-        if not self.world.contains(target):
+        if not self.world.contains(target, source_timestamp_s=self.clock.now_s):
             raise CrazySwarmError(ErrorCode.GEOFENCE_BREACH, "target is outside the indoor world")
         start = self._control_position()
         start_yaw = self._control_yaw()
@@ -1116,13 +1207,47 @@ class SimulatedVehicle(Vehicle):
             additional_current_a=configured_current,
             actuator_health_scales=actuator_health_scales,
         )
+        swept_contact = self.world.first_swept_obstacle_contact(
+            previous_position,
+            self.physics.state.position_m,
+            source_timestamp_s=self.clock.now_s,
+            nominal_radius_m=0.055,
+            nominal_half_height_m=0.025,
+        )
+        if swept_contact is not None:
+            self.physics.state.position_m = swept_contact.center_position_m
+            self.physics.state.velocity_m_s = Vector3()
+            self._state = VehicleState.FAULT
+            self._armed = False
+            self._flying = False
+            self._cut_motors()
+            collision_receipt = (
+                "DYNAMIC_OBSTACLE_COLLISION_TERMINATION"
+                if swept_contact.dynamic
+                else "COLLISION_CONFIGURED_TERMINATION"
+            )
+            if collision_receipt not in self._fault_messages:
+                self._fault_messages.append(collision_receipt)
+            self._sync_physics_state()
+            await self._publish()
+            raise CrazySwarmError(
+                ErrorCode.GEOFENCE_BREACH,
+                "simulated rigid body collided with dynamic geometry"
+                if swept_contact.dynamic
+                else "simulated rigid body collided with configured geometry",
+                details={
+                    "contact_model": "continuous_swept_physical_envelope_termination_only",
+                    **swept_contact.model_dump(mode="json"),
+                },
+            )
         if (
             self._state is VehicleState.LANDING
             and self._landing_contact_source_timestamp_s is None
+            and not self._landing_contact_pending
             and previous_position.z > 0.001
             and self.physics.state.position_m.z <= 0.001
         ):
-            self._landing_contact_source_timestamp_s = self.clock.now_s
+            self._landing_contact_pending = True
             self._landing_pre_contact_vertical_speed_m_s = (
                 abs(previous_velocity.z) if previous_velocity.z < 0.0 else 0.0
             )
@@ -1142,7 +1267,10 @@ class SimulatedVehicle(Vehicle):
                 "modeled battery reached authoritative cutoff",
                 details={"cutoff_reason": (None if cutoff_reason is None else cutoff_reason.value)},
             )
-        if not self.world.contains(self.physics.state.position_m):
+        if not self.world.contains(
+            self.physics.state.position_m,
+            source_timestamp_s=self.clock.now_s,
+        ):
             self.physics.state.position_m = previous_position
             self.physics.state.velocity_m_s = Vector3()
             self._state = VehicleState.FAULT
@@ -1159,7 +1287,17 @@ class SimulatedVehicle(Vehicle):
             )
         self._sync_physics_state()
         self._update_estimator(dt)
+        previous_published_sequence = self._last_published.sequence
         await self._publish()
+        if (
+            self._landing_contact_pending
+            and self._last_published.sequence > previous_published_sequence
+        ):
+            self._landing_contact_source_timestamp_s = self._last_published.source_timestamp_s
+            self._landing_contact_source_clock_id = self._last_published.source_clock_id
+            self._landing_contact_source_clock_epoch = self._last_published.source_clock_epoch
+            self._landing_contact_source_sequence = self._last_published.sequence
+            self._landing_contact_pending = False
 
     async def _settle_after_battery_cutoff(
         self,
@@ -1577,6 +1715,7 @@ class SimulatedVehicle(Vehicle):
             self._position,
             down_direction,
             self.config.max_range_m,
+            source_timestamp_s=source_timestamp_s,
         )
         height_factor = min(1.0, max(0.0, ground_distance / 0.05))
         if ground_distance > self.config.flow.maximum_height_m:
@@ -1688,7 +1827,12 @@ class SimulatedVehicle(Vehicle):
             else self._sensor_random
         )
         for name, direction in directions.items():
-            value = self.world.ray_distance(self._position, direction, self.config.max_range_m)
+            value = self.world.ray_distance(
+                self._position,
+                direction,
+                self.config.max_range_m,
+                source_timestamp_s=source_timestamp_s,
+            )
             noisy = (
                 value
                 + self.config.range_sensor.bias_m

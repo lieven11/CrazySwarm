@@ -490,6 +490,13 @@ COMMAND_SEMANTICS: tuple[CommandSemantics, ...] = (
         completion_semantics="relative trajectory completed",
     ),
     CommandSemantics(
+        command=CommandKind.BODY_RATE_THRUST,
+        required_capabilities=frozenset({VehicleCapability.BODY_RATE_THRUST}),
+        allowed_frames=frozenset({CoordinateFrame.BODY}),
+        duration_semantics="REQUESTED_TRAJECTORY_DURATION",
+        completion_semantics="finite body-rate stream completed and commander priority released",
+    ),
+    CommandSemantics(
         command=CommandKind.EXECUTE_TRAJECTORY,
         required_capabilities=frozenset({VehicleCapability.TIME_PARAMETERIZED_TRAJECTORY}),
         allowed_frames=frozenset({CoordinateFrame.WORLD}),

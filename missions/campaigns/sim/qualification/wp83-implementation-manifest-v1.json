@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "packet_id": "WP-83",
+  "originating_request": "ok continue with the p1",
+  "base_commit": "40cd9947f87eb9bf2719d72e7c72ea867eab9977",
+  "accepted_design_payload_sha256": "d7fe1b62e8afb2d8ceab3a5dc14a63574520767ca4fd39f2ab57dc0a272d51a4",
+  "design_artifact": {
+    "path": "missions/campaigns/sim/qualification/wp83-design-audit-v1.json",
+    "sha256": "91665b666888d30577b3c3374ad49fa175388742459432ba1bb6929b66a7fe04"
+  },
+  "implementation_status": "IMPLEMENTED_UNVERIFIED",
+  "files": [
+    {
+      "path": "docs/project/REQUIREMENTS_CHANGELOG.md",
+      "change": "MODIFIED",
+      "preimage_sha256": "68303842c574b1998ef6f464648215f48c65632aefb1e03e7181c7df13b6c721",
+      "postimage_sha256": "851fd719e561fc325101cf52fdb740026cc2bae0103ec25c21a005f578f9221b"
+    },
+    {
+      "path": "docs/project/requirements/EVIDENCE_AND_REVIEW.md",
+      "change": "MODIFIED",
+      "preimage_sha256": "3c800960dda12c49727b9a87a88c6c4882d22a4a4d5c08d58f9903cd6d32a593",
+      "postimage_sha256": "3fd8e4ea132c18a18e42b1741f1171a18d68a24cbecbaaa40b171d170a8d8b30"
+    },
+    {
+      "path": "docs/reference/LANDING_GOAL_REGION_V1.md",
+      "change": "MODIFIED",
+      "preimage_sha256": "4c5990707a0a46b065feb20dec016b0cfc2d97b234275ea30551a3a1de90a811",
+      "postimage_sha256": "7c5a38b0f5cee4aeabb09f8afc449880d110f9c0ac5a6795808dc3d11385c86c"
+    },
+    {
+      "path": "src/crazyswarm_app/domain/commands.py",
+      "change": "MODIFIED",
+      "preimage_sha256": "6aba9415f010bad81db33c2dd67c67117e2281292f459d7eb870fe24991d0373",
+      "postimage_sha256": "86ff7d9fcf374f60d42cf6499d36a6567f3675e867587bc4ed79d188dbeb7ff6"
+    },
+    {
+      "path": "src/crazyswarm_app/domain/goals.py",
+      "change": "MODIFIED",
+      "preimage_sha256": "e06479bb50efa16ee1985b8ab199e075fc7ecf6cff27b299d583383738ad3422",
+      "postimage_sha256": "04f7214150335df745b3b85dd0477df5e6cb4594e28334c1ba3fa23d10de837b"
+    },
+    {
+      "path": "src/crazyswarm_app/missions/base.py",
+      "change": "MODIFIED",
+      "preimage_sha256": "c9d163a49a8dbbecee4ca5a82f32f1430ed578b5744c0c8ebecdf786bcab0542",
+      "postimage_sha256": "e99dec4ee72c419e13e9f32cd4396874e0dfb35fe2e9c7f5062e8cfeaa9735b5"
+    },
+    {
+      "path": "src/crazyswarm_app/simulation/vehicle.py",
+      "change": "MODIFIED",
+      "preimage_sha256": "4c979b67bca972a06ec9bd1540c8f5205c34015440fb753eda8a118115e00f10",
+      "postimage_sha256": "f425662a16c197936e697359e672297c97cee4d8eeba29fdd8b42b6db8c9d808"
+    },
+    {
+      "path": "tests/missions/test_trajectory_execution.py",
+      "change": "MODIFIED",
+      "preimage_sha256": "565cbe6192e65d22a50ce184ab834dd66e0e9bc6936fb3af0eed74dbae26baf5",
+      "postimage_sha256": "140f6b5be6928462b5db302de7552a88430e61f824e363adfd47d09624351fa0"
+    }
+  ],
+  "production_claims": [
+    {
+      "claim_id": "region_native_landing_accelerated",
+      "boundary": "INTEGRATION / FAST_SIM / ACCELERATED",
+      "path": "MissionRunner -> LandExecutionOperation -> ScriptMission -> MissionContext.capture_and_land -> MissionFleetAuthority -> SafetySupervisor.land -> LandCommand -> SimulatedVehicle._land -> GoalCaptureRecord -> MissionResult",
+      "result": "PASSED"
+    },
+    {
+      "claim_id": "region_native_landing_realtime",
+      "boundary": "INTEGRATION / FAST_SIM / OBSERVED_REALTIME",
+      "path": "MissionRunner -> LandExecutionOperation -> ScriptMission -> MissionContext.capture_and_land -> MissionFleetAuthority -> SafetySupervisor.land -> LandCommand -> SimulatedVehicle._land -> GoalCaptureRecord -> MissionResult",
+      "result": "PASSED"
+    }
+  ],
+  "checks": [
+    {
+      "command": "./.venv/bin/pytest tests/missions/test_trajectory_execution.py::test_landing_region_retains_capture_xy_through_contact -q -x",
+      "phase": "PREIMAGE_REGRESSION",
+      "result": "FAILED_EXPECTED",
+      "evidence": "accelerated route failed first at schema_version 2 != 3"
+    },
+    {
+      "command": "./.venv/bin/pytest tests/missions/test_trajectory_execution.py -q",
+      "phase": "POSTIMAGE",
+      "result": "9 passed in 58.29s"
+    },
+    {
+      "command": "./.venv/bin/pytest tests/simulation/test_vehicle.py -q",
+      "phase": "POSTIMAGE",
+      "result": "13 passed in 2.93s"
+    },
+    {
+      "command": "./.venv/bin/pytest tests/safety/test_supervisor.py -q",
+      "phase": "POSTIMAGE",
+      "result": "20 passed in 2.79s"
+    },
+    {
+      "command": "./.venv/bin/pytest tests/missions/test_authority.py -q",
+      "phase": "POSTIMAGE",
+      "result": "2 passed in 0.19s"
+    },
+    {
+      "command": "./.venv/bin/pytest tests/simulation/test_qualification.py::test_long_duration_hover_move_idle_land_and_energy_invariants -q",
+      "phase": "POSTIMAGE",
+      "result": "1 passed in 9.65s"
+    },
+    {
+      "command": "./.venv/bin/ruff check <WP-83 Python implementation files>",
+      "phase": "POSTIMAGE",
+      "result": "PASSED"
+    },
+    {
+      "command": "./.venv/bin/mypy <WP-83 production Python files>",
+      "phase": "POSTIMAGE",
+      "result": "PASSED"
+    },
+    {
+      "command": "./.venv/bin/python scripts/check_requirement_catalog.py",
+      "phase": "POSTIMAGE",
+      "result": "requirement catalog valid: 147 unique definitions"
+    },
+    {
+      "command": "parse frozen complete v1/v2 payloads through GoalCaptureRecord",
+      "phase": "POSTIMAGE",
+      "result": "PASSED; every v3 record and attempt field remained None"
+    }
+  ],
+  "known_out_of_boundary_failures": [
+    {
+      "check": "tests/simulation/test_qualification.py",
+      "failure": "collision receipt expects termination_only but workspace production returns continuous_swept_physical_envelope_termination_only",
+      "wp83_owned_path_in_failure": false
+    },
+    {
+      "check": "tests/api/test_persistent_handover.py and repeat-run cases in tests/api/test_unified_uploaded_execution.py",
+      "failure": "API runtime returns unknown vehicle / 404 after an earlier run",
+      "wp83_owned_path_in_failure": false
+    }
+  ]
+}

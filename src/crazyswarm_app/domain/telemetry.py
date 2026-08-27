@@ -130,6 +130,49 @@ class MotorTelemetry(ContractModel):
     readings: tuple[MotorReading, MotorReading, MotorReading, MotorReading]
 
 
+class RadioFailureKind(StrEnum):
+    """Operator-relevant physical-radio failure classes.
+
+    These values describe the boundary at which failure was observed. They do
+    not claim a hardware root cause without an independent A/B qualification.
+    """
+
+    NONE = "NONE"
+    USB_UNAVAILABLE = "USB_UNAVAILABLE"
+    TARGET_OFFLINE = "TARGET_OFFLINE"
+    RF_ACK_LOSS = "RF_ACK_LOSS"
+    OUTBOUND_QUEUE_SATURATED = "OUTBOUND_QUEUE_SATURATED"
+    TELEMETRY_STALE = "TELEMETRY_STALE"
+    PROTOCOL_SETUP_FAILED = "PROTOCOL_SETUP_FAILED"
+    UNKNOWN = "UNKNOWN"
+
+
+class RadioTransportDiagnostics(ContractModel):
+    """Measured Crazyradio transport state for one connection epoch."""
+
+    connection_epoch: int = Field(ge=1)
+    state: Literal["HEALTHY", "DEGRADED", "STALE", "DISCONNECTED"]
+    failure_kind: RadioFailureKind = RadioFailureKind.NONE
+    acked_packet_count: int = Field(default=0, ge=0)
+    lost_packet_count: int = Field(default=0, ge=0)
+    packet_loss_percent: Percentage | None = None
+    consecutive_lost_packet_count: int = Field(default=0, ge=0)
+    maximum_consecutive_lost_packet_count: int = Field(default=0, ge=0)
+    retry_quality_percent: Percentage | None = None
+    uplink_rssi_raw: float | None = None
+    uplink_rate_hz: Annotated[float, Field(ge=0.0)] | None = None
+    downlink_rate_hz: Annotated[float, Field(ge=0.0)] | None = None
+    uplink_congestion_percent: Percentage | None = None
+    downlink_congestion_percent: Percentage | None = None
+    outbound_queue_depth: int = Field(default=0, ge=0)
+    outbound_queue_capacity: int = Field(default=1, ge=1)
+    queue_saturation_count: int = Field(default=0, ge=0)
+    usb_error_count: int = Field(default=0, ge=0)
+    last_ack_age_ms: Annotated[float, Field(ge=0.0)] | None = None
+    last_event_at_utc: datetime | None = None
+    last_event_message: str | None = Field(default=None, max_length=240)
+
+
 class TransportReading(ContractModel):
     """Command-transport evidence without implying that every adapter is a radio."""
 
@@ -138,6 +181,7 @@ class TransportReading(ContractModel):
     delivery_quality_percent: Percentage | None = None
     latency_ms: Annotated[float, Field(ge=0.0)] | None = None
     packet_loss_percent: Percentage | None = None
+    radio: RadioTransportDiagnostics | None = None
 
 
 class VehicleTelemetry(ContractModel):
@@ -170,6 +214,9 @@ class VehicleTelemetry(ContractModel):
     estimator: EstimatorReading | None = None
     flow: FlowReading | None = None
     ranges: RangeReadings | None = None
+    # Literal Crazyflie stabilizer/mixer outputs in fixed M1, M2, M3, M4 order.
+    # Physical firmware exposes PWM percentages without measured thrust or current.
+    motor_pwm_percent: tuple[Percentage, Percentage, Percentage, Percentage] | None = None
     motors: MotorTelemetry | None = None
     faults: tuple[str, ...] = ()
 

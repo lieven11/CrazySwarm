@@ -180,6 +180,8 @@ class CapabilityFeasibilityRecord(ContractModel):
     deadline_s: float = Field(gt=0.0)
     maximum_acceleration_m_s2: float = Field(ge=0.0)
     maximum_jerk_m_s3: float = Field(ge=0.0)
+    maximum_path_deviation_m: float | None = Field(default=None, ge=0.0)
+    minimum_protected_free_space_m: float | None = None
     violated_constraints: tuple[str, ...]
     evidence_sha256: SHA256
 
@@ -509,14 +511,13 @@ class CapabilityResolution(ContractModel):
                 0.30,
                 self.authored_lookahead_time_s * self.certified_entry_speed_m_s,
                 self.adjacent_segment_cap_m,
-                self.protected_free_space_cap_m,
             )
             radius_candidate = min(0.25, max(0.08, preliminary_distance * 0.75))
             expected_radius = min(
                 radius_candidate,
                 self.adjacent_segment_cap_m,
-                self.protected_free_space_cap_m,
-                self.path_deviation_cap_m,
+                2.0 * self.protected_free_space_cap_m,
+                2.0 * self.path_deviation_cap_m,
             )
             expected_distance = min(preliminary_distance, 2.0 * expected_radius)
             if not math.isclose(
@@ -646,6 +647,13 @@ class PlanningSubmission(ContractModel):
         )
 
 
+class CoordinationPreparationRequest(ContractModel):
+    """Optional exact two-drone launch-gap experiment, separate from motion physics."""
+
+    schema_version: Literal[1] = 1
+    launch_gap_s: float = Field(ge=0.0, le=60.0)
+
+
 class ResolvedPlanningPackage(ContractModel):
     """The exact single-file-equivalent package accepted for a run."""
 
@@ -657,6 +665,8 @@ class ResolvedPlanningPackage(ContractModel):
     vehicle_model: dict[str, object]
     backend_configuration_sha256: SHA256
     capability_resolution: CapabilityResolution | None = None
+    motion_preparation: MotionPreparationResolution | None = None
+    coordination_preparation: CoordinationPreparationRequest | None = None
     resolved_package_sha256: SHA256
 
     @model_validator(mode="after")
@@ -696,6 +706,17 @@ class ResolvedPlanningPackage(ContractModel):
         )
         if self.capability_resolution != expected_resolution:
             raise ValueError("planning package capability resolution mismatch")
+        if self.motion_preparation is not None and (
+            self.motion_preparation.motion_quality_contract
+            != motion_contract_for_execution_profile(self.case, self.execution_profile)
+            or self.motion_preparation.motion_quality_contract_sha256
+            != canonical_sha256(self.motion_preparation.motion_quality_contract)
+            or self.planning_submission.planning_submission_id
+            != self.motion_preparation.planning_submission_id
+            or self.execution_profile.submission_id
+            != self.motion_preparation.execution_profile_submission_id
+        ):
+            raise ValueError("planning package motion preparation mismatch")
         if self.resolved_package_sha256 != canonical_sha256(self.canonical_payload()):
             raise ValueError("planning package resolved hash mismatch")
         return self
@@ -706,10 +727,13 @@ class ResolvedPlanningPackage(ContractModel):
 
 class ExecutionProfileParameters(ContractModel):
     target_path_speed_m_s: float | None = Field(default=None, gt=0.0, le=0.5)
+    certified_path_speed_m_s: float | None = Field(default=None, gt=0.0, le=0.5)
     segment_target_speeds_m_s: tuple[float, ...] = ()
     target_vertical_rate_m_s: float | None = Field(default=None, gt=0.0, le=0.3)
     duration_scale: float | None = Field(default=None, ge=0.75, le=1.50)
     lookahead_time_s: float | None = Field(default=None, gt=0.0, le=2.0)
+    maximum_path_tube_error_m: float | None = Field(default=None, gt=0.0, le=100.0)
+    smoothness_percent: int | None = Field(default=None, ge=0, le=100, strict=True)
     entry_exit_ramp_s: float = Field(default=1.25, gt=0.0, le=5.0)
     steady_window_tolerance_fraction: float = Field(default=0.20, gt=0.0, le=0.50)
 
@@ -719,6 +743,121 @@ class ExecutionProfileParameters(ContractModel):
             raise ValueError("submission segment-speed schedule is unbounded")
         if any(value <= 0.0 or value > 0.5 for value in self.segment_target_speeds_m_s):
             raise ValueError("submission segment speeds must be inside 0..0.5 m/s")
+        if (
+            self.certified_path_speed_m_s is not None
+            and self.target_path_speed_m_s is not None
+            and self.certified_path_speed_m_s > self.target_path_speed_m_s + 1e-12
+        ):
+            raise ValueError("certified path speed cannot exceed the authored target")
+        return self
+
+
+class MotionPreparationRequest(ContractModel):
+    """Plain operator motion controls retained before safety resolution."""
+
+    schema_version: Literal[1] = 1
+    balance: int = Field(default=50, ge=0, le=100, strict=True)
+    speed_m_s: float | None = Field(default=None, gt=0.0, le=2.0)
+    accuracy_m: float | None = Field(default=None, gt=0.0, le=100.0)
+    smoothness: int | None = Field(default=None, ge=0, le=100, strict=True)
+
+
+class MotionPreparationLimits(ContractModel):
+    """Mission-authored bounds for plain operator motion controls."""
+
+    accuracy_min_m: float = Field(gt=0.0)
+    accuracy_max_m: float = Field(gt=0.0, le=100.0)
+    accuracy_binding: str = Field(min_length=1, max_length=120)
+
+
+def motion_preparation_limits_for_case(case: CampaignCase) -> MotionPreparationLimits:
+    """Resolve the meaningful accuracy range from goal and world geometry."""
+
+    volume = case.hard_constraints.flight_volume
+    volume_spans = (
+        volume.maximum_m.x - volume.minimum_m.x,
+        volume.maximum_m.y - volume.minimum_m.y,
+        volume.maximum_m.z - volume.minimum_m.z,
+    )
+    positive_volume_spans = tuple(span for span in volume_spans if span > 0.0)
+    volume_route_span = math.sqrt(sum(span * span for span in positive_volume_spans))
+    candidates: list[tuple[float, str]] = [
+        (
+            volume_route_span if positive_volume_spans else 100.0,
+            "flight-volume route span",
+        )
+    ]
+    route_nodes = tuple(
+        node
+        for nodes in (case.semantics.route_intent_by_role.values() if case.semantics else ())
+        for node in nodes
+    )
+    capture_tolerances = tuple(node.capture_tolerance_m for node in route_nodes)
+    if capture_tolerances and (
+        case.drone_count != 1
+        or any(node.mode is not RouteNodeMode.FLY_THROUGH for node in route_nodes)
+    ):
+        candidates.append((min(capture_tolerances), "mission goal tolerance"))
+    elif not route_nodes:
+        goal_half_spans = tuple(
+            min(positive_spans) / 2.0
+            for drone in case.drones
+            for goal in drone.goal_sequence
+            if (
+                positive_spans := tuple(
+                    span
+                    for span in (
+                        goal.maximum_m.x - goal.minimum_m.x,
+                        goal.maximum_m.y - goal.minimum_m.y,
+                        goal.maximum_m.z - goal.minimum_m.z,
+                    )
+                    if span > 0.0
+                )
+            )
+        )
+        if goal_half_spans:
+            candidates.append((min(goal_half_spans), "mission goal dimensions"))
+    accuracy_max_m, accuracy_binding = min(candidates, key=lambda item: item[0])
+    return MotionPreparationLimits(
+        accuracy_min_m=min(0.01, accuracy_max_m),
+        accuracy_max_m=accuracy_max_m,
+        accuracy_binding=accuracy_binding,
+    )
+
+
+class ResolvedMotionControl(ContractModel):
+    label: Literal["Speed", "Accuracy", "Smoothness"]
+    unit: Literal["m/s", "m", "%"]
+    requested_value: float
+    resolved_value: float
+    binding_safety_cap: str | None = Field(default=None, min_length=1, max_length=240)
+
+
+class MotionPreparationResolution(ContractModel):
+    schema_version: Literal[1] = 1
+    request: MotionPreparationRequest
+    controls: tuple[ResolvedMotionControl, ResolvedMotionControl, ResolvedMotionControl]
+    planning_submission_id: Identifier
+    execution_profile_submission_id: Identifier
+    motion_quality_contract: MotionQualityContract
+    motion_quality_contract_sha256: SHA256
+    resolution_sha256: SHA256
+
+    @model_validator(mode="after")
+    def exact_resolution_is_hash_bound(self) -> MotionPreparationResolution:
+        if tuple(item.label for item in self.controls) != (
+            "Speed",
+            "Accuracy",
+            "Smoothness",
+        ):
+            raise ValueError("motion controls must retain the plain ordered control set")
+        if canonical_sha256(self.motion_quality_contract) != self.motion_quality_contract_sha256:
+            raise ValueError("resolved motion contract hash mismatch")
+        if (
+            canonical_sha256(self.model_dump(mode="python", exclude={"resolution_sha256"}))
+            != self.resolution_sha256
+        ):
+            raise ValueError("motion preparation resolution hash mismatch")
         return self
 
 
@@ -745,6 +884,8 @@ class ExecutionCapabilityRequest(ContractModel):
                 or parameters.target_vertical_rate_m_s
                 or parameters.duration_scale
                 or parameters.lookahead_time_s
+                or parameters.maximum_path_tube_error_m
+                or parameters.smoothness_percent is not None
             ):
                 raise ValueError("constant-path-speed capability has unrelated parameters")
         elif self.capability_id == CORNER_TRANSITION_CAPABILITY_ID:
@@ -764,6 +905,8 @@ class ExecutionCapabilityRequest(ContractModel):
                     parameters.target_vertical_rate_m_s,
                     parameters.duration_scale,
                     parameters.lookahead_time_s,
+                    parameters.maximum_path_tube_error_m,
+                    parameters.smoothness_percent,
                 )
             ):
                 raise ValueError("energy-aware retiming has no caller-selected scalar parameter")
@@ -775,6 +918,8 @@ class ExecutionCapabilityRequest(ContractModel):
                     parameters.target_vertical_rate_m_s,
                     parameters.duration_scale,
                     parameters.lookahead_time_s,
+                    parameters.maximum_path_tube_error_m,
+                    parameters.smoothness_percent,
                 )
             ):
                 raise ValueError("route-fidelity capability is planning-owned")
@@ -862,6 +1007,8 @@ class ExecutionProfileSubmission(ContractModel):
                 or parameters.target_vertical_rate_m_s
                 or parameters.duration_scale
                 or parameters.lookahead_time_s
+                or parameters.maximum_path_tube_error_m
+                or parameters.smoothness_percent is not None
             ):
                 raise ValueError("segment-speed submission has unrelated parameters")
         elif self.kind is ExecutionProfileKind.BOUNDED_VERTICAL_RATE:
@@ -872,6 +1019,8 @@ class ExecutionProfileSubmission(ContractModel):
                 or parameters.segment_target_speeds_m_s
                 or parameters.duration_scale
                 or parameters.lookahead_time_s
+                or parameters.maximum_path_tube_error_m
+                or parameters.smoothness_percent is not None
             ):
                 raise ValueError("vertical-rate submission has unrelated parameters")
         elif self.kind is ExecutionProfileKind.DURATION_SCALE:
@@ -902,6 +1051,8 @@ class ExecutionProfileSubmission(ContractModel):
             or parameters.target_vertical_rate_m_s
             or parameters.duration_scale
             or parameters.lookahead_time_s
+            or parameters.maximum_path_tube_error_m
+            or parameters.smoothness_percent is not None
         ):
             raise ValueError("submission kind has unsupported time-law parameters")
         if self.status is SubmissionStatus.EXECUTABLE and not self.supported_backend_profile_ids:
@@ -957,15 +1108,42 @@ def motion_contract_for_execution_profile(
         ExecutionProfileKind.CONSTANT_PATH_SPEED,
         ExecutionProfileKind.CORNER_TRANSITION,
     }:
-        target_speed = profile.parameters.target_path_speed_m_s
+        target_speed = (
+            profile.parameters.certified_path_speed_m_s or profile.parameters.target_path_speed_m_s
+        )
         if target_speed is None:  # Model validation already prevents this.
             raise ValueError(f"{kind.value} profile has no target path speed")
         objectives = (
             (
                 MotionQualityMetric.JERK,
+                MotionQualityMetric.ANGULAR_ACTIVITY,
+                MotionQualityMetric.MOTOR_SPREAD,
                 MotionQualityMetric.SPEED_RIPPLE,
                 MotionQualityMetric.PATH_ADHERENCE,
                 MotionQualityMetric.DURATION,
+            )
+            if kind is ExecutionProfileKind.CORNER_TRANSITION
+            and (
+                (profile.parameters.smoothness_percent or 0) >= 50
+                or (
+                    profile.parameters.smoothness_percent is None
+                    and "smoothness" in profile.submission_id
+                )
+            )
+            else (
+                MotionQualityMetric.JERK,
+                MotionQualityMetric.MOTOR_SPREAD,
+                MotionQualityMetric.SPEED_COMPLIANCE,
+                MotionQualityMetric.PATH_ADHERENCE,
+                MotionQualityMetric.DURATION,
+            )
+            if kind is ExecutionProfileKind.CONSTANT_PATH_SPEED
+            and (profile.parameters.smoothness_percent or 0) >= 50
+            else (
+                MotionQualityMetric.DURATION,
+                MotionQualityMetric.SPEED_RIPPLE,
+                MotionQualityMetric.PATH_ADHERENCE,
+                MotionQualityMetric.JERK,
             )
             if kind is ExecutionProfileKind.CORNER_TRANSITION
             else (
@@ -980,6 +1158,10 @@ def motion_contract_for_execution_profile(
                 "speed_law": MotionSpeedLaw.CONSTANT,
                 "target_speed_m_s": target_speed,
                 "objective_order": objectives,
+                "maximum_path_tube_error_m": (
+                    profile.parameters.maximum_path_tube_error_m
+                    or contract.maximum_path_tube_error_m
+                ),
             }
         )
     if kind is ExecutionProfileKind.RAMPED_SEGMENT_SPEED:
@@ -1001,10 +1183,23 @@ def motion_contract_for_execution_profile(
                 "speed_law": MotionSpeedLaw.PRECISION_FIRST,
                 "target_speed_m_s": None,
                 "objective_order": (
-                    MotionQualityMetric.ENERGY,
-                    MotionQualityMetric.DURATION,
-                    MotionQualityMetric.PATH_ADHERENCE,
-                    MotionQualityMetric.JERK,
+                    (
+                        MotionQualityMetric.JERK,
+                        MotionQualityMetric.MOTOR_SPREAD,
+                        MotionQualityMetric.PATH_ADHERENCE,
+                        MotionQualityMetric.DURATION,
+                    )
+                    if (profile.parameters.smoothness_percent or 0) >= 50
+                    else (
+                        MotionQualityMetric.DURATION,
+                        MotionQualityMetric.PATH_ADHERENCE,
+                        MotionQualityMetric.JERK,
+                        MotionQualityMetric.ENERGY,
+                    )
+                ),
+                "maximum_path_tube_error_m": (
+                    profile.parameters.maximum_path_tube_error_m
+                    or contract.maximum_path_tube_error_m
                 ),
             }
         )
@@ -2057,7 +2252,22 @@ def resolve_planning_package(
     comparison_context_id: str | None = None,
     planning_capability_request: PlanningCapabilityRequest | None = None,
     execution_capability_request: ExecutionCapabilityRequest | None = None,
+    motion_preparation_request: MotionPreparationRequest | None = None,
+    coordination_preparation_request: CoordinationPreparationRequest | None = None,
 ) -> ResolvedPlanningPackage:
+    if motion_preparation_request is not None and any(
+        value is not None
+        for value in (
+            execution_profile_submission_id,
+            comparison_context_id,
+            planning_capability_request,
+            execution_capability_request,
+        )
+    ):
+        raise ValueError(
+            "plain motion preparation cannot be combined with execution-profile, "
+            "comparison-context, or capability inputs"
+        )
     if planning_submission_id is not None and planning_capability_request is not None:
         raise ValueError(
             "choose either a catalog planning submission or a core planning capability request"
@@ -2068,28 +2278,49 @@ def resolve_planning_package(
         raise ValueError(
             "choose either a catalog execution profile or a core execution capability request"
         )
-    planning = (
-        compile_contextual_planning_submission(
-            case,
-            planning_submission_id,
-            comparison_context_id=comparison_context_id,
-        )
-        if comparison_context_id is not None
-        else (
-            bind_planning_capability(case, planning_capability_request)
-            if planning_capability_request is not None
-            else resolve_planning_submission(case, planning_submission_id)
-        )
+    simulation_catalog_baseline = (
+        case.environment is EnvironmentKind.SIMULATION
+        and planning_submission_id in {None, BASELINE_PLANNING_SUBMISSION_ID}
+        and execution_profile_submission_id in {None, BASELINE_SUBMISSION_ID}
+        and comparison_context_id is None
+        and planning_capability_request is None
+        and execution_capability_request is None
+        and motion_preparation_request is None
     )
-    profile = (
-        bind_execution_capability(case, execution_capability_request)
-        if execution_capability_request is not None
-        else resolve_submission(
+    motion_preparation: MotionPreparationResolution | None = None
+    if motion_preparation_request is not None:
+        planning, profile, motion_preparation = _resolve_prepared_motion(
             case,
-            execution_profile_submission_id or planning.execution_profile_submission_id,
-            require_executable=True,
+            motion_preparation_request,
+            planning_submission_id=planning_submission_id,
         )
-    )
+    else:
+        planning = (
+            compile_contextual_planning_submission(
+                case,
+                planning_submission_id,
+                comparison_context_id=comparison_context_id,
+            )
+            if comparison_context_id is not None
+            else (
+                bind_planning_capability(case, planning_capability_request)
+                if planning_capability_request is not None
+                else resolve_planning_submission(
+                    case,
+                    planning_submission_id,
+                    require_executable=not simulation_catalog_baseline,
+                )
+            )
+        )
+        profile = (
+            bind_execution_capability(case, execution_capability_request)
+            if execution_capability_request is not None
+            else resolve_submission(
+                case,
+                execution_profile_submission_id or planning.execution_profile_submission_id,
+                require_executable=not simulation_catalog_baseline,
+            )
+        )
     if planning.execution_profile_sha256 != profile.profile_sha256:
         planning = planning.model_copy(
             update={
@@ -2097,6 +2328,21 @@ def resolve_planning_package(
                 "execution_profile_sha256": profile.profile_sha256,
             }
         )
+    if coordination_preparation_request is not None:
+        if case.drone_count != 2:
+            raise ValueError("launch-gap preparation is available only for two-drone cases")
+        if planning.coordination.synchronized_route_start_required:
+            raise ValueError("this resolution requires synchronized route starts")
+        if not any(
+            strategy in planning.strategy_authority
+            for strategy in (PlannerStrategy.GROUND_DELAY, PlannerStrategy.AIRBORNE_STAGING)
+        ):
+            raise ValueError("the selected resolution has no launch-timing authority")
+        if (
+            coordination_preparation_request.launch_gap_s
+            > planning.coordination.maximum_release_delay_s
+        ):
+            raise ValueError("requested launch gap exceeds the resolution's authored limit")
     world = planning_world_definition(case)
     vehicle_model = planning_vehicle_model()
     payload: dict[str, object] = {
@@ -2108,11 +2354,229 @@ def resolve_planning_package(
         "vehicle_model": vehicle_model,
         "backend_configuration_sha256": case.execution.configuration_sha256,
         "capability_resolution": resolve_package_capability_resolution(case, planning, profile),
+        "motion_preparation": motion_preparation,
+        "coordination_preparation": coordination_preparation_request,
     }
     return ResolvedPlanningPackage(
         **payload,
         resolved_package_sha256=canonical_sha256(payload),
     )
+
+
+def _resolve_prepared_motion(
+    case: CampaignCase,
+    request: MotionPreparationRequest,
+    *,
+    planning_submission_id: str | None = None,
+) -> tuple[PlanningSubmission, ExecutionProfileSubmission, MotionPreparationResolution]:
+    """Resolve plain sliders while preserving the selected coordination authority."""
+
+    feasibility = _constant_path_speed_feasibility(case)
+    balance_fraction = request.balance / 100.0
+    requested_speed = request.speed_m_s or (
+        feasibility.minimum_path_speed_m_s
+        + balance_fraction
+        * (feasibility.maximum_path_speed_m_s - feasibility.minimum_path_speed_m_s)
+    )
+    resolved_speed = min(
+        feasibility.maximum_path_speed_m_s,
+        max(feasibility.minimum_path_speed_m_s, requested_speed),
+    )
+    speed_cap_reason: str | None = None
+
+    if request.accuracy_m is not None:
+        requested_accuracy = request.accuracy_m
+    elif request.balance <= 50:
+        requested_accuracy = 0.01 * 5.0 ** (request.balance / 50.0)
+    else:
+        requested_accuracy = 0.05 * 2000.0 ** ((request.balance - 50.0) / 50.0)
+    motion_limits = motion_preparation_limits_for_case(case)
+    resolved_accuracy = min(requested_accuracy, motion_limits.accuracy_max_m)
+    requested_smoothness = (
+        request.smoothness if request.smoothness is not None else 100 - request.balance
+    )
+    # Even the Flow endpoint needs enough future geometry to preserve speed through
+    # an easy bend. Smoothness extends that horizon; it never collapses the corner
+    # transition into a short, low-speed kink.
+    lookahead_s = 1.25 + requested_smoothness / 100.0 * 0.50
+
+    preparation_key = canonical_sha256([case.case_sha256, request])[:20]
+    has_semantic_stop = any(
+        node.mode is not RouteNodeMode.FLY_THROUGH
+        for drone in case.drones
+        for node in case.route_nodes_for(drone.role_id)
+    )
+    if case.family == "takeoff_hover_land":
+        speed_fraction = (resolved_speed - feasibility.minimum_path_speed_m_s) / (
+            feasibility.maximum_path_speed_m_s - feasibility.minimum_path_speed_m_s
+        )
+        source = resolve_submission(case, "vertical_cycle.precision_first")
+        profile = source.model_copy(
+            update={
+                "submission_id": f"prepared-motion.{preparation_key}",
+                "display_name": "Prepared motion",
+                "kind": ExecutionProfileKind.DURATION_SCALE,
+                "owner": ExecutionProfileOwner.TIME_PARAMETERIZER,
+                "parameters": ExecutionProfileParameters(
+                    duration_scale=1.50 - speed_fraction * 0.75,
+                    maximum_path_tube_error_m=resolved_accuracy,
+                    smoothness_percent=requested_smoothness,
+                    entry_exit_ramp_s=lookahead_s,
+                ),
+            }
+        )
+    elif has_semantic_stop:
+        profile = bind_execution_capability(
+            case,
+            ExecutionCapabilityRequest(
+                capability_id=CONSTANT_PATH_SPEED_CAPABILITY_ID,
+                parameters=ExecutionProfileParameters(
+                    target_path_speed_m_s=resolved_speed,
+                    entry_exit_ramp_s=lookahead_s,
+                ),
+            ),
+        )
+        profile = profile.model_copy(
+            update={
+                "submission_id": f"prepared-motion.{preparation_key}",
+                "parameters": profile.parameters.model_copy(
+                    update={
+                        "maximum_path_tube_error_m": resolved_accuracy,
+                        "smoothness_percent": requested_smoothness,
+                    }
+                ),
+            }
+        )
+    else:
+        profile = bind_execution_capability(
+            case,
+            ExecutionCapabilityRequest(
+                capability_id=CORNER_TRANSITION_CAPABILITY_ID,
+                parameters=ExecutionProfileParameters(
+                    target_path_speed_m_s=resolved_speed,
+                    lookahead_time_s=lookahead_s,
+                    maximum_path_tube_error_m=resolved_accuracy,
+                    smoothness_percent=requested_smoothness,
+                ),
+            ),
+        )
+        profile = profile.model_copy(update={"submission_id": f"prepared-motion.{preparation_key}"})
+    profile = profile.model_copy(
+        update={
+            "display_name": "Prepared motion",
+            "rationale": "Resolved from the plain Balance and Tune controls.",
+        }
+    )
+    baseline = resolve_planning_submission(
+        case,
+        planning_submission_id or BASELINE_PLANNING_SUBMISSION_ID,
+        require_executable=(
+            case.environment is not EnvironmentKind.SIMULATION
+            or planning_submission_id not in {None, BASELINE_PLANNING_SUBMISSION_ID}
+        ),
+    )
+    planning = baseline.model_copy(
+        update={
+            # Motion preparation never invents coordination authority. It preserves
+            # the operator-selected fleet submission (or the catalog baseline) and
+            # only binds the reusable execution profile below it.
+            "display_name": (
+                "Prepared motion"
+                if planning_submission_id in {None, BASELINE_PLANNING_SUBMISSION_ID}
+                else f"{baseline.display_name} · prepared motion"
+            ),
+            "rationale": (
+                "The operator motion preference is bounded by immutable world, "
+                "clearance, dynamics, actuator, energy, and terminal guards."
+            ),
+            # Accuracy is a direct route-shaping control only when the case owns a
+            # reference path. Goal-seeking dynamic missions intentionally own no
+            # centerline or rejoin route; binding their plain accuracy control to a
+            # global hard tube would make the required obstacle detour illegal.
+            # Coordinated missions likewise retain their case planning authority.
+            "path_adherence": (
+                PathAdherencePolicy(
+                    mode=PathAdherenceMode.HARD_TUBE,
+                    maximum_centerline_deviation_m=resolved_accuracy,
+                )
+                if case.drone_count == 1
+                and (case.semantics is None or case.semantics.goal_seeking is None)
+                else baseline.path_adherence
+            ),
+            "execution_profile_submission_id": profile.submission_id,
+            "execution_profile_sha256": profile.profile_sha256,
+            "capability_id": None,
+        }
+    )
+    if profile.kind is ExecutionProfileKind.CORNER_TRANSITION:
+        # Resolve the capability's independently sampled dynamics limit into the
+        # actual profile, contract, and operator readout.  Keeping the authored
+        # request as the contract target would falsely report a speed the bounded
+        # allocator is not permitted to fly.
+        capability = resolve_package_capability_resolution(case, planning, profile)
+        if capability is None or capability.certified_entry_speed_m_s is None:
+            raise ValueError("prepared corner motion lacks a certified entry speed")
+        resolved_speed = capability.certified_entry_speed_m_s
+        profile = profile.model_copy(
+            update={
+                "parameters": profile.parameters.model_copy(
+                    update={"certified_path_speed_m_s": resolved_speed}
+                )
+            }
+        )
+        planning = planning.model_copy(update={"execution_profile_sha256": profile.profile_sha256})
+        speed_cap_reason = capability.limiting_constraint
+    speed_cap = (
+        None
+        if math.isclose(requested_speed, resolved_speed, abs_tol=1e-12)
+        else speed_cap_reason
+        or (
+            "case speed feasibility "
+            f"{feasibility.minimum_path_speed_m_s:.3f}.."
+            f"{feasibility.maximum_path_speed_m_s:.3f} m/s"
+        )
+    )
+    accuracy_cap = (
+        None
+        if math.isclose(requested_accuracy, resolved_accuracy, abs_tol=1e-12)
+        else f"{motion_limits.accuracy_binding} {motion_limits.accuracy_max_m:.3f} m"
+    )
+    motion_contract = motion_contract_for_execution_profile(case, profile)
+    resolution_payload: dict[str, object] = {
+        "schema_version": 1,
+        "request": request,
+        "controls": (
+            ResolvedMotionControl(
+                label="Speed",
+                unit="m/s",
+                requested_value=requested_speed,
+                resolved_value=resolved_speed,
+                binding_safety_cap=speed_cap,
+            ),
+            ResolvedMotionControl(
+                label="Accuracy",
+                unit="m",
+                requested_value=requested_accuracy,
+                resolved_value=resolved_accuracy,
+                binding_safety_cap=accuracy_cap,
+            ),
+            ResolvedMotionControl(
+                label="Smoothness",
+                unit="%",
+                requested_value=float(requested_smoothness),
+                resolved_value=float(requested_smoothness),
+            ),
+        ),
+        "planning_submission_id": planning.planning_submission_id,
+        "execution_profile_submission_id": profile.submission_id,
+        "motion_quality_contract": motion_contract,
+        "motion_quality_contract_sha256": canonical_sha256(motion_contract),
+    }
+    resolution = MotionPreparationResolution(
+        **resolution_payload,
+        resolution_sha256=canonical_sha256(resolution_payload),
+    )
+    return planning, profile, resolution
 
 
 def bind_planning_capability(
@@ -2621,7 +3085,6 @@ def bind_execution_capability(
     if (
         capability.status is not SubmissionStatus.EXECUTABLE
         or case.execution.backend_profile_id not in capability.qualified_backend_profile_ids
-        or case.implementation_status is not ImplementationStatus.EXECUTABLE
     ):
         raise ValueError(
             f"capability {request.capability_id} is not qualified for backend "
@@ -2752,6 +3215,19 @@ def normalized_route_polyline(
         for point in authored_positions:
             if not deduplicated or _vector_distance(deduplicated[-1], point) > 1e-9:
                 deduplicated.append(point)
+        if len(deduplicated) < 2:
+            # Cruise normalization projects launch and landing onto the first/last
+            # route altitude.  A pure take-off/hover/land mission has no horizontal
+            # cruise after that projection, so retain its real vertical legs as the
+            # motion-preparation geometry.
+            deduplicated = []
+            for point in (
+                drone.start_region.center_m,
+                *(goal.center_m for goal in drone.goal_sequence),
+                drone.landing_region.center_m,
+            ):
+                if not deduplicated or _vector_distance(deduplicated[-1], point) > 1e-9:
+                    deduplicated.append(point)
         positions = tuple(deduplicated)
 
     remaining_goals = list(drone.goal_sequence)
@@ -2789,9 +3265,12 @@ def normalized_route_polyline(
             current = positions[current_index]
             after = positions[after_index]
             current_is_unidentified = node_ids[current_index].startswith("@geometry-")
-            if (
-                _vector_distance(before, current) <= 1e-9 and current_is_unidentified
-            ) or _forward_collinear(before, current, after):
+            current_is_repeated_path_state = (
+                sum(_vector_distance(current, candidate) <= 1e-9 for candidate in positions) > 1
+            )
+            if (_vector_distance(before, current) <= 1e-9 and current_is_unidentified) or (
+                _forward_collinear(before, current, after) and not current_is_repeated_path_state
+            ):
                 retained.pop(retained_position)
                 changed = True
                 break
@@ -2956,9 +3435,24 @@ def resolve_capability_resolution(
         ),
         None,
     )
+    flight_volume = case.hard_constraints.flight_volume
     contract_deviation_cap = min(
-        case.motion_contract_for(case.drones[0].role_id).maximum_path_tube_error_m,
-        0.25,
+        (
+            profile.parameters.maximum_path_tube_error_m
+            or case.motion_contract_for(case.drones[0].role_id).maximum_path_tube_error_m
+        ),
+        math.dist(
+            (
+                flight_volume.minimum_m.x,
+                flight_volume.minimum_m.y,
+                flight_volume.minimum_m.z,
+            ),
+            (
+                flight_volume.maximum_m.x,
+                flight_volume.maximum_m.y,
+                flight_volume.maximum_m.z,
+            ),
+        ),
     )
     path_deviation_cap = min(
         contract_deviation_cap,
@@ -2968,12 +3462,17 @@ def resolve_capability_resolution(
             else contract_deviation_cap
         ),
     )
-    flight_volume = case.hard_constraints.flight_volume
     protected_radius = 0.055 + case.hard_constraints.position_uncertainty_m + 0.05
     free_clearances = []
     environment = case.semantics.environment_constraints if case.semantics else None
     for points in route_points:
-        for point in points:
+        # Launch and landing contact points of the vertical-cycle mission are
+        # intentionally on the floor boundary.  They are governed by terminal
+        # contact authority, not by the in-flight corner free-space margin.
+        clearance_points = (
+            points[1:-1] if case.family == "takeoff_hover_land" and len(points) > 2 else points
+        )
+        for point in clearance_points:
             free_clearances.append(
                 min(
                     point.x - flight_volume.minimum_m.x,
@@ -2991,14 +3490,18 @@ def resolve_capability_resolution(
                 dz = max(solid.minimum_m.z - point.z, 0.0, point.z - solid.maximum_m.z)
                 free_clearances.append(math.sqrt(dx * dx + dy * dy + dz * dz) - protected_radius)
     minimum_free_clearance = min(free_clearances, default=0.0)
-    if minimum_free_clearance <= 0.0:
-        raise ValueError("corner-transition route has no protected free-space margin")
-    protected_free_space_cap = minimum_free_clearance * 0.25
+    # This is clearance normal to the route, not available lookahead distance along
+    # it.  The previous quarter-clearance value incorrectly collapsed a long smooth
+    # transition to a few centimetres.  The exact interpolated path/free-space bounds
+    # are sampled independently in the capability certificate below.
+    # This compiler runs before the planner and therefore sees only authored
+    # geometry.  Keep a minimal smoothing cap when that geometry touches a protected
+    # margin; the planner may be authorized to replace it, and its independent
+    # certificate remains the authority for the selected route.
+    protected_free_space_cap = max(minimum_free_clearance, 1e-6)
     maximum_radius = min(
         0.25,
         adjacent_cap,
-        protected_free_space_cap,
-        path_deviation_cap,
     )
     limits = case.hard_constraints.dynamics
     speed_feasibility = _constant_path_speed_feasibility(case)
@@ -3010,39 +3513,121 @@ def resolve_capability_resolution(
     base_speed = min(target_speed, dynamics_speed_cap)
     certified_speed = base_speed
     safety_retiming_factor = 1.0
-    radius = maximum_radius
-    lookahead_distance = min(
+    preliminary_distance = min(
         0.30,
         lookahead * certified_speed,
         adjacent_cap,
-        protected_free_space_cap,
-        2.0 * radius,
     )
-    from crazyswarm_app.campaign.trajectory import allocate_trajectory_points
+    radius_candidate = min(0.25, max(0.08, preliminary_distance * 0.75))
+    radius = min(
+        radius_candidate,
+        adjacent_cap,
+        2.0 * protected_free_space_cap,
+        2.0 * path_deviation_cap,
+    )
+    lookahead_distance = min(preliminary_distance, 2.0 * radius)
+    from crazyswarm_app.campaign.trajectory import allocate_trajectory_points, audit_trajectory
+    from crazyswarm_app.domain.trajectory import TimeParameterizedTrajectory
 
-    for _ in range(4):
-        achieved_speeds = []
-        for points in route_points:
-            targets = (target_speed,) * (len(points) - 1)
-            durations = tuple(
-                math.dist(
-                    (before.x, before.y, before.z),
-                    (after.x, after.y, after.z),
-                )
-                / target_speed
-                for before, after in pairwise(points)
+    achieved_speeds = []
+    allocated_accelerations = []
+    for points in route_points:
+        targets = (certified_speed,) * (len(points) - 1)
+        durations = tuple(
+            math.dist(
+                (before.x, before.y, before.z),
+                (after.x, after.y, after.z),
             )
+            / certified_speed
+            for before, after in pairwise(points)
+        )
+        allocated = allocate_trajectory_points(
+            case,
+            points,
+            speed_factor=1.0,
+            segment_durations_s=durations,
+            path_speed_targets_m_s=targets,
+            entry_exit_ramp_s=lookahead,
+            transition_distance_m=lookahead_distance,
+            turn_blend_radius_m=radius,
+            corner_cut_tolerance_m=(path_deviation_cap if case.drone_count == 1 else None),
+        )
+        achieved_speeds.append(
+            max(
+                math.sqrt(
+                    point.velocity_m_s.x**2 + point.velocity_m_s.y**2 + point.velocity_m_s.z**2
+                )
+                for point in allocated
+            )
+        )
+        allocated_trajectory = TimeParameterizedTrajectory(
+            trajectory_id=f"capability-reserve-{canonical_sha256(allocated)[:20]}",
+            role_id="capability-reserve",
+            vehicle_id="capability-reserve",
+            route_sha256=canonical_sha256(points),
+            points=allocated,
+            declared_stop_sequences=(allocated[0].sequence, allocated[-1].sequence),
+            completion_position_tolerance_m=0.05,
+            completion_velocity_tolerance_m_s=0.05,
+        )
+        allocated_accelerations.append(
+            audit_trajectory(case, allocated_trajectory).maximum_acceleration_m_s2
+        )
+    achieved = min(achieved_speeds)
+    smoothness_fraction = (profile.parameters.smoothness_percent or 0) / 100.0
+    tracking_acceleration_limit = limits.maximum_acceleration_m_s2 * (
+        0.95 - 0.50 * smoothness_fraction
+    )
+    maximum_allocated_acceleration = max(allocated_accelerations, default=0.0)
+    tracking_reserve_applied = maximum_allocated_acceleration > tracking_acceleration_limit
+    if tracking_reserve_applied:
+        achieved *= math.sqrt(tracking_acceleration_limit / maximum_allocated_acceleration)
+    # Observe the allocator once at the bounded authored speed. Re-feeding its
+    # already-retimed output as a new authored request recursively collapses speed
+    # at every corner and reverses the operator's monotonic Speed control.
+    if achieved < certified_speed and not math.isclose(
+        achieved,
+        certified_speed,
+        rel_tol=1e-8,
+        abs_tol=1e-9,
+    ):
+        certified_speed = achieved
+        safety_retiming_factor = base_speed / certified_speed
+        preliminary_distance = min(
+            0.30,
+            lookahead * certified_speed,
+            adjacent_cap,
+        )
+        radius_candidate = min(0.25, max(0.08, preliminary_distance * 0.75))
+        radius = min(
+            radius_candidate,
+            adjacent_cap,
+            2.0 * protected_free_space_cap,
+            2.0 * path_deviation_cap,
+        )
+        lookahead_distance = min(preliminary_distance, 2.0 * radius)
+
+    # The final radius/lookahead changes after the first bounded observation. Recheck
+    # that exact final geometry until its admitted speed and tracking reserve agree;
+    # otherwise the profile could truthfully report the first pass while execution
+    # performs an additional hidden retime.
+    for _ in range(16):
+        if not profile.submission_id.startswith("prepared-motion."):
+            break
+        final_speeds = []
+        final_accelerations = []
+        for points in route_points:
             allocated = allocate_trajectory_points(
                 case,
                 points,
                 speed_factor=1.0,
-                segment_durations_s=durations,
-                path_speed_targets_m_s=targets,
+                path_speed_targets_m_s=(certified_speed,) * (len(points) - 1),
                 entry_exit_ramp_s=lookahead,
                 transition_distance_m=lookahead_distance,
                 turn_blend_radius_m=radius,
+                corner_cut_tolerance_m=(path_deviation_cap if case.drone_count == 1 else None),
             )
-            achieved_speeds.append(
+            final_speeds.append(
                 max(
                     math.sqrt(
                         point.velocity_m_s.x**2 + point.velocity_m_s.y**2 + point.velocity_m_s.z**2
@@ -3050,35 +3635,51 @@ def resolve_capability_resolution(
                     for point in allocated
                 )
             )
-        achieved = min(achieved_speeds)
-        if math.isclose(achieved, certified_speed, rel_tol=1e-8, abs_tol=1e-9):
+            allocated_trajectory = TimeParameterizedTrajectory(
+                trajectory_id=f"capability-final-{canonical_sha256(allocated)[:20]}",
+                role_id="capability-final",
+                vehicle_id="capability-final",
+                route_sha256=canonical_sha256(points),
+                points=allocated,
+                declared_stop_sequences=(allocated[0].sequence, allocated[-1].sequence),
+                completion_position_tolerance_m=0.05,
+                completion_velocity_tolerance_m_s=0.05,
+            )
+            final_accelerations.append(
+                audit_trajectory(case, allocated_trajectory).maximum_acceleration_m_s2
+            )
+        reconciled_speed = min(final_speeds)
+        maximum_final_acceleration = max(final_accelerations, default=0.0)
+        if maximum_final_acceleration > tracking_acceleration_limit:
+            reconciled_speed *= math.sqrt(tracking_acceleration_limit / maximum_final_acceleration)
+            tracking_reserve_applied = True
+        if math.isclose(reconciled_speed, certified_speed, rel_tol=1e-6, abs_tol=1e-8):
             break
-        certified_speed = achieved
+        certified_speed = min(certified_speed, reconciled_speed)
         safety_retiming_factor = base_speed / certified_speed
-        preliminary_distance = min(
-            0.30,
-            lookahead * certified_speed,
-            adjacent_cap,
-            protected_free_space_cap,
-        )
+        preliminary_distance = min(0.30, lookahead * certified_speed, adjacent_cap)
         radius_candidate = min(0.25, max(0.08, preliminary_distance * 0.75))
         radius = min(
             radius_candidate,
             adjacent_cap,
-            protected_free_space_cap,
-            path_deviation_cap,
+            2.0 * protected_free_space_cap,
+            2.0 * path_deviation_cap,
         )
         lookahead_distance = min(preliminary_distance, 2.0 * radius)
+    else:
+        raise ValueError("corner-transition speed/reserve reconciliation did not converge")
 
     limiting = []
     if dynamics_speed_cap <= target_speed + 1e-12:
         limiting.append("dynamics speed/radius cap")
     if safety_retiming_factor > 1.0 + 1e-9:
         limiting.append("bounded acceleration/jerk retiming")
-    if math.isclose(radius, path_deviation_cap, abs_tol=1e-12):
-        limiting.append("hard-tube deviation cap")
-    if math.isclose(radius, protected_free_space_cap, abs_tol=1e-12):
-        limiting.append("protected free-space cap")
+    if tracking_reserve_applied:
+        limiting.append("smoothness tracking-acceleration reserve")
+    if math.isclose(radius, 2.0 * path_deviation_cap, abs_tol=1e-12):
+        limiting.append("sampled hard-tube tangent cap")
+    if math.isclose(radius, 2.0 * protected_free_space_cap, abs_tol=1e-12):
+        limiting.append("sampled protected-free-space tangent cap")
     if math.isclose(radius, adjacent_cap, abs_tol=1e-12):
         limiting.append("adjacent segment cap")
     if math.isclose(lookahead_distance, 2.0 * radius, abs_tol=1e-12):
@@ -3086,7 +3687,7 @@ def resolve_capability_resolution(
     feasibility = _corner_capability_feasibility(
         case,
         route_points=tuple(route_points),
-        target_speed_m_s=target_speed,
+        target_speed_m_s=certified_speed,
         lookahead_time_s=lookahead,
         lookahead_distance_m=lookahead_distance,
         turn_blend_radius_m=radius,
@@ -3095,6 +3696,8 @@ def resolve_capability_resolution(
             for polyline in normalized_polylines
             for mode in polyline.raw_node_modes
         ),
+        path_deviation_cap_m=path_deviation_cap,
+        protected_free_space_cap_m=protected_free_space_cap,
     )
     return CapabilityResolution(
         capability_id=capability_id,
@@ -3336,6 +3939,8 @@ def _corner_capability_feasibility(
     lookahead_distance_m: float,
     turn_blend_radius_m: float,
     has_semantic_stop: bool,
+    path_deviation_cap_m: float,
+    protected_free_space_cap_m: float,
 ) -> CapabilityFeasibilityRecord:
     """Complete the bounded compiler and independently sample its exact deadline/dynamics."""
 
@@ -3345,6 +3950,50 @@ def _corner_capability_feasibility(
     maximum_duration = 0.0
     maximum_acceleration = 0.0
     maximum_jerk = 0.0
+    maximum_path_deviation = 0.0
+    minimum_protected_free_space = float("inf")
+    flight_volume = case.hard_constraints.flight_volume
+    protected_radius = 0.055 + case.hard_constraints.position_uncertainty_m + 0.05
+    environment = case.semantics.environment_constraints if case.semantics else None
+
+    def distance_to_segment(point: Vector3, before: Vector3, after: Vector3) -> float:
+        delta = (after.x - before.x, after.y - before.y, after.z - before.z)
+        length_squared = sum(value * value for value in delta)
+        if length_squared <= 1e-18:
+            return _vector_distance(point, before)
+        relative = (point.x - before.x, point.y - before.y, point.z - before.z)
+        fraction = max(
+            0.0,
+            min(
+                1.0,
+                sum(left * right for left, right in zip(relative, delta, strict=True))
+                / length_squared,
+            ),
+        )
+        projection = Vector3(
+            x=before.x + fraction * delta[0],
+            y=before.y + fraction * delta[1],
+            z=before.z + fraction * delta[2],
+        )
+        return _vector_distance(point, projection)
+
+    def protected_free_space(point: Vector3) -> float:
+        margins = [
+            point.x - flight_volume.minimum_m.x,
+            flight_volume.maximum_m.x - point.x,
+            point.y - flight_volume.minimum_m.y,
+            flight_volume.maximum_m.y - point.y,
+            point.z - flight_volume.minimum_m.z,
+            flight_volume.maximum_m.z - point.z,
+        ]
+        clearance = min(margins) - protected_radius
+        for solid in environment.keep_out_regions if environment is not None else ():
+            dx = max(solid.minimum_m.x - point.x, 0.0, point.x - solid.maximum_m.x)
+            dy = max(solid.minimum_m.y - point.y, 0.0, point.y - solid.maximum_m.y)
+            dz = max(solid.minimum_m.z - point.z, 0.0, point.z - solid.maximum_m.z)
+            clearance = min(clearance, math.sqrt(dx * dx + dy * dy + dz * dz) - protected_radius)
+        return clearance
+
     for role_index, points in enumerate(route_points):
         allocated = allocate_trajectory_points(
             case,
@@ -3354,6 +4003,7 @@ def _corner_capability_feasibility(
             entry_exit_ramp_s=lookahead_time_s,
             transition_distance_m=lookahead_distance_m,
             turn_blend_radius_m=turn_blend_radius_m,
+            corner_cut_tolerance_m=(path_deviation_cap_m if case.drone_count == 1 else None),
         )
         trajectory = TimeParameterizedTrajectory(
             trajectory_id=f"capability-feasibility-{role_index}",
@@ -3373,6 +4023,20 @@ def _corner_capability_feasibility(
             elapsed += 0.01
         samples.append(
             (trajectory.duration_s, sample_trajectory(trajectory, trajectory.duration_s))
+        )
+        maximum_path_deviation = max(
+            maximum_path_deviation,
+            *(
+                min(
+                    distance_to_segment(sample.position_m, before, after)
+                    for before, after in pairwise(points)
+                )
+                for _, sample in samples
+            ),
+        )
+        minimum_protected_free_space = min(
+            minimum_protected_free_space,
+            *(protected_free_space(sample.position_m) for _, sample in samples),
         )
         maximum_acceleration = max(
             maximum_acceleration,
@@ -3403,6 +4067,10 @@ def _corner_capability_feasibility(
         violations.append("ACCELERATION_VIOLATION")
     if maximum_jerk > case.hard_constraints.dynamics.maximum_jerk_m_s3 + 1e-9:
         violations.append("JERK_VIOLATION")
+    if maximum_path_deviation > path_deviation_cap_m + 1e-9:
+        violations.append("PATH_DEVIATION_VIOLATION")
+    if minimum_protected_free_space < -1e-9:
+        violations.append("PROTECTED_FREE_SPACE_VIOLATION")
     payload: dict[str, object] = {
         "schema_version": 1,
         "oracle_id": "independent-dense-capability-feasibility-v1",
@@ -3418,6 +4086,8 @@ def _corner_capability_feasibility(
         "deadline_s": case.hard_constraints.deadline_s,
         "maximum_acceleration_m_s2": maximum_acceleration,
         "maximum_jerk_m_s3": maximum_jerk,
+        "maximum_path_deviation_m": maximum_path_deviation,
+        "minimum_protected_free_space_m": minimum_protected_free_space,
         "violated_constraints": tuple(violations),
     }
     return CapabilityFeasibilityRecord(
@@ -3431,6 +4101,22 @@ def _constant_path_speed_feasibility(case: CampaignCase) -> ProfileFeasibilityRe
 
     segments: list[tuple[float, float, float, float]] = []
     limits = case.hard_constraints.dynamics
+
+    def append_segment(before: Vector3, after: Vector3) -> None:
+        horizontal = math.hypot(after.x - before.x, after.y - before.y)
+        vertical = abs(after.z - before.z)
+        length = math.hypot(horizontal, vertical)
+        if length <= 1e-9:
+            return
+        horizontal_fraction = horizontal / length
+        vertical_fraction = vertical / length
+        bounds = [0.5]
+        if horizontal_fraction > 1e-9:
+            bounds.append(limits.maximum_horizontal_speed_m_s / horizontal_fraction)
+        if vertical_fraction > 1e-9:
+            bounds.append(limits.maximum_vertical_speed_m_s / vertical_fraction)
+        segments.append((length, horizontal_fraction, vertical_fraction, min(bounds)))
+
     for drone in sorted(case.drones, key=lambda item: item.role_id):
         first_goal = drone.goal_sequence[0].center_m
         last_goal = drone.goal_sequence[-1].center_m
@@ -3440,19 +4126,19 @@ def _constant_path_speed_feasibility(case: CampaignCase) -> ProfileFeasibilityRe
             drone.landing_region.center_m.model_copy(update={"z": last_goal.z}),
         )
         for before, after in pairwise(points):
-            horizontal = math.hypot(after.x - before.x, after.y - before.y)
-            vertical = abs(after.z - before.z)
-            length = math.hypot(horizontal, vertical)
-            if length <= 1e-9:
-                continue
-            horizontal_fraction = horizontal / length
-            vertical_fraction = vertical / length
-            bounds = [0.5]
-            if horizontal_fraction > 1e-9:
-                bounds.append(limits.maximum_horizontal_speed_m_s / horizontal_fraction)
-            if vertical_fraction > 1e-9:
-                bounds.append(limits.maximum_vertical_speed_m_s / vertical_fraction)
-            segments.append((length, horizontal_fraction, vertical_fraction, min(bounds)))
+            append_segment(before, after)
+    if not segments:
+        # A pure take-off/hover/land case intentionally has no cruise segment.
+        # Its plain Speed control binds to the vertical legs instead of failing
+        # preparation solely because the horizontal cruise projection is empty.
+        for drone in sorted(case.drones, key=lambda item: item.role_id):
+            points = (
+                drone.start_region.center_m,
+                *(goal.center_m for goal in drone.goal_sequence),
+                drone.landing_region.center_m,
+            )
+            for before, after in pairwise(points):
+                append_segment(before, after)
     if not segments:
         raise ValueError(f"case {case.case_id} has no nontrivial route for constant path speed")
     limiting_index = min(range(len(segments)), key=lambda index: segments[index][3])

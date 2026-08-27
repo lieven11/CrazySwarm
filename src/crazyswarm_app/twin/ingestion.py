@@ -39,15 +39,10 @@ class TwinIngestionBoundary:
         channels = self._channels.get(batch.session_id)
         if channels is None:
             raise ValueError("twin channels are not registered for this session")
-        existing = self.store.samples(batch.session_id)
-        existing_by_id = {item.sample_id: item for item in existing}
-        last_by_stream = {
-            (item.side, item.vehicle_id, item.channel_id): item
-            for item in sorted(
-                existing,
-                key=lambda item: (item.source_timestamp_s, item.sequence),
-            )
-        }
+        existing_by_id, last_by_stream = self.store.ingestion_state(
+            batch.session_id,
+            frozenset(item.sample_id for item in batch.samples),
+        )
         batch_seen: dict[str, str] = {}
         for sample in batch.samples:
             if sample.session_id != batch.session_id:
@@ -156,6 +151,7 @@ def default_twin_channels() -> tuple[TwinChannelDefinition, ...]:
         "estimator.health": ("state", "vehicle", "IDENTIFIER"),
         "flow.state": ("json", "body", "IDENTIFIER"),
         "range.state": ("json", "body", "IDENTIFIER"),
+        "transport.radio": ("json", "transport", "IDENTIFIER"),
         "perception.world_revision": ("revision", "world", "SCALAR"),
         "command.identity": ("sha256", "authority", "IDENTIFIER"),
         "plan.identity": ("sha256", "authority", "IDENTIFIER"),

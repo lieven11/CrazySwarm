@@ -16,7 +16,10 @@ from crazyswarm_app.campaign.models import (
     ImplementationStatus,
     LifecycleRecord,
     LifecycleState,
+    MajorMissionCurriculum,
     MigrationReceipt,
+    MissionCluster,
+    TwoDroneMissionCurriculum,
 )
 from crazyswarm_app.campaign.semantic_audit import (
     CaseSemanticAudit,
@@ -33,18 +36,38 @@ _IGNORED_NAMES = {"README.md", ".DS_Store"}
 
 ONE_DRONE_FAMILY_ORDER = (
     "takeoff_hover_land",
+    "hover_endurance",
+    "axis_nudge_return",
+    "short_offset_landing",
     "point_to_point_relocation",
     "move_return",
+    "checkpoint_path",
     "altitude_transition",
+    "spatial_step_path",
     "continuous_waypoint_sequence",
     "curved_route",
+    "polygon_loop",
     "planar_shape_loop",
     "boundary_constrained_route",
     "static_multi_goal_sequence",
 )
-_ONE_DRONE_FAMILY_RANK = {
-    family: index for index, family in enumerate(ONE_DRONE_FAMILY_ORDER)
+_ONE_DRONE_FAMILY_RANK = {family: index for index, family in enumerate(ONE_DRONE_FAMILY_ORDER)}
+
+_MAJOR_MISSION_CASE_IDS = {
+    "1d.altitude_transition.canonical_nominal",
+    "1d.altitude_transition.wide",
+    "1d.boundary_constrained_route.canonical_nominal",
+    "1d.continuous_waypoint_sequence.canonical_nominal",
+    "1d.curved_route.canonical_nominal",
+    "1d.move_return.canonical_nominal",
+    "1d.planar_shape_loop.circle",
+    "1d.planar_shape_loop.figure_eight",
+    "1d.planar_shape_loop.rounded_square",
+    "1d.point_to_point_relocation.canonical_nominal",
+    "1d.static_multi_goal_sequence.canonical_nominal",
+    "1d.takeoff_hover_land.canonical_nominal",
 }
+_RESERVED_WIND_CASE_ID = "1d.altitude_transition.wind_shift"
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,6 +128,15 @@ class CampaignCatalog:
                         raise ValueError(f"duplicate campaign case ID: {case.case_id}")
                     entries[case.case_id] = CatalogEntry(case, path, source)
         semantic_audit = audit_catalog(entry.case for entry in entries.values())
+        dynamic_case_ids = {
+            entry.case.case_id
+            for entry in entries.values()
+            if entry.case.cluster is MissionCluster.DYNAMIC_REPLANNING
+        }
+        if dynamic_case_ids and dynamic_case_ids != {"1d.online_obstacle_replan.dynamic_nominal"}:
+            raise ValueError(
+                "dynamic replanning catalog cluster must contain only the online obstacle case"
+            )
         self._semantic_audits = {item.case_id: item for item in semantic_audit.cases}
         invalid = tuple(
             item
@@ -189,6 +221,92 @@ class CampaignCatalog:
             for environment, clusters in sorted(result.items())
         }
 
+    def major_mission_curriculum(
+        self,
+        path: Path | None = None,
+    ) -> MajorMissionCurriculum:
+        """Load the immutable-case presentation registry and fail closed on drift."""
+
+        curriculum_path = (
+            path.resolve()
+            if path is not None
+            else self.root.parent.joinpath("curriculum", "1d-major-missions-v1.yaml")
+        )
+        if not curriculum_path.is_file():
+            raise ValueError(f"major-mission curriculum is missing: {curriculum_path}")
+        raw = yaml.safe_load(curriculum_path.read_text(encoding="utf-8"))
+        curriculum = MajorMissionCurriculum.model_validate(raw)
+        enabled = tuple(
+            variant.case_id
+            for group in curriculum.groups
+            for variant in group.variants
+            if variant.status is ImplementationStatus.EXECUTABLE
+        )
+        disabled = tuple(
+            variant
+            for group in curriculum.groups
+            for variant in group.variants
+            if variant.status is ImplementationStatus.PLANNED_NOT_EXECUTABLE
+        )
+        if set(enabled) != _MAJOR_MISSION_CASE_IDS or len(enabled) != len(_MAJOR_MISSION_CASE_IDS):
+            raise ValueError(
+                "major-mission executable coverage mismatch: "
+                f"missing={sorted(_MAJOR_MISSION_CASE_IDS - set(enabled))}, "
+                f"extra={sorted(set(enabled) - _MAJOR_MISSION_CASE_IDS)}"
+            )
+        missing_catalog_cases = _MAJOR_MISSION_CASE_IDS - self._entries.keys()
+        if missing_catalog_cases:
+            raise ValueError(
+                "major-mission registry references unknown or renamed cases: "
+                f"{sorted(missing_catalog_cases)}"
+            )
+        if tuple(item.case_id for item in disabled) != (_RESERVED_WIND_CASE_ID,):
+            raise ValueError("Wind shift must remain the sole reserved disabled variant")
+        wind = disabled[0]
+        if (
+            wind.label != "Wind shift"
+            or wind.future_fixture_source != "SimulationConfig.disturbance.force_impulse_n_s"
+            or wind.case_id in self._entries
+        ):
+            raise ValueError("reserved Wind shift variant boundary changed")
+        return curriculum
+
+    def two_drone_mission_curriculum(
+        self,
+        path: Path | None = None,
+    ) -> TwoDroneMissionCurriculum:
+        """Load the non-duplicated 2D conflict presentation registry."""
+
+        curriculum_path = (
+            path.resolve()
+            if path is not None
+            else self.root.parent.joinpath("curriculum", "2d-conflict-missions-v1.yaml")
+        )
+        if not curriculum_path.is_file():
+            raise ValueError(f"2D mission curriculum is missing: {curriculum_path}")
+        raw = yaml.safe_load(curriculum_path.read_text(encoding="utf-8"))
+        curriculum = TwoDroneMissionCurriculum.model_validate(raw)
+        discovered = {
+            case.case_id
+            for case in self.cases()
+            if case.environment is EnvironmentKind.SIMULATION and case.drone_count == 2
+        }
+        mapped = {variant.case_id for group in curriculum.groups for variant in group.variants}
+        if mapped != discovered:
+            raise ValueError(
+                "2D mission curriculum/catalog mismatch: "
+                f"missing={sorted(discovered - mapped)}, extra={sorted(mapped - discovered)}"
+            )
+        status_by_case = {case.case_id: case.implementation_status for case in self.cases()}
+        for group in curriculum.groups:
+            for variant in group.variants:
+                if variant.status is not status_by_case[variant.case_id]:
+                    raise ValueError(
+                        f"2D curriculum status drift for {variant.case_id}: "
+                        f"{variant.status.value} != {status_by_case[variant.case_id].value}"
+                    )
+        return curriculum
+
     def initial_lifecycle(self) -> tuple[LifecycleRecord, ...]:
         return tuple(
             LifecycleRecord(
@@ -242,9 +360,7 @@ def validate_case_against_policy(case: CampaignCase, policy: SafetyPolicy) -> No
 def _presentation_key(entry: CatalogEntry) -> tuple[int, int, int, str, str]:
     case = entry.case
     environment_rank = 0 if case.environment is EnvironmentKind.SIMULATION else 1
-    family_rank = (
-        _ONE_DRONE_FAMILY_RANK.get(case.family, 10_000) if case.drone_count == 1 else 0
-    )
+    family_rank = _ONE_DRONE_FAMILY_RANK.get(case.family, 10_000) if case.drone_count == 1 else 0
     return (
         environment_rank,
         case.drone_count,

@@ -1,6 +1,7 @@
 /** Cloudflare Worker entry point for the vinext-starter template. */
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
+import { controlApiTimeoutMs } from "./control-api-timeout";
 
 interface AssetFetcher {
   fetch(request: Request): Promise<Response>;
@@ -75,6 +76,9 @@ async function proxyControlApi(request: Request, env: Env | undefined): Promise<
   if (idempotencyKey) headers.set("Idempotency-Key", idempotencyKey);
   const contentType = request.headers.get("Content-Type");
   if (contentType) headers.set("Content-Type", contentType);
+  const isCampaignPreview = target.pathname === "/api/v1/campaign/active/preview";
+  const isPhysicalTwinLive = target.pathname === "/api/v1/physical-twin/live";
+  const timeoutMs = controlApiTimeoutMs(target.pathname, request.method);
   try {
     const upstream = await fetch(target, {
       method: request.method,
@@ -82,7 +86,7 @@ async function proxyControlApi(request: Request, env: Env | undefined): Promise<
       body: request.method === "GET" || request.method === "HEAD"
         ? undefined
         : await request.arrayBuffer(),
-      signal: AbortSignal.timeout(5_000),
+      signal: isPhysicalTwinLive ? undefined : AbortSignal.timeout(timeoutMs),
     });
     const responseHeaders = new Headers();
     for (const header of [
@@ -92,6 +96,7 @@ async function proxyControlApi(request: Request, env: Env | undefined): Promise<
       "X-CrazySwarm-CSV-Schema",
       "X-CrazySwarm-Row-Count",
       "X-CrazySwarm-Content-SHA256",
+      "Cache-Control",
     ]) {
       const value = upstream.headers.get(header);
       if (value) responseHeaders.set(header, value);
@@ -100,10 +105,16 @@ async function proxyControlApi(request: Request, env: Env | undefined): Promise<
       status: upstream.status,
       headers: responseHeaders,
     });
-  } catch {
+  } catch (error) {
+    const timedOut = error instanceof Error && error.name === "TimeoutError";
     return Response.json(
-      { error: { code: "LOCAL_SERVICE_OFFLINE", message: "SIM OFFLINE" } },
-      { status: 503 },
+      { error: {
+        code: timedOut ? "LOCAL_SERVICE_TIMEOUT" : "LOCAL_SERVICE_OFFLINE",
+        message: timedOut
+          ? isCampaignPreview ? "Campaign preview timed out" : "Local service request timed out"
+          : "SIM OFFLINE",
+      } },
+      { status: timedOut ? 504 : 503 },
     );
   }
 }

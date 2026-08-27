@@ -17,6 +17,88 @@
 | Current development case | `SIM / three_drone_multi_conflict` until the WP-39 catalog cutover |
 | Development execution budget | One active case plus at most one explicitly selected secondary case |
 
+## 2026-08-27 — Healthy-radio telemetry-stall recovery fast loop
+
+**Status:** `IMPLEMENTED`
+
+**Independent verification:** `IMPLEMENTED_UNVERIFIED` (fast-loop work; no formal
+independent gate requested)
+
+**Frozen baseline:** the live observer closed and reopened its link at
+`2026-08-27T19:33:50Z` and `2026-08-27T19:35:28Z`. Both failures were classified as
+`TELEMETRY_STALE`; contemporaneous transport reported healthy ACKs, an empty outbound
+queue, and zero USB errors. The reconnects restored firmware log delivery without a
+firmware-clock reset. Application command volume and RF loss are therefore not the
+measured failure boundary.
+
+**Bounded implementation:** after the existing stale grace, and only when transport
+classification remains `TELEMETRY_STALE`, stop/delete and recreate the existing cflib
+log blocks on the retained radio link. Clear cached log values, require a fresh callback
+within a bounded timeout, and journal the repair attempt/result. Permit one repair per
+stale episode; if it fails or stalls again within `30 s`, retain the existing full
+disconnect/reconnect fallback.
+Never apply this recovery to RF loss, queue saturation, USB failure, command execution,
+or a suspended observer.
+
+**Exit gate:** injected observer coverage proves successful log repair preserves the
+same radio connection, failed repair falls back to exactly one reconnect, and an RF
+fade never invokes log repair. Link-level coverage proves old blocks are removed,
+fresh telemetry is required, and no connection epoch changes. No live deployment or
+physical operation is part of this coding task.
+
+**Author checks:** the combined adapter, observer, commissioning, and physical-twin API
+selection passed `110` tests; after the final repeated-stall escalation bound, the
+adapter/observer selection passed `72` tests. Ruff, strict mypy on the four changed
+production modules, and `git diff --check` passed.
+
+## 2026-08-27 — Physical hover drop / radio-causality fast loop
+
+**Status:** `IMPLEMENTED`
+
+**Independent verification:** `IMPLEMENTED_UNVERIFIED` (fast-loop work; no formal
+independent gate requested)
+
+**Operator intent:** keep the improved room-wide Crazyradio connection, determine
+whether intermittent physical drops are caused by excessive packet traffic, and stop
+the aircraft from waiting in an unstable near-floor/controller-recovery condition.
+
+**Frozen baseline:** the two completed `hover-12s` runs at `2026-08-27T18:18:51Z`
+and `2026-08-27T18:19:48Z`, the aborted operation
+`twin-basic-real-806004e76c7d4553b9287ae1a3571157`, and their retained telemetry/radio
+transport evidence. The completed hover windows remained within `0.276..0.346 m` and
+`0.302..0.344 m`; their minimum loaded voltages / displayed battery levels were
+`3.859 V / 30%` and `3.806 V / 20%`. At the near-floor anomaly the measured transport
+was `HEALTHY` with `0%` window packet loss, queue depth `0`, and sub-millisecond ACK
+age, while the down range was `0.003 m`, motor PWM reached `98.73%`, attitude reached
+approximately `14.5 deg` roll / `6.9 deg` pitch, and loaded battery voltage / displayed
+level fell to `3.669 V / 10%`. The later RF loss burst occurred after motor output was
+already zero. This supports loss of power/actuator margin as the guarded condition but
+does not qualify battery, motor, propeller, floor contact, or estimator hardware as the
+single component cause.
+
+**Causal hypothesis:** isolated radio misses are not the initiating cause because the
+high-level Crazyflie commander holds its setpoint onboard and the anomaly precedes the
+observed RF burst. The immediate software gap is that duration-based high-level
+commands collect telemetry but do not turn sustained measured floor proximity,
+estimator loss, excessive tilt, or combined actuator saturation/voltage sag into a
+fail-closed command result.
+
+**Bounded implementation:** add a physical-adapter airborne-stability guard for
+takeoff, hover, stop/hold, and relative movement. Use sustained time windows so one
+packet miss, one asynchronous log value, or one sensor sample cannot trigger it. Route
+a violation through the existing recorded failure and abort/land path; do not retune
+the onboard controller, replay uncertain commands, change the radio URI, or claim the
+physical cause is qualified. The bounded thresholds are floor proximity at or below
+`0.06 m` for `0.30 s`; an unavailable/unconverged estimator or roll/pitch at or above
+`20 deg` for `0.25 s`; and motor output at or above `95%` together with loaded battery
+voltage at or below `3.75 V` for `0.25 s`.
+
+**Exit gate:** focused adapter and physical-flight tests prove that stable flight and
+isolated packet loss remain admitted, while sustained near-floor flight, estimator
+loss, excessive tilt, and saturation with loaded-voltage sag fail with exact measured
+details and permit the existing recovery path to land. Physical validation remains an
+operator rerun after deployment and is not part of this coding task.
+
 ## Current state and reason for reopening curriculum work
 
 WP-01 through WP-34 remain closed as the implemented software and Fast Sim foundation
@@ -2677,6 +2759,7 @@ diff.”
 - Review unit: WP-52 through WP-56 together; the original accepted design plus the five
   residual implementation findings are mandatory context.
 - Independent verification: `BLOCKED_WITH_FINDINGS`.
+
 - Initial R2 design payload SHA-256:
   `d6189e46a60b30091313f4766f1a8df1ab28f437a536b383ba9ab7bd4b3253fa`.
 - Reviewer: fresh project-scoped `/root/wp52_56_r2_design_review`, different from both
@@ -2980,6 +3063,7 @@ and both delimited design sections.
 - Originating request: 2026-08-12 explicit `Ok continue` authorization.
 - Review unit: combined R2+R3 WP-52–56 design, with R3 closing the two R2 P1s.
 - Independent verification: `DESIGN_VERIFIED`.
+
 - Initial R3 design payload SHA-256:
   `9519afc1d13a1e63f3a9c61a48789aef5bdd3124637a8a7bd3ce68ca65f698b1`.
 - Initial verdict: `BLOCKED_WITH_FINDINGS`, with no P0, six P1 findings, and no separate
@@ -5290,3 +5374,7195 @@ focused recheck by that same verifier remains. Any unresolved P0/P1 leaves the b
 - Real-aircraft evidence remains literal `NOT_RUN`. The interrupted UI dependency tree
   prevented lint/build/browser execution and is recorded as an evidence limitation,
   not a passing result.
+
+## Operator-review successor batch — stable goal-seeking replanning and compact 1D missions
+
+This is a narrow successor to the partially implemented WP-57 through WP-61 batch. It
+does not reopen that batch's exhausted implementation review, inherit its unverified
+claims, or authorize implementation. It converts the latest two failed realtime runs
+and the operator's clarified product model into five independently reviewable design
+packets.
+
+| Packet | Status | Independent verification |
+|---|---|---|
+| WP-62 — realtime replanning runtime stability and recovery | `DEFINED_NOT_STARTED` | `DESIGN_VERIFIED` |
+| WP-63 — five-major-mission 1D curriculum and plain preparation controls | `DEFINED_NOT_STARTED` | `DESIGN_VERIFIED` |
+| WP-64 — whole-route motion trade-offs and motor-realism regression | `DEFINED_NOT_STARTED` | `DESIGN_VERIFIED` |
+| WP-65 — source-time graph-to-flight review cursor | `DEFINED_NOT_STARTED` | `DESIGN_VERIFIED` |
+| WP-66 — start-goal dynamic replanning cluster and online-obstacle mission | `DEFINED_NOT_STARTED` | `DESIGN_VERIFIED` |
+
+<!-- WP62-66-DESIGN-PAYLOAD-BEGIN -->
+
+### Frozen originating requests
+
+The following is the exact operator request that originated this successor batch:
+
+> next work packet iteration or improvement
+>
+> - 1D
+>   - Compact current missions into 5 major missions with the same path planning and so on (in basic flight & routes, hovering, move to target, follow path same altitude, follow path with changing altitudes windshief and so on, like the ones before, figure 8 and different shape as submissions e.g.
+>     - The basic movement was fine, general path planning is good, constant velocity can be done, it can hover land etc., follow line
+>     - Only thing is that e.g. in curved route: you see how at the kink it still slows down even though it didnt have to slow down because the turn was easy to do not that harsh, that is also the quality measure that I am talking about like maybe also let me adjust for the paramters, constant velocity, waypoint holding max accuaracy to the limit it can go off the planned path, if I set it to 100m then it could go straight you know if no obstacle there, thats what I am talking about I want this kind of econtrol hewn preparing a mission with a path so it does a tradeoff between velocity amount and stability, control acceleration and realness (it cannot change velocity suddenly for 100° corners or something), so basically basic mission with case, then choose between subcases like now and also let me choose these measurements
+>     - Just make the submission like one simple slider with one word not planner retimed baseline doubled, also remove this eligible shit it is not needed
+>     - Test if movement is better, more realistic motor movement
+>     - Do you know e.g. when looking at mission velocity profile one bump then exactly what the drone did there at this moment or where it was -> if not implement that capability for better post analysis
+>
+> - Replanning Flexible dynamic
+>   - Then you can extend the online obstacle replan
+> -
+> The replanning flexible dynamic mission is currently not what I expected. There are multiple issues. I think the issue is that, so, as I said above as well, you should structure between this basic flight and routes where you have, like, this pre-planned mission, and then I want another, like, mission cluster. So I don't want this, like, this single online obstacle replan mission within the basic flight and routes. I want you to introduce another mission cluster, which is just this, like, dynamic replanning thing. Of course, then the easiest one would be the one that you are currently doing, but there are multiple issues there. First of all, I think the issue is that you are still pre-planning a path. So this was valid for the first thing where we had a clear path, no obstacles, and everything. But the thing here is you only have, for the live iteration obstacle thing, you shouldn't pre-plan a path, because what you're doing right now is you're pre-planning a path, then an object appears, and then you go suddenly all the way to the right or to the left or whatever, which is physically also not possible, but it's not smooth. So that's the first thing. For example, you could slow down or you could go left, for example, very, like, smoothly, but you shouldn't, maybe this immediate, like, measure or avoidance thing would be, could be valid if, for example, it would be very close to the object. So the closer the object and the higher the velocity of the drone, then the more immediate this thing could be. Otherwise, you can also replan it very smoothly. So there should be this measurement as well, taking into account the velocity of the drone and also the distance to the object, which is then, of course, bound to a sensor measurement data, which is now known. And for the real drone, we have to see for obstacle avoidance. But this is just for mission planning right now. And then if the obstacle disappears, you go back to this center line. But this is the wrong approach because you should only have one start and one goal, like one start and one goal, and then you should always steer to that goal. Now, if there's no obstacles, then of course, the ideal line would be a straight line. But then if there's an obstacle, you should go around it smoothly. Then if there's another obstacle, you go around that one. Or if you can't go further, then, for example, you can also stop, you can relocate, you can turn, and then you can fly around it. So that should be this approach. So only, so it's really like an algorithm, for example. dyxtra algorithm or manhattan distance or something just like if you have tree branches when you steer to a goal or something. so for this mission cluster get rid of this preplanned mission and steering back to it. analze the csv as well, dont bother to plan other missions for now we have to get the reaction right first so keep this online obstacle thing just structure into this new mission cluster
+>
+> structure work packets for this
+
+The following exact follow-up expands the stability and implementation-review scope:
+
+> also fo9r the online obstacle it is not stable at all and it crashes often so the sim being down
+>
+> also i want you to analze the latest implementations espeically considering this online replanning bedcaue now the execution i think was fairly bad but so many tokens were burned
+
+### Frozen intent/value and scope
+
+- Minimum useful outcome: the existing local product remains recoverable across
+  repeated realtime runs, and one online-obstacle mission flies from one start to one
+  goal using only current perceived free space without an unnecessary stop for an
+  ample-margin obstacle.
+- Explicit value: compact the current 1D curriculum into five understandable major
+  missions; expose the speed/accuracy/smoothness choice in plain controls; improve
+  whole-route physical continuity; and connect a plotted anomaly to the exact drone
+  position and source sample.
+- Necessary prerequisites: truthful source/receive/realtime clock handling, continuous
+  telemetry during plan/cutover work, immutable hard safety bounds, and an independent
+  accepted-trajectory certificate.
+- Scope priority: implement WP-62 first, then the smallest WP-64 motion-core slice
+  needed by WP-66, then WP-66. Do not spend implementation time on the catalog polish,
+  review cursor, wind fixture, or any new dynamic mission until the final WP-66
+  realtime gate passes.
+- Deferred: additional dynamic mission families, digital-twin calibration, hardware,
+  live computer vision, mapping/SLAM, learned control, and physical-flight claims.
+  The `Wind shift` name is reserved under `3D path` and remains
+  `PLANNED_NOT_EXECUTABLE` until the online reaction gate passes; the existing
+  source-timed force-impulse model is its future fixture boundary.
+
+### Frozen development boundary and pre-freeze audit
+
+- Branch: `codex/1d-replanning-digital-twin`.
+- Base commit: `40cd9947f87eb9bf2719d72e7c72ea867eab9977`.
+- `ACTIVE.md` preimage before this batch:
+  `2fb892b71b06f97f33b8249e4496e055dc6a515e534fa447b8b0ff3ef4cff1bd`.
+- Durable requirements postimage:
+  `77c722f00a98b0e861393a096e8538dbc799ebd3348f10f873743b853aef767e`.
+- UI-guide postimages: `design.md`
+  `30628d07cb3476f74495fe4c12f81c4892d754bf944a92549f1a8b1cac8c234a`
+  and `docs/project/DESIGN.md`
+  `ece20b42853194b2e820bbfe2768f3c9d0731a6e9428d5ee5724aa7a795d7b05`.
+- Machine-readable design audit:
+  `missions/campaigns/sim/qualification/wp62-66-design-audit-v1.json`, 212,758
+  bytes, SHA-256
+  `0d48bce6b7b5326ba1a402e87ac8ed8a3e9318974650f14b5a8ec96f78099a16`.
+- Audit program: `scripts/audit_wp62_66_design.py`, SHA-256
+  `6fe8e3646008be372bbe0b661915d0039a4c8bd18a1165bb6bbf8185dd931dfd`.
+- Reproduce exact group coverage, current evidence hashes, boundary closure, response
+  arithmetic, reaction certificates, speed/distance monotonicity, and adverse cases:
+
+```bash
+.venv/bin/python scripts/audit_wp62_66_design.py \
+  missions/campaigns/sim/qualification/wp62-66-design-audit-v1.json
+```
+
+The audit maps all 12 current 1D basic/route case IDs exactly once into the five
+operator groups. Its boundary manifest contains 154 classified existing paths: direct
+AST import discovery from five production roots contributes 59 paths and a clean
+temporary generator run contributes 67 exact simulator/template/real-mirror outputs.
+It also freezes eight absent/new implementation paths and binds both latest run
+manifests, analyses, and CSVs by hash. These hashes intentionally include pre-existing
+user edits in the shared dirty tree; implementation must preserve or explicitly
+incorporate them and may not revert them.
+
+### Latest-implementation and CSV assessment
+
+The latest broad implementation commit `9621591` changed 88 files with 10,559 added
+and 3,088 deleted lines. It combined motion, sensed replanning, motor evidence,
+digital-twin/calibration, API, and UI work. Its independent implementation review and
+focused recheck are exhausted with P1 findings, including the unconditional
+stop-and-hold reaction and missing production connection of adaptive motion intent.
+This successor therefore separates the minimum runtime/reaction path from the deferred
+work instead of treating that broad commit as qualified.
+
+| Evidence | Observed result |
+|---|---|
+| `campaign-run-dd31f5156c7ad2adbb67` | `ABORTED`; 308 CSV rows; no perceived obstacle; realtime factor `0.7762462302035557`; `TELEMETRY_STALE`/stale-fleet abort; terminal `EMERGENCY` |
+| `campaign-run-b2657ba1f323a160070f` | `ABORTED`; 603 CSV rows; one observation and one replacement dispatch; realtime factor `0.7886796105394428`; the same stale-fleet abort; terminal `EMERGENCY` |
+
+The second run perceived the obstacle at source `5.027430402413535 s` and receive
+`5.147430402413535 s`. Planning took `0.08945066599972051 s`; total recorded reaction
+was `0.310043290999347 s`; the old prefix certificate reported
+`0.952651849579511 m` clearance. Nevertheless, production
+`CampaignExecutionHead.run()` calls `stop_and_hold_for_replan()` for every accepted
+observation before planning, and the evidence labeled the drone stopped while its
+observed speed was still `0.16009514752424556 m/s` against a `0.02 m/s` stop
+threshold. The replacement then formed a rectangular lateral detour from approximately
+`(-1.223, 0.003, 0.400)` through `y=-0.382` to the original goal, rather than a
+velocity-continuous local route from the current state.
+
+Both analyses attribute the abort to a wall-clock watchdog expiring while the
+source-clock schedule continued. Fleet freshness uses wall-clock time since the
+supervisor's last telemetry receive, while replanning preempts the active command and
+waits for planning/cutover. This is the evidence-backed likely integration cause; WP-62
+must prove the exact publisher/clock defect through a failure-first test rather than
+assume it. Neither CSV records a collision (`collision_count=0`); the later emergency
+descent and approximately `2.294 m/s` raw vertical excursion explain the visual crash
+impression but do not establish modeled physical impact.
+
+The existing accelerated end-to-end test currently fails before perception with:
+
+```text
+ValueError: dynamic activation requires passing static baselines:
+1d.point_to_point_relocation.canonical_nominal
+```
+
+The current worktree decouples review from lifecycle selection while that test still
+assumes review approval supplies the prerequisite. WP-62 must repair the production
+contract or its fixture explicitly; an accelerated component success remains
+insufficient evidence for the realtime claim. At design time the backend and served UI
+are reachable, but post-failure recoverability has not been demonstrated.
+
+### WP-62 — realtime replanning runtime stability and recovery
+
+**Status:** `DEFINED_NOT_STARTED`
+
+**Independent verification:** `DRAFT_UNVERIFIED`
+
+Own the source/receive/wall-clock boundary from Fast Sim telemetry publication through
+the supervisor session and fleet freshness watchdog while planning and cutover work is
+active. Remove false starvation caused by route preemption, task cancellation, or
+blocking planner work. Preserve the existing `0.25 s` freshness limit and `0.8`
+minimum realtime factor; changing either value is an oracle failure. Ensure every
+terminal path performs bounded cleanup and leaves the API, simulator vehicle, Campaign
+workspace, and next-run authority usable.
+
+Required implementation slices:
+
+1. Add a failure-first realtime test that reproduces the current stale abort while an
+   observation is validated/planned/committed and traces the missing telemetry receive
+   update to its production owner.
+2. Make telemetry publication independent of the replanning command task, and compare
+   source progress, receive freshness, and realtime performance on their correct
+   clocks. Do not manufacture heartbeat samples or mark old data fresh.
+3. Reconcile route cancellation, replacement authority, emergency/landing cleanup,
+   active-run persistence, and the static-prerequisite lifecycle used by the true E2E
+   fixture.
+4. Retain health and authority evidence before the run, after every terminal result,
+   and at the start of an immediate retry.
+
+Exit evidence:
+
+- Three consecutive `OPERATOR_OBSERVED_REALTIME` executions of the current online case
+  reach at least the first two trusted observations without `TELEMETRY_STALE`,
+  `STALE_FLEET_OBSERVATION`, timing-caused `EMERGENCY`, or a realtime factor below
+  `0.8`. Each run may still fail on an explicit planner/motion gate before WP-66, but
+  the failure must be recoverable and correctly classified.
+- An immediate fourth run starts normally without process restart, stale authority,
+  retained obstacle leakage, or a stuck active-run record; API health and the served
+  Campaign workspace remain available after each terminal result.
+- One isolated authoritative-telemetry dropout longer than `0.25 s` produces the
+  expected single safe abort. A receive-clock-only delay, source-clock freeze, and
+  planner compute pause are independently distinguishable in retained evidence.
+- The corrected production E2E test enters the sensed-world path; accelerated-only
+  success cannot close the packet. Exact pre/post CSV, faults, missing sequences,
+  realtime factor, cleanup events, and service health are retained per repeat.
+
+### WP-63 — five-major-mission 1D curriculum and plain preparation controls
+
+**Status:** `DEFINED_NOT_STARTED`
+
+**Independent verification:** `DRAFT_UNVERIFIED`
+
+Add a versioned grouping registry over immutable cases and runs. The operator-facing
+major missions and exact current mapping are:
+
+| Major mission | Current variants |
+|---|---|
+| `Flight` | Take off, hover, land |
+| `Target` | Move to target; move and return |
+| `Level path` | Continuous waypoints; curved route; multi-goal/checkpoint route; boundary-constrained route |
+| `3D path` | Altitude transition; wide altitude transition; reserved disabled `Wind shift` |
+| `Shape` | Circle; rounded square; figure eight |
+
+Normal preparation shows one `Balance` slider (`0..100`, default `50`) whose endpoints
+are `Accuracy` and `Flow`. It resolves monotonically through each case's declared
+feasible endpoints; it never changes hard guards. A closed `Tune` disclosure exposes
+one-word `Speed`, `Accuracy`, and `Smoothness` sliders. `Speed` requests cruise speed,
+`Accuracy` requests maximum soft-reference/tube deviation, and `Smoothness` requests
+the relative acceleration/jerk/angular/motor-spread objective. Units, requested value,
+resolved feasible value, and any binding safety cap appear beside the focused control.
+A request such as `100 m` may permit a straight shortcut through admitted free space,
+but it can never relax obstacles, vehicle geometry, flight volume, dynamics, actuator,
+energy, or terminal guards.
+
+Replace visible technical labels such as `Planner-retimed baseline` with the plain
+control state. Remove routine `Eligible` badges. An unavailable variant is disabled
+with one concise reason; internal submission/profile IDs, hashes, eligibility and full
+resolution evidence remain in the closed technical disclosure. Persist the resolved
+typed motion contract and its hash, not only slider positions.
+
+Exit evidence:
+
+- Machine tests prove all 12 current IDs appear exactly once under the five labels,
+  reordered source files do not change grouping, a renamed/unknown case fails closed,
+  and every retained run remains reachable under its immutable case ID.
+- Slider endpoint/midpoint fixtures prove monotonic resolution, hard-bound capping,
+  requested-versus-resolved retention, and that `100 m` cannot escape the volume or
+  intersect an obstacle.
+- Served desktop and narrow UI evidence covers keyboard sliders, disclosure, disabled
+  reason, loading/empty/error states, focus return, and absence of `Eligible` and
+  technical planner labels from the normal path.
+
+### WP-64 — whole-route motion trade-offs and motor-realism regression
+
+**Status:** `DEFINED_NOT_STARTED`
+
+**Independent verification:** `DRAFT_UNVERIFIED`
+
+Finish the reusable whole-route/receding-horizon motion capability that WP-58 did not
+connect to production. Plan velocity, acceleration, jerk, and path deviation over the
+meaningful future geometry from the current position/velocity/acceleration. Preserve
+explicit `CHECKPOINT` holds while treating ordinary fly-through knots, equivalent
+subdivision, and the figure-eight crossover as geometry rather than stop commands.
+Resolve speed, tube/free-space accuracy, acceleration, jerk, angular activity,
+individual-motor headroom/spread/saturation, energy, and terminal behavior together;
+no single smoothness score may hide a hard regression.
+
+The implementation priority inside WP-64 is only the shared motion core and curved /
+figure-eight / altitude anchors required by WP-66. The reserved wind-shift fixture may
+be enabled only after WP-66 passes, using the existing source-timed force impulse and
+the same pre/post oracle; it does not authorize a new aerodynamic-fidelity claim.
+
+Exit evidence:
+
+- Equivalent collinear subdivision changes sampled geometry/time law by at most
+  `1e-6 m`; an easy continuous bend and repeated-coordinate crossover retain at least
+  `0.95` of their admitted approach speed, while a 100-degree bend visibly obeys the
+  acceleration/jerk envelope instead of changing velocity instantaneously.
+- At least `95%` of every declared steady window lies in its requested speed band;
+  checkpoint dwell and continuous fly-through are each independently perturbed and
+  verified.
+- Three accelerated repeats per curved-route, figure-eight, and altitude anchor plus
+  one realtime repeat per anchor retain the full pre/post vector from `REQ-EVI-013`.
+  Every hard motion, safety, contact, motor, energy, and terminal guard passes every
+  repeat; an average cannot hide a failure.
+- An independently sampled trajectory oracle, not the production parameterizer,
+  computes curvature, speed continuity, tracking, acceleration/jerk, and hard bounds.
+  Raw CSV extrema reconcile with processed values, and individual motors show the
+  signed differential response expected from body acceleration without saturation or
+  reduced headroom relative to the retained baseline.
+
+### WP-65 — source-time graph-to-flight review cursor
+
+**Status:** `DEFINED_NOT_STARTED`
+
+**Independent verification:** `DRAFT_UNVERIFIED`
+
+Replace independent static chart inspection with one retained source-sequence cursor
+shared by all Campaign review plots and the room/replay marker. Clicking, tapping, or
+keyboard-moving a velocity-profile bump selects the nearest actual CSV source sample,
+not a screen-space estimate. The focused readout shows source sequence/time, exact
+recorded position, accepted plan/reference sample, commanded and observed velocity,
+IMU, individual motors, perceived objects, replan/cutover identity, and safety state
+available at that sequence. Missing fields are `Unavailable`; derived or interpolated
+values state their method and never present as exact measurements.
+
+Exit evidence:
+
+- A fixture with a unique velocity bump and deliberately offset receive timestamps
+  selects the correct source sequence and exact position; reordering CSV rows,
+  duplicate receive times, missing channels, and an interpolation gap do not move or
+  fabricate the source truth.
+- Every graph shares the cursor, retains unit/source/quality labels, has a text
+  alternative and keyboard operation, and can expand without turning the entire chart
+  into a conflicting button target.
+- Served desktop/narrow/reduced-motion evidence proves velocity-bump selection moves
+  the room marker and shows the same source sequence across plot, spatial view, and
+  download row.
+
+### WP-66 — start-goal dynamic replanning cluster and online-obstacle mission
+
+**Status:** `DEFINED_NOT_STARTED`
+
+**Independent verification:** `DRAFT_UNVERIFIED`
+
+Add the enum/API/catalog/UI cluster `DYNAMIC_REPLANNING`, labeled `Dynamic
+replanning`, and move only `1d.online_obstacle_replan.dynamic_nominal` into it. Do not
+add or plan another dynamic mission in this batch. Replace that case's route intent
+with a goal-seeking contract containing one start state, one goal/landing region,
+immutable safety/dynamics bounds, and the current perceived-world generation. Supplying
+an authored reference route, centerline, or rejoin waypoint is rejected. Historical
+case and run identities remain inspectable; a versioned successor contract records the
+semantic change.
+
+Use a bounded A* free-space corridor search over `0.05 m` X/Y cells and eight headings.
+Its primitive family is exactly the eight adjacent cells; diagonal corner cutting is
+forbidden and obstacles are inflated by the `0.055 m` nominal radius, `0.05 m`
+uncertainty, and `0.15 m` policy clearance. Its lexicographic cost is path length in
+metres, integrated absolute heading change in radians, negative minimum clearance in
+metres, then canonical state key. Euclidean distance is the admissible primary-cost
+heuristic. The hard bounds are 8,192 expansions and `0.09 s`; either exhaustion returns
+`NO_COMMAND_BUDGET_EXHAUSTED`. Neighbor/candidate enumeration order and obstacle IDs
+cannot affect the selected point vector. A found corridor is not motion authority: the
+WP-64 layer must build a position/velocity/acceleration-continuous trajectory from the
+fresh committed state and the independent `0.01 m` swept sampler must certify it;
+failure rejects the corridor.
+
+The exact prototype returns a `2.6 m` no-obstacle path after 52 expansions and a
+`3.01421356238 m` obstacle path with `2.356194490191 rad` integrated turn,
+`0.3 m` minimum center clearance, and 4,060 expansions. Reversed candidate enumeration
+and renamed obstacle IDs return the identical point vector. Removing the obstacle from
+the frozen current state reduces path length from `2.419238815547 m` to `1.8 m`.
+One-expansion exhaustion returns `BUDGET_EXHAUSTED`; an enclosing wall proves
+`NO_SOLUTION` after 2,530 expansions. Recede and repeat this process on every accepted
+addition, movement, or removal; never optimize return to an old line.
+
+Response urgency uses the exact audited relation:
+
+```text
+T = sense/process + validate + plan + acknowledge + commit
+response_distance = speed*T + jerk_limited_stop_distance(speed, acceleration, jerk)
+required_surface_distance = vehicle_radius + uncertainty + policy_clearance
+                            + response_distance
+margin = perceived_center_to_surface_distance - required_surface_distance
+urgency = clamp(1 - margin/0.25 m, 0, 1)
+```
+
+The hard independent certificates remain authoritative over this scheduling measure.
+With zero initial acceleration, `1.0 m/s²` acceleration and `8.0 m/s³` jerk, the
+independent oracle derives a `0.105 m` jerk-limited stop from `0.4 m/s`. At `T=0.33 s`,
+the `0.95 m` witness therefore has exactly `0.458 m` margin and urgency `0`, so it
+continues with a moving replan. At the same speed, `0.50 m` yields `0.008 m` margin and
+urgency `0.968`, so it blends jerk-limited deceleration/turn; `0.35 m` has `-0.142 m`
+margin and no certified braking/hold/abort response, so it fails closed instead of
+claiming avoidance. At `0.2 m/s` and `0.50 m`, the derived stop is `0.0325 m`, margin is
+`0.1465 m`, and urgency is `0.414`, proving speed as well as distance affects response.
+
+No command is selected from a caller-supplied certificate flag. The audit independently
+samples the braking route at `0.01 m`, computes the invariant hold set, samples the
+vertical abort route, authenticates the payload hash, and evaluates source/receive
+freshness and generation. Separate full witnesses cover stale generation, late source,
+late receive, tampering, a certified hold, a certified abort/land, and a state with no
+certified response. Every route/hold/abort/decision certificate has its own computed
+hash and pass/fail output.
+
+Exit evidence:
+
+- Schema and production-trigger tests reject authored route/centerline/rejoin input and
+  prove the initial planner cannot observe future obstacle geometry or event timing.
+- With no obstacle the certified plan approaches the straight start-goal solution.
+  With the nominal obstacle it continues moving through a smooth detour without an
+  unconditional `stop_and_hold_for_replan`; obstacle removal shortens safe goal cost
+  from the current state without returning to the old centerline.
+- Independent perturbations cover left/right choice, changed obstacle geometry,
+  high-speed/near obstacle, late/stale/tampered update, no solution, safe hold,
+  turn/relocate, and abort/land. Candidate exhaustion never dispatches an uncertified
+  route.
+- Three consecutive realtime runs process all four current sensor events, dispatch
+  acknowledged continuous replacements, reach the goal, land/disarm, pass every
+  motion/safety/physical guard, meet realtime factor `>=0.8`, and leave the next run
+  healthy. One deliberately late event triggers the exact certified fallback. Every
+  repeat retains raw CSV, response arithmetic, candidate/rejection set, certificate,
+  cutover, post-cutover tracking, motor evidence, and terminal result.
+- The qualification guard registry contains 28 direction-aware metrics derived from
+  `MotionQualityContract`, WP-62, WP-64, and WP-66: speed-band coverage/ripple, path
+  tube, acceleration, jerk, angular rate, motor headroom/spread/saturation/differential
+  sign and magnitude, energy, clearance/contact, checkpoint/continuous/crossover
+  semantics, unintended stops, terminal peak/reversals/duration/state, supervisor,
+  goal/landing error, realtime factor, and stale aborts. A full passing vector plus one
+  isolated failing override per metric proves every comparator is sensitive; every
+  required repeat must pass every applicable guard.
+
+### Claim, counterexample, and production-boundary matrix
+
+| Claim | Intended production path | Independent oracle and counterexample | Required boundary |
+|---|---|---|---|
+| WP-62 truthful/recoverable realtime execution | Campaign Play → runtime executor → simulation telemetry → supervisor session → fleet freshness → terminal cleanup → immediate retry | Independent source/receive sequence monitor; real dropout must abort while planner pause must not | `PRODUCTION_ENTRY / FAST_SIM / OBSERVED_REALTIME` |
+| WP-63 compact preparation | Catalog generation → API models → Campaign catalog → resolved motion contract | Exact 12-ID set oracle; reorder/unknown case, `100 m` cap, and disabled choice | `PRODUCTION_ENTRY / NO_RUNTIME / NOT_APPLICABLE`, plus served UI |
+| WP-64 whole-route motion | Prepared motion contract → planner → sampled trajectory → runtime commands → CSV/analyzer | Independent arc-length/dynamics sampler; subdivision, crossover, checkpoint, hard bend, motor-sign perturbations | `PRODUCTION_ENTRY / FAST_SIM / ACCELERATED + OBSERVED_REALTIME` |
+| WP-65 exact review cursor | Retained CSV/evidence → API → review plots → room/replay marker | Exact source-sequence lookup; row reorder, duplicate receive time, missing/interpolated channel | `PRODUCTION_ENTRY / FAST_SIM / ACCELERATED + OBSERVED_REALTIME`, plus served UI |
+| WP-66 goal-seeking online replanning | Dynamic cluster Play → sensed observation → perceived world → urgency/search → independent certificate → acknowledged cutover → goal/landing | Independent geometry/clock certificate; route-input rejection, nominal/near/late/tampered/no-solution/removal cases | `PRODUCTION_ENTRY / FAST_SIM / OBSERVED_REALTIME` |
+
+The machine audit carries classified claim-owner paths, AST-discovered direct
+production transits, preimage hashes, relied-upon tests, and generator outputs derived
+by executing the current generator into a clean temporary root and comparing every
+result with the repository, plus absent/new test, curriculum, and dynamic-cluster
+paths. The audit explicitly includes perception, scenario, execution, sensors, Safety
+Supervisor, API runtime/telemetry cleanup, public campaign API models, Control Center,
+served page, generated API client, and all current simulator/template/real-mirror
+outputs. Any implementation-owned path absent from these independently derived sets
+requires an explicit design revision. The later implementation manifest freezes every
+changed/new/deleted path with pre/post hashes and preserves unrelated dirty-tree edits.
+
+### Dependency, completion, and non-goals
+
+The value-first implementation order is WP-62, the minimal reusable WP-64 core, and
+WP-66. WP-63 and WP-65 follow only after the final WP-66 realtime gate; the wind-shift
+fixture follows those and remains disabled in this design. WP-65 depends on WP-62's
+stable retained evidence. WP-66 depends on WP-62 and the WP-64 continuity core. No
+packet can claim another packet's exit evidence.
+
+This design authorizes no implementation, service restart, mission run, history
+transition, commit, push, hardware action, digital-twin calibration, or new dynamic
+mission. A later implementation request begins only from a recorded
+`DESIGN_VERIFIED` identity and must use a fresh implementation verifier.
+
+<!-- WP62-66-DESIGN-PAYLOAD-END -->
+
+### WP-62 through WP-66 design-review handoff
+
+- Initial design identity: 27,245-byte payload SHA-256
+  `46ba656c0a76b3a4fa75e793eb9115b604ef20c4200aa70f7d87f96f956ba0f3`.
+- Initial review: fresh read-only verifier `/root/wp62_66_design_review` returned
+  `BLOCKED_WITH_FINDINGS` on 2026-08-14 with no P0 and four P1 `MUST_FIX_NOW`
+  findings: caller-authored fallback/certificate flags and contradictory arithmetic;
+  underspecified/unfalsifiable search; self-reconciled boundary lists that omitted
+  production owners; and an incomplete, insensitive motion/motor guard registry.
+- Sole consolidated author correction: consumed. The correction replaces braking with
+  a jerk-limited derivation; independently samples route, hold, abort, and decision
+  certificates; adds isolated stale/late/tampered/hold/abort/no-certificate witnesses;
+  freezes the exact A* lattice, cost, heuristic, bounds, deterministic invariances and
+  numerical outputs; derives imports with AST and all generator outputs through a clean
+  temporary run; classifies 154 manifest paths; and prototypes all 28 required guards
+  with one isolated failure each.
+- Corrected design identity: 30,040-byte payload SHA-256
+  `52570fcfcef8c7e5d62f79eb8c111522c236fe2a590500bcf086092bbc5e43c6`.
+- Corrected audit identity: 212,758-byte artifact SHA-256
+  `0d48bce6b7b5326ba1a402e87ac8ed8a3e9318974650f14b5a8ec96f78099a16`;
+  audit program SHA-256
+  `6fe8e3646008be372bbe0b661915d0039a4c8bd18a1165bb6bbf8185dd931dfd`.
+- Focused recheck: consumed by the same verifier. The independent verdict is
+  `BLOCKED_WITH_FINDINGS`; no implementation or third automatic design pass is
+  permitted.
+- Resolved initial P1s: fallback/certificate decisions now come from independent
+  executable geometry/clock oracles rather than caller booleans, and affected
+  boundaries now derive from production imports and a clean generator run rather than
+  self-reconciled lists.
+- Remaining P1 `MUST_FIX_NOW` in WP-66 search evidence: the prototype freezes a
+  `0.09 s` wall budget but has no wall-time cutoff. Independent timing measured the
+  4,060-expansion obstacle witness at median `0.313 s` and the 2,530-expansion
+  no-solution witness at median `0.136 s`; both currently return a completed result
+  instead of `BUDGET_EXHAUSTED`. The frozen search claim therefore does not satisfy its
+  own bound.
+- Remaining P1 `MUST_FIX_NOW` in the shared WP-64/WP-66 guard vector: the 28-metric
+  registry includes maximum path-tube error but omits retained `tracking_rms_m`, despite
+  `REQ-EVI-013` and the packet exit requiring tracking. Persistent RMS degradation
+  could pass the declared registry.
+- Final state: all five packets remain `DEFINED_NOT_STARTED / REVIEW_BLOCKED`. The
+  frozen corrected payload stays identified by SHA-256
+  `52570fcfcef8c7e5d62f79eb8c111522c236fe2a590500bcf086092bbc5e43c6`;
+  the status/verdict text above is the permitted mechanical closeout record. A new
+  operator-authorized design iteration is required to change the search budget/proof
+  and guard universe before implementation.
+
+<!-- WP62-66-R2-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-62 through WP-66 R2 implementation-entry correction
+
+### Frozen authorization and scope
+
+The exact operator authorization for this successor iteration is:
+
+> ok then start implementation
+
+Implementation remains conditional on `DESIGN_VERIFIED`. This R2 overlay changes only
+the two P1 `MUST_FIX_NOW` findings left by the exhausted base-design recheck. It does
+not reopen resolved findings, change the five packets, add a dynamic mission, enable
+wind shift, expand hardware/digital-twin scope, or alter unrelated user work.
+
+- Base design: 30,040 bytes, SHA-256
+  `52570fcfcef8c7e5d62f79eb8c111522c236fe2a590500bcf086092bbc5e43c6`.
+- R2 audit: `missions/campaigns/sim/qualification/wp62-66-r2-design-audit-v1.json`,
+  121,075 bytes, SHA-256
+  `6960c59284a0d98ed28492cd187c6e16805b939f22fa041a2ce683f6d1ea687f`.
+- R2 audit program: `scripts/audit_wp62_66_r2_design.py`, SHA-256
+  `d694035b002db0754d87aa6c5a5eb647b8f1e702073cdcea4996f222f340862a`.
+- Reproduce the composite correction:
+
+```bash
+.venv/bin/python scripts/audit_wp62_66_design.py \
+  missions/campaigns/sim/qualification/wp62-66-design-audit-v1.json
+.venv/bin/python scripts/audit_wp62_66_r2_design.py \
+  missions/campaigns/sim/qualification/wp62-66-r2-design-audit-v1.json
+```
+
+### R2-A — enforced, feasible search timing
+
+The deterministic expansion bound remains 8,192. The hard wall-clock search budget is
+corrected from the disproven `0.09 s` to `0.5 s`, which remains inside the immutable
+case planning budget of `2.0 s`. The deadline covers all search and independent path
+certification work: the search checks `time.monotonic()` before every expansion and
+again after certification, before publishing a path. Reaching either bound returns
+`BUDGET_EXHAUSTED / NO COMMAND`; it may not finish or report a plan after the deadline.
+
+The exact same 4,060-expansion obstacle witness completes with its unchanged certified
+`3.01421356238 m` path. Five pre-freeze wall-time samples are
+`(0.22960458399938943, 0.22534387499945296, 0.22835112500069954,
+0.22378625000055763, 0.2245147920002637) s`. The enclosing-wall no-solution witness
+completes after 2,530 expansions with samples
+`(0.13022362499941664, 0.13043441599984362, 0.1305727079998178,
+0.12966625000080967, 0.12972999999874446) s`. Every retained sample is below `0.5 s`.
+A zero-wall-budget perturbation performs zero expansions and returns
+`BUDGET_EXHAUSTED`, proving the expansion-side wall check is behavior-driving. A
+separate straight-path witness injects `0.51 s` only during certification and must
+discard the otherwise valid path as `BUDGET_EXHAUSTED / NO COMMAND`, proving the
+post-certificate check. The audit independently reruns the exact output witnesses three
+times and rejects any result/path/hash change.
+
+The conservative reaction envelope now uses the complete corrected maximum:
+
+```text
+T = 0.12 sense/process + 0.02 validate + 0.50 search
+    + 0.0006 acknowledge + 0.0994 commit = 0.74 s
+```
+
+At `0.4 m/s`, the retained jerk-limited stop distance is `0.105 m`, so response
+distance is `0.401 m` and required protected surface distance is `0.656 m`. The
+`0.95 m` nominal observation retains `0.294 m` margin and urgency `0`; the `0.75 m`
+witness has `0.094 m` margin and urgency `0.624`; `0.50 m` is insufficient with
+`-0.156 m` margin and urgency `1`. At `0.2 m/s` and `0.75 m`, required distance is
+`0.4355 m`, margin is `0.3145 m`, and urgency is `0`. These values replace only the
+base payload's superseded `0.09 s` timing and dependent reaction numbers.
+
+The R2 audit regenerates the complete eleven-witness reaction set at `T=0.74 s`, not
+only the scalar envelope. Every witness freezes source/receive/generation clocks,
+vehicle state, protected-distance terms, search result, braking-path certificate,
+hold certificate, vertical abort certificate, selected command, and a hash of the full
+decision. The nominal, progressive, lower-speed, and insufficient-clearance commands
+are respectively `CONTINUE_WITH_MOVING_REPLAN`,
+`JERK_LIMITED_DECELERATE_AND_TURN`, `CONTINUE_WITH_MOVING_REPLAN`, and
+`NO_CERTIFIED_RESPONSE_FAIL_CLOSED`. Stale-generation, late-source, late-receive, and
+tampered observations are rejected into a certified hold. The three blocked-goal
+child cases select `CERTIFIED_HOLD`, `CERTIFIED_ABORT_AND_LAND`, and
+`NO_CERTIFIED_RESPONSE_FAIL_CLOSED`. These R2 witnesses supersede the base payload's
+`T=0.33 s` clocks, distance terms, commands, and hashes wherever they depend on search
+timing; the immutable base artifact remains provenance rather than executable R2 truth.
+
+Implementation and exit evidence must enforce both bounds through the production
+planner clock. A test-injected `0 s`/expired deadline and an expansion-limit fixture
+must dispatch no replacement. Five local production repeats of the obstacle and
+no-solution searches must each complete below `0.5 s`; a faster median cannot hide one
+deadline miss. Runtime evidence records actual planning time and the budget disposition.
+
+### R2-B — complete tracking guard
+
+Add `tracking_rms_m <= 0.05 m` to the shared WP-64/WP-66 qualification guard vector.
+It is distinct from maximum path-tube error: RMS detects persistent degradation while
+the maximum detects a localized excursion. The full registry now contains 29 unique,
+direction-aware metrics.
+
+The complete passing vector uses `tracking_rms_m=0.049`; its isolated failure changes
+only that key to `0.051`, which must reject qualification while the other 28 guards
+remain passing. Conversely, every other isolated failure retains tracking RMS at
+`0.049`. The implementation analyzer, evaluation, review bundle, CSV comparison, and
+qualification gate must treat a missing RMS value as failure whenever tracking applies.
+Every accelerated and realtime repeat passes RMS individually; aggregate or median
+tracking cannot hide a failed run.
+
+Tracking RMS applies to every `MotionQualityContract` repeat and has no N/A branch.
+The exact required repeat identities are `accelerated-1`, `accelerated-2`,
+`accelerated-3`, and `realtime-1`. Qualification requires all four records, each with
+`applicable=true`, a non-null value, and `tracking_rms_m <= 0.05 m`. The audit executes
+the passing vector `(0.047, 0.048, 0.049, 0.049)` and proves four distinct failures:
+one missing record, an attempted `applicable=false`/N/A record, one `0.051 m` repeat,
+and an aggregate-cheat vector `(0.049, 0.049, 0.049, 0.053)` whose arithmetic mean is
+exactly `0.05 m` but whose realtime repeat still fails.
+
+### R2 implementation entry
+
+After this composite design is independently verified, implementation begins in the
+already frozen value order: WP-62 runtime stability, the minimum WP-64 motion core,
+then WP-66 online goal-seeking replanning. WP-63 and WP-65 remain after the WP-66
+realtime gate. The later implementation manifest must bind the verified base+R2 design
+identities, preserve all pre-existing dirty-tree changes, and enter a fresh independent
+implementation gate before any packet can become verified or complete.
+
+**Status:** `DEFINED_NOT_STARTED`
+
+**Independent verification:** `DRAFT_UNVERIFIED`
+
+<!-- WP62-66-R2-DESIGN-PAYLOAD-END -->
+
+### WP-62 through WP-66 R2 design-review handoff
+
+- Initial R2 payload submitted for review: 5,074 bytes, SHA-256
+  `783bd2e4d1fbbc4b1a3f238a31e325b86350a4a5beb7b072ba631155b2b94fb8`.
+- Independent design verifier: `/root/wp62_66_r2_design_review`
+  (`work_packet_verifier`, fresh for this successor design).
+- Initial verdict: `CHANGES_REQUIRED` with three P1 findings: the deadline did not
+  include post-search certification, the corrected scalar reaction latency did not
+  regenerate the complete dependent witness/certificate set, and tracking RMS lacked
+  executable repeat/applicability semantics.
+- Sole consolidated author correction: consumed. It adds a post-certificate hard-wall
+  failure witness, regenerates and hashes all eleven reaction decisions at `T=0.74 s`,
+  and executes missing/N/A/per-repeat/aggregate-cheat tracking cases.
+- Corrected R2 payload: 7,092 bytes, SHA-256
+  `4201ea8a858e1d91b3f5877bdfacbd4716b5fa59b42cac9ac9d796cf38477806`.
+- Corrected audit artifact: 121,075 bytes, SHA-256
+  `6960c59284a0d98ed28492cd187c6e16805b939f22fa041a2ce683f6d1ea687f`.
+- Corrected audit program: SHA-256
+  `d694035b002db0754d87aa6c5a5eb647b8f1e702073cdcea4996f222f340862a`.
+- Focused recheck: consumed by the same verifier. The independent verdict is
+  `BLOCKED_WITH_FINDINGS`; a third automatic pass is not permitted.
+- Resolved on recheck: the hard deadline now covers certification and returns no
+  command, and all eleven `T=0.74 s` reaction decisions and subordinate certificates
+  independently recompute to the frozen commands and hashes.
+- Remaining P1 `MUST_FIX_NOW`: the RMS evaluator keys only the unscoped IDs
+  `accelerated-1..3` and `realtime-1`. Duplicate IDs across the curved-route,
+  figure-eight, and altitude anchors can overwrite a failed repeat; WP-66's required
+  `realtime-2` and `realtime-3` are treated as unexpected; and non-finite `NaN` passes
+  the current numeric comparison. The executable repeat identity must include packet,
+  case/anchor, mode, and ordinal; reject duplicates, missing/unexpected records,
+  non-finite values, and every per-run threshold failure.
+- Independent verification: `BLOCKED_WITH_FINDINGS`.
+
+<!-- WP62-66-R3-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-62 through WP-66 R3 repeat-universe correction
+
+### Frozen authorization, provenance, and scope
+
+The exact operator authorization for this successor correction and implementation is:
+
+> ok yes i authorize
+
+This overlay corrects only the remaining R2 P1 concerning executable per-repeat
+tracking RMS identity and fail-closed evaluation. It does not reopen the independently
+resolved R2 search-deadline or reaction-certificate findings, change any mission
+semantics, add a case, enable wind shift, or expand the implementation boundary.
+
+- Base commit: `40cd9947f87eb9bf2719d72e7c72ea867eab9977`.
+- Base design payload: 30,040 bytes, SHA-256
+  `52570fcfcef8c7e5d62f79eb8c111522c236fe2a590500bcf086092bbc5e43c6`.
+- R2 design payload: 7,092 bytes, SHA-256
+  `4201ea8a858e1d91b3f5877bdfacbd4716b5fa59b42cac9ac9d796cf38477806`.
+- `ACTIVE.md` preimage before R3: SHA-256
+  `5ec66c3387cd076ffa51c019b00d31c565c5a49222b53ee2674094a927143ad2`.
+- Durable requirements and UI-guide identities remain unchanged:
+  `docs/project/WORKFLOW_AND_REQUIREMENTS.md`
+  `77c722f00a98b0e861393a096e8538dbc799ebd3348f10f873743b853aef767e`,
+  `design.md`
+  `30628d07cb3476f74495fe4c12f81c4892d754bf944a92549f1a8b1cac8c234a`,
+  and `docs/project/DESIGN.md`
+  `ece20b42853194b2e820bbfe2768f3c9d0731a6e9428d5ee5724aa7a795d7b05`.
+- R3 audit artifact:
+  `missions/campaigns/sim/qualification/wp62-66-r3-design-audit-v1.json`,
+  96,549 bytes, SHA-256
+  `4a0d9b3e665ba1b1a8d29450368cfc5c7b334d5749419f1a4a18f49b4fb56d46`.
+- R3 audit program: `scripts/audit_wp62_66_r3_design.py`, SHA-256
+  `71fb40f59ab0c519a2179c18b7cd25d6f1211c5fe49016b15ad486adc1acc52a`.
+- Reproduce the exact R3 policy and counterexamples with:
+
+```bash
+.venv/bin/python scripts/audit_wp62_66_r3_design.py \
+  missions/campaigns/sim/qualification/wp62-66-r3-design-audit-v1.json
+```
+
+### Exact tracking-RMS repeat universe
+
+`tracking_rms_m <= 0.05 m` remains required and has no N/A branch. A repeat identity
+is the exact tuple `(packet_id, case_id, mode, ordinal)`; labels such as
+`accelerated-1` alone are invalid. The complete expected universe is:
+
+| Packet and case | Mode | Required ordinals |
+|---|---|---|
+| WP-64 — `1d.curved_route.canonical_nominal` | `AUTOMATED_ACCELERATED` | 1, 2, 3 |
+| WP-64 — `1d.curved_route.canonical_nominal` | `OPERATOR_OBSERVED_REALTIME` | 1 |
+| WP-64 — `1d.planar_shape_loop.figure_eight` | `AUTOMATED_ACCELERATED` | 1, 2, 3 |
+| WP-64 — `1d.planar_shape_loop.figure_eight` | `OPERATOR_OBSERVED_REALTIME` | 1 |
+| WP-64 — `1d.altitude_transition.canonical_nominal` | `AUTOMATED_ACCELERATED` | 1, 2, 3 |
+| WP-64 — `1d.altitude_transition.canonical_nominal` | `OPERATOR_OBSERVED_REALTIME` | 1 |
+| WP-66 — `1d.online_obstacle_replan.dynamic_nominal` | `OPERATOR_OBSERVED_REALTIME` | 1, 2, 3 |
+
+The universe therefore contains 15 distinct records. Qualification rejects duplicate,
+missing, unexpected, or malformed identities before aggregation. It also rejects
+`applicable` unless it is exactly `true`, missing/non-numeric values, every non-finite
+value including `NaN`, positive infinity, and negative infinity, and any finite value
+below zero or above `0.05 m`. Identity records contain exactly the four declared
+fields; packet, case, and mode have exact non-empty string types, while the ordinal has
+exact Python/JSON integer type and is at least one. Booleans and integral-looking
+floats are not ordinals. Qualification handles every malformed record as retained
+rejection output rather than raising or aborting evaluation; oversized integers are
+compared without a lossy float conversion. Every record is evaluated even after
+another failure; insertion order cannot change the outcome. No dictionary overwrite,
+mean, median, percentile, or packet-level aggregate may substitute for the individual
+comparisons.
+
+The R3 audit executes all 15 passing identities and proves reordering invariance. Its
+isolated adverse cases cover the exact R2 counterexample—a failing duplicate followed
+by a passing duplicate—plus a missing WP-66 realtime ordinal 2, unexpected WP-66
+ordinal 4, attempted N/A, one `0.051 m` run, `NaN`, both infinities, and an
+aggregate-cheat vector whose mean remains below `0.05 m` while one repeat is `0.053 m`.
+The sole correction adds isolated scalar/missing-field/extra-field identity records,
+a non-mapping record, Boolean and float ordinals, missing and standalone non-numeric
+values, negative RMS, and an oversized integer. Each case retains its exact rejection
+reason, and every adverse case fails without an exception. The repeated ordinals
+across distinct WP-64 case IDs remain valid because case and packet are part of the
+identity.
+
+### R3 implementation entry
+
+Once this base+R2+R3 composite is independently `DESIGN_VERIFIED`, the existing
+implementation authorization becomes active. Work begins with WP-62 runtime stability,
+then the minimum WP-64 continuity core and WP-66 online goal seeking. WP-63 and WP-65
+remain gated behind the WP-66 realtime result. The implementation manifest and fresh
+implementation verifier must bind all three design identities and preserve unrelated
+dirty-tree work.
+
+**Status:** `DEFINED_NOT_STARTED`
+
+**Independent verification:** `DRAFT_UNVERIFIED`
+
+<!-- WP62-66-R3-DESIGN-PAYLOAD-END -->
+
+### WP-62 through WP-66 R3 design-review handoff
+
+- Initial R3 payload: 4,483 bytes, SHA-256
+  `94e039ef8c15c383b393e14ddb2a0c8b2ce9f414a18a04893089f9ae3d60f232`.
+- Independent design verifier: `/root/wp62_66_r3_design_review`
+  (`work_packet_verifier`, fresh for R3).
+- Initial verdict: `CHANGES_REQUIRED` with one P1: incomplete schema validation
+  accepted Boolean/float ordinals and negative RMS, raised on malformed/oversized
+  inputs, and lacked isolated malformed/missing/non-numeric witnesses.
+- Sole consolidated correction: consumed. It enforces exact identity and evidence
+  field types, non-negative finite RMS, total no-throw rejection, and retained exact
+  reasons for all requested boundary cases.
+- Corrected R3 payload: 5,216 bytes, SHA-256
+  `5c24eb560133232cf5fb9e7a5105a727083f78854f07cba85c86c2d5ee6c3b5d`.
+- Corrected audit artifact: 96,549 bytes, SHA-256
+  `4a0d9b3e665ba1b1a8d29450368cfc5c7b334d5749419f1a4a18f49b4fb56d46`.
+- Corrected audit program: SHA-256
+  `71fb40f59ab0c519a2179c18b7cd25d6f1211c5fe49016b15ad486adc1acc52a`.
+- Focused recheck: consumed by the same verifier. The independent verdict is
+  `BLOCKED_WITH_FINDINGS`; a third automatic pass is not permitted.
+- Resolved on recheck: all original schema counterexamples now return the exact
+  retained rejection without exceptions, including malformed/non-mapping records,
+  Boolean/float ordinals, missing/string/Boolean/negative/non-finite RMS, and an
+  oversized RMS integer.
+- Remaining P1 `MUST_FIX_NOW`: a positive ordinal such as `10**9999` passes the exact
+  integer-type check, then raises during diagnostic string conversion instead of
+  returning `UNEXPECTED` plus the corresponding `MISSING` identity. The identity
+  validator must bound ordinals to the declared repeat universe before any string
+  conversion and retain this oversized-ordinal rejection witness.
+- Independent verification: `BLOCKED_WITH_FINDINGS`.
+
+<!-- WP62-66-R4-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-62 through WP-66 R4 bounded-identity correction
+
+### Frozen authorization and provenance
+
+The exact operator authorization for this successor correction and implementation is:
+
+> ok yes i authorize
+
+R4 changes only the remaining oversized-ordinal failure in the executable tracking-RMS
+qualification policy. It inherits the packet scope, boundaries, durable requirements,
+search timing, reaction witnesses, 15-repeat universe, and all other accepted
+base/R2/R3 decisions without reopening them.
+
+- Base commit: `40cd9947f87eb9bf2719d72e7c72ea867eab9977`.
+- Base design SHA-256:
+  `52570fcfcef8c7e5d62f79eb8c111522c236fe2a590500bcf086092bbc5e43c6`.
+- R2 design SHA-256:
+  `4201ea8a858e1d91b3f5877bdfacbd4716b5fa59b42cac9ac9d796cf38477806`.
+- Corrected R3 design SHA-256:
+  `5c24eb560133232cf5fb9e7a5105a727083f78854f07cba85c86c2d5ee6c3b5d`.
+- `ACTIVE.md` preimage before R4: SHA-256
+  `f02383fe28acd963a6f9ea9abedd3043451629ddbd3bcaf14446b3eb5424fae8`.
+- R4 audit artifact:
+  `missions/campaigns/sim/qualification/wp62-66-r4-design-audit-v1.json`,
+  122,248 bytes, SHA-256
+  `dc09f1af28b9439b9c88c8e1e39682c87579b6a1564cbf7c5cc2578812da71ee`.
+- R4 audit program: `scripts/audit_wp62_66_r4_design.py`, SHA-256
+  `d7f72cb0cf422f47fc9f2586178bb04f17898b376415b5adc5f75a94b447b810`.
+- Reproduce with:
+
+```bash
+.venv/bin/python scripts/audit_wp62_66_r4_design.py \
+  missions/campaigns/sim/qualification/wp62-66-r4-design-audit-v1.json
+```
+
+### Bounded identity before diagnostics
+
+The repeat identity remains `(packet_id, case_id, mode, ordinal)`. Before membership
+testing, hashing, sorting, or diagnostic conversion, the evaluator requires exactly
+those four fields, non-empty strings bounded respectively to 5, 96, and 32 characters,
+and an exact non-Boolean integer ordinal in the closed interval `1..3`. Values outside
+that schema return `INVALID_IDENTITY` using only the bounded record index; untrusted
+identity values are never formatted. A schema-valid bounded identity that is absent
+from the exact 15-record universe returns `UNEXPECTED`, and its expected counterpart
+remains `MISSING`.
+
+The audit replays every R3 success and adverse class, including order invariance,
+duplicate overwrite, missing/unexpected identities, N/A, malformed identities and
+records, Boolean/float/zero/four ordinals, missing/non-numeric/Boolean/negative/
+non-finite RMS, oversized RMS, threshold failure, and aggregate masking. It adds the
+exact `ordinal=10**9999` counterexample and an overlong identity string; both return
+retained `INVALID_IDENTITY` plus the missing expected identity without raising. It
+also rejects a non-list record container. Serialization records injected non-JSON
+numbers by bounded descriptors rather than converting their complete decimal value.
+
+### R4 implementation entry
+
+If the base+R2+R3+R4 composite is independently `DESIGN_VERIFIED`, the existing
+authorization immediately opens implementation in the frozen order: WP-62, minimum
+WP-64, WP-66, then WP-63 and WP-65. The later exact implementation manifest and fresh
+implementation verifier bind all four design hashes and preserve unrelated dirty-tree
+work.
+
+**Status:** `DEFINED_NOT_STARTED`
+
+**Independent verification:** `DRAFT_UNVERIFIED`
+
+<!-- WP62-66-R4-DESIGN-PAYLOAD-END -->
+
+### WP-62 through WP-66 R4 design-review handoff
+
+- Initial R4 payload: 3,221 bytes, SHA-256
+  `34d6640165a86a86ad741fbc16202f4f4ec22fe6a06f18de701bec6900a99a1b`.
+- Independent design verifier: `/root/wp62_66_r4_design_review`
+  (`work_packet_verifier`, fresh for R4).
+- Independent verdict: `DESIGN_VERIFIED` with no P0, P1, or P2 findings. The verifier
+  independently reproduced every frozen identity and the pre-R4 ledger preimage,
+  exercised huge positive/negative ordinals, bounded/unbounded strings, renamed and
+  absent children, both duplicate orders, field and record reordering, all inherited
+  malformed/non-finite cases, and aggregate masking.
+- No author correction or focused recheck was consumed.
+- Independent verification: `DESIGN_VERIFIED`.
+
+## WP-62 through WP-66 implementation candidate
+
+<!-- WP62-66-IMPLEMENTATION-PAYLOAD-BEGIN -->
+
+This section is the author-frozen implementation candidate for the accepted base + R2
++ R3 + R4 design. It does not alter any accepted design payload. The exact file and
+section identities are retained separately in
+`missions/campaigns/sim/qualification/wp62-66-implementation-manifest-v1.json`.
+
+| Packet | Status | Independent verification |
+| --- | --- | --- |
+| WP-62 — realtime replanning runtime stability and recovery | `IMPLEMENTED` | `IMPLEMENTED_UNVERIFIED` |
+| WP-63 — five-major-mission 1D curriculum and plain preparation controls | `IMPLEMENTED` | `IMPLEMENTED_UNVERIFIED` |
+| WP-64 — whole-route motion trade-offs and motor-realism regression | `IMPLEMENTED` | `IMPLEMENTED_UNVERIFIED` |
+| WP-65 — source-time graph-to-flight review cursor | `IMPLEMENTED` | `IMPLEMENTED_UNVERIFIED` |
+| WP-66 — start-goal dynamic replanning cluster and online-obstacle mission | `IMPLEMENTED` | `IMPLEMENTED_UNVERIFIED` |
+
+### Initial implementation-review verdict and sole correction
+
+The first fresh implementation verifier returned `BLOCKED_WITH_FINDINGS`. Its six P1
+findings were accepted as the correction scope: no production-path telemetry-dropout
+abort/cleanup/retry evidence; no `100 m` Accuracy obstacle boundary; raw kinematics and
+tracking-oracle qualification that could mask failure; timestamp-only sibling-chart
+selection; author-asserted rather than served UI evidence; and replacement commit that
+accepted caller-supplied acknowledgement sets before real Supervisor dispatch.
+
+This is the single permitted author correction. It adds a production dropout and
+immediate-retry run, the `100 m` hard-boundary child case, raw/processed gate
+reconciliation plus an independent source-time quintic P/V/A oracle, exact
+timestamp-and-sequence cursor joins, retained served-browser screenshots, and
+hash-bound Supervisor preparation receipts that must be consumed for the exact active
+and replacement trajectories before atomic commit. A missing or tampered receipt
+produces zero commits and zero replacement dispatches. The correction also retains the
+source-clock authority before initial trajectory dispatch so a cancelled old epoch
+cannot lose temporal-oracle identity, and it preserves an isolated-planner startup
+failure through unconditional cleanup instead of masking it with mission-unregister
+cleanup.
+
+### Implementation and failure analysis
+
+The unstable online runs were not a simulator or vehicle crash. The retained aborts
+were `STALE_FLEET_OBSERVATION`: CPU-heavy planning/certification ran beside the 100 Hz
+control path, while a zero-sleep source-clock wait repeatedly called the full mission
+observation boundary. That combination starved telemetry and retained tens of
+thousands of duplicate full observations. Individual evidence bundles grew from about
+`218 kB` after correction to as much as roughly `300 MB` before correction. The large
+JSON/CSV payloads also explain much of the poor analysis efficiency and token use: the
+same duplicate state was repeatedly serialized, searched, and summarized.
+
+The production repair pre-warms one isolated planner process before takeoff, keeps A*
+and trajectory certification outside the control process, reads the Supervisor's
+canonical telemetry cache while waiting, sleeps for a bounded `1..10 ms`, and retains
+full observations only at planning/cutover evidence boundaries. Runtime cleanup now
+closes the planner process, terminates fleet tasks, clears dynamic obstacles, and
+removes completed runtime coordinator graphs. The accelerated dynamic regression uses
+the qualifying realtime source/wall-time basis so an artificial clock multiplier
+cannot move the vehicle into an obstacle envelope while the isolated planner is still
+certifying an earlier state.
+
+### Packet claim reconciliation
+
+| Packet | Implemented production path and observation | Author evidence boundary |
+| --- | --- | --- |
+| WP-62 | Campaign Play → `FastSimCampaignExecutor` → pre-warmed isolated execution head → Supervisor telemetry cache → terminal cleanup and immediate retry. Real stale telemetry still fails closed; planner work no longer manufactures stale telemetry or unbounded retained observations. | `PRODUCTION_ENTRY / FAST_SIM / OBSERVED_REALTIME`; four consecutive clean online runs, including the required three plus immediate retry. |
+| WP-63 | Catalog generation and API expose exactly five major groups—Flight, Target, Level path, 3D path, Shape—with all 12 current 1D static cases exactly once. Normal preparation exposes `Balance`; closed `Tune` exposes Speed, Accuracy, Smoothness. Wind shift remains disabled and normal UI contains no Eligible badge or internal planner label. | `PRODUCTION_ENTRY / NO_RUNTIME / NOT_APPLICABLE`, plus built and served 1280 × 720 UI; narrow behavior is automated render/CSS coverage. |
+| WP-64 | The resolved preparation request reaches the motion contract, whole-route planner, P/V/A-continuous trajectory, runtime commands, CSV analyzer, per-motor truth oracle, and strict repeat evaluator. Gentle bends retain speed; hard changes receive bounded physical retiming; terminal-only goal capture is not converted into an energy-heavy crawl. | `PRODUCTION_ENTRY / FAST_SIM / ACCELERATED + OBSERVED_REALTIME`; all 12 curved-route, figure-eight, and altitude repeat identities pass individually and the exact 15-record RMS universe passes at `<= 0.05 m`. |
+| WP-65 | Retained telemetry CSV → API review payload → all graph sliders → exact source-sequence lookup → text readout and room marker. Receive time is displayed but is never the cursor key; absent channels remain explicitly unavailable. | `PRODUCTION_ENTRY / FAST_SIM / ACCELERATED + OBSERVED_REALTIME`, plus built and served UI. Browser observation selected exact source sequence `1944`; all six graphs, the readout, and the room marker reported sequence `1944`. |
+| WP-66 | The online mission is the sole case in the Dynamic replanning cluster. Its initial authority is only current start, terminal goal/landing, immutable limits, and perceived-world generation. Each sensed add/move/remove event runs distance/speed urgency, deterministic bounded eight-neighbor A*, independent safe-prefix/corridor/cutover certification, exact Supervisor preparation receipt consumption before atomic commit, and direct goal continuation; authored centerline/reference/rejoin fields reject. | `PRODUCTION_ENTRY / FAST_SIM / OBSERVED_REALTIME`; every one of four events was persisted, recertified, committed, and dispatched in each of four consecutive runs, followed by captured landing. Nominal, rename/reorder, budget, no-solution, late/unsafe, missing/tampered/partial acknowledgement, and malformed-route counterexamples are executable tests. |
+
+### Retained author evidence
+
+- Runtime qualifier:
+  `missions/campaigns/sim/qualification/wp62-66-runtime-qualification-v1.json`,
+  file SHA-256
+  `7fc513ded453b9364ec07767f63ccbda685bc0407673d4dd9bdcda30bcdab711`,
+  payload SHA-256
+  `6fe4bdca44610d725dbd5434e38c95d7e79f9202ba5763adb8045242d5c7ef07`.
+  It reports `all_required_repeats_and_retry_passed: true`, four online statuses
+  `SUCCEEDED`, realtime factors `0.999842`, `0.999872`, `0.999732`, and
+  `0.996414`, no failed/missing motion guards, all four event IDs persisted,
+  recertified, and dispatched, and clean runtime state after every run.
+- The strict tracking evaluator observed exactly 15 expected identities, 15 unique
+  expected identities, no failures, and no aggregate substitution. All 12 WP-64
+  anchors and all three required WP-66 realtime repeats passed individually.
+- The four retained online execution bundles are `223,063`, `222,755`, `223,036`,
+  and `224,179` bytes. Each qualified online child retained exactly `9`
+  `observations_read`, below the independent cap of `12`; the runs retain only the planning/cutover
+  observations needed for causal review.
+- UI inspection:
+  `missions/campaigns/sim/qualification/wp62-66-ui-inspection-v1.json`, file SHA-256
+  `765fb2b5086233503aa517a8bf38ae2601e05ec46fe16d33c24881e1105cfdfd`.
+  The actually served viewport was `1280 × 720` with no horizontal overflow. The
+  browser capability ignored the requested narrow override, so narrow and
+  reduced-motion behavior are claimed only from automated render/CSS checks. Five
+  group labels and counts are `Flight 1`, `Target 2`, `Level path 4`, `3D path 2`,
+  `Shape 3`; normal preparation shows Balance/Tune and zero Eligible labels; all six
+  graphs, the readout, and the room marker reported exact source sequence `1944`; no
+  browser console warning/error was observed. Five screenshot paths, byte sizes, and
+  SHA-256 identities are retained in the inspection artifact.
+- Backend author checks: the final packet-focused suite reports `170 passed`, including
+  the production online E2E, source-contract boundaries, and isolated-planner cleanup;
+  the complete runtime qualifier passes; focused Ruff and targeted Mypy pass. A
+  broader compatibility run reported `172 passed, 2 failed`.
+  Both failures remain visible and are outside the frozen 1D review unit: the legacy
+  three-drone 40-second ground-wait fixture aborts Gamma for stale telemetry, and a
+  synthetic 2D head-on dynamic fixture expects dispatch where the new protected
+  response/certification boundary fails closed. Neither is relabeled as passing or as
+  qualified by WP-62 through WP-66.
+- UI author checks: ESLint and TypeScript pass; Vitest reports `13` files and `133`
+  tests passed; the production Vinext build completes; rendered HTML reports `3`
+  tests passed. JSDOM's expected missing-canvas diagnostic and the build's existing
+  large-chunk advisory are non-failing.
+
+### Residual limits and gate state
+
+No hardware, physical-flight, Live Isaac, or aerodynamic-fidelity claim is made.
+Wind shift remains the explicitly disabled reserved fixture, and no second dynamic
+mission was introduced. The two broader compatibility failures above remain explicit
+out-of-scope limitations; the implementation does not extend or qualify multi-role
+dynamic replanning. The implementation is author-complete but remains
+`IMPLEMENTED_UNVERIFIED` pending the original fresh verifier's one focused correction
+recheck of the revised exact manifest, production paths, retained evidence, and
+meaningful counterexamples.
+
+<!-- WP62-66-IMPLEMENTATION-PAYLOAD-END -->
+
+### WP-62 through WP-66 implementation-review handoff
+
+- Frozen implementation manifest:
+  `missions/campaigns/sim/qualification/wp62-66-implementation-manifest-v1.json`,
+  file SHA-256
+  `5b329227c61bf7f0e39ca05dceda6dba91d8f53a7ff8992000c88e61986c54fd`,
+  canonical payload SHA-256
+  `c42f28cab3b4d2346ae3b85ce94510ca39667b35759e5ed5449f7a6ad8d8c857`.
+- Independent implementation verifier: `/root/wp62_66_impl_review`
+  (`work_packet_verifier`, fresh for implementation).
+- Initial verdict: `BLOCKED_WITH_FINDINGS` with six P1 findings. The single permitted
+  correction and focused recheck resolved the WP-63 `Accuracy=100 m` obstacle child,
+  WP-64 raw/processed kinematics and independent temporal oracle, WP-65 exact
+  source-identity lookup, and WP-66 acknowledgement-before-commit findings.
+- Focused-recheck verdict: `BLOCKED_WITH_FINDINGS`. Two P1 findings remain. First,
+  independent execution reproduced one fault-free immediate retry that aborted for
+  `STALE_FLEET_OBSERVATION`; the same test passed in isolation, so the claimed retry
+  stability remains nondeterministic. Second, all retained served screenshots are
+  `1280 x 720`, reduced-motion media did not match, and the cursor screenshot does not
+  visibly retain source sequence `1944`, the correlated room marker, or the download
+  row; automated assertions and author-transcribed inspection values do not satisfy
+  the accepted served narrow/reduced-motion/correlation evidence boundary.
+- The sole implementation correction and focused recheck are consumed. No third
+  automatic pass is permitted for this review unit. WP-62 through WP-66 remain
+  `IMPLEMENTED_UNVERIFIED`; the corrected implementation may not be accepted as
+  `QUALIFIED` or `COMPLETE`.
+- Residual qualification remains limited to software Fast Sim and local UI. No
+  hardware, physical-flight, Live Isaac, or aerodynamic qualification is established.
+
+### 2026-08-15 online-obstacle operator defect follow-up
+
+Three consecutive observed-realtime runs stopped briefly after the obstacle reveal,
+then resumed the original terminal leg through the obstacle. The retained traces show
+that the changed-world child tried to resolve the run-generated prepared-motion
+profile through the static registry, rejected it as not admitted, executed a certified
+`STOP_AND_HOLD`, and then allowed the accepted program to continue into its direct
+landing correction. The rendered dynamic obstacle was also absent from Fast Sim's
+authoritative collision world.
+
+This follow-up preserves the already-frozen WP-62 through WP-66 payloads above. Its
+bounded correction is to carry the exact resolved execution profile and capability
+into every changed-world child; make a certified fallback terminate the superseded
+accepted program; expose the source-time dynamic-world timeline to simulator physics
+and retained evidence; and use deterministic stratified appearance variation. Exit
+evidence is focused regression coverage for prepared-motion replan admission,
+fallback termination without a subsequent landing move, swept dynamic-obstacle
+collision, and seeded variation repeatability/distribution, followed by a new
+observed-realtime mission run. This correction does not upgrade the existing
+`IMPLEMENTED_UNVERIFIED` packet status or erase the two retained verifier findings.
+
+<!-- WP67-70-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-67 through WP-70 — flexible dynamic replanning correction
+
+### Frozen authorization, intent, and value
+
+Originating operator request on 2026-08-17:
+
+> ok implement those changes
+
+The authorized antecedent is the immediately preceding Runs 2–6 synthesis: replace
+the misleading Accuracy control for online goal seeking with an explicit safe margin;
+make more than two appearing objects configurable; prevent unnecessary hard braking,
+stale-cutover rejection, beneficial-event fallback, and route-side churn; safety-cap
+infeasible speed; separate fixed repeats from seeded stress; retain exact planning and
+source evidence; and correct dynamic path-tube, stop, and failure classification.
+
+| Intent/value category | Frozen content |
+| --- | --- |
+| Minimum useful operator outcome | A three-object online-replanning run can be prepared with a visible minimum drone-to-object clearance, the required full opening is shown, ordinary obstacle updates remain moving replans, and the resulting evidence explains every accepted or failed cutover. |
+| Explicitly requested behavior | More than two objects with a set amount; no Accuracy filter for a route-free online mission; a minimum safe margin; repair the observed refusal/hesitation/hard-brake/second-object behavior. |
+| Necessary prerequisites | Hash-bound preparation inputs; speed feasibility cap; fixed repeat identity; fresh-state moving cutover; truthful path/stop/root-cause evaluation; exact event/search/cutover evidence. |
+| Optional experiment | One four-object fixed-world stress run and a distinct seeded-stress identity. Failure here may remain a declared stress limit if the default three-object outcome passes safely. |
+| Non-goals | No physical-flight, Live Isaac, learned perception, SLAM, damage, multi-drone dynamic-replanning, or mathematical continuous-space completeness claim; no clearance below the case's existing `0.15 m` hard minimum; no wider freshness or Supervisor start tolerance. |
+
+- Base commit: `40cd9947f87eb9bf2719d72e7c72ea867eab9977`.
+- Dirty-tree rule: every scoped preimage is the exact byte hash in
+  `missions/campaigns/sim/qualification/wp67-70-design-audit-v1.json`; the commit is
+  provenance, not a substitute for those hashes.
+- `ACTIVE.md` preimage before this payload: SHA-256
+  `e6cd3612e69603b2ef234ac414fc92d7c25786ae7941084b3d690b1a54d299d8`.
+- Pre-freeze audit program: `scripts/audit_wp67_70_design.py`, SHA-256
+  `b4224a7ca06789f8355385730d0e863d6cda44cff24b8b1173238a527939b747`.
+- Pre-freeze audit artifact:
+  `missions/campaigns/sim/qualification/wp67-70-design-audit-v1.json`, SHA-256
+  `039d0b9332ff3e17c3de72f63694286b37a9ec52955d42a958e4b8d60cffda6c`.
+- Reproduce before review with:
+
+```bash
+.venv/bin/python scripts/audit_wp67_70_design.py \
+  missions/campaigns/sim/qualification/wp67-70-design-audit-v1.json
+```
+
+The audit passes exact control-key, boundary-coverage, opening-formula, gap-boundary,
+speed-cap, event-cardinality, and event-identity checks. Existing focused baseline
+checks report `39 passed, 4 failed`: one pre-existing catalog-count mismatch and three
+missing historical `run-files` fixtures in `tests/api/test_campaign.py`. They are
+retained as pre-existing limits and may not be attributed to this batch.
+
+### Frozen shared contracts
+
+1. **Preparation identity.** `MotionPreparationRequest` gains an optional, typed
+   `dynamic_replanning` object. It is legal only for a one-drone goal-seeking dynamic
+   case and is included in the resolved-package hash, API preview/download/run request,
+   locked inputs, runtime context, and evidence. The fields are:
+   `minimum_clearance_m=0.15..0.30` in `0.01 m` steps (default `0.15`), exact integer
+   `obstacle_count=1..4` (default `3`), and `variation_mode=FIXED|SEEDED_STRESS`
+   (default `FIXED`) with a bounded explicit seed. Other cases reject these fields.
+2. **Clearance meaning.** `minimum_clearance_m` is the surface margin between the
+   nominal vehicle envelope and every solid after localization/prediction uncertainty;
+   it may only tighten the case's `0.15 m` minimum. The read-only minimum full opening
+   is `2 × (0.055 m vehicle radius + 0.05 m uncertainty + requested clearance +
+   0.05 m spline/search reserve)`. Therefore the default opening is exactly `0.61 m`;
+   `0.59 m` rejects, `0.61 m` admits at the `1e-9 m` numeric boundary, and `0.63 m`
+   admits. Evidence retains every component rather than only the sum.
+3. **No path Accuracy for goal seeking.** The dynamic UI labels the control
+   `Clearance`, never `Accuracy`. Its motion-quality contract has no path-tube guard
+   and removes `PATH_ADHERENCE` from the objective vector because there is no authored
+   reference route. Temporal tracking of each accepted initial/replacement trajectory,
+   obstacle clearance, dynamics, goal capture, and landing remain hard evidence.
+4. **Bounded object population.** One exact shared resolver creates the runtime event
+   list used by preview scheduling, static event admission, perception truth, and
+   evaluation. Counts `1,2,3,4` produce respectively `3,4,5,6` events: add/move the
+   first object, add each further distinct object once, then remove the first. Event
+   sequences/generations are contiguous, IDs and solid IDs are unique, each event
+   retains the existing `3.0 s` observation lead, the maximum simultaneous population
+   equals the requested count, and extra objects use bounded authored template
+   geometry that leaves an independently checked outer passage. Future objects remain
+   absent from initial planner truth.
+5. **Repeat identity.** `FIXED` materializes the same exact dynamic-world geometry and
+   event timing for the same case/package/seed regardless of run ID. `SEEDED_STRESS`
+   additionally binds the run ID and therefore produces a distinct retained truth
+   identity. Fixed and stress results are never aggregated as repeats of one world.
+6. **Reaction speed cap.** Dynamic goal-seeking preparation resolves any request above
+   `0.30 m/s` to `0.30 m/s` before Play and names the dynamic reaction envelope as the
+   binding cap. With the existing `0.74 s` complete latency, `1.0 m/s²` acceleration,
+   `8.0 m/s³` jerk, `0.055 m` radius, `0.05 m` uncertainty, and `0.15 m` clearance,
+   the retained witnesses require center-to-surface distances `0.529775 m` at
+   `0.29 m/s`, `0.540750 m` at `0.30 m/s`, and `0.781250 m` at `0.50 m/s`.
+   Runtime urgency remains authoritative and can still brake/fallback on a genuinely
+   late or close observation.
+7. **Continuity-aware search.** Goal-corridor A* takes the observed horizontal
+   velocity as its initial heading when speed exceeds the stop threshold. Its frozen
+   primary cost is `path_length_m + 0.10 m/rad × integrated_absolute_heading_change`;
+   path length, integrated turn, protected clearance, and canonical grid state remain
+   deterministic tie-break evidence. This penalizes a large corridor-side reversal
+   but never admits a blocked gap or weakens clearance.
+8. **Fresh handoff.** Planning remains isolated from the control loop. Immediately
+   before Supervisor preparation, the execution head captures one final source-time
+   observation and rebases/recertifies the exact trajectory. The normal path requires
+   observation age `<=0.25 s` and exact start error `<=0.10 m`; it does not widen the
+   existing Supervisor limit. At most one full fresh search may follow an unusable
+   stale corridor. A retry record is appended before starting it and retains initial,
+   retry, rebase, and cumulative latency even when the retry times out. Budget
+   exhaustion is `INCONCLUSIVE_BUDGET`, never geometrical `NO_SOLUTION`.
+9. **Beneficial events.** `OBSTACLE_REMOVED` and `PASSAGE_OPENED` can never select an
+   immediate fallback solely because another retained solid is close. They still
+   reoptimize and certify from fresh state; invalid, late, or stale evidence may fail
+   closed normally.
+10. **Truthful evaluation.** Dynamic path-tube is explicitly not applicable. An
+    unintended stop requires speed `<=0.02 m/s` continuously for at least `0.20 s`,
+    strictly between moving intervals in the same accepted authority epoch; command,
+    acknowledgement, cutover, initial stabilization, and final capture boundaries do
+    not each create stops. Root cause classification matches normalized reason/fault
+    codes from authoritative terminal fields and exact execution-head dispositions;
+    configured words elsewhere in the bundle cannot classify a watchdog failure.
+11. **Retained explanation.** Each event record retains the resolved preparation and
+    source-code identities, observed state age/speed, response witness, search
+    disposition/expansions/wall time, inflation components, required opening, selected
+    path/objective, rejected/no-solution/budget reason, rebase attempt/latency,
+    preparation start error or structured Supervisor error, receipt/commit/dispatch,
+    and post-cutover observation. Dirty runtime source is identified by exact hashes of
+    the production modules used for preparation, world materialization, planning,
+    replanning, execution, and evaluation.
+
+### Work packets
+
+#### WP-67 — Dynamic preparation and operator controls
+
+**Status:** `IN_PROGRESS`
+
+**Independent verification:** `DRAFT_UNVERIFIED`
+
+Implement the typed dynamic preparation, hash transit, three-object default, bounded
+one-to-four object population, fixed/stress repeat identity, `0.15..0.30 m` Clearance,
+computed Opening readout, and `0.30 m/s` preflight speed cap. In the Campaign workspace,
+dynamic Motion keeps `Balance`, `Speed`, `Clearance`, and `Smoothness`; a compact
+Environment row directly below contains `Obstacles` and `Variation`. Static missions
+retain the existing Accuracy control. Update the durable UI guide because this is a
+new case-specific preparation pattern.
+
+#### WP-68 — Moving-replan continuity and cutover freshness
+
+**Status:** `PLANNED`
+
+**Independent verification:** `DRAFT_UNVERIFIED`
+
+Implement velocity-seeded continuity cost, final fresh rebase before preparation,
+bounded single retry, complete failed-attempt evidence, and beneficial-event handling.
+No solution, budget exhaustion, stale state, and Supervisor rejection remain distinct
+safe outcomes; no safety tolerance or planning authority is widened.
+
+#### WP-69 — Dynamic evidence and evaluator truth
+
+**Status:** `PLANNED`
+
+**Independent verification:** `DRAFT_UNVERIFIED`
+
+Remove the inapplicable goal-seeking path-tube guard; join motion observations to the
+accepted trajectory epoch; make stop detection phase/authority aware; classify exact
+terminal causes; and retain the complete event/search/handoff/source identity described
+above through bundle, evaluator, offline analyzer, API, and download artifacts.
+
+#### WP-70 — Reproducible qualification and served handoff
+
+**Status:** `PLANNED`
+
+**Independent verification:** `DRAFT_UNVERIFIED`
+
+Add independent component and production-entry counterexamples and run the bounded
+matrix below. Rebuild/restart the affected local API/UI only after confirming that no
+active mission would be interrupted, then inspect the actual served desktop and narrow
+surface. This establishes software Fast Sim behavior only.
+
+### Claim and evidence matrix
+
+| Claim | Trigger / production transit | State or command effect | Independent oracle and counterexample | Boundary |
+| --- | --- | --- | --- | --- |
+| Dynamic controls are truthful | Campaign dynamic case → UI request → preview/package/run API → resolved package | Clearance changes both planning solid policy and motion clearance; object count changes the resolved event set; Accuracy is absent | Recompute package hashes and opening from independent constants; reject clearance `<0.15`/`>0.30`, Boolean/non-integer counts, and dynamic fields on a static case | `PRODUCTION_ENTRY / NO_RUNTIME / NOT_APPLICABLE` |
+| Object population is bounded and repeatable | Resolved package → schedule/scenario/perception source | Exactly the requested distinct/max-simultaneous objects appear; fixed run IDs share truth while stress IDs differ | Independently enumerate event/solid IDs and timeline occupancy; reorder source templates and rename a child without changing cardinality | `INTEGRATION / FAST_SIM / ACCELERATED` |
+| Nominal updates remain moving replans | Source-time sensor event → isolated search → fresh rebase → Supervisor receipt → commit/dispatch | Accepted replacement preserves motion and reaches goal/landing without certified fallback | Raw telemetry and exact event trace; removal near another solid, stale state, insufficient gap, no solution, and exhausted budget perturbations | `PRODUCTION_ENTRY / FAST_SIM / OBSERVED_REALTIME` |
+| Gap and route selection are explainable | Fresh perceived geometry → A* → spline/cutover certificate | Gap below required opening rejects; continuity cost prefers a feasible committed side without weakening clearance | Independent `0.59/0.61/0.63 m` geometry oracle plus mirrored/reordered obstacles and opposite initial headings | `COMPONENT + INTEGRATION / FAST_SIM / ACCELERATED` |
+| Evaluation reports actual dynamic behavior | Retained CSV/context → evaluator → analyzer/API | No path-tube verdict for route-free goal seeking; stops and root cause use exact epochs/codes | Hand-built CSV stop intervals and terminal fields; configured `watchdog` prose with a replanning-budget failure must not classify `SIM_TIMING` | `INTEGRATION / FAST_SIM / ACCELERATED` |
+| Served preparation is usable | Current built assets and API → Campaign workspace | Dynamic case visibly shows Clearance, Opening, Obstacles, and Variation; static case still shows Accuracy | Desktop/narrow rendered inspection, keyboard operation, long values, disabled/error state, and request capture | `PRODUCTION_ENTRY / NO_RUNTIME / NOT_APPLICABLE` |
+
+### Executable exit evidence
+
+1. Pre-freeze audit remains byte-identical and passing; a separate implementation
+   manifest binds postimages without rewriting this design artifact.
+2. Focused Python tests cover request validation, hash sensitivity, 1–4 populations,
+   fixed/stress identity, watchdog reserve, speed cap, gap boundaries, velocity-heading
+   mirroring, beneficial removal, fresh-start preparation, retry timeout evidence,
+   path-tube N/A, stop intervals, and exact cause classification.
+3. Existing dynamic, planner, motion-quality, evaluation, API, documentation-routing,
+   and generated-contract tests pass except explicitly frozen unrelated baseline
+   failures. Ruff, targeted Mypy, ESLint, TypeScript, Vitest, and the production UI
+   build pass.
+4. Three consecutive default `obstacle_count=3`, `FIXED`, `0.29 m/s`, observed-realtime
+   production-entry runs have identical dynamic-world truth identity, persist and
+   dispatch every configured event, contain no `SAFE_FALLBACK`, complete goal capture
+   and landing, retain protected clearance `>=0`, local estimate/truth RMS `<=0.03 m`,
+   no unintended route stop, start error `<=0.10 m`, observation age `<=0.25 s`, and
+   cumulative replanning latency `<=2.0 s` per event. Every repeat passes individually.
+5. One fixed four-object run exercises all four simultaneous objects. It must remain
+   collision-free and evidence-complete; a budget fallback may remain a declared P2
+   stress limitation only if the default three-object gate above passes and the UI
+   labels four objects as stress rather than nominal.
+6. The served UI inspection binds API/assets and verifies desktop and narrow layout,
+   keyboard labels, dynamic/static control swap, computed opening, obstacle count,
+   fixed/stress choice, speed-cap explanation, loading/disabled/error behavior, and no
+   horizontal overflow or console error.
+
+### Model, cost, and review route
+
+- Author route: frontier reasoning at high effort because this batch crosses
+  safety-sensitive geometry, reaction timing, authority cutover, generated API, and
+  served UI boundaries. Exact model name, token count, and wall time are not exposed;
+  proxies are four packets, one design review/recheck maximum, one implementation
+  review/recheck maximum, declared run count, and the frozen implementation file list.
+- Design review count: `0`; correction count: `0`.
+- Implementation review count: `0`; correction count: `0`.
+- Safe fallback if a claim cannot close: retain the current `0.15 m` safety minimum,
+  cap dynamic speed at `0.30 m/s`, keep four objects labeled stress, and leave the
+  affected packet `IMPLEMENTED_UNVERIFIED` without qualifying runtime or served UI.
+
+<!-- WP67-70-DESIGN-PAYLOAD-END -->
+
+### WP-67 through WP-70 initial design-review handoff
+
+- Initial payload: 16,544 bytes, SHA-256
+  `f90a8af102f675df870729b00fd8f4210f7c0ce0b5f734603bc4a32568b67f42`.
+- Independent design verifier: `/root/wp67_70_design_review`
+  (`work_packet_verifier`, fresh for this review unit).
+- Initial verdict: `BLOCKED_WITH_FINDINGS` with six P1 findings. The accepted
+  correction scope is limited to lattice-phase opening truth, independently derived
+  motion/continuity guards, a complete sensed-world witness, independently discovered
+  transit boundaries, separation of immutable resolved-world identity from motion
+  policy, and the prior-run transition before new qualification evidence.
+- Sole consolidated design correction: consumed below. The same verifier receives one
+  focused recheck; no third automatic pass is permitted.
+
+<!-- WP67-70-R2-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-67 through WP-70 R2 consolidated design correction
+
+R2 supersedes only the six erroneous or incomplete contracts named above. Every other
+initial WP-67 through WP-70 decision remains frozen. The originating operator request,
+base commit, and initial payload hash remain unchanged.
+
+- Initial design SHA-256:
+  `f90a8af102f675df870729b00fd8f4210f7c0ce0b5f734603bc4a32568b67f42`.
+- `ACTIVE.md` preimage before R2: SHA-256
+  `c35b70ff67e2567fa6d7caa17cde9f236935ce15a72d77e46f57c3dd41c50956`.
+- R2 audit program: `scripts/audit_wp67_70_r2_design.py`, 26,742 bytes,
+  SHA-256 `895866b2a450485f7368b3f819c7f02e16091780b60f0d5ab6cf1f5797316e58`.
+- R2 audit artifact:
+  `missions/campaigns/sim/qualification/wp67-70-r2-design-audit-v1.json`,
+  56,223 bytes, SHA-256
+  `760501d2fa9a7a609d41ee9bc46fd9a440e541d8cf3c992a77ae305aea4d483e`.
+- Reproduce with:
+
+```bash
+.venv/bin/python scripts/audit_wp67_70_r2_design.py \
+  missions/campaigns/sim/qualification/wp67-70-r2-design-audit-v1.json
+```
+
+The audit imports the production corridor search, reaction-horizon, urgency,
+perception, scenario-event, and canonical-hash boundaries. It passes all 15 frozen
+checks. Its source-to-transit manifest is discovered from production symbol
+occurrences, classifies every discovered node `MODIFY`, `PRESERVE`, `NEW`, or
+`GENERATED`, and derives both generated API outputs from `ui/package.json` rather than
+from the author claim table.
+
+### R2-1 — physical opening versus planner guarantee
+
+`minimum_clearance_m` remains the nominal vehicle-envelope-to-solid surface margin
+after localization/prediction uncertainty. Its legal range is corrected to
+`0.15..0.25 m`, step `0.01 m`; a larger value must be rejected, never silently
+weakened. The upper bound preserves a useful outer route in the exact four-object
+world below.
+
+Two read-only values are retained and shown with their meanings:
+
+- physical protected opening =
+  `2 × (0.055 radius + 0.05 uncertainty + clearance + 0.05 spline/search reserve)`;
+- planner-guaranteed opening = physical protected opening + one `0.05 m` cell for
+  arbitrary lattice phase.
+
+At the default clearance these are `0.61 m` physical and `0.66 m` guaranteed. At
+`0.25 m` they are `0.81 m` and `0.86 m`. The UI primary readout is
+`Opening ≥ 0.66 m` and describes it as the discrete planner guarantee. It may expose
+the `0.61 m` physical value only as subordinate diagnostic text.
+
+The executable oracle uses the real `search_goal_corridor`: a `0.61 m` gap centered
+on the grid is selected; `0.61 m` and `0.63 m` gaps shifted by `0.025 m` return
+`NO_SOLUTION`; a `0.66 m` shifted gap is selected. Mirroring and source-object
+reordering must preserve those dispositions. This is a discrete-grid guarantee, not a
+continuous-space completeness claim.
+
+### R2-2 — separately hashed world/case truth
+
+Dynamic world preparation is not nested in `MotionPreparationRequest` and never
+changes a motion-profile hash. The public request contains two sibling components:
+
+1. `MotionPreparationRequest` owns `speed_m_s`, `minimum_clearance_m`, and
+   `smoothness`; for route-free goal seeking it rejects Accuracy/path-tube input.
+2. `DynamicWorldPreparationRequest` owns exact integer `obstacle_count=1..4`,
+   `variation_mode=FIXED|SEEDED_STRESS`, and an explicit bounded integer
+   `variation_seed`.
+
+Before preview, download, scheduling, or Play, one resolver materializes an immutable
+`ResolvedDynamicWorld` with separate `dynamic_world_definition_sha256`,
+`dynamic_event_set_sha256`, and `resolved_dynamic_world_sha256`. It then derives an
+immutable successor `CampaignCase` whose ID is
+`<source-case-id>.world-<first-12-world-hash>` and whose case hash includes the exact
+scenario events and parent source-case hash. `ResolvedPlanningPackage.case`, planning
+submission, execution profile, schedule, perception timeline, lock, runtime context,
+manifest, and evaluation all bind this resolved child case/hash. The lock also keeps
+the selected source case ID/hash for catalog grouping. The child snapshot is retained
+inside the package and run evidence and is not registered as a second visible catalog
+entry.
+
+The existing authored source case and its base two-object world remain byte-immutable.
+Changing obstacle count, seed, geometry, timing, or hard world truth creates a new
+resolved child case/hash. Changing only clearance or speed creates a new motion/
+planning component and package hash while preserving the resolved world and child-case
+hash. A run ID never participates in world materialization. `FIXED` defaults to seed
+`42`; `SEEDED_STRESS` exposes its explicit seed. Equal mode/seed inputs are exact
+repeats across run IDs; different stress seeds are distinct worlds and are never
+pooled as repeats.
+
+### R2-3 — exact one-to-four-object sensed-world witness
+
+All event source clocks use `campaign-scenario`. Sensor observations use
+`simulated-depth-range`, configuration hash from `PerceptionModelConfig(latency_s=0.12,
+expiry_s=0.50)`, exact source sequence/world generation, and the resolved child-case
+and event-set identities. Every event has `duration_s=3.0`, so its effective source
+time is trigger plus `3.0 s`.
+
+| Event | Trigger / effective source s | Exact solid bounds `(xmin,ymin,zmin)..(xmax,ymax,zmax)` m |
+| --- | --- | --- |
+| add 1 | `2.0 / 5.0` | `sensed-rock-1: (-0.15,-0.20,0.10)..(0.20,0.20,0.70)` |
+| move 1 | `5.5 / 8.5` | `sensed-rock-1: (0.20,-0.25,0.10)..(0.50,0.15,0.70)` |
+| add 2 | `7.5 / 10.5` | `sensed-wall-2: (0.85,0.45,0.00)..(1.00,0.90,0.80)` |
+| add 3 | `9.25 / 12.25` | `sensed-wall-3: (0.55,-0.80,0.00)..(0.75,-0.45,0.80)` |
+| add 4 | `11.0 / 14.0` | `sensed-wall-4: (0.90,-0.80,0.00)..(1.10,-0.45,0.80)` |
+| remove 1 | `12.5 / 15.5` | remove exact `sensed-rock-1` identity |
+
+For count `N`, include add/move 1, adds `2..N`, and remove 1. Renumber event sequence
+and generation contiguously `1..N+2`. Counts `1..4` therefore produce `3..6` events
+and exact maximum simultaneous populations `1..4`. Received source time is trigger
+plus `0.12 s`; sensor expiry is trigger plus `0.62 s`. Future truth is absent from
+initial planning view. The exact extra-object geometry leaves a lower outer passage at
+the maximum admitted `0.25 m` clearance; implementation tests certify that route with
+the real planner and its boundary margin.
+
+The complete reaction witness binds these latency components:
+`0.12 sensing + 0.02 validation/queue + 0.50 planning + 0.0006 acknowledgement +
+0.0994 cutover guard = 0.74 s`. Event lead and prediction horizon are `3.0 s`, sensor
+expiry is `0.50 s`, normal freshness is `<=0.25 s`, planning budget is `<=2.0 s`, and
+trajectory prediction step is `0.02 s`. At `0.30 m/s`, required center-to-surface
+distance is `0.540750 m` at clearance `0.15 m` and `0.640750 m` at clearance
+`0.25 m`; both are tested, along with isolated margin failures and the preflight speed
+cap.
+
+The nominal sensed event must produce a safe-prefix certificate, selected/certified
+corridor, hash-bound preparation receipt, atomic commit, and moving replacement
+dispatch. A late observation with a certified stationary prefix may dispatch
+`STOP_AND_HOLD`; without such a prefix it requires an abort-route certificate and
+`ABORT_AND_LAND`. Missing/tampered receipts or missing certificates produce zero
+replacement commits and zero replacement dispatches. Stale, no-solution, budget, and
+Supervisor-rejection outcomes retain distinct codes.
+
+### R2-4 — independently derived hesitation and continuity guards
+
+The guard registry in the R2 artifact is derived from the frozen operator text plus
+the durable motion, replanning, mission, planning, and evidence requirements. The
+implementation may not prove completeness by comparing two author-maintained copies
+of the same list. Every default three-object repeat must independently pass:
+
+| Guard | Exact nominal threshold | Isolated meaningful failure |
+| --- | --- | --- |
+| Speed | accepted-epoch band coverage `>=0.95`, excluding takeoff, cutover, and final-capture windows | replace moving samples with `0.10 m/s` |
+| Temporal tracking | RMS to the exact accepted trajectory epoch `<=0.03 m` | offset observations `0.04 m` |
+| Hard braking / jerk | route peak deceleration `<=1.0 m/s²`; peak jerk `<=8.0 m/s³` | inject `1.1 m/s²` brake |
+| Route continuity | replacement initial heading change `<=π/2`; zero nominal corridor-side reversals | mirror one replacement to the other feasible side |
+| Unintended stop | zero intervals at speed `<=0.02 m/s` for `>=0.20 s` strictly inside a moving accepted epoch | inject `0.21 s` zero speed |
+| Clearance / collision | nominal envelope-to-solid margin `>=requested clearance`; zero collisions | move one solid `0.01 m` inside margin |
+| Event completeness | every configured event joins observation, certificate, receipt, commit, and dispatch | remove one receipt |
+| Freshness / budget | age `<=0.25 s`, start error `<=0.10 m`, cumulative search `<=2.0 s` | age final observation to `0.251 s` |
+| Goal / landing | both captured within the case terminal limits | omit landing completion |
+
+Raw and processed acceleration/jerk must reconcile; raw failure cannot be masked by a
+percentile. Heading change uses the observed pre-cutover velocity and first replacement
+tangent. Corridor side is the sign of cross product against the immutable start-goal
+chord, ignores direct/collinear paths, and is evaluated only between successive
+accepted detours around the same retained blocking set. The beneficial removal/direct
+goal continuation cannot manufacture a side reversal.
+
+### R2-5 — complete boundary and generated-output manifest
+
+The R2 artifact scans production Python/TypeScript for the actual preparation,
+package, API, scenario, perception, planning, replanning, execution, evaluation,
+analysis, and Campaign UI symbols and records exact line witnesses and preimage hashes.
+Every discovered node is classified. The explicit edit set additionally covers the
+catalog/source-child identity, API runtime and persistence/export owners, simulation
+world/sensor owners, mission entry point, durable UI/system maps, tests, and the exact
+case fixture. `ui/openapi.json` and `ui/app/lib/api.generated.ts` are `GENERATED` and
+are derived from the real `generate:api` command. The implementation manifest must
+compare this discovered R2 set with actual postimages and explain every added, changed,
+preserved, generated, or deleted node; a hand-maintained subset cannot close the gate.
+
+### R2-6 — prior-run transition and qualification order
+
+Runs 2–6 are historical evidence for the pre-correction implementation and cannot be
+pooled with the corrected world/package identity. After the implementation revision is
+committed and before any new retained affected campaign run:
+
+1. confirm no active mission or preparation would be interrupted;
+2. run `scripts/mark_campaign_runs_old.py` for case
+   `1d.online_obstacle_replan.dynamic_nominal`, the exact applied revision identity,
+   actor, and reason `WP-67..70 dynamic-world/preparation semantics replaced`;
+3. retain the command, prior/new counts, changed run IDs, and revision hash;
+4. restart the affected API/runtime under REQ-WFL-053 and verify state; and
+5. only then collect the three default fixed repeats and optional four-object stress
+   evidence.
+
+If no committed revision identity or transition authority exists, implementation tests
+may run against isolated temporary stores, but no new retained campaign run may be
+claimed as qualification. Old rows are preserved, never deleted or rewritten.
+
+### Corrected packet and gate state
+
+| Packet | Status | Independent verification |
+| --- | --- | --- |
+| WP-67 — dynamic preparation and operator controls | `REVIEW_BLOCKED` | `BLOCKED_WITH_FINDINGS` |
+| WP-68 — moving-replan continuity and cutover freshness | `REVIEW_BLOCKED` | `BLOCKED_WITH_FINDINGS` |
+| WP-69 — dynamic evidence and evaluator truth | `REVIEW_BLOCKED` | `BLOCKED_WITH_FINDINGS` |
+| WP-70 — reproducible qualification and served handoff | `REVIEW_BLOCKED` | `BLOCKED_WITH_FINDINGS` |
+
+Implementation remains closed until the same independent verifier returns
+`DESIGN_VERIFIED` for the initial+R2 composite. If verified, implementation must bind
+both design hashes, retain unrelated dirty-tree work, and freeze an exact pre/post
+manifest before a different fresh implementation verifier is spawned.
+
+<!-- WP67-70-R2-DESIGN-PAYLOAD-END -->
+
+### WP-67 through WP-70 R2 recheck handoff
+
+- Corrected R2 payload: 12,313 bytes, SHA-256
+  `3cfdb3ae05bb3f2f45e125a835df92fd677d23bf06005ff75a9f4d7bac881840`.
+- Design-review count: `1`; consolidated correction count: `1`.
+- Focused recheck: consumed by the same verifier.
+- Focused-recheck verdict: `BLOCKED_WITH_FINDINGS`. Opening/lattice truth and the
+  Runs 2–6 transition order are resolved. Four P1 findings remain: the guard registry
+  and prose perturbations are not independently computed; the sensed-world witness
+  does not execute certificates/receipts/commit/dispatch and the frozen three-/four-
+  object geometry exhausts the 8,192-state production search; the 34-path transit
+  manifest omits API runtime, generator, transition-script, and test owners; and the
+  child-case witness uses a placeholder parent hash while stress seeds alter metadata
+  but not behavior-driving event geometry.
+- The sole correction and focused recheck are consumed. No third automatic pass is
+  permitted for this review unit. Production implementation remains closed.
+- Independent verification: `BLOCKED_WITH_FINDINGS`.
+
+## Active implementation track — 2D conflict curriculum and motion parity
+
+Status: `IMPLEMENTED`
+
+This ordinary implementation track records the 2026-08-20 operator feedback without
+recasting it as a new work packet. Existing retained case and run identities remain
+immutable; corrected cases and catalog groupings reference them as baselines.
+
+### Operator intent
+
+- A two- or three-drone route reuses the same qualified single-drone continuous-flight
+  primitive. Drone count changes coordination, not vehicle physics, waypoint traversal,
+  controller behavior, or the default speed law.
+- An ordinary fly-through node does not command a stop or a node-local slowdown. Speed
+  changes are admitted only by authored checkpoints, terminal capture, real curvature,
+  dynamics/actuator bounds, path-fidelity limits, or an active separation constraint.
+- Head-on conflict, bottleneck, merge, and perpendicular crossing answer different
+  causal questions. A synchronized conflict cannot pass by leaving one vehicle on the
+  ground until the other completes.
+- Timing experiments expose a bounded start-gap/release control and report the resolved
+  earliest safe value. Geometry experiments instead require simultaneous participation
+  and compare lateral detour with vertical layering; recovery experiments use actual
+  source-time changes and atomic replanning.
+- The 2D catalog presents one behavior-focused hierarchy. Constraint variants remain
+  subordinate to the owning conflict mission instead of appearing as duplicate mission
+  families in both `GEOMETRIC_CONFLICT_RESOLUTION` and
+  `CONSTRAINTS_AND_OPTIMIZATION`.
+
+### Dependencies and implementation tasks
+
+1. Preserve the exact retained run/case artifacts cited by the existing WP-54 and
+   operator-review records; add successor presentation or case identities where mission
+   truth changes.
+2. Remove drone-count branching from continuous fly-through tangent allocation and add
+   parity tests using equivalent one- and two-role route geometry.
+3. Correct the bottleneck successor to use fly-through corridor nodes; retain explicit
+   checkpoints only for genuine multi-goal missions.
+4. Bind ground waits to each vehicle source clock, keep all required fleet children alive
+   through admitted release windows, and prove both-role takeoff/completion for head-on,
+   merge, bottleneck, and crossing anchors.
+5. Add bounded coordination preparation for start gap/release and keep hard separation,
+   geometry, dynamics, and authorization authoritative when a requested value is unsafe.
+6. Publish a compact 2D mission curriculum that groups timing, lateral, vertical, and
+   recovery variants under distinct conflict questions and removes duplicate default
+   navigation paths.
+
+### Non-goals
+
+- No physical-flight or impact-fidelity claim from Fast Sim.
+- No weakening of collision, protected-clearance, workspace, dynamics, or terminal gates.
+- No mutation or deletion of retained runs, evidence, or historical case identities.
+- No mission-local copy of the single-drone time law or controller tuning.
+
+### Measurable exit gates
+
+1. Equivalent one- and multi-drone fly-through polylines compile with the same internal
+   knot-speed rule and zero undeclared stops; authored checkpoint cases still stop.
+2. The four 2D conflict anchors generate and execute commands for every required role.
+   Synchronized submissions meet their launch-skew and overlap contracts; timing-only
+   submissions retain continuous earliest-release evidence.
+3. Bottleneck fly-through interior speed remains above the declared continuous-knot
+   ratio unless the retained plan names the binding dynamics, curvature, path-fidelity,
+   or separation constraint.
+4. The operator can vary the bounded start gap before Play and sees requested versus
+   resolved release plus an exact blocked reason when the request cannot be certified.
+5. The served 2D catalog exposes one non-duplicated conflict hierarchy with distinct
+   bottleneck, head-on, merge, crossing, geometry, and recovery questions; desktop and
+   narrow rendered states pass `design.md` criteria.
+6. Targeted campaign, planner, trajectory, API, and UI tests pass, followed by one
+   accelerated anchor per strategy class and a realtime operator handoff without a
+   qualification overclaim.
+
+### Implementation evidence — 2026-08-20
+
+- Two-role trajectory allocation now uses the same continuous fly-through tangent rule
+  as the qualified one-role primitive. Bottleneck staging nodes remain continuous and
+  only authored checkpoints declare a stop.
+- The retained second-role non-start was traced to a finite-step source-clock residue in
+  admitted ground wait. A source-time tolerance removes the zero-progress loop without
+  weakening fleet freshness, mission timeout, or separation supervision.
+- The bottleneck, head-on, merge, and perpendicular-crossing anchors each completed an
+  accelerated end-to-end run with both `Alpha` and `Beta` present in final analysis.
+- Exact launch-gap preparation is independently planned in both role orders. Bottleneck
+  requests reuse the same certified passage geometry as automatic earliest release;
+  unsafe requested gaps still fail closed.
+- `2d-conflict-missions-v1` exposes all 18 simulation 2D cases exactly once under
+  Crossing, Traffic, Merge, Coordination, and Recovery. The default 2D catalog no longer
+  exposes the older duplicate cluster navigation.
+- Focused backend, UI, API-adapter, typecheck, production-build, and in-app visual checks
+  pass. The realtime operator handoff named by exit gate 6 remains an operator validation
+  step and is not represented as simulation qualification.
+
+<!-- WP71-75-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-71 through WP-75 — first physical Crazyflie readiness ladder
+
+This packet batch is one design-review unit. It converts the current application from
+a simulator with partial physical scaffolding into a deliberately staged path toward
+one contained Crazyflie flight. It does not authorize a radio scan, a connection, a
+motor command, or a flight during design or implementation verification.
+
+### Frozen request and current verdict
+
+The originating detailed physical-flight request is already frozen verbatim in the
+WP-57 through WP-61 design payload above. The successor request that selects this
+packet structure is frozen exactly as received:
+
+> ok so what is the verdict what do you want to do first will you structure it in work packets or how do you want to imlement
+
+Verdict at the design base: the application is **not ready for a props-on first
+flight**. `TWIN` provisioning is rejected by the API, the production vehicle provider
+does not construct a Crazyflie adapter, the physical curriculum is rejected as
+`NOT_RUN`, the first four curriculum stages resolve to the same takeoff/hover/land
+case, motor truth required by physical handoff is unavailable, the immediate stop is
+hidden behind an Engineering confirmation, there is no keyboard authority, and the
+link path has no active command watchdog lifecycle. One targeted baseline has 125
+passing tests and one failing physical-plan schema test. These observations are
+preimages, not completion evidence.
+
+Base commit: `40cd9947f87eb9bf2719d72e7c72ea867eab9977`.
+
+### Intent/value card
+
+- **Operator:** one operator with one Crazyflie, one configured radio URI, an
+  independent observer, and a contained indoor test area.
+- **Decision:** determine safely whether observation, props-off actuation, basic
+  controlled motion, and finally a 0.3 m hover are each ready to advance.
+- **Minimum useful outcome:** even if flight packets do not advance, the normal served
+  application can connect to one exact vehicle in observation-only mode and explain
+  every unavailable or blocked state without implying flight readiness.
+- **Evidence consumer:** the operator reviewing the live Control Center, plus the
+  retained physical qualification record and later independent implementation
+  verifier.
+- **Hard stop:** any missing identity, telemetry freshness, permit, preflight, watchdog,
+  observer, containment, or command acknowledgement leaves the next stage blocked.
+
+### Frozen boundaries and audit
+
+The machine-readable prefreeze artifact is
+`missions/campaigns/sim/qualification/wp71-75-design-audit-v1.json`. It freezes the
+base commit, the preimage of this ledger before this payload, 43 production/UI/test/
+documentation boundaries, both generated API outputs, six intended new files, all
+six public claims, dependencies, and required requirement IDs. Its audit command is:
+
+`./.venv/bin/python scripts/audit_wp71_75_design.py`
+
+At draft time the audit reports zero errors. UI contract regeneration remains one
+atomic pair: `ui/openapi.json` and `ui/app/lib/api.generated.ts`. Because this batch
+introduces a physical service owner and changes public transit and primary test
+boundaries, implementation must update `docs/system/README.md` as well as the durable
+surface rules in `design.md` and `docs/project/DESIGN.md` where the new patterns land.
+An implementation manifest must compare this complete discovered set with exact
+postimages; naming a hand-written diff is insufficient.
+
+### Batch invariants and non-goals
+
+1. **One intent, environment-specific adapters.** The same canonical takeoff, hold,
+   relative-move, land, and abort intent and evidence envelope crosses Fast Sim and the
+   physical adapter. Simulation success never substitutes for observed hardware.
+2. **Exact identity, no discovery.** Physical entry uses one explicitly configured,
+   pinned Crazyflie radio URI. The application must never scan for or select an
+   arbitrary nearby vehicle. The first binding requires a visible operator identity
+   confirmation; later mode selection may reconnect only that retained binding.
+3. **Connect is not arm.** Selecting Digital twin may establish an observation-only
+   link. It may not arm, grant a permit, start a mission, spin motors, or auto-resume a
+   prior mission. Reconnection after restart, link loss, or emergency stop remains
+   observation-only.
+4. **Physical state is literal.** Missing battery, estimator, deck, motor, link, or
+   acknowledgement channels remain explicit `UNAVAILABLE`; no simulated or derived
+   placeholder may satisfy a physical gate.
+5. **Safety authority preempts ownership.** Emergency stop must bypass mission and
+   fleet leases and reach the link immediately. Controlled landing may preempt a
+   mission only while link, estimator, height, and command acknowledgement remain
+   healthy; otherwise the supervisor escalates to emergency stop.
+6. **No arbitrary low-PWM ritual.** Props-off motor testing uses the official firmware
+   system/motor health path or a bounded, named adapter primitive with explicit
+   props-removed and restrained attestations. It does not expose general PWM or motor
+   sliders in the UI.
+7. **No qualification by absence.** Until the radio exists and an authorized operator
+   runs a stage, all hardware results are literally `NOT_RUN`. Unit mocks and Fast Sim
+   prove software behavior only.
+8. **Contained scope.** No multi-drone operation, outdoor flight, obstacle avoidance,
+   dynamic replanning, autonomous calibration promotion, arbitrary routes, or claim of
+   complete simulation/physical equivalence is in this batch.
+
+### Packet state and dependency order
+
+| Packet | Status | Independent verification | Depends on | Minimum independently useful value |
+| --- | --- | --- | --- | --- |
+| WP-71 — exact observation-only physical entry | `PLANNED` | `DRAFT_UNVERIFIED` | — | Select Digital twin, connect/reconnect only the pinned identity, and show live or honestly unavailable physical state without command authority. |
+| WP-72 — non-bypassable safety authority | `PLANNED` | `DRAFT_UNVERIFIED` | WP-71 | Preflight cannot be bypassed and Space/Enter provide visible emergency-stop/controlled-land authority during a hot physical session. |
+| WP-73 — props-off truth and fault drills | `PLANNED` | `DRAFT_UNVERIFIED` | WP-71, WP-72 | Retain real sensor, firmware health/motor, watchdog, disconnect, and restart evidence without fabricated channels. |
+| WP-74 — paired basic mission pipeline | `PLANNED` | `DRAFT_UNVERIFIED` | WP-73 | Execute distinct startup, hover, land, and short-move stages through the same intent/evidence pipeline in sim and hardware. |
+| WP-75 — contained first-hover release | `PLANNED` | `DRAFT_UNVERIFIED` | WP-74 | Authorize and retain only a tightly bounded first physical hover after all preceding gates pass. |
+
+Implementation is strictly sequential. A packet may remain independently useful
+without advancing its successor; a failure does not collapse stages into one release.
+
+### WP-71 — exact observation-only physical entry
+
+**Ownership:** runtime and API provisioning, physical service lifecycle, provider and
+Crazyflie adapter/link boundaries, configuration, public API models/generated pair,
+Control Center environment selector and telemetry presentation, system/UI maps, and
+production-entry/UI tests named by the prefreeze artifact.
+
+**Design:** add one application-owned physical service that constructs and registers
+the Crazyflie adapter from the pinned URI. `TWIN` becomes the paired physical-plus-
+simulation observation environment, not an alias for Fast Sim. Selecting it performs
+an idempotent connect only after first-bind identity confirmation. A missing radio,
+driver, deck, log variable, or link yields a typed state and remedy in the normal
+surface; it never silently falls back to simulation. Mode switching away disconnects
+cleanly and cannot leave a command stream alive. Measured telemetry and the matched
+simulation estimate use distinct labels, clocks, freshness, and provenance.
+
+**Exit:** served UI selection triggers the real provisioning path with a fake link
+oracle; exact URI and confirmed identity are preserved across reconnect; wrong
+identity, absent radio, timeout, stale telemetry, and restart are isolated failures;
+zero arm/permit/mission/motor calls occur. The physical device result remains
+`NOT_RUN` until the radio is available.
+
+### WP-72 — non-bypassable safety authority
+
+**Ownership:** safety supervisor, physical qualification plan schema, domain command
+contract, mission/fleet preparation and execution preemption, link watchdog lifecycle,
+Control Center flight controls/hotkeys, API/generated types, and safety/API/UI tests.
+
+**Design:** reconcile the physical plan loader and make a valid, current preflight
+receipt mandatory for every physical takeoff or motor-test command even when firmware
+reports an auto-armed state. Enable flight hotkeys only after a deliberate visible
+“physical controls hot” action, while the physical surface has focus and no editable
+field is focused. In that state, Space calls immediate emergency stop, prevents the
+browser default, and needs no modal or typed confirmation; Enter requests controlled
+landing. Both actions are also permanent visible buttons outside Engineering. The UI
+shows the active mapping and last acknowledgement. Emergency stop bypasses mission/
+fleet ownership, cancels future dispatch, emits the lowest-level stop immediately,
+and keeps the onboard command watchdog active through the whole command-capable
+session. Controlled landing is bounded and supervisor-owned; unhealthy state escalates
+to stop. Correct the manual forward-axis mapping to the canonical positive-X contract.
+
+**Exit:** production-path tests prove preflight rejection despite auto-arm; Space-to-
+link dispatch latency is bounded by the application deadline and does not wait for a
+lease, modal, or network retry; missing acknowledgement, stale link, watchdog expiry,
+mission ownership, page focus, editable focus, repeated keydown, and process restart
+have explicit safe dispositions. Hardware remains `NOT_RUN`.
+
+### WP-73 — props-off truth and fault drills
+
+**Ownership:** physical curriculum and handoff schema, adapter telemetry/health
+channels, qualification recorder/storage, physical service, Control Center check
+surface, and hardware/twin/API/UI tests.
+
+**Design:** expose an ordered, resumable props-off checklist: identity; battery and
+charger state; estimator/static pose stability; required positioning-deck presence and
+quality; firmware system health; motor/propeller assignment inspection; official
+firmware motor health/test result; bounded adapter motor-test result if and only if the
+official interface supports it; emergency-stop acknowledgement; watchdog silence;
+link removal; and clean restart to observation-only. Before any actuation the operator
+must attest battery restraint, props removed, clear area, and observer presence. The
+application stores source variable, firmware result, timestamp, freshness, units, and
+availability for every item. A missing motor channel makes physical handoff fail
+explicitly instead of copying simulation truth.
+
+**Exit:** fake-link and schema tests preserve raw observed values and prove that
+missing/tampered/stale motor or estimator truth cannot pass; props-attestation loss,
+watchdog lapse, radio disconnect, and application restart each cut authority and never
+auto-resume. On real hardware, the stage is not passable until an authorized props-off
+run is retained.
+
+### WP-74 — paired basic mission pipeline
+
+**Ownership:** curriculum catalog, canonical mission/command contracts, twin
+coordinator/ingestion/handoff, mission runner, physical adapter primitives,
+qualification storage, Campaign Lab/Control Center stage UI, and mission/twin/UI
+tests.
+
+**Design:** replace the duplicated early curriculum cases with distinct stages and
+exact bounds:
+
+1. observation/startup only;
+2. static sensor stability for 10 s;
+3. props-off emergency/watchdog drill;
+4. take off vertically to `0.30 m`, hover `3 s`, and land at origin;
+5. take off to `0.30 m`, translate `0.10 m` on +X at at most `0.15 m/s`, hold `2 s`,
+   return to origin, and land; and
+6. take off to `0.30 m`, translate `0.10 m` on +X, land at the displaced target.
+
+Every stage has its own immutable case identity, canonical intent, requested and
+resolved bounds, command acknowledgements, source-clock telemetry, supervisor events,
+and environment-qualified verdict. Simulation and hardware results are shown side by
+side but never pooled. Stages 4–6 cannot be scheduled until WP-73 has a current pass;
+advancement is manual and one stage at a time.
+
+**Exit:** real adapter test doubles and Fast Sim consume the same canonical intent;
+rename/reordering and axis-sign counterexamples preserve identity and displacement;
+takeoff, hover, relative move, return, land, abort, stale telemetry, missed
+acknowledgement, and restart paths retain exact evidence. Real-stage results remain
+`NOT_RUN` until explicitly run.
+
+### WP-75 — contained first-hover release
+
+**Ownership:** physical release policy, permit lifecycle, served Control Center
+readiness/flight view, recorder/export, containment checks, operator docs, and
+end-to-end production-entry tests.
+
+**Design:** the first props-on authorization is only stage 4 from WP-74: vertical
+takeoff to `0.30 m`, three-second hover, and origin landing. The permit binds the exact
+vehicle, firmware/configuration, positioning system, charged battery, completed
+props-off run, operator, independent observer, indoor containment attestation, `0.50 m`
+horizontal containment radius, altitude limit, low-speed profile, emergency mapping,
+and one execution. Any material change invalidates it. The UI presents a linear
+readiness ladder, measured position/quality/battery/link/watchdog, abort controls, and
+the exact blocking gate. Three successful, separately initiated shakedowns are needed
+before the packet can qualify later motion stages. An intentional airborne emergency
+stop is not a success requirement; its simulated and props-off proof remains required,
+and it remains available to the operator during flight.
+
+**Exit:** served end-to-end tests prove permit one-shot behavior, no auto-advance,
+containment and altitude rejection, disconnect/quality/battery/observer failures,
+controlled landing, emergency preemption, retained export, and restart invalidation.
+Only an observed physical run can turn the hardware verdict from `NOT_RUN` into pass or
+fail. No test in the current radio-absent environment may claim that result.
+
+### Production-claim matrix
+
+| Claim | Real trigger and authoritative path | Retained observation | Independent oracle | Meaningful failure/counterexample |
+| --- | --- | --- | --- | --- |
+| Exact observation entry (WP-71) | Served Digital twin selection -> API physical service -> provider -> Crazyflie adapter -> exact pinned link | confirmed identity, URI hash, link state, raw telemetry provenance/freshness, zero authority | fake link records exact lifecycle and commands | wrong identity/absent radio produces typed block and zero commands |
+| Non-bypassable authority (WP-72) | Served Space/Enter or visible control -> API -> supervisor preemption -> adapter/link | key/control source, supervisor decision, dispatch/ack clocks, watchdog state | link spy plus independent monotonic deadline | active mission lease, auto-arm, or missing ack cannot delay/bypass stop/preflight |
+| Props-off truth (WP-73) | Served checklist -> API qualification service -> live firmware/log variables and official health primitive | raw values, units, source names, availability, attestations, fault transitions | fake firmware table plus retained schema replay | delete/tamper motor channel or lapse watchdog and handoff fails |
+| Paired simple mission (WP-74) | Served stage Play -> canonical intent -> runner -> sim or physical adapter -> recorder | immutable case/intent, commands/acks, telemetry, supervisor events, environment verdict | independent geometric/time reconstruction | rename/reorder or flip axis and exact 0.10 m displacement oracle catches it |
+| Contained first hover (WP-75) | Served one-shot permit -> stage 4 -> supervisor -> real adapter -> recorder/export | permit inputs/hash, observer/containment, live state, full flight/abort/land trace | independent altitude/containment reconstruction from raw observations | stale quality, `>0.30 m` target, `>0.50 m` radius, reuse, or restart blocks |
+| Served physical UI (WP-75) | Production build and served application, not a component harness | screenshots/DOM state plus correlated API/run identifiers | browser test against served API with controlled physical fake | narrow viewport, disconnected state, or hidden safety control fails handoff |
+
+All hardware rows require `HARDWARE + OBSERVED_REALTIME` evidence. Mocks, accelerated
+clocks, and Fast Sim are subordinate software oracles only.
+
+### Implementation and verification order
+
+1. Implement WP-71 only, run its declared checks, freeze exact pre/post hashes and
+   production traces, and obtain a fresh independent implementation verdict.
+2. Repeat the implementation gate independently for WP-72, WP-73, WP-74, and WP-75;
+   do not batch flight authority into the observation packet.
+3. No packet may use the unavailable radio as a reason to fabricate a pass. WP-71 can
+   qualify its absent-radio failure path in software; real connection and all physical
+   stages remain pending operator authorization and hardware availability.
+4. This design request stops at `DESIGN_VERIFIED`. Implementation begins only after an
+   explicit implementation request and then only with WP-71.
+
+<!-- WP71-75-DESIGN-PAYLOAD-END -->
+
+<!-- WP76-79-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-76 through WP-79 — 1D terminal behavior and curriculum truth repair
+
+### Frozen originating request and observed boundary
+
+The originating operator request is frozen as follows:
+
+> Analyze all 1D runs; investigate the shaky end that appears to snap into the goal;
+> mark all analyzed 1D runs Old; and correct the misleadingly easy recovery/replanning
+> missions, old Python files, and catalog grouping.
+
+The operator then asked, “ok then what do you recommend to fix this?” and authorized
+this batch with, “ok then now structure work packets for this and do one iteration on
+the implementation”. The authorized implementation iteration is **WP-76 only**.
+WP-77, WP-78, and WP-79 remain design-only in this iteration.
+
+The pre-design run analysis covered `85` retained 1D run records across `14` discovered
+cases. `70` route-to-landing transitions had usable terminal evidence; their last
+route sample was a median `0.043 m` from the exact landing center, `61/70` were more
+than `0.02 m` from center, and the maximum was `0.0645 m`. Only two transitions showed
+a true post-route component reversal. The causal finding is therefore not general
+terminal flutter: after a valid region capture, the command path still imposed a
+minimum `0.5 s` exact-center alignment phase before descent. All `85` analyzed records
+were explicitly marked `Old` under revision
+`operator-review-1d-2026-08-20:40cd9947f87e` at
+`2026-08-20T17:37:48.133168Z`; this batch may inspect them as history but may not use
+them as current prerequisite, baseline, comparison, promotion, or qualification
+evidence (`REQ-EVI-007`, `REQ-WFL-052`).
+
+### Frozen design identity and mechanically closed boundary
+
+| Field | Frozen value |
+| --- | --- |
+| Base commit | `40cd9947f87eb9bf2719d72e7c72ea867eab9977` |
+| Design audit | `missions/campaigns/sim/qualification/wp76-79-design-audit-v1.json` |
+| Design-audit SHA-256 | `514e77fd633dbec3f73d655fa66391e08ba48525299d74711e4b3f004d0e642f` |
+| Audit command | `./.venv/bin/python scripts/audit_wp76_79_design.py` |
+| Boundary derivation | Transit-symbol discovery over production, mission, campaign, UI, test, curriculum, and dynamic-case roots plus explicit packet-owned paths |
+| Boundary count | `83` current files with exact dirty-worktree preimage hashes |
+| Implementation selection | `WP-76` only |
+| Design-only successors | `WP-77`, `WP-78`, `WP-79` |
+
+The audit artifact freezes the exact originating requests, packet graph, six
+canonically tagged production-claim rows, four executable numeric region witnesses,
+eight isolated safety witnesses, an eight-entry legacy lifecycle inventory, an exact
+eight-row qualification matrix and guard vector, durable requirement set, production
+transit nodes, discovered path set, classifications, current dirty-worktree preimage
+hashes, intended new paths, and base commit. Its production trace closes the public
+API/service/executor/mission/supervisor/simulator/result/recorder/storage/evaluation/
+analyzer path rather than beginning at an already accepted program. This ledger
+section and that artifact are one design review unit. Existing unrelated edits are not
+part of this implementation; the implementation manifest must compare WP-76
+postimages to these exact preimages instead of describing the repository merely as
+“dirty”.
+
+### Intent/value card and invariants
+
+| Item | Frozen decision |
+| --- | --- |
+| Operator problem | Valid 1D arrivals visibly “snap” or “click” to the landing center, while completion, quality, and catalog names imply more than the evidence supports. |
+| Smallest useful outcome | Remove the artificial center-seeking phase after a valid region capture and retain proof of the actual capture-to-descent handoff. |
+| Primary beneficiary | The operator reviewing ordinary 1D Fast Sim missions. |
+| Safety invariant | Descent remains forbidden until a fresh, valid, in-region, within-speed capture; contact-aware descent and post-contact disarm remain unchanged. |
+| Authority invariant | Estimated state authorizes control; simulator ground truth remains evidence only. |
+| Identity invariant | Historical case and run identities remain immutable; new groupings and successors reference rather than rewrite them. |
+| Scope invariant | No controller-gain tuning, dynamic-world implementation, physical-flight authority, or weakening of hard safety/terminal gates. |
+| Failure invariant | Outside-region, overspeed, stale/invalid, and unsafe-correction cases fail closed before nominal descent authority. |
+
+Durable coverage is `REQ-EVI-003` through the relevant evidence gates including
+`REQ-EVI-004`, `REQ-EVI-005`, `REQ-EVI-007`, `REQ-EVI-011`, and `REQ-EVI-013`;
+`REQ-MIS-001`, `REQ-MIS-003`, `REQ-MIS-009`, and `REQ-MIS-010`; `REQ-MOT-010` and
+`REQ-MOT-011`; `REQ-RPL-006` and `REQ-RPL-009`; and workflow gates `REQ-WFL-014`,
+`017`, `018`, `020`, `023`, `028`, `029`, `034`, `036`, `039`, `042`, `046`, `047`,
+`052`, and `053`. WP-76 must clarify `REQ-EVI-005`: a point target aligns to its
+admitted point,
+while an admitted region authorizes descent from the fresh accepted capture point and
+must not silently reinterpret “region” as “exact center”.
+
+### Packet graph and verification state
+
+| Packet | Canonical Status | Independent verification | Depends on | Minimum valuable outcome |
+| --- | --- | --- | --- | --- |
+| WP-76 — region-native terminal capture and landing handoff | `PLANNED` | `BLOCKED_WITH_FINDINGS` (R2 final) | — | An accepted in-region pose descends at its accepted XY with no center-alignment command. |
+| WP-77 — outcome, evidence-completeness, and motion-quality truth | `PLANNED` | `BLOCKED_WITH_FINDINGS` (R2 final) | WP-76 | Completion, evidence completeness, and quality are separate verdicts with separate reasons. |
+| WP-78 — recovery and dynamic-replanning catalog truth | `PLANNED` | `BLOCKED_WITH_FINDINGS` (R2 final) | WP-77 | Current catalog names/grouping match real executed behavior; legacy artifacts remain immutable history. |
+| WP-79 — post-boundary 1D qualification and handoff | `PLANNED` | `BLOCKED_WITH_FINDINGS` (R2 final) | WP-76, WP-77, WP-78 | A bounded fresh matrix proves the successor generation without Old-run leakage. |
+
+The blocked WP-67 through WP-70 dynamic-world batch remains blocked with its two
+automatic design passes exhausted. WP-78 may correct presentation, provenance, and
+successor naming, but it may not claim or implement WP-67–70 changed-world behavior,
+nor may this successor batch be used as a third review pass for those packets.
+
+### Frozen numeric witnesses
+
+The independent design audit retains the machine-readable values. These examples fix
+the boundary semantics before code changes:
+
+| Witness | Center X | Captured X / speed | Expected authority |
+| --- | ---: | ---: | --- |
+| Accepted offset | `1.35 m` | `1.30 m` / `0.10 m/s` | Descent target X is `1.30 m`; commanded capture-to-descent XY is at most `1e-9 m`. |
+| Inclusive edge | `1.35 m` | `1.45 m` / `0.10 m/s` | Descent is authorized at the inclusive `0.10 m` region boundary. |
+| Outside edge | `1.35 m` | `1.450001 m` / `0.10 m/s` | No nominal descent without a separately admitted correction. |
+| Overspeed | `1.35 m` | `1.30 m` / `0.100001 m/s` | No descent when the maximum capture speed is `0.10 m/s`. |
+
+Goal-ID rename and case reordering must not change any numeric outcome. A diversion is
+an explicit point target and retains point-alignment semantics; it is not evidence for
+the nominal region-native claim.
+
+### WP-76 — region-native terminal capture and landing handoff
+
+**Ownership:** landing requirement/reference contract, public campaign API and service
+transit, goal-capture authority, simulated landing execution, mission-result payload,
+recorder/storage/evaluation/analyzer transit, retained goal-capture evidence, and
+production-path plus mission/simulator regression tests. The implementation-owned
+files remain the eight paths classified in the audit; every other traced owner is
+`RELIED_UPON_UNCHANGED` and must retain its preimage or enter the exact implementation
+manifest if the implementation proves it must change.
+
+**Design:** the last aligned `GoalCaptureAttempt.estimated_position_m` is the nominal
+descent XY authority. `MissionContext.capture_and_land` passes that exact XY and the
+admitted landing Z through the ordinary Supervisor and `LandCommand` path. A
+goal-bound `LandCommand` admits any nominal target inside the immutable horizontal
+goal region at the immutable landing height; an explicit diversion remains admissible
+only at its declared point. `SimulatedVehicle._land` omits the separate horizontal
+alignment move only for a nominal in-region target. It retains the descent controller,
+contact gate, bounded settle, and disarm-after-contact behavior. Goal-capture evidence
+is versioned to retain the authorized capture position, descent target, and commanded
+pre-descent horizontal adjustment. Ground truth is never command authority.
+
+**Production trace:** `POST /campaign/runs` -> `CampaignService.run_active` ->
+`FastSimCampaignExecutor` -> `FleetCoordinator` -> `MissionRunner` -> accepted
+execution program -> `ScriptMission` -> `MissionContext.capture_and_land` ->
+`SafetySupervisor.land` -> `LandCommand` -> `SimulatedVehicle._land` ->
+`MissionResult` -> `MissionResultPayload` -> observability bridge/recorder ->
+`EvidenceStore` materialization/evaluation -> campaign analyzer/intake -> campaign
+review API. The audit freezes every transit owner and exact preimage.
+
+**Independent oracle:** reconstruct the commanded XY delta from the retained accepted
+capture and descent target; require zero (within `1e-9 m`) for the nominal region
+claim, `alignment_duration_s == 0`, contact before disarm, and terminal truth inside
+the immutable region. Inspect landing-phase exact telemetry independently for a
+center-seeking pre-descent segment. The executable prefreeze audit recomputes all four
+region/speed witnesses rather than trusting expected booleans and independently
+evaluates invalid, stale, wrong-Z, out-of-volume correction, contact/disarm-order, and
+exact/off-point diversion perturbations. The regression must first fail on the frozen
+preimage. `docs/reference/LANDING_GOAL_REGION_V1.md` is an implementation-owned
+contract owner and must be reconciled with `REQ-EVI-005`.
+
+**Exit:** accelerated and realtime ordinary mission tests pass; inclusive edge,
+outside-edge, overspeed, renamed-goal, explicit-diversion, and unsafe-correction cases
+have typed outcomes; the exact 1D regression has no separate center-alignment phase;
+all pre-existing contact and safety gates pass. WP-76 then becomes
+`IMPLEMENTED_UNVERIFIED` and receives a fresh independent implementation verifier.
+
+### WP-77 — outcome, evidence-completeness, and motion-quality truth
+
+**Ownership:** analyzer verdict contract, API schema/generated clients, Campaign Lab
+run/review status, exact-CSV reconciliation, and analyzer/UI tests.
+
+**Design:** expose three orthogonal verdicts: (1) execution disposition such as
+completed, rejected, aborted, or failed; (2) evidence completeness/identity status;
+and (3) motion-quality status with terminal behavior as one explicit component.
+`all_required_behavior_oracles_passed` may inform quality but may not rewrite the
+execution disposition. Every failed or unavailable component carries an exact reason,
+source window, threshold, and raw/processed reconciliation. The UI shows these next
+to one another rather than a single optimistic or pessimistic badge.
+
+**Exit:** a completed run with terminal flutter remains execution-completed and
+quality-failed; an incomplete bundle remains evidence-incomplete; a hard mission
+failure remains failed even if available quality metrics look good. Exact CSV,
+analyzer, API, generated-client, and served UI identities reconcile.
+
+### WP-78 — recovery and dynamic-replanning catalog truth
+
+**Ownership:** versioned curriculum grouping, case/projection provenance, catalog/API
+presentation, Campaign Lab navigation, and catalog/runtime semantic tests.
+
+**Design:** keep existing case IDs, retained runs, and legacy Python projections
+immutable and inspectable, but label data-only or predecessor artifacts as historical
+provenance rather than current executable missions. The current Recovery grouping may
+contain only a case that injects the declared fault and retains the recovery/fallback
+effect. The Dynamic replanning grouping may contain only successors that traverse the
+real changed-world runtime and retain trigger, invalidation, replacement/fallback, and
+cutover evidence. Easy static routes receive plain truthful names and stay under the
+five current 1D major missions. Presentation-only grouping never grants execution or
+qualification authority.
+
+The lifecycle inventory is exact and machine-checked. These eight existing projections
+receive exactly one `HISTORICAL_PROJECTION` disposition; no file is deleted or treated
+as current runtime proof:
+
+| Family | Immutable projection path |
+| --- | --- |
+| `abort_and_land_goal_fallback` | `missions/library/one_drone/abort_and_land_goal_fallback/mission.py` |
+| `blocked_replan` | `missions/library/one_drone/blocked_replan/mission.py` |
+| `duplicate_stale_goal_update` | `missions/library/one_drone/duplicate_stale_goal_update/mission.py` |
+| `failure_recovery` | `missions/library/one_drone/failure_recovery/mission.py` |
+| `mid_route_goal_replacement` | `missions/library/one_drone/mid_route_goal_replacement/mission.py` |
+| `online_obstacle_replan` | `missions/library/one_drone/online_obstacle_replan/mission.py` |
+| `operator_approval_goal_replacement` | `missions/library/one_drone/operator_approval_goal_replacement/mission.py` |
+| `planning_budget_expiry` | `missions/library/one_drone/planning_budget_expiry/mission.py` |
+
+The mechanically closed boundary also includes the 1D recovery YAML, dynamic YAML,
+catalog generator, semantic audit, catalog/model/service/UI owners, and every
+production runtime owner discovered from these family symbols. A later WP-78
+implementation must state per family whether its current case is an easy historical
+projection, a truthful static/failure exercise, or a still-blocked dynamic successor;
+names alone cannot decide that disposition.
+
+**Exit:** removing a behavior-driving event makes the dynamic/recovery claim fail;
+renaming or reordering does not change identity or qualification; legacy Python/data
+projections are absent from the current executable surface but remain traceable; no
+WP-67–70 behavior is upgraded from its blocked state; all eight lifecycle keys have
+exactly one retained disposition with no missing or extra row.
+
+### WP-79 — post-boundary 1D qualification and operator handoff
+
+**Ownership:** bounded qualifier, generation/revision reconciliation, retained
+manifests, ordinary runtime invocation, and operator runbook/handoff evidence.
+
+**Design:** after WP-76–78 individually pass implementation verification, run exactly
+the eight rows below. Every row selects execution profile
+`planner_retained_baseline` and planning submission `case_planning_authority`; no
+nearest/current/post-result selection is permitted.
+
+| Row | Exact case ID | Clock evidence | Repeat |
+| --- | --- | --- | ---: |
+| `flight-a1` | `1d.takeoff_hover_land.canonical_nominal` | `ACCELERATED` | 1 |
+| `flight-a2` | `1d.takeoff_hover_land.canonical_nominal` | `ACCELERATED` | 2 |
+| `flight-a3` | `1d.takeoff_hover_land.canonical_nominal` | `ACCELERATED` | 3 |
+| `target-a1` | `1d.point_to_point_relocation.canonical_nominal` | `ACCELERATED` | 1 |
+| `level-path-a1` | `1d.continuous_waypoint_sequence.canonical_nominal` | `ACCELERATED` | 1 |
+| `3d-path-a1` | `1d.altitude_transition.canonical_nominal` | `ACCELERATED` | 1 |
+| `shape-a1` | `1d.planar_shape_loop.circle` | `ACCELERATED` | 1 |
+| `flight-r1` | `1d.takeoff_hover_land.canonical_nominal` | `OBSERVED_REALTIME` | 1 |
+
+Each row requires execution `SUCCEEDED`, complete identities/evidence, commanded
+capture-to-descent XY at most `1e-9 m`, `alignment_duration_s == 0`, terminal region
+margin at least zero, `SIMULATED_GROUND_CONTACT`, contact no later than disarm, every
+required behavior oracle passing, and no Old-run eligibility. The three accelerated
+Flight rows additionally require exact equality of case, execution-profile,
+planning-submission, and resolved-package hashes; maximum pairwise truth-path-length
+difference is `0.10 m` and maximum pairwise tracking-RMS difference is `0.02 m`, using
+the existing frozen comparison bounds. The aggregate passes only with exactly `8/8`
+passing rows. All runs use new IDs and bind exact plan, program, trajectory, simulator,
+and revision hashes. The qualifier fails if any Old run enters a prerequisite,
+baseline, peer/mode comparison, promotion, or aggregate. It reports each run; no
+average hides a failure. The served API/UI must be rebuilt/restarted and correlated to
+the retained qualification before handoff.
+
+**Exit:** the exact eight-row fresh matrix passes identity/completeness, terminal region, no-snap,
+motion-quality, repeatability, and Old/current separation or reports an exact failed
+row and isolated guard. No new mission count is a success criterion, no row may be
+substituted after results are visible, and no pre-boundary run is promoted.
+
+### Production-claim matrix
+
+| Claim | Execution boundary | Environment | Clock | Ordinary trigger and effect | Retained observation / independent oracle | Meaningful counterexample |
+| --- | --- | --- | --- | --- | --- | --- |
+| Region-native landing accelerated (WP-76) | `PRODUCTION_ENTRY` | `FAST_SIM` | `ACCELERATED` | `POST /campaign/runs` through service, executor, mission, supervisor, command, simulator, recorder, store, evaluator, and review | Retain capture/target/alignment/contact; independently reconstruct XY and landing telemetry | Rename goal; inclusive/outside edge; overspeed; stale/invalid; wrong Z; unsafe correction; diversion |
+| Region-native landing realtime (WP-76) | `PRODUCTION_ENTRY` | `FAST_SIM` | `OBSERVED_REALTIME` | Same public path in `OPERATOR_OBSERVED_REALTIME` mode | Retain source/receive clocks and bundle identity; independently reconstruct source-time handoff | Rename goal and reorder selected variant |
+| Orthogonal verdicts (WP-77) | `PRODUCTION_ENTRY` | `FAST_SIM` | `ACCELERATED` | Retained bundle through analyzer, API, and review UI changes displayed verdicts | Retain disposition/completeness/all quality reasons; independently recompute exact CSV | Completed run with flutter; incomplete bundle; hard failure with good partial metrics |
+| Truthful catalog (WP-78) | `PRODUCTION_ENTRY` | `NO_RUNTIME` | `NOT_APPLICABLE` | Versioned grouping through catalog service changes Campaign Lab presentation only | Retain identity/status/event/runtime/predecessor; semantic fingerprint and runtime evidence remain separate | Rename/reorder, remove event, or omit one of eight legacy entries |
+| Fresh generation accelerated (WP-79) | `PRODUCTION_ENTRY` | `FAST_SIM` | `ACCELERATED` | Fixed seven accelerated rows through ordinary campaign runtime | Retain new IDs/exact inputs/metrics/eligibility; independently reconcile manifest and CSV | Inject Old run, mismatched input, or substitute a row |
+| Fresh generation realtime (WP-79) | `PRODUCTION_ENTRY` | `FAST_SIM` | `OBSERVED_REALTIME` | Fixed `flight-r1` row through ordinary realtime campaign runtime | Retain source/receive clocks and terminal handoff; independently reconstruct exact CSV | Substitute accelerated or superseded evidence |
+
+### Implementation and verification order
+
+1. Obtain one fresh independent design verdict for this exact delimited payload and
+   audit artifact. Permit at most one correction and one focused recheck by that same
+   verifier. Unresolved P0/P1 findings leave all four packets blocked.
+2. If and only if the batch reaches `DESIGN_VERIFIED`, implement WP-76 as the single
+   vertical slice authorized in this iteration. WP-77–79 remain `PLANNED`.
+3. Run WP-76’s declared regression and relevant existing suites, freeze exact
+   pre/post hashes and changed sections against the audit preimages, then use a
+   different fresh implementation verifier.
+4. Do not begin WP-77–79 implementation and do not run the WP-79 qualification matrix
+   during this iteration. A served-product handoff is required only when their later
+   implementation actually changes or claims the served API/UI.
+
+<!-- WP76-79-DESIGN-PAYLOAD-END -->
+
+### WP-76 through WP-79 design-review handoff and consolidated correction
+
+- Initial delimited payload: 15,002 bytes, SHA-256
+  `09047471734dc8ba1e116cfe7349fe41150937ade46567638ba6b639f915bb26`.
+- Initial prefreeze artifact: SHA-256
+  `18a66e9abc0baed3237336914236f9fa25ce3772f1f246c46634039e5e6426ca`.
+- Reviewer: `/root/wp76_79_design_verifier` (`work_packet_verifier`), initial review
+  on 2026-08-20.
+- Initial verdict: `BLOCKED_WITH_FINDINGS`; four P1 groups, one P2, no P0.
+- P1 dispositions in the single allowed correction: refreshed unstable preimages;
+  replaced noncanonical claim labels with separate execution/environment/clock tags;
+  extended WP-76 from the public campaign API through persistence/evaluation/review;
+  converted configured examples into executable region and isolated safety witnesses;
+  added the landing reference owner; froze eight legacy Python projection dispositions
+  and all related runtime/generator owners; and froze eight exact qualification rows,
+  submission IDs, per-row guards, repeat guards, and `8/8` aggregate semantics.
+- P2 disposition: this dedicated handoff now precedes the unrelated WP-71–75 handoff,
+  so hashes and verdicts cannot be attributed to the wrong packet batch.
+- Revised delimited payload: 20,533 bytes, SHA-256
+  `0d75a609b79354b5e9d228127eb4ca7f627598b6ff972c4cc0402f03f00b7343`.
+- Revised prefreeze artifact: SHA-256
+  `514e77fd633dbec3f73d655fa66391e08ba48525299d74711e4b3f004d0e642f`;
+  `83` exact boundary preimages, six claim rows, four numeric witnesses, eight
+  isolated safety witnesses, eight lifecycle rows, and eight qualification rows.
+- Design review count: `1`; correction count: `1`; focused recheck count: `1`.
+- Model/effort: primary and verifier runtime names/effort are not exposed; frontier
+  reasoning was required by the cross-layer control/safety and independent-adjudication
+  triggers in `REQ-WFL-045`. Token/time usage: not available. Proxies: one review turn,
+  one correction pass, zero runtime runs, eight implementation-owned paths.
+- Focused recheck verdict: `BLOCKED_WITH_FINDINGS`; implementation is unauthorized
+  and the automatic design-review budget is exhausted.
+- Remaining P1 findings: two classified boundary files changed during the recheck;
+  witness-set membership and the real `MissionObservation.age_s` freshness relation
+  remain unproved; WP-77 omits generated OpenAPI/client owners; WP-78 omits the
+  `moving_target` projection from its lifecycle inventory; and WP-79 guard/aggregate
+  metadata has no isolated executable sensitivity vectors.
+- Resolved on recheck: the revised payload/artifact identities reproduced at recheck
+  start, canonical claim tags were present, the principal public API-to-review trace
+  and landing reference owner were closed, and the durable handoff identity was clear.
+- Final reviewer: `/root/wp76_79_design_verifier`; no P0 and no residual P2 findings.
+- Mechanical status-only closeout changed the reviewed payload from 20,533 bytes,
+  SHA-256 `0d75a609b79354b5e9d228127eb4ca7f627598b6ff972c4cc0402f03f00b7343`
+  to 20,477 bytes, SHA-256
+  `3ff9c0195f6b7d1d3cc242e3df2e0cafbd6a96ef1306084b231ee30a96b6e0aa`;
+  only the four verification cells changed from “R2 recheck pending” to “R2 final”.
+
+### WP-71 through WP-75 initial design-review handoff
+
+- Delimited design payload (inclusive of markers): 17,786 bytes, SHA-256
+  `2eb524ed441d4ea6e5351da913b092f108f31d9a5b765849cd45ad07e7e2524f`.
+- Prefreeze artifact: SHA-256
+  `c674e2e6909f834bccd631b577e2945a75de9b224935d3c2dd74e3d86a8cbf39`.
+- Audit implementation: SHA-256
+  `7f6e4062dda4c09e338120155c36f3f11c325df633c5c8d993ca6fe94563792a`.
+- Design-review count: `0`; correction count: `0`; focused recheck count: `0`.
+- Hardware evidence: `NOT_RUN` (radio unavailable; no physical action authorized).
+- Independent verification: `DRAFT_UNVERIFIED`.
+
+
+<!-- WP71-75-R1-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-71 through WP-75 R1 consolidated design correction
+
+This is the sole author correction permitted after the initial independent review. It
+is additive to, and where inconsistent supersedes, the initial payload. It addresses
+`WP71-75-DES-001` through `WP71-75-DES-006` only; it does not authorize
+implementation or hardware activity.
+
+### R1-1 — exact originating request
+
+The full operator request that originated this physical-flight successor is frozen
+verbatim here:
+
+> ok the drone is there but radio not yet so you cannot connect to it yet but i want you to anazle the Application for its readiness for doing the first real-life test with the drone. So I expect this basically for real flight to be just the same as simulation, just as, you know, I switch between simulation and digital twin. So if I click digital twin, then it will, of course, then connect. If it has not been connected before, then it will connect to the drone. And then, yeah, I don't know. I expect this to look the same. So of course I only have one drone now, so it's only 1D. But basically, of course, I cannot start with all those, like, basic flight routes. I need to start much slower. So I want you to search the internet for tests that can be done first, I don't know, symmetry checks, not really, or maybe also testing sensors or something, and then going step by step, maybe having motors rotate for a couple of seconds, but not with max speed to, you know, take off. Something like that, test abort commands. So for example, if I'm on the digital twin mode and I press the space key, the space bar, for example, it will shut off the drone immediately. If I press, I don't know, Enter, then it will slowly decrease the altitude, let's say, for example, if I just went airborne, emission normally, then it would, you know, go down. So this is like, the first class should be, like, setting checks like that, and then, of course, then more feedback and stuff like that, but that can also work on another mission class, or mission cluster could be very slow to hover, stay there for a couple of seconds, then land again, or hover, yeah, go to another location, land there, stuff like that. And I think that is enough for now for setting the checks and very basic, simple missions to test it out, see how the drone behaves. And then after I've done all these checks, we can go on to more complicated tasks, yeah.
+
+The successor packet-structure question remains frozen in the initial payload. The
+operator's “same as simulation” expectation means one familiar surface and one
+canonical intent contract; it does not permit simulated values to masquerade as real
+measurements or permit a simulator to command the aircraft.
+
+### R1-2 — protocol-accurate, permit-independent safety authority
+
+On the first confirmed physical binding, the application creates an authenticated
+`PhysicalSafetyAuthority` bound to operator session, exact observed vehicle identity,
+and exact pinned URI. It is distinct from a motion `CommandPermit` and remains usable
+after a motion permit expires or is cleared. Only immediate emergency stop, watchdog
+keepalive lifecycle, and the application-controlled land fallback may use it.
+
+Immediate emergency stop is classified before `_require_permit()` and bypasses motion
+permit, preflight receipt, mission/fleet lease, current mission phase, and normal
+command queue. It still requires the authenticated safety authority and exact active
+link binding. One non-repeating Space keydown generates exactly one CRTP emergency
+stop packet; browser key repeat and transport code never retry it automatically. The
+host retains `KEY_CAPTURED`, `API_RECEIVED`, and `CRTP_DISPATCH_ATTEMPTED` monotonic
+events plus synchronous dispatch success/error. These are dispatch facts, **not an
+aircraft acknowledgement**. The Bitcraze emergency-stop and watchdog packets have no
+response. When the link remains readable, a separate later supervisor-bitfield
+observation may record `isLocked`; its absence is `UNKNOWN_OUTCOME`, never motor-off.
+
+Emergency stop and watchdog expiry latch the Crazyflie locked until a physical reboot.
+The application never auto-recovers, auto-rearms, auto-retries, or resumes. After every
+E-stop/watchdog test or event, it requires operator-confirmed power-cycle/reboot,
+reconnects observation-only, re-verifies identity and supervisor state, and requires
+new preflight and motion permits.
+
+The watchdog is disabled during WP-71 observation. It is activated by its first
+keepalive only after physical controls are explicitly hot and before any props-off
+actuation or props-on arm. The host sends every `0.100 s`; nominal maximum measured
+gap is `0.250 s`, preserving `0.750 s` against the firmware's `1.000 s` timeout. It
+continues across motion-permit expiry, cancel, and application-controlled landing.
+After confirmed ground/disarm it is deliberately allowed to latch, and reboot recovery
+is required before another session. Process death, worker death, or link loss ceases
+keepalives; the firmware is expected to latch no later than `1.100 s` after the last
+accepted keepalive. With no readable link, outcome stays `UNKNOWN_OUTCOME` until the
+locked state is directly observed; silence is not credited.
+
+Enter is not a firmware-supervisor controlled landing. It is an application safety
+request that bypasses ordinary mission ownership and uses the Crazyflie high-level
+commander only while the link is connected/fresh, supervisor reports flyable and not
+locked/tumbled/crashed, estimator/height are fresh, and the watchdog loop is healthy.
+It sends a `0.0 m` high-level landing target over `3.000 s`, observes descent/ground,
+disarms, and then completes the latching/reboot lifecycle above. If those prerequisites
+are absent, the application makes one best-effort immediate E-stop dispatch when a
+link exists; if the link does not exist, it stops keepalives and records
+`UNKNOWN_OUTCOME`. It never claims a ground-controlled landing over a lost link.
+
+### R1-3 — executable safety and first-flight numerical witness
+
+The corrected prefreeze artifact
+`missions/campaigns/sim/qualification/wp71-75-design-r1-audit-v2.json` is the
+machine-replayable witness for the following frozen inputs and computed results.
+
+#### Host emergency/watchdog timing
+
+All host durations use monotonic clocks. `UI_DISPATCH` is browser key-handler entry to
+request-start. `SERVER_DISPATCH` is ASGI handler entry to the call into the link's
+`send_emergency_stop`; neither includes radio processing or a nonexistent response.
+In a served production build with a controlled local API/link spy, execute 100
+independent non-repeating Space events: every `UI_DISPATCH <= 0.050 s`, every
+`SERVER_DISPATCH <= 0.025 s`, their per-repeat sum `<= 0.100 s`, and p99 sum
+`<= 0.075 s`. Timer tolerance is `0.001 s`; equality passes. The same canonical input
+must produce the same safety-command hash in all repeats; run IDs and timestamps are
+excluded from that hash. The expired-permit and cleared-permit variants must retain the
+same dispatch count and safety-command hash. An active lease must also remain one
+dispatch. Editable focus and a repeating keydown must produce zero dispatches.
+
+The watchdog nominal vector uses a virtual monotonic clock for 100 keepalives at
+`0.100 s` and a separate 10-second props-off observed run. Every gap must be
+`<=0.250 s`. A `0.251 s` isolated host gap fails the host-health guard but remains
+inside firmware margin; a `1.001 s` gap produces the latching fallback disposition.
+The protocol has no acknowledgement field. A readable-link observation of `isLocked`
+within `1.100 s` is retained when available; link removal yields
+`UNKNOWN_OUTCOME_REBOOT_REQUIRED`, not pass.
+
+#### Fixed first-flight command envelope
+
+The accepted bench record and onsite Flow2/surface/light matrix remain prerequisites;
+their hardware values are `NOT_RUN` and therefore block WP-75 today. Flight bounds are
+fixed before implementation output:
+
+- exact required decks: `deck.bcFlow2=1` and `deck.bcMultiranger=1`;
+- preflight battery: measured `pm.vbat >= max(3.800 V, pm.lowVoltage + 0.300 V)`,
+  not charging, both variables fresh within `0.250 s`; a missing firmware threshold or
+  value one millivolt below the computed bound blocks;
+- estimator convergence: ten `kalman.varPX/PY/PZ` samples at `0.500 s`; each axis
+  range must be strictly `<0.001`; equality fails;
+- static pose: 100 consecutive samples over `10.000 s` at achieved rate `>=10 Hz`,
+  no invalid value/dropout, and per-axis position range `<=0.050 m`; the accepted
+  WP-73 surface/light condition must match the flight setup;
+- takeoff: relative target `(0,0,+0.300 m)`, high-level duration `3.000 s`, commanded
+  vertical speed cap `0.150 m/s`;
+- hover: `3.000 s` at the accepted target;
+- land: high-level target `0.000 m`, duration `3.000 s`, followed by up to `2.000 s`
+  to observe ground/disarm before safety shutdown;
+- hard command caps for this batch: altitude `<=0.350 m`, horizontal radius
+  `<=0.500 m`, scalar translation speed `<=0.100 m/s`, acceleration `<=0.500 m/s²`,
+  and jerk `<=2.000 m/s³`; equality passes;
+- first move stages use exactly `+0.100 m` canonical world X and zero Y, never body
+  “forward” ambiguity; stage 5 returns to origin, stage 6 lands at the displaced point.
+
+The time parameterizer owns speed/acceleration/jerk limits; the high-level controller
+owns onboard tracking. The UI cannot enlarge hard caps. The runtime rejects isolated
+`0.351 m` altitude, `0.501 m` radius, `0.101 m/s` speed, `0.501 m/s²` acceleration,
+and `2.001 m/s³` jerk vectors before dispatch. A missing/failed bench matrix,
+`0.001` estimator-range equality, stale battery, deck mismatch, or non-+X command also
+blocks. Software qualification executes every isolated perturbation with all other
+fields nominal. Physical qualification requires three separately initiated stage-4
+runs, each with a distinct one-shot permit and review; all three must pass, and a
+failure or anomaly stops the sequence without averaging or automatic retry.
+
+These limits establish command and software-safety feasibility, not external physical
+accuracy. Onboard position cannot validate itself. Any onsite evidence that indicates
+the fixed envelope is unsafe blocks the flight and requires a new design review; it
+cannot silently retune these values after implementation.
+
+### R1-4 — actual paired twin entry in WP-71
+
+WP-71 owns the physical service plus predicted simulator, twin models/storage,
+`TwinCoordinator`, ingestion, and the twin API/UI lifecycle. One confirmed binding
+creates three immutable identities:
+
+- observed vehicle ID `physical:<binding-id>` mapped only to the exact pinned URI and
+  confirmed firmware identity;
+- predicted vehicle ID `fast-sim:<binding-id>` mapped only to a separately registered
+  Fast Sim adapter initialized from the first valid measured pose; and
+- twin session ID `twin:<binding-id>:<session-sequence>` mapping those two distinct
+  vehicle IDs as observed/predicted roles.
+
+`binding-id` is the first 16 hexadecimal characters of SHA-256 over the canonical
+confirmed vehicle identity plus canonical pinned URI; the session sequence is a
+monotonic persisted integer and is not part of either vehicle identity. This resolves
+the provider's one-ID/one-backend constraint without aliasing the sources.
+
+Selecting Digital twin connects the observed adapter first. Only after exact identity,
+fresh initial pose, units, frames, source clock, and sequence validate does it register
+the predicted adapter, create the coordinator/session, and start paired ingestion. Each
+sample retains source vehicle/role, source clock and sequence, source time, receive
+monotonic time, units, frame, validity, and availability. Residuals are computed only
+for channel/time pairs admitted by the existing tolerance contract and stored by
+`TwinStorage`; unavailable channels stay unavailable. The simulator is observation-
+only relative to the aircraft and cannot dispatch, correct, land, or stop it.
+
+Absent radio/wrong identity leaves no predicted adapter or twin session. Failure after
+predicted registration rolls back that adapter and session atomically and disconnects
+the observed link. Re-selecting uses the retained confirmed binding but creates a new
+session sequence; restart never reuses a live session and begins observation-only.
+WP-71 exits only when a production trace proves served selection -> physical service ->
+observed adapter -> predicted provider -> `TwinCoordinator.create_session` -> paired
+ingestion -> `TwinStorage`, with a residual oracle and disconnect/rollback tests. The
+radio-absent physical result remains `NOT_RUN`.
+
+### R1-5 — remove the WP-74/WP-75 physical dependency cycle
+
+The corrected dependency and claim split is:
+
+| Packet | Corrected dependency | Corrected closeable claim |
+| --- | --- | --- |
+| WP-71 | — | Served exact-identity observation plus real/predicted twin-session software path; hardware connection remains `NOT_RUN`. |
+| WP-72 | WP-71 | Protocol-accurate safety authority and watchdog software path; hardware remains `NOT_RUN`. |
+| WP-73 | WP-71, WP-72 | Props-off checklist/recorder and fault software path; physical pass requires an authorized onsite run. |
+| WP-74 | WP-73 software contract | Distinct canonical curriculum and Fast Sim/physical-adapter-double parity only; no props-on hardware claim and all hardware stages remain `NOT_RUN`. |
+| WP-75 | WP-73 physical pass, WP-74 software pass | The sole props-on release: stage 4 only, three separately reviewed 0.30 m shakedowns. |
+
+WP-74 never authorizes or executes physical stages 4–6. WP-75 may release only stage 4
+after WP-73 has an accepted real props-off record. Stages 5–6 remain blocked outside
+this batch until the three WP-75 hover shakedowns pass and a future separately reviewed
+physical-motion packet explicitly releases them. Thus WP-75 depends on a closeable
+software WP-74, while no WP-74 claim depends on WP-75.
+
+### R1-6 — independently closed boundary, requirement, and generated-output audit
+
+The V2 audit replaces the initial subset audit. It extracts packet/dependency rows and
+claim keys from this delimited correction payload, scans production symbols and API/UI
+serving/generator sources to derive transit owners, parses the real `generate:api`
+command to derive the exact generated pair, checks routed mission/motion/evidence/
+fidelity/UI/workflow requirement IDs, and compares each independently derived set with
+the V2 manifest. Removing any discovered owner such as `safety/supervisor.py`, the
+physical plan, mission base/authority, twin models/storage, CSV export, dashboard/
+served page, or OpenAPI exporter fails it.
+
+The manifest now includes the real
+`config/qualification/reality-physical-plan-v1.json`,
+`docs/guides/REALITY_WP04_06_PHYSICAL_PROCEDURE.md`, mission authority/base, twin
+models/storage/pipeline, evidence exporter, UI page/package, dashboard service,
+OpenAPI exporter, domain requirements, and their primary tests. Existing paths have
+exact classifications and hashes; intended new paths are asserted absent. The audit
+checks current `HEAD`, packet ordering and acyclicity, initial and R1 payload identities,
+artifact self-hash handoff, and the byte-exact initial ledger preimage using:
+
+`awk '/<!-- WP71-75-DESIGN-PAYLOAD-BEGIN -->/{exit}{print}' docs/work-packages/ACTIVE.md | sed '$d' | shasum -a 256`
+
+The expected reconstruction is
+`db07518867f2372b8e9e40968f85756dd366dc8dc968b797940acbdf0ecf1254`.
+The exact routed set is `REQ-MOT-001`, `REQ-MOT-003`, `REQ-MOT-005`,
+`REQ-MOT-006`, `REQ-MOT-007`, `REQ-MOT-008`, `REQ-MOT-009`, `REQ-MOT-010`,
+`REQ-MOT-011`, `REQ-MOT-013`, `REQ-MOT-017`; `REQ-MIS-001`, `REQ-MIS-002`,
+`REQ-MIS-003`, `REQ-MIS-004`, `REQ-MIS-006`, `REQ-MIS-008`, `REQ-MIS-009`,
+`REQ-MIS-010`; `REQ-REU-001`, `REQ-REU-002`, `REQ-REU-003`, `REQ-REU-004`;
+`REQ-EVI-001`, `REQ-EVI-003`, `REQ-EVI-004`, `REQ-EVI-005`, `REQ-EVI-008`,
+`REQ-EVI-011`, `REQ-EVI-012`, `REQ-EVI-014`; `REQ-XFR-001`, `REQ-XFR-002`,
+`REQ-XFR-004`, `REQ-XFR-005`, `REQ-XFR-006`, `REQ-XFR-008`; `REQ-UI-001`,
+`REQ-UI-002`; and `REQ-WFL-014`, `REQ-WFL-017`, `REQ-WFL-018`, `REQ-WFL-020`,
+`REQ-WFL-023`, `REQ-WFL-024`, `REQ-WFL-025`, `REQ-WFL-029`, `REQ-WFL-034`,
+`REQ-WFL-038`, `REQ-WFL-042`, `REQ-WFL-043`, `REQ-WFL-046`, `REQ-WFL-047`,
+`REQ-WFL-048`, `REQ-WFL-053`.
+
+### R1 corrected production-claim matrix
+
+| Claim key | Environment/clock | Corrected authoritative trace and oracle |
+| --- | --- | --- |
+| `exact_paired_twin_entry` | software production entry plus later `HARDWARE/OBSERVED_REALTIME` connection | Served selector -> physical service -> exact observed adapter -> separate Fast Sim adapter -> coordinator -> ingestion -> storage; independent residual and atomic rollback oracle. |
+| `permit_independent_emergency` | software production entry plus later props-off hardware | Served Space/button -> authenticated safety authority -> supervisor preemption -> permit-bypassing single CRTP dispatch; dispatch events and separate state observation, never an acknowledgement. |
+| `watchdog_latching_fallback` | software virtual clock plus later props-off observed realtime | 100 ms keepalive lifecycle -> 1,000 ms firmware timeout -> locked/reboot-required disposition; 0.251 s and 1.001 s isolated gaps and link-loss unknown-outcome oracle. |
+| `props_off_truth` | software schema plus later `HARDWARE/OBSERVED_REALTIME` | Served checklist -> qualification service -> live firmware logs/params -> recorder/export; delete/tamper/stale/attestation failures cannot pass. |
+| `paired_basic_mission_software` | Fast Sim and physical-adapter double; no hardware qualification | Served stage -> canonical intent -> runner -> adapter -> evidence; exact +X, timing, cap, rename/reorder, and isolated guard vectors. |
+| `contained_first_hover` | `HARDWARE/OBSERVED_REALTIME`, initially `NOT_RUN` | One-shot permit -> WP-74 stage 4 intent -> supervisor -> real adapter -> recorder/export; all three separate shakedowns, cap/bench/observer/restart failures, no averaging. |
+| `served_physical_ui` | served production build | Browser surface -> production API and correlated retained IDs; desktop/narrow/disconnected/hotkey-focus/visible-safety-control oracle. |
+
+### R1 corrected state
+
+| Packet | Status | Independent verification |
+| --- | --- | --- |
+| WP-71 | `PLANNED` | `DRAFT_UNVERIFIED` |
+| WP-72 | `PLANNED` | `DRAFT_UNVERIFIED` |
+| WP-73 | `PLANNED` | `DRAFT_UNVERIFIED` |
+| WP-74 | `PLANNED` | `DRAFT_UNVERIFIED` |
+| WP-75 | `PLANNED` | `DRAFT_UNVERIFIED` |
+
+Implementation remains closed. The same initial verifier receives one focused recheck
+of the initial+R1 composite; no third automatic design pass is permitted.
+
+<!-- WP71-75-R1-DESIGN-PAYLOAD-END -->
+
+### WP-71 through WP-75 R1 focused-recheck handoff
+
+- Initial verifier verdict: `BLOCKED_WITH_FINDINGS` with two P0 and four P1
+  `MUST_FIX_NOW` findings (`WP71-75-DES-001` through `WP71-75-DES-006`).
+- R1 payload (inclusive of markers): 18,786 bytes, SHA-256
+  `b33775b8349d32142232bfad6418223b9d48d38eb32872125dc6d1919d87083c`.
+- V2 artifact: SHA-256
+  `a13236989333676dedba805faa29242b336073058da3c91bf9b8af8840b49541`.
+- V2 audit implementation: SHA-256
+  `d32baddf64ab6d164715a48016618f0c7c20f59c32badcb0456f1c473fd99d10`.
+- V2 audit result: zero errors; 72 frozen boundaries, 48 independently
+  discovered production boundaries, seven claims, five acyclic packets, 55 routed
+  requirements, and the two generated API outputs.
+- Design-review count: `1`; correction count: `1`; focused recheck count: `1`.
+- Hardware evidence: `NOT_RUN`.
+- Independent verification: `BLOCKED_WITH_FINDINGS` after the same verifier's focused
+  recheck.
+
+### WP-71 through WP-75 final design-gate outcome
+
+| Packet | Status | Independent verification |
+| --- | --- | --- |
+| WP-71 | `REVIEW_BLOCKED` | `BLOCKED_WITH_FINDINGS` |
+| WP-72 | `REVIEW_BLOCKED` | `BLOCKED_WITH_FINDINGS` |
+| WP-73 | `REVIEW_BLOCKED` | `BLOCKED_WITH_FINDINGS` |
+| WP-74 | `REVIEW_BLOCKED` | `BLOCKED_WITH_FINDINGS` |
+| WP-75 | `REVIEW_BLOCKED` | `BLOCKED_WITH_FINDINGS` |
+
+The focused recheck resolves `WP71-75-DES-001`, `003`, `004`, and `005`. Two gate
+failures remain and the sole correction/recheck is consumed:
+
+- `WP71-75-DES-002` (P0): the artifact records authored emergency timing and flight
+  thresholds, but not the 100 exact emergency input/output vectors or a production-
+  planner-derived takeoff/landing speed, acceleration, jerk, and secondary-guard
+  witness. The physical link accepts height/duration while the real planner uses its
+  own derived relations, so the claimed envelope remains self-certified.
+- `WP71-75-DES-006` (P1): boundary discovery is still a fixed set plus selected symbol
+  lookup rather than production import/transit closure. Direct dependencies including
+  `fleet/artifacts.py`, `domain/models.py`, `vehicles/base.py`, and
+  `observability/bus.py` can be omitted without failing the audit.
+
+No third automatic review is permitted. Implementation remains closed. Hardware
+evidence remains `NOT_RUN`; no connection, permit, motor command, or flight occurred.
+
+<!-- WP80-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-80 — observation-only physical/predicted Digital Twin entry
+
+Status: `IN_PROGRESS`
+
+Independent verification: `DRAFT_UNVERIFIED`
+
+WP-80 is a narrow successor to the review-blocked WP-71 through WP-75 batch. The
+operator has now explicitly requested implementation:
+
+> ok implement
+
+The complete originating physical-flight request is frozen verbatim in the WP-71
+through WP-75 R1 payload. This successor implements only the minimum safe first slice
+selected there: one exact-identity, observation-only Crazyflie connection paired with
+one predicted Fast Sim vehicle and one persisted twin session. It makes no command,
+timing, motor, watchdog, landing, or flight-envelope claim, so unresolved
+`WP71-75-DES-002` is outside and disabled rather than bypassed.
+
+Base commit: `40cd9947f87eb9bf2719d72e7c72ea867eab9977`.
+
+Ledger preimage SHA-256:
+`2ac50325be922703c9798e1ed20f6c2d4dbc92c0f4b15020698c0237585db78e`.
+
+### Intent/value and authority boundary
+
+- **Operator value:** selecting Digital twin in the served Control Center connects to
+  one pinned Crazyflie when available, shows measured and predicted state in the same
+  familiar surface, and explains absent-radio/identity/telemetry failures without
+  silently falling back to simulation.
+- **Minimum useful outcome now:** with no radio, the production path and UI retain a
+  typed `RADIO_UNAVAILABLE`/disconnected result, create no predicted vehicle or twin
+  session, and expose the exact remediation. With a controlled fake link, the same
+  path proves binding, reconnect, pairing, ingestion, persistence, and rollback.
+- **Authority:** this packet may call only adapter `connect`, `snapshot`, telemetry
+  stream, and `disconnect`. It never creates or installs a `CommandPermit`, never calls
+  `Vehicle.execute`, never arms, never enables hotkeys/watchdog, and never changes the
+  supervisor to a command-capable physical mode.
+- **Evidence class:** software production-entry qualification only. Real connection is
+  `HARDWARE / OBSERVED_REALTIME / NOT_RUN` until the radio exists and the operator
+  separately authorizes it.
+
+### Exact binding and lifecycle
+
+The served API owns a two-phase, persisted binding state under the application cache:
+
+1. `PUT /physical-twin/binding` accepts one complete URI matching the existing
+   Crazyflie URI grammar, one operator-chosen vehicle label, and an explicit exact-URI
+   confirmation. It never scans. It stores the URI locally, returns only a redacted URI
+   plus SHA-256, and does not connect.
+2. `POST /physical-twin/connect` is idempotent. It constructs `CrazyflieVehicle` with
+   `CflibCrazyflieLink`, calls `connect` on only the pinned URI, and derives an observed
+   identity hash from canonical URI, returned URI, firmware identity, protocol version,
+   deck parameters, and adapter contract. A first or changed observed identity returns
+   `IDENTITY_CONFIRMATION_REQUIRED`; the observed adapter remains connected only for
+   observation and no predicted vehicle/session exists.
+3. `POST /physical-twin/confirm` accepts the pending connection nonce and exact observed
+   identity hash. A mismatch disconnects and clears the pending connection. A match
+   persists the confirmed binding hash, registers distinct IDs
+   `physical:<binding-id>` and `fast-sim:<binding-id>`, initializes the Fast Sim vehicle
+   from the first fresh measured world-frame pose, creates a `TwinCoordinator` session,
+   starts paired ingestion, and returns the session plus source/provenance state.
+4. After confirmation, later Digital twin selections call `connect` and automatically
+   create a fresh monotonically sequenced twin session only when the observed identity
+   still matches. Restart never restores a live link/session; it restores only the
+   confirmed binding and begins disconnected/observation-only.
+5. `POST /physical-twin/disconnect`, mode switching away, startup rollback, and runtime
+   shutdown cancel ingestion, mark an existing session complete/failed as applicable,
+   disconnect and unregister both vehicles, clear transient state, and retain the
+   confirmed binding. No command authority survives because none was ever created.
+
+`binding-id` is the first 16 hexadecimal characters of SHA-256 over the canonical
+confirmed observed identity payload. Observed and predicted IDs are distinct, satisfying
+the registry's one-ID/one-backend invariant. The selected URI is never discovered or
+substituted, and a returned URI mismatch fails closed.
+
+### Paired observation and truthfulness
+
+The new `ObservationTwinService` is application-owned and uses existing
+`ApplicationRuntime`, `CrazyflieVehicle`, `SoftwareBackendVehicleProvider` or the same
+Fast Sim construction boundary, `TwinCoordinator`, `TwinIngestionBoundary`, and
+`DurableTwinStore`. Every `0.100 s` while connected it snapshots both sides and emits
+the existing common twin schema with distinct `OBSERVED`/`PREDICTED` roles, vehicle
+IDs, sequence, source time, receive monotonic time, units, frames, availability,
+quality, and raw/sample hashes. It ingests at most ten batches per second. Missing
+physical battery, motor, range, flow, estimator, or other channels emit `MISSING` with
+`value=null`; simulated values never fill the observed side. Residuals are derived only
+by the existing alignment/unit/frame contract.
+
+The predicted vehicle is a model estimate, not ground truth and not physical safety
+authority. The UI labels columns `Measured` and `Predicted`, shows model/session/source
+identity and freshness, and never labels either `actual` or `ground truth`. Absent radio,
+pending confirmation, stale telemetry, missing channel, rollback, and disconnected
+states remain visible in the ordinary Control Center rather than Engineering.
+
+### Public contracts and UI
+
+Add typed binding/status/connect/confirm/disconnect response models to the API and
+regenerate `ui/openapi.json` plus `ui/app/lib/api.generated.ts` atomically using the
+real `generate:api` command. `ui/app/lib/api.ts` owns the client calls; the Control
+Center selector calls `connect` on Digital twin selection, opens the first-bind identity
+confirmation when required, and calls `disconnect` when switching back to Simulation.
+The selector remains usable with a configured binding even when the radio is absent so
+the operator sees the typed failure. Without any binding it opens exact-URI setup.
+
+The new durable interaction pattern and changed physical-service/public-test boundaries
+must update `design.md`, `docs/project/DESIGN.md`, and `docs/system/README.md`.
+
+### Claim matrix and independent oracles
+
+| Claim | Production trace | Retained result | Independent oracle and counterexample |
+| --- | --- | --- | --- |
+| Exact no-scan binding | served selector -> physical-twin API -> service -> `CrazyflieVehicle.connect` -> `CflibCrazyflieLink.connect(exact_uri)` | redacted URI, URI hash, returned-URI/firmware/protocol/deck identity hash, state | fake link records its only URI; wrong returned URI, malformed URI, absent radio, and second-nearby identity produce zero scan and zero session |
+| Two-phase first identity | connect -> pending nonce -> served confirm -> persisted binding | pending/confirmed identity hashes and transition | wrong nonce/hash disconnects; restart before confirmation retains no binding and creates no session |
+| Paired production session | confirm/reconnect -> physical registration -> predicted registration -> `TwinCoordinator.create_session` -> ingestion -> store | distinct role IDs, session/config, samples/residuals/provenance | independently reconstruct binding ID and first aligned position residual; same-ID, session-create failure, and ingestion failure roll back both registrations |
+| Literal availability | adapter snapshots -> common channel mapper -> ingestion/storage -> served timeline/status | source-side availability/value/unit/frame/hash | delete each physical source family in turn; observed side remains `MISSING/null` even when prediction is available |
+| Observation-only authority | every public physical-twin route and lifecycle | command/permit counters fixed at zero | spy adapter fails test on `install_command_permit` or `execute`; connect, confirm, reconnect, disconnect, rollback, mode switch, and shutdown all retain zero |
+| Served operator surface | production build -> Control Center -> production API | correlated binding/session/source IDs and visible state | desktop/narrow tests cover unconfigured, absent radio, pending identity, paired, stale, and disconnected states; safety/motor/flight controls remain unavailable |
+
+### Boundary closure and tests
+
+The prefreeze artifact
+`missions/campaigns/sim/qualification/wp80-design-audit-v1.json` and
+`scripts/audit_wp80_design.py` derive the complete recursive local-import closure from
+the production seeds, compare it to exact per-path preimage hashes/classifications,
+derive the generated pair from `ui/package.json`, validate base/ledger/payload identity,
+and assert intended new paths absent. This directly closes the import/transit omission
+that blocked WP-71 through WP-75. The implementation manifest must compare this frozen
+closure with exact postimages and explain every added, changed, generated, relied-upon,
+or deleted path.
+
+Declared implementation checks:
+
+- new service/model production-path tests for binding, first confirmation, reconnect,
+  session creation, ingestion, persistence, rollback, absence, and zero authority;
+- existing Crazyflie adapter, twin coordinator/ingestion/storage, runtime, API, and
+  dashboard tests;
+- OpenAPI regeneration drift check and UI component tests, including narrow layout;
+- a production-build served browser test against a controlled fake physical link;
+- the WP-80 design audit followed by the implementation manifest audit.
+
+### Non-goals and exit
+
+No physical connection is attempted in this implementation environment. No scanning,
+permit, preflight, watchdog, E-stop, motor test, arm, takeoff, landing, mission routing,
+flight hotkey, model calibration/promotion, or physical qualification is introduced.
+WP-72 through WP-75 and their successor work remain blocked.
+
+WP-80 exits only when the full production slice is implemented, declared checks pass,
+an exact dirty-tree-safe implementation manifest is frozen, and a fresh independent
+implementation verifier returns a passing verdict. Design verification must pass first.
+
+<!-- WP80-DESIGN-PAYLOAD-END -->
+
+### WP-80 design-review handoff
+
+- Delimited payload: 10,430 bytes, SHA-256
+  `34eb1e8364f26ecff21ec38eb7c6a945350119241fd74ae0dbd73f49b6c5b903`.
+- Recursive-closure artifact: SHA-256
+  `b21fedc2c3749345ea265826ac0cebef7bf75e48f7a51811b6371a1fb8e74365`.
+- Audit implementation: SHA-256
+  `12143dce69a7c1ecd58d57bcfee01fbd51f68edcdf8161f7ef7def07c522352d`.
+- Audit result: zero errors; 111-file recursive Python closure, 12-file recursive
+  UI closure, 144 total frozen boundaries, and the exact generated API pair.
+- Review count: `0`; correction count: `0`; focused recheck count: `0`.
+- Hardware evidence: `NOT_RUN`; physical command authority: absent by design.
+- Independent verification: `DRAFT_UNVERIFIED`.
+
+<!-- WP80-R1-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-80 R1 consolidated design correction
+
+This is WP-80's sole design correction. It resolves the initial verifier's five P1
+findings; the P2 lifecycle details are frozen here only to the minimum needed for a
+deterministic production boundary. Where inconsistent, R1 supersedes the initial
+WP-80 payload.
+
+### R1-1 — service-private observation adapters and zero authority
+
+Neither physical nor predicted adapter is registered in `ApplicationRuntime.vehicles`,
+`SafetySupervisor`, `ParameterService`, fleet providers, mission runners, or active/
+selected vehicle state. `ObservationTwinService` owns a private
+`CrazyflieObservationAdapter` and a private read-only predicted observer. Their IDs
+exist only in the `TwinSessionConfig` and twin store. Consequently every existing
+select, mode, connect, preflight, manual command, mission, fleet, and parameter route
+receives an unknown vehicle ID if given `physical:<binding-id>` or
+`fast-sim:<binding-id>`; tests exercise every command-entry family and assert zero link
+command calls.
+
+`CrazyflieObservationAdapter` exposes only `connect`, `snapshot`, `telemetry_stream`,
+and `disconnect`; it has no permit installation or execute method. It may share
+Crazyflie telemetry conversion internals, but the existing command-capable
+`CrazyflieVehicle` validation and behavior remain unchanged. This packet does not add
+an observation authority to the general `Vehicle` protocol or registry.
+
+### R1-2 — observation-only connection validation
+
+The observation adapter calls the link with exactly the pinned URI and requires:
+
+- the returned URI exactly equals the pinned URI;
+- a non-empty firmware identity or explicit `UNAVAILABLE` identity field;
+- a finite protocol version when supplied, exact source/receive clocks, and at least
+  one parseable telemetry sample before pairing; and
+- no scan/discovery call.
+
+Protocol `<12`, missing Flow2/Multi-ranger, missing high-level commander, controller,
+estimator, firmware version, log family, or the pinned cflib version are retained as
+`COMMAND_READINESS_UNQUALIFIED` issues and literal unavailable channels; they do not
+block observation or first identity confirmation. This relaxation exists only in the
+new observation adapter. It can never construct or upgrade to `CrazyflieVehicle` in
+place. Any future command-capable transition must disconnect and pass the existing
+full command adapter/preflight packet outside WP-80.
+
+### R1-3 — explicit clock, epoch, frame, and predicted tick contract
+
+Each service connection creates a session clock with `session_epoch_monotonic_s` at
+the first accepted physical sample. Every retained sample adds these provenance fields
+to the twin stream contract:
+
+- `source_clock_id`: exact producer identity (`crazyflie-firmware`,
+  `fast-sim-observer`, or `test-fixture`);
+- `source_epoch`: integer starting at one and incremented on a raw timestamp rollback;
+- `raw_source_timestamp_s`: the unmodified producer time; and
+- existing `source_timestamp_s`: session-relative time computed as zero at the first
+  sample and thereafter from non-negative within-epoch deltas, while receive monotonic
+  time remains separately retained.
+
+Observed firmware and Fast Sim raw clocks are never compared directly. Alignment and
+residual derivation use session-relative source time plus receive-time pairing. An epoch
+reset invalidates cross-epoch residual pairing and begins a new strictly increasing
+stream sequence; raw rollback is retained, not hidden.
+
+Crazyflie position is `HOME`, not `WORLD`. WP-80 stores the first valid HOME pose as a
+session origin and may label observed/predicted pose `home` only. It performs no
+HOME-to-WORLD transform. If an existing channel definition requires `world`, both pose
+sides emit `INCOMPATIBLE/null` until a separately configured transform exists; WP-80
+does not invent one. The first required residual oracle therefore uses a compatible
+scalar channel such as battery voltage when both sides actually provide it, otherwise
+it retains an explicit unavailable residual. It never requires a fabricated position
+residual.
+
+The private predicted observer has a read-only `advance_observation(dt_s=0.100)` path
+that advances Fast Sim's fixed-step physics/telemetry without accepting commands or
+mission intent. Exactly one service loop owns it. Each loop advances once, snapshots
+both sides, and ingests one batch; the target period is `0.100 s`, with the existing
+500 Hz hard bound remaining authoritative. Tests prove the second and later predicted
+timestamps strictly increase, ten batches in one second are admitted, an eleventh
+same-window delivery is rejected by the 10 Hz service guard, offset raw clocks align by
+session time, epoch reset separates residuals, and frame mismatch stays incompatible.
+
+### R1-4 — fake-link provenance cannot become measured evidence
+
+The link factory returns an immutable provenance kind. Only the production
+`CflibCrazyflieLink` factory may request `MEASURED_REAL`, and that result still remains
+`HARDWARE / OBSERVED_REALTIME / NOT_RUN` in this radio-absent implementation. Any
+injected fake, spy, replay, or test link forces observed and predicted source classes
+to `TEST`, creates `TwinSessionConfig(test_only=True)`, and surfaces `Test fixture` in
+the status and UI instead of `Measured`. The service rejects a fake factory that claims
+`MEASURED_REAL`. Negative tests assert fake sessions are excluded from ordinary
+hardware session lists/qualification and cannot emit measured or physical evidence.
+
+### R1-5 — serialized persisted lifecycle
+
+`GET /physical-twin/status` is the single reload/status source. One service-owned
+`asyncio.Lock` serializes configure, connect, confirm, disconnect, and shutdown for the
+single binding. A pending identity nonce is single-use, bound to the observed identity
+hash, expires after `300 s`, and is never persisted. Expiry or mismatch disconnects and
+clears pending state. The persisted binding schema is versioned and atomically replaced;
+invalid JSON/schema/hash returns `CONFIGURATION_INVALID`, creates no link, and requires
+explicit replacement. Idempotent retry while `CONNECTING`, `PENDING_CONFIRMATION`, or
+`PAIRED` returns that same transition/session. A new session is created only after a
+completed disconnect and new connect transition. Runtime shutdown invokes the same
+serialized disconnect path.
+
+### R1-6 — corrected closure, claims, and generated contract
+
+The V2 audit uses these independent production seeds in addition to the initial set:
+`src/crazyswarm_app/dashboard.py`, `src/crazyswarm_app/dashboard_service.py`,
+`ui/app/layout.tsx`, `ui/app/globals.css`, and `ui/worker/index.ts`. UI traversal parses
+side-effect CSS imports as well as TypeScript imports. Python and UI recursive closures
+are recomputed from repository sources, not copied from the artifact.
+
+The V2 artifact stores structured claim rows with exact owner/entry paths. The audit
+extracts the six backticked claim keys below from this payload, compares them to those
+rows, requires every claim owner and entry in the recursively discovered/fixed
+manifest, derives the OpenAPI pair from `ui/package.json`, validates current exact
+preimages after generated-output drift, and retains the initial payload plus R1 hashes,
+base commit, and byte-exact ledger preimage.
+
+### R1 corrected claim matrix
+
+| Claim key | Exact owners/entries | Focused failure oracle |
+| --- | --- | --- |
+| `exact_no_scan_binding` | physical-twin API, observation service, observation adapter, cflib link | absent/wrong URI and a scan-spy yield zero scan/session/command |
+| `two_phase_first_identity` | physical-twin models/API, persisted service state | wrong/expired nonce or corrupt state disconnects and creates no session |
+| `paired_production_session` | service-private physical/predicted observers, coordinator, ingestion, store | later ticks, offset clocks, epoch reset, frame mismatch, rollback |
+| `literal_availability` | observation mapper, twin models/ingestion/replay/store, status/UI | remove each channel; no predicted-to-observed substitution |
+| `observation_only_authority` | private service plus all existing vehicle/mode/preflight/manual/mission/fleet/parameter entries | submit both private IDs to every entry family; all reject and link command count stays zero |
+| `served_operator_surface` | dashboard/service, FastAPI route, app layout/CSS/page, Control Center/API client, worker proxy | served desktop/narrow unconfigured/test/pending/paired/stale/disconnected states |
+
+The corrected audit artifacts are
+`missions/campaigns/sim/qualification/wp80-r1-design-audit-v2.json` and
+`scripts/audit_wp80_design_r1.py`. All other initial WP-80 non-goals, requirements,
+software-only evidence class, implementation checks, and implementation-verification
+gate remain in force.
+
+### R1 state
+
+Status: `PLANNED`
+
+Independent verification: `DRAFT_UNVERIFIED`
+
+Hardware evidence: `NOT_RUN`; physical/predicted adapters remain service-private and
+command-inert.
+
+<!-- WP80-R1-DESIGN-PAYLOAD-END -->
+
+### WP-80 R1 focused-recheck handoff
+
+- Initial verdict: `BLOCKED_WITH_FINDINGS` (five P1 `MUST_FIX_NOW`, one deferred P2).
+- R1 payload: 9,060 bytes, SHA-256
+  `d27618ace58b7a125221688c45465e75d780187a7cc83d87ec55fa05fe2fb1c9`.
+- V2 closure/claim artifact: SHA-256
+  `71f0f96f57d35cb0ad72beded06a49b7aba0fa4161f82a1b72d9cac9947c12cb`.
+- V2 audit implementation: SHA-256
+  `9aa2421a4aa41658f5b1214715379c19b26492689533dafc2752ce003e1ce645`.
+- V2 audit result: zero errors; 113-file recursive Python closure, 15-file
+  recursive UI/worker/CSS closure, 149 total frozen boundaries, six reconciled claim
+  rows, and the exact current generated API pair.
+- Review count: `1`; correction count: `1`; focused recheck count: `1`.
+- Hardware evidence: `NOT_RUN`; test links are forced to `TEST` provenance.
+- Independent verification: `DESIGN_VERIFIED`.
+
+### WP-80 design-gate verdict
+
+Status: `IMPLEMENTED`
+
+Independent verification: `BLOCKED_WITH_FINDINGS`
+
+The focused recheck resolves all five P1 findings and the minimum P2 lifecycle
+ambiguity. The prior numerical-flight finding is safely outside scope. Implementation
+is authorized only for the initial+R1 observation-only composite; payload hashes and
+the V2 audit identities above are binding.
+
+<!-- WP80-IMPLEMENTATION-PAYLOAD-BEGIN -->
+
+### WP-80 implementation handoff
+
+Accepted design SHA-256: initial
+`34eb1e8364f26ecff21ec38eb7c6a945350119241fd74ae0dbd73f49b6c5b903`; R1
+`d27618ace58b7a125221688c45465e75d780187a7cc83d87ec55fa05fe2fb1c9`.
+
+Status: `IMPLEMENTED`
+
+Independent verification: `BLOCKED_WITH_FINDINGS`
+
+Implemented production boundary:
+
+- one atomic, versioned exact-URI binding with no discovery call;
+- one service-private observation facade exposing connect, snapshot, telemetry stream,
+  and disconnect only, with no permit or execute surface;
+- first-seen identity nonce/confirmation, confirmed reconnect, corrupt-state failure,
+  serialized lifecycle, shared shutdown cleanup, and redacted served status;
+- confirmed-identity-owned `physical:<binding-id>` / `fast-sim:<binding-id>` private
+  IDs, with no URI-hash identity substitution;
+- one private Fast Sim predictor advanced at 0.100 s by the observer loop, an explicit
+  ten-batch-per-second admission guard, one-based rollback epochs, raw producer
+  clock/time plus mapped session time, and no cross-reset residual reach-back;
+- all 28 common channels on both roles for every accepted batch, with literal
+  `MISSING/null` sensor families and explicit `HOME` to `WORLD`
+  `INCOMPATIBLE/null` pose/velocity instead of a fabricated transform;
+- authenticated physical-twin lifecycle routes and the existing Control Center
+  Simulation/Digital twin selector with exact binding, identity confirmation, source
+  telemetry/freshness/missing-state cards, sample count, readiness gaps, disconnect on
+  Simulation selection, and observation-only campaign/mission Play lock;
+- partial session-creation and asynchronous stream failures close both adapters and
+  retain only failed session evidence, never an orphan active/ready session;
+- physical mission Play, hotkeys, permits, motors, arm, takeoff, landing, and all
+  existing vehicle/fleet/mission/parameter command routes remain outside and locked.
+
+Software evidence:
+
+- focused Python qualification: 58 passed across the API contract, dashboard/release,
+  Crazyflie adapter, observation service, twin persistence/pipeline, and simulation
+  contracts; the final packet-specific subset is 10 passed;
+- UI unit qualification: 140 passed, including unconfigured Digital twin setup and
+  exact binding/test-provenance API behavior, measured/predicted source state,
+  Simulation-mode disconnect, and the Digital Twin Play lock;
+- production UI build, TypeScript typecheck, packet-owned ESLint, Ruff, mypy, OpenAPI
+  regeneration, and generated TypeScript all pass;
+- the broader API suite retains a pre-existing concurrent campaign-catalog mismatch
+  (`case_count` 54 versus a stale expected 55), outside WP-80 paths;
+- the production dashboard served HTTP 200 locally. The in-app browser could not
+  reach either localhost or the host bridge, so live visual inspection is explicitly
+  `NOT_RUN`; rendered component tests and the production build do not upgrade it.
+
+Hardware evidence: `NOT_RUN`. No radio scan, radio connection, permit, motor command,
+or flight occurred. Injected links are forced to `TEST` and cannot create ordinary
+measured/hardware evidence.
+
+Independent implementation review fix pass: the initial implementation verdict was
+`BLOCKED_WITH_FINDINGS` with five P1 findings. This single permitted fix pass addresses
+identity ownership, clock/epoch/10 Hz semantics, full common-schema/operator state,
+session/stream rollback, and mode-switch/Play cleanup. The sole focused recheck
+reproduced all five code corrections, the 149-boundary manifest, generated contracts,
+and targeted Python/UI evidence. It retained one original P1 because the production
+build was not reachable for a served in-app-browser inspection; `REQ-WFL-038` forbids
+promoting jsdom/rendered-HTML/build evidence to that evidence class. The final gate
+verdict is therefore `BLOCKED_WITH_FINDINGS`; no third automatic review is permitted.
+
+Frozen manifest:
+`missions/campaigns/sim/qualification/wp80-implementation-manifest-v1.json`, generated
+and checked by `scripts/freeze_wp80_implementation.py`.
+
+<!-- WP80-IMPLEMENTATION-PAYLOAD-END -->
+
+<!-- WP81-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-81 — region-native landing handoff integration slice
+
+### Origin, predecessor, and intent/value card
+
+The operator asked to remove the shaky 1D terminal behavior that appears to “snap” or
+“click” into an exact goal even though landing is admitted by a region, then explicitly
+said, “ok implement”. WP-76 through WP-79 could not pass their batch design gate because
+unrelated catalog/UI/qualification boundaries drifted and three successor contracts
+remained incomplete. WP-81 is a new, smaller successor for the explicitly requested
+minimum value only; it does not reopen or upgrade WP-76 through WP-79.
+
+| Item | Frozen decision |
+| --- | --- |
+| Minimum useful outcome | A fresh valid pose already admitted by the immutable landing region becomes the nominal descent XY, with no separate center-seeking alignment command. |
+| Necessary prerequisites | Existing goal-region capture, Supervisor command authority, contact-aware simulated descent, MissionRunner, and retained mission result. |
+| Optional work excluded | Catalog cleanup, verdict separation, broad qualification, public Campaign API/UI proof, and new freshness policy. |
+| Safety invariant | Region, speed, landing-height, correction, contact, and disarm gates are not weakened. Ground truth remains evidence, never command authority. |
+| Point-target invariant | An explicit diversion remains an exact point target and retains point-alignment behavior. |
+| Historical invariant | Existing cases/runs and the previously applied 85-run Old boundary remain unchanged. |
+
+### Frozen design identity
+
+| Field | Value |
+| --- | --- |
+| Base commit | `40cd9947f87eb9bf2719d72e7c72ea867eab9977` |
+| Artifact | `missions/campaigns/sim/qualification/wp81-design-audit-v1.json` |
+| Artifact SHA-256 | `38eccb9074be29fdad131eb8913b6b4e9258b52ba98b1b690467e85520f2a33e` |
+| Audit command | `./.venv/bin/python scripts/audit_wp81_design.py` |
+| Exact current boundaries | `15` paths: seven implementation-owned and eight relied upon unchanged |
+| Canonical Status | `PLANNED` |
+| Independent verification | `BLOCKED_WITH_FINDINGS` (R2 final) |
+
+The audit freezes exact dirty-worktree preimages, not the ambient diff. The seven
+implementation-owned paths are:
+
+1. `docs/project/requirements/EVIDENCE_AND_REVIEW.md`
+2. `docs/reference/LANDING_GOAL_REGION_V1.md`
+3. `src/crazyswarm_app/domain/commands.py`
+4. `src/crazyswarm_app/domain/goals.py`
+5. `src/crazyswarm_app/missions/base.py`
+6. `src/crazyswarm_app/simulation/vehicle.py`
+7. `tests/missions/test_trajectory_execution.py`
+
+The unchanged transit boundary is `domain/trajectory.py`, `missions/models.py`,
+`missions/observation.py`, `missions/authority.py`, `missions/runner.py`,
+`missions/script.py`, `safety/policy.py`, and `safety/supervisor.py`. The audit parses
+the source tree independently and requires unique owners for `MissionRunner`,
+`ScriptMission`, `MissionContext`, `MissionFleetAuthority`, `SafetySupervisor`,
+`LandCommand`, `SimulatedVehicle`, `GoalCaptureRecord`, and `MissionResult`; every
+discovered owner must appear in the exact manifest. Any required edit outside the
+seven owned paths invalidates this design rather than silently widening it.
+
+### Contract and production transit
+
+`REQ-EVI-005` is clarified without weakening it: a landing **point** requires
+horizontal alignment to that point; a landing **region** requires capture inside its
+horizontal/vertical/speed bounds and then authorizes descent at the fresh accepted
+capture XY. “Honor the region” does not mean “move to its exact center”. Contact-aware
+descent and disarm-after-contact remain mandatory. Coverage also includes
+`REQ-MOT-010`, `REQ-MOT-011`, and workflow requirements `REQ-WFL-014`, `017`, `018`,
+`020`, `023`, `029`, `034`, `036`, `039`, `042`, `046`, and `047`.
+
+The intended integration transit is:
+
+`MissionRunner` -> accepted `LandExecutionOperation` -> `ScriptMission` ->
+`MissionContext.capture_and_land` -> `MissionFleetAuthority.execute` ->
+`SafetySupervisor.land` -> `LandCommand` -> `SimulatedVehicle._land` ->
+`GoalCaptureRecord` -> `MissionResult`.
+
+This packet claims that integration path only. It does not claim public Campaign API,
+storage/materialization, analyzer, or served UI qualification.
+
+### Exact behavior and evidence changes
+
+1. `MissionContext.capture_and_land` stores the estimated position from the aligned
+   `GoalCaptureAttempt` and uses its X/Y plus the immutable landing Z as the nominal
+   `LandCommand.target_position_m`.
+2. `LandCommand` accepts a goal-bound nominal target only when its X/Y lies inside the
+   immutable horizontal region and its Z equals the immutable landing Z. For a
+   `DIVERT` goal, the declared diversion point remains the only admissible out-of-region
+   target.
+3. `SimulatedVehicle._land` skips the separate horizontal `_move_to` only when the
+   explicit target is inside the nominal goal region. It records
+   `alignment_duration_s == 0`; generic point landings and diversions keep the existing
+   alignment phase.
+4. Each `GoalCaptureAttempt` retains the observation source timestamp needed to bind
+   the independent telemetry window. `GoalCaptureRecord` advances to schema v3 and retains
+   `authorized_capture_position_m`, `descent_target_position_m`,
+   `commanded_pre_descent_horizontal_adjustment_m`, and `alignment_duration_s`.
+   Rejected records retain no invented descent values. Representative v1 and v2
+   payload fixtures omit every v3 field and must parse with those values remaining
+   `None`; no migration may invent descent evidence.
+5. Terminal success remains region-relative. The previous test expectation of exact
+   center error at most `0.02 m` is replaced by the immutable region tolerance plus the
+   new exact command-handoff oracle; this is not a widened landing region.
+
+### Executable prefreeze witnesses
+
+The audit validates exact witness and result set equality, recomputes each result, and
+fails if a witness/result is missing, duplicated, or changed:
+
+| Witness | Expected result |
+| --- | --- |
+| Offset capture: center `1.35`, capture/target `1.30`, tolerance `0.10`, speed `0.10` | Command valid, descent authorized, capture-to-target XY `0`. |
+| Inclusive edge: capture/target `1.45` | Command valid and descent authorized. |
+| Outside edge: capture/target `1.450001` | Nominal command invalid and descent unauthorized. |
+| Overspeed: capture `1.30`, speed `0.100001` | Region command is geometrically valid; capture does not authorize descent. |
+| Wrong landing Z: `0.000001` for goal Z `0` | Command invalid. |
+| Exact diversion point: declared/commanded X `0.25` | Command valid; explicit point semantics retained. |
+| Off diversion point: commanded X `0.249999` | Command invalid. |
+| Vertical miss: approach Z `0.30`, capture Z `0.350001`, tolerance `0.05` | Descent unauthorized while the landing command geometry remains valid. |
+| Invalid observation at otherwise valid pose/speed | Descent unauthorized. |
+| `DIVERT` goal captured nominally inside its original region | Nominal region target remains valid; diversion point is not forced. |
+
+The independent telemetry oracle binds samples at or after the accepted attempt’s
+source timestamp and ends immediately before observed altitude drops more than
+`0.005 m` below the accepted capture Z. Using retained estimated `position_m`, it
+requires both maximum horizontal displacement from the accepted capture and maximum
+progress toward the exact region center to be at most `0.010 m`. The audit freezes a
+stationary passing vector and a hidden-center-seek failing vector that moves from X
+`1.30` through `1.325` to center X `1.35` before descending. Removing either vector,
+changing either threshold, or flipping either expected disposition fails the audit.
+
+No new stale-observation threshold is part of WP-81. `SafetySupervisor.observe`
+continues to request a current adapter snapshot and `MissionObservation.valid` remains
+required; a broader source/receive freshness contract requires a future independently
+designed packet.
+
+### Test sensitivity and exit evidence
+
+Before the implementation edit, add the retained-evidence assertions to the existing
+MissionRunner integration test and confirm failure because schema-v2 evidence lacks
+the capture/target/alignment fields and the old command targets the exact center. Then:
+
+- run the canonical route in `ACCELERATED` and `OBSERVED_REALTIME` Fast Sim modes;
+- require `MissionStatus.SUCCEEDED`, zero commanded capture-to-target XY within
+  `1e-9 m`, zero nominal alignment duration, terminal truth inside the immutable
+  region, contact before disarm, and motors cut after contact;
+- independently sample the pre-descent telemetry window and require both frozen
+  `0.010 m` anti-centering bounds, so implementation-reported zero alignment cannot
+  conceal observed center-seeking motion;
+- exercise inclusive/outside, overspeed, vertical miss, invalid observation, wrong-Z,
+  renamed-goal, exact/off-point diversion, and a `DIVERT` goal captured nominally in
+  its original region;
+- parse representative schema-v1 and schema-v2 goal-capture payloads without v3
+  fields and require all new evidence values to remain `None`;
+- retain the existing bounded-correction and unsafe-correction regressions; and
+- run the focused mission file plus adjacent command/simulator tests needed by any
+  failure, without claiming the blocked broader qualification.
+
+### Claim matrix
+
+| Claim | Trigger/effect | Retained observation | Independent oracle | Counterexample | Boundary / environment / clock |
+| --- | --- | --- | --- | --- | --- |
+| Region-native accelerated landing | MissionRunner accepted program changes nominal land target and simulator alignment phase | v3 capture, command target, attempt source time, alignment duration, contact/disarm | Reconstruct capture-to-target XY and enforce `0.010 m` pre-descent displacement/center-progress telemetry bounds | Outside/vertical/invalid/overspeed/wrong-Z and DIVERT child cases | `INTEGRATION / FAST_SIM / ACCELERATED` |
+| Region-native realtime landing | Same integration transit under realtime clock | v3 capture plus source-clock terminal evidence | Same exact telemetry-window reconstruction without trusting reported alignment | Renamed goal, hidden-center vector, and clock-mode comparison | `INTEGRATION / FAST_SIM / OBSERVED_REALTIME` |
+
+### Non-goals and implementation order
+
+WP-81 does not change controller gains, trajectory generation, dynamic replanning,
+catalog grouping, API schemas/generated clients, review verdicts, run-history state,
+or physical/higher-fidelity behavior. It does not claim that a convenient current XY
+outside the region is acceptable.
+
+Implementation begins only after a fresh independent `DESIGN_VERIFIED` verdict for
+this exact payload. After the author test loop, WP-81 becomes
+`IMPLEMENTED_UNVERIFIED`, receives an exact pre/post implementation manifest, and is
+reviewed by a different fresh implementation verifier. One review plus one recheck is
+the maximum at each gate.
+
+<!-- WP81-DESIGN-PAYLOAD-END -->
+
+### WP-81 design-review handoff and consolidated correction
+
+- Initial payload: 8,886 bytes, SHA-256
+  `ae4f89b0dcc3424dc132d70faaf46f01b183af71c0e6695e6fdfc252a9775843`.
+- Initial artifact: SHA-256
+  `68122a906a30a893d7e21e8b4f1e22665a1fce0792b79b5b83f1ff16b899a6fc`.
+- Reviewer: `/root/wp81_design_verifier` (`work_packet_verifier`), 2026-08-20.
+- Initial verdict: `BLOCKED_WITH_FINDINGS`; three P1 and one P2.
+- Consolidated correction: added independently discovered transit-class ownership and
+  `MissionFleetAuthority`; froze an executable telemetry anti-centering oracle with
+  passing and hidden-center-seek vectors; added vertical, invalid-observation, and
+  nominal-capture-on-DIVERT witnesses; and froze v1/v2 compatibility fixtures.
+- Revised payload: 11,093 bytes, SHA-256
+  `a7a9d10dc69dec8ce98f2146758f02ce3631698284917f63917b2c244366c628`.
+- Revised artifact: SHA-256
+  `38eccb9074be29fdad131eb8913b6b4e9258b52ba98b1b690467e85520f2a33e`;
+  15 exact boundaries, two claim rows, ten capture witnesses, two telemetry vectors,
+  and two historical-schema fixtures.
+- Review count: `1`; correction count: `1`; focused recheck count: `1`.
+- Model/effort and token/time usage: not exposed. Proxies: one review, one correction,
+  zero runtime runs, seven implementation-owned paths.
+- Focused recheck verdict: `BLOCKED_WITH_FINDINGS`; implementation is unauthorized
+  and the automatic design-review budget is exhausted.
+- Resolved on recheck: vertical, invalid-observation, and nominally captured `DIVERT`
+  variants are isolated; v1/v2 compatibility fixtures and assertions are declared;
+  all revised identities and preimages reproduced.
+- Remaining P1 findings: transit discovery still begins from a hand-authored symbol
+  seed and does not independently derive `LandExecutionOperation`; the telemetry
+  oracle stops before descent and can miss a center-seeking move that begins during
+  descent but before contact.
+- Final reviewer: `/root/wp81_design_verifier`; no third automatic pass is permitted.
+- Mechanical status-only closeout changed the reviewed payload from 11,093 bytes,
+  SHA-256 `a7a9d10dc69dec8ce98f2146758f02ce3631698284917f63917b2c244366c628`
+  to 11,082 bytes, SHA-256
+  `bb888d7ef47a33c1b4d7d81420a5d0d2aade838acd64f0a81e1367146e45672a`;
+  only the verification field changed from recheck-pending to final.
+
+<!-- WP82-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-82 — P1 closure for region-native landing integration
+
+### Authorization, value, and predecessor boundary
+
+The operator explicitly authorized this successor with “ok continue with the p1”.
+WP-82 resolves only the two P1 gates left by review-blocked WP-81 and, if independently
+design-verified, implements the same minimum useful outcome: an accepted in-region
+capture remains the nominal XY through landing instead of snapping to the exact region
+center. It does not reopen WP-81’s exhausted review or the broader WP-76–79 batch.
+
+| Item | Frozen value |
+| --- | --- |
+| Minimum outcome | Remove nominal center-seeking after valid region capture and retain independently checkable evidence through contact. |
+| Necessary prerequisite | A mechanically complete integration transit and a telemetry oracle sensitive before and during descent. |
+| Safe fallback | Current exact-center behavior remains unchanged until both gates pass. |
+| Non-goals | Catalog/UI/API qualification, new freshness policy, controller tuning, dynamic replanning, physical claims, and broad run qualification. |
+| Canonical Status | `PLANNED` |
+| Independent verification | `REVIEW_BLOCKED` |
+
+### Frozen identity and exact boundary
+
+| Field | Value |
+| --- | --- |
+| Base commit | `40cd9947f87eb9bf2719d72e7c72ea867eab9977` |
+| Prefreeze artifact | `missions/campaigns/sim/qualification/wp82-design-audit-v1.json` |
+| Artifact SHA-256 | `18177db4ebd5645164a71cd4c5c9f76cf25a500be6ffc1053d6c0239a0001f43` |
+| Audit implementation | `scripts/audit_wp82_design.py` |
+| Audit SHA-256 | `a18d5a5908fd269c2f179896dc29514b3eb204a5ca8530c6cf5da7f242812050` |
+| Reproduction | `./.venv/bin/python scripts/audit_wp82_design.py` |
+| Executed transit | `37` production files called independently by each of the existing accelerated and realtime MissionRunner integration routes |
+| Exact manifest | `43` paths with dirty-worktree preimage hashes and edit classification |
+
+The boundary is not seeded from an expected symbol or path list. The audit loads the
+existing `tests/missions/test_trajectory_execution.py::_run_route` fixture, executes it
+separately in `ACCELERATED` and `REALTIME` modes under `sys.setprofile`, requires each
+mission result to be `SUCCEEDED`, and records every called function whose source is
+under `src/crazyswarm_app`. The exact per-clock called-file sets, function names,
+preimages, the eight implementation-owned paths, and relied-upon design support are one
+frozen artifact. Validation reruns both integrations and requires exact per-clock
+runtime-transit equality.
+Removing any called owner—including `domain/trajectory.py` or
+`missions/authority.py`—fails mechanically without relying on a hand-authored transit
+seed.
+
+The eight implementation-owned paths are:
+
+1. `docs/project/requirements/EVIDENCE_AND_REVIEW.md`
+2. `docs/project/REQUIREMENTS_CHANGELOG.md`
+3. `docs/reference/LANDING_GOAL_REGION_V1.md`
+4. `src/crazyswarm_app/domain/commands.py`
+5. `src/crazyswarm_app/domain/goals.py`
+6. `src/crazyswarm_app/missions/base.py`
+7. `src/crazyswarm_app/simulation/vehicle.py`
+8. `tests/missions/test_trajectory_execution.py`
+
+All other runtime-discovered paths are `RELIED_UPON_UNCHANGED`. An implementation edit
+outside the owned set invalidates this design instead of widening it silently.
+
+### Contract retained from WP-81
+
+`REQ-EVI-005` distinguishes point from region semantics. A point target aligns to its
+point. A region authorizes descent only after valid horizontal, vertical, and speed
+capture, then uses the accepted estimated capture XY and immutable landing Z. Ground
+truth remains evidence only. Contact-aware descent, terminal region membership, and
+disarm-after-contact remain unchanged. Coverage includes `REQ-MOT-010`,
+`REQ-MOT-011`, and `REQ-WFL-014`, `017`, `018`, `020`, `023`, `029`, `034`, `036`,
+`039`, `042`, `046`, and `047`. Because this operator correction changes a durable
+landing preference, `REQ-WFL-003` also requires the requirements changelog update;
+`scripts/check_requirement_catalog.py` is frozen as relied-upon validation support.
+
+The implementation transit is discovered from the running integration and includes:
+
+`MissionRunner` -> `LandExecutionOperation` -> `ScriptMission` ->
+`MissionContext.capture_and_land` -> `MissionFleetAuthority.execute` ->
+`SafetySupervisor.land` -> `LandCommand` -> `SimulatedVehicle._land` ->
+`GoalCaptureRecord` -> `MissionResult`.
+
+WP-82 claims `INTEGRATION / FAST_SIM / ACCELERATED` and
+`INTEGRATION / FAST_SIM / OBSERVED_REALTIME`, not public API or served UI behavior.
+
+### Full capture-to-contact telemetry oracle
+
+The independent oracle uses the retained estimated `position_m` signal and the closed
+source interval from the accepted attempt through contact. The attempt, every selected
+sample, and contact must retain the same `source_clock_id` and clock epoch; sequence
+numbers must strictly increase and source timestamps must be nondecreasing. It requires:
+
+- at least four samples in the interval;
+- the final included sample timestamp and sequence to equal the retained contact pair;
+- final estimated Z at most `0.010 m`;
+- maximum horizontal displacement from the accepted capture XY at most `0.015 m`; and
+- maximum progress toward the exact region center at most `0.010 m`.
+
+The executable audit retains thirteen exact vectors with full computed outputs:
+
+1. stationary capture through descent/contact: pass;
+2. center seek before descent: fail;
+3. center seek during descent after Z has already dropped: fail; and
+4. one isolated failing vector for each of sample count, contact coverage, horizontal
+   displacement, center progress, terminal Z, wrong clock, epoch reset, sequence
+   reorder, and timestamp reorder; and
+5. one all-numeric-threshold equality vector that passes exactly at every bound.
+
+The during-descent vector starts at `(1.30, 0, 0.30)`, remains at X `1.30` while Z
+drops, then moves through X `1.325` and center X `1.35` before contact. It must fail.
+The audit requires exact witness/result membership and recomputes every metric. For
+each isolated vector it proves that exactly the named guard fails while every other
+guard passes. Removing a vector, changing a threshold, weakening clock binding, or
+flipping an outcome fails mechanically.
+
+### Implementation and evidence schema
+
+After `DESIGN_VERIFIED` only:
+
+1. retain the aligned observation source timestamp, clock ID, epoch, and sequence in
+   `GoalCaptureAttempt`;
+2. use that aligned estimated X/Y plus immutable landing Z as the nominal
+   `LandCommand.target_position_m`;
+3. validate nominal target X/Y inside the immutable region and Z at the immutable
+   landing height, while an out-of-region diversion remains valid only at its exact
+   declared point;
+4. skip the simulator’s separate horizontal alignment only for a nominal in-region
+   target; generic point/diversion landing retains alignment;
+5. advance `GoalCaptureRecord` to schema v3 with
+   `authorized_capture_position_m`, `descent_target_position_m`,
+   `commanded_pre_descent_horizontal_adjustment_m`, `alignment_duration_s`, and the
+   contact clock ID/epoch/sequence paired with contact time;
+6. retain v1/v2 readability with absent v3 values remaining `None`; and
+7. clarify the durable requirement/reference contract without widening the admitted
+   landing region.
+
+The inherited executable capture witnesses remain exact: offset and inclusive-edge
+success; outside-edge, overspeed, vertical miss, invalid observation, wrong landing Z,
+and off-diversion rejection; exact diversion success; and nominal region capture on a
+goal that declares `DIVERT` success. Compatibility is no longer asserted with schema
+descriptors: the audit freezes complete v1 and v2 `GoalCaptureRecord` payloads, parses
+both through the production model, and requires every v3 record/attempt field to remain
+`None`. The WP-82 audit also imports and recomputes the frozen WP-81 capture witnesses
+so resolved safety findings cannot disappear.
+
+### Regression sensitivity and exit
+
+Before production edits, add assertions to the existing MissionRunner integration test
+for the v3 handoff evidence and the full capture-to-contact telemetry oracle. Run that
+test on the preimage and retain failure because the old code targets the exact center,
+reports a positive alignment duration, and lacks v3 evidence. Then implement the
+vertical slice and require:
+
+- accelerated and observed-realtime canonical routes succeed;
+- capture-to-command XY is zero within `1e-9 m`;
+- nominal alignment duration is zero;
+- all capture-to-contact telemetry bounds pass independently;
+- terminal truth remains inside the immutable goal region;
+- contact precedes disarm and motors cut after contact;
+- all inherited boundary/child/schema cases pass; and
+- existing bounded-correction, unsafe-correction, command, and simulator regressions
+  remain green.
+
+Self-authored evidence supports only `IMPLEMENTED_UNVERIFIED`. The author then freezes
+exact pre/post hashes and changed sections against this artifact and uses a different
+fresh implementation verifier.
+
+### Claim matrix
+
+| Claim | Real trigger/effect | Retained observation | Independent oracle | Counterexamples | Boundary |
+| --- | --- | --- | --- | --- | --- |
+| Accelerated region-native landing | Executed MissionRunner integration changes nominal descent target/alignment | Attempt/contact source identity, capture/target, alignment, telemetry, contact/disarm | Clock-bound full capture-to-contact displacement and center-progress reconstruction | Pre/during-descent seek plus nine isolated guards and equality pass | `INTEGRATION / FAST_SIM / ACCELERATED` |
+| Realtime region-native landing | Independently executed and profiled transit under realtime source clock | Same v3 evidence and complete clock-bound contact interval | Same oracle with realtime source identity | Same isolated guards, renamed goal, DIVERT child | `INTEGRATION / FAST_SIM / OBSERVED_REALTIME` |
+
+### Review order and cost boundary
+
+Use one fresh design verifier. Permit one consolidated correction and one focused
+recheck. Implementation starts immediately only after `DESIGN_VERIFIED`. Model/effort
+and token/time usage are recorded when exposed; otherwise use review, correction,
+runtime-run, and changed-file counts without inventing cost.
+
+<!-- WP82-DESIGN-PAYLOAD-END -->
+
+### WP-82 design-review handoff and consolidated correction
+
+- Frozen design payload reviewed initially: 9,184 bytes, SHA-256
+  `5e5bb1ee502e6f19d6186908ae24b7ebae84320de7a71b3c289239b7c4bec979`.
+- Initial independent verdict: `REVIEW_BLOCKED` with five P1 findings and no P0:
+  telemetry guard vectors were not isolated; source clock/epoch/sequence identity was
+  not bound through contact; historical schema inputs were descriptors rather than
+  complete production-parsed records; the `REQ-WFL-003` changelog/check boundary was
+  absent; and only the accelerated transit was executed.
+- Single permitted consolidated correction: thirteen vectors now include one isolated
+  failure per guard and an all-threshold equality pass; full source identity and order
+  are checked; complete v1/v2 payloads are parsed through `GoalCaptureRecord`; the
+  requirement changelog and catalog checker are frozen; and accelerated plus realtime
+  routes are independently executed and profiled.
+- Corrected artifact: SHA-256
+  `18177db4ebd5645164a71cd4c5c9f76cf25a500be6ffc1053d6c0239a0001f43`;
+  corrected audit: SHA-256
+  `a18d5a5908fd269c2f179896dc29514b3eb204a5ca8530c6cf5da7f242812050`.
+- Corrected exact design payload submitted for the one focused recheck: 10,366 bytes,
+  SHA-256 `a3100a5b8601dce00f3e9ae0ff410a50acb1b9cc9801e18578d2361fa4cab3d1`.
+- Focused recheck verdict: `BLOCKED_WITH_FINDINGS`, no P0 and one remaining P1.
+  `WP82-DES-002` showed that a window whose first sample occurs after the accepted
+  capture timestamp/sequence passes every frozen guard, leaving capture-to-first-sample
+  motion invisible. The single correction/recheck allowance is exhausted; WP-82 is
+  not authorized for implementation.
+
+<!-- WP83-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-83 — capture-endpoint closure for region-native landing
+
+### Authorization and minimum outcome
+
+The operator’s “ok continue with the p1” authorizes this fresh successor after WP-82’s
+exhausted focused recheck. WP-83 carries forward the independently accepted WP-82
+corrections and resolves only its remaining P1: prove that retained telemetry covers
+the accepted capture endpoint as well as contact before implementing the region-native
+landing slice.
+
+| Item | Frozen value |
+| --- | --- |
+| Minimum outcome | Accepted capture timestamp/sequence is the first sample in the independently checked capture-to-contact interval. |
+| Safe fallback | Exact-center landing behavior remains unchanged until design and implementation gates pass. |
+| Non-goals | New freshness policy, controller tuning, dynamic replanning, physical claims, UI/API/catalog qualification, and broad run qualification. |
+| Canonical Status | `IMPLEMENTED` |
+| Independent verification | `IMPLEMENTATION_VERIFIED` |
+
+### Frozen identity, boundary, and requirements
+
+| Field | Value |
+| --- | --- |
+| Base commit | `40cd9947f87eb9bf2719d72e7c72ea867eab9977` |
+| Originating request | `ok continue with the p1` |
+| Predecessor | `WP-82 BLOCKED_WITH_FINDINGS` |
+| Prefreeze artifact | `missions/campaigns/sim/qualification/wp83-design-audit-v1.json` |
+| Artifact SHA-256 | `91665b666888d30577b3c3374ad49fa175388742459432ba1bb6929b66a7fe04` |
+| Audit implementation | `scripts/audit_wp83_design.py` |
+| Audit SHA-256 | `7ec389a99b7bbe9c91e86175fde10f65f2816a7b9d494335ccd1c5a628dbcaf8` |
+| Reproduction | `./.venv/bin/python scripts/audit_wp83_design.py` |
+| Executed transit | `37` production files independently called in each of accelerated and realtime modes |
+| Exact manifest | `44` hashed paths: eight implementation-owned, both predecessor audits and catalog checker relied upon, plus runtime transit |
+
+The implementation-owned set remains exactly
+`docs/project/requirements/EVIDENCE_AND_REVIEW.md`,
+`docs/project/REQUIREMENTS_CHANGELOG.md`,
+`docs/reference/LANDING_GOAL_REGION_V1.md`,
+`src/crazyswarm_app/domain/commands.py`,
+`src/crazyswarm_app/domain/goals.py`,
+`src/crazyswarm_app/missions/base.py`,
+`src/crazyswarm_app/simulation/vehicle.py`, and
+`tests/missions/test_trajectory_execution.py`. Any substantive implementation edit
+outside that set invalidates the design. The frozen requirements are `REQ-EVI-005`,
+`REQ-MOT-010`, `REQ-MOT-011`, and `REQ-WFL-003`, `014`, `017`, `018`, `020`, `023`,
+`029`, `034`, `036`, `039`, `042`, `046`, and `047`.
+
+The audit executes the existing MissionRunner integration fixture under
+`sys.setprofile` separately in accelerated and realtime modes, requires both results
+to succeed, freezes every called production file/function and preimage, parses full
+v1/v2 `GoalCaptureRecord` payloads through the production model, and recomputes all
+inherited capture and telemetry witnesses.
+
+### Closed capture-to-contact oracle
+
+In addition to WP-82’s accepted sample-count, contact-coverage, source clock, epoch,
+strict sequence, nondecreasing timestamp, horizontal displacement, center progress,
+and terminal-Z guards, WP-83 adds `covers_capture`. The first selected sample timestamp
+must equal `GoalCaptureAttempt.source_timestamp_s` within `1e-9 s`, and its sequence
+must equal the attempt source sequence. The stationary pass explicitly freezes
+sequence 99 before capture, 100 at capture, 104 at contact, and 105 after contact.
+
+The fourteenth vector begins only at timestamp `5.1`, sequence 101 for a capture at
+timestamp `5.0`, sequence 100. It otherwise has four samples, covers contact, retains
+the same clock/epoch, is ordered, stationary in XY, and reaches Z zero. The audit proves
+that exactly `covers_capture` fails. This closes the invisible capture-to-first-sample
+motion counterexample without changing any numeric tolerance.
+
+### Implementation contract and declared evidence
+
+After `DESIGN_VERIFIED`, first add integration assertions and retain their failure on
+the preimage. Then implement the unchanged vertical slice:
+
+1. retain attempt source timestamp, clock ID, epoch, and sequence;
+2. command accepted estimated capture X/Y plus immutable landing Z for nominal region
+   capture, while exact diversion/point semantics remain unchanged;
+3. skip separate simulator horizontal alignment only for that nominal in-region target;
+4. emit schema-v3 capture/target/alignment and contact source-identity evidence while
+   complete frozen v1/v2 records keep all v3 values `None`;
+5. reconstruct the closed capture-through-contact estimated-position interval for both
+   clock modes and require all ten guards independently; and
+6. update the durable requirement, reference, and `REQ-WFL-003` changelog entry.
+
+Declared checks are the preimage regression failure; accelerated and realtime
+MissionRunner route tests; inherited goal capture/command/simulator regressions;
+historical schema parsing; `scripts/check_requirement_catalog.py`; and the WP-83 audit.
+Self-authored checks can establish only `IMPLEMENTED_UNVERIFIED`. A different fresh
+implementation verifier must trace the production path and exercise an independent
+counterexample before any `QUALIFIED` or `COMPLETE` transition.
+
+### Cost and review boundary
+
+Use one fresh design verifier, with one consolidated correction and one focused
+recheck maximum. This successor contains one new guard and one new isolated witness;
+it does not reopen accepted or rejected predecessor scope. Record observed run/review
+counts without inventing unavailable model, token, or time measurements.
+
+<!-- WP83-DESIGN-PAYLOAD-END -->
+
+### WP-83 independent design verdict
+
+- Fresh verifier verdict: `DESIGN_VERIFIED`; no P0/P1 findings.
+- Reproduced payload: 5,645 bytes, SHA-256
+  `d7fe1b62e8afb2d8ceab3a5dc14a63574520767ca4fd39f2ab57dc0a272d51a4`;
+  audit/artifact hashes and both 37-file clock-mode traces matched with zero errors.
+- Retained P2: build the production interval from the capture `(timestamp, sequence)`
+  identity, because timestamp-only selection could reject an earlier same-tick sample.
+- Mechanical status-only closeout changes only `DRAFT_UNVERIFIED` to
+  `DESIGN_VERIFIED`; implementation is now authorized within the frozen eight-file
+  owned boundary.
+
+<!-- WP84-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-84 — flexible dynamic-replanning successor correction
+
+### Authorization, predecessor boundary, and minimum value
+
+The operator authorized a fresh successor to the exhausted WP-67 through WP-70 review
+unit and authorized implementation only after this successor reaches
+`DESIGN_VERIFIED`. WP-67 through WP-70 remain immutable
+`REVIEW_BLOCKED / BLOCKED_WITH_FINDINGS`; this packet is not a third review pass and
+does not claim that WP-76 through WP-83 implemented any of their behavior.
+
+Originating operator objective and correction request on 2026-08-20:
+
+> Configure more than two appearing obstacles; replace route Accuracy with a
+> meaningful minimum drone-to-object clearance; show the planner-guaranteed minimum
+> opening; reduce hesitation, hard braking, stale cutovers, route-side switching, and
+> unnecessary fallback; and analyze and address failures observed in Runs 2–6. Create
+> the next fresh successor packet, obtain a fresh `DESIGN_VERIFIED` verdict before
+> production implementation, preserve the dirty worktree, use a different fresh
+> implementation verifier, regenerate API artifacts, run backend/UI perturbations,
+> freeze exact dirty-tree pre/post identities, and transition Runs 2–6 to Old only
+> after an applied committed revision and before replacement retained evidence.
+
+The successor must close the four predecessor P1 findings: independently computed
+guard oracles; feasible sensed-world and actual certificate/receipt/commit/dispatch
+witnesses; complete independently discovered production/test/generated boundaries;
+and real source-child plus behavior-driving seeded world identity.
+
+| Intent/value category | Frozen content |
+| --- | --- |
+| Minimum useful outcome | A route-free one-drone goal-seeking run accepts a configured three-object world, displays `Clearance` and the planner-guaranteed opening, performs moving certified replacements without routine fallback or side churn, and reaches goal capture and landing with complete truthful evidence. |
+| Explicit behavior | Configure `1..4` appearing objects; default to three; expose `0.15..0.25 m` minimum drone-envelope-to-object clearance; show `Opening ≥ 0.66 m` at the default; cap unsafe requested speed; distinguish no-solution, budget, stale, preparation, commit, and dispatch failures. |
+| Necessary prerequisites | Separate immutable world truth from motion policy; exact source-child hashes; feasible real-planner geometry; complete latency/safe-prefix/abort/receipt/commit/dispatch authority; independent guard vectors; generated API/UI transit; historical-run boundary and served restart. |
+| Optional experiment | One four-object fixed-world stress run after the three-object minimum passes. It may remain a labeled stress limit but may not weaken or block the default three-object value. |
+| Safe fallback | Preserve the hard `0.15 m` minimum, `0.30 m/s` dynamic speed cap, certified hold/abort behavior, zero dispatch without exact certificates/receipts, and current two-object source case until the verified successor is fully connected. |
+| Non-goals | Physical flight, Live Isaac, learned vision/SLAM, damage/contact fidelity, multi-drone online replanning, continuous-space completeness, wider freshness/start tolerances, or requalification of unrelated WP-71 through WP-83 work. |
+
+Canonical **Status:** `PLANNED`
+**Independent verification:** `DRAFT_UNVERIFIED`
+
+### Short successor retrospective and durable requirements
+
+The WP-67 through WP-70 focused recheck is recorded in
+`docs/project/retrospectives/REPEATED_PACKET_REVIEWS.md`. Its reusable failures were
+already codified by `REQ-WFL-046` through `REQ-WFL-049`: complete numerical vectors,
+independently discovered boundary closure, executable sensed-world/certificate
+witnesses, and independently derived guard-universe closure. No new durable rule is
+invented here. WP-84 applies those existing rules together and keeps the
+case-specific geometry/identity findings inside this packet.
+
+Applicable requirements are `REQ-MIS-002`, `003`, `006`, `009`; `REQ-MOT-001`,
+`011` through `017`; `REQ-PLN-003`, `004`, `009` through `013`; `REQ-GEO-002`,
+`003`, `007`, `009`; `REQ-RPL-001` through `013`; `REQ-EVI-003` through `007`,
+`011`, `013`; `REQ-UI-002`; and `REQ-WFL-001`, `002`, `005` through `012`, `014`
+through `027`, `029`, `032` through `040`, and `042` through `053`.
+
+### Frozen pre-design identities and executable audit
+
+| Field | Frozen identity |
+| --- | --- |
+| Base commit | `40cd9947f87eb9bf2719d72e7c72ea867eab9977` |
+| Dirty-tree rule | Base commit is provenance only; every scoped existing path uses the exact byte preimage in the audit artifact. No unrelated edit may be reset, reverted, overwritten, or attributed to WP-84. |
+| `ACTIVE.md` preimage before WP-84 | `afc691b4c562da3e7acdd27b3d767c87a1d8024a5d86b2d2a1269c642d09f790` |
+| Successor retrospective postimage | `6a0ce39707fa63a415d49699c72e3bc450280745f0805816c3b7f7366b93ba8d` |
+| Audit program | `scripts/audit_wp84_design.py`, SHA-256 `60dd7295f843ca21e769a829ebff20575eb2bbbb186d3f4ce94dda3008459d41` |
+| Audit artifact | `missions/campaigns/sim/qualification/wp84-design-audit-v1.json`, SHA-256 `3e5720bbca22c1c4a888a9fee9638e92f1a7c16a8d5b44238de833366fe6633c` |
+| Real source case | `1d.online_obstacle_replan.dynamic_nominal`, SHA-256 `24790c25d4bba4716ea63f4424335f5c7039d1bc6d3d8e9157adfac9171e713d` |
+| Frozen predecessors | WP-67–70 initial `f90a8af102f675df870729b00fd8f4210f7c0ce0b5f734603bc4a32568b67f42`; R2 `3cfdb3ae05bb3f2f45e125a835df92fd677d23bf06005ff75a9f4d7bac881840` |
+
+Reproduce before review with:
+
+```bash
+.venv/bin/python scripts/audit_wp84_design.py \
+  missions/campaigns/sim/qualification/wp84-design-audit-v1.json
+```
+
+The audit passes 13 checks. It derives 14 guard conjuncts from the frozen operator
+terms, durable requirement IDs, and real production model fields; computes one whole
+passing vector and one isolated failure per conjunct; exercises the real corridor
+planner for six event stages at both admitted clearance extremes; binds the real
+source-case hash; proves fixed/same-seed identity across run IDs and geometry/timing
+change across stress seeds; executes the current production service transit through
+four safe-prefix certificates, four real Supervisor receipts, four atomic commits,
+and four dispatches with zero fallback; executes accepted and missing/tampered
+certificate/receipt commit gates with respectively one and zero eligible dispatches;
+and reconciles 70 production, API/runtime, script, test, UI, and generated paths from
+runtime-module, symbol, explicit public/test, owner, and real generator sources.
+
+The current transit's outer run/review/evaluation remains `FAILED` despite completing
+all four replacement transactions. This is retained as the pre-fix evaluator witness,
+not presented as qualification: route-free dynamic evidence is still judged by the
+old route Accuracy/path-tube and stop semantics.
+
+### Corrected public preparation and identity contracts
+
+1. **Sibling policy and world requests.** The API request carries sibling components:
+   `MotionPreparationRequest` owns `speed_m_s`, `minimum_clearance_m`, and
+   `smoothness`; `DynamicWorldPreparationRequest` owns exact integer
+   `obstacle_count=1..4`, `variation_mode=FIXED|SEEDED_STRESS`, and explicit bounded
+   integer `variation_seed`. These fields are legal only for the one-drone
+   `START_GOAL_CURRENT_WORLD` family. Dynamic goal seeking rejects Accuracy/path-tube
+   input; static route/checkpoint cases retain Accuracy unchanged.
+2. **Clearance and opening truth.** `minimum_clearance_m=0.15..0.25` in exact `0.01 m`
+   increments means nominal vehicle-envelope surface to solid after the separately
+   retained `0.05 m` localization/prediction uncertainty. It only tightens case
+   safety. Physical protected opening is
+   `2 × (0.055 vehicle radius + 0.05 uncertainty + clearance + 0.05 spline/search reserve)`.
+   The guarantee for arbitrary `0.05 m` lattice phase adds one cell. At default
+   clearance the physical value is `0.61 m` and the displayed primary value is
+   `Opening ≥ 0.66 m`; at `0.25 m` they are `0.81 m` and `0.86 m`. The guarantee is
+   discrete-planner feasibility, not continuous-space completeness.
+3. **Immutable resolved world.** One resolver runs before preview, download, schedule,
+   or Play. It binds the real source case ID/hash and emits separate
+   `dynamic_world_definition_sha256`, `dynamic_event_set_sha256`, and
+   `resolved_dynamic_world_sha256`. It derives one hidden resolved child ID
+   `<source-case-id>.world-<first-12-world-hash>` and case hash from the real parent
+   hash plus exact geometry/events. The child snapshot is retained in the resolved
+   package, locked inputs, execution request, manifest, bundle, evaluation, replay,
+   and download, but is not registered as a second visible catalog item.
+4. **Truth is separate from motion.** Obstacle count, seed, geometry, timing, or event
+   truth changes the resolved world and child-case hash. Clearance, speed, smoothness,
+   or later run ID changes only the policy/package/run identity and never silently
+   rewrites immutable world truth. The planning submission and execution profile are
+   explicitly rebound to the compatible resolved child through an exact source
+   authority record; no permissive registry fallback is allowed.
+5. **Repeat identity.** `FIXED` defaults to seed `42`; identical source case/count/mode/
+   seed produces byte-identical event/world/child identities across run IDs.
+   `SEEDED_STRESS` exposes its seed and applies bounded deterministic offsets to solid
+   X/Y geometry and trigger/effective timing. Equal stress seeds repeat exactly;
+   different seeds change those behavior-driving inputs and are never pooled as fixed
+   repeats.
+
+### Feasible sensed-world and authority contract
+
+For count `N`, materialize add/move obstacle 1, adds `2..N`, then remove obstacle 1;
+renumber sequences/generations `1..N+2`. Counts `1..4` therefore create `3..6` events
+and maximum simultaneous populations `1..4`. Every event has a `3.0 s` observation
+lead; perception latency remains `0.12 s`, expiry `0.50 s`, normal freshness
+`<=0.25 s`, complete response envelope `0.74 s`, planning budget `<=2.0 s`, and
+trajectory verification step `0.02 s`. Future solids remain absent from initial
+planner truth.
+
+The fixed geometry is:
+
+| Solid/event | Bounds `(xmin,ymin,zmin)..(xmax,ymax,zmax)` m | Trigger / effective source s |
+| --- | --- | --- |
+| `sensed-rock-1` add | `(-0.15,-0.20,0.10)..(0.20,0.20,0.70)` | `2.0 / 5.0` |
+| `sensed-rock-1` move | `(0.20,-0.25,0.10)..(0.50,0.15,0.70)` | `5.5 / 8.5` |
+| `sensed-wall-2` add | `(0.70,0.75,0.00)..(0.85,1.05,0.80)` | `7.5 / 10.5` |
+| `sensed-wall-3` add | `(0.35,0.85,0.00)..(0.50,1.10,0.80)` | `9.25 / 12.25` |
+| `sensed-wall-4` add | `(1.00,0.85,0.00)..(1.15,1.10,0.80)` | `11.0 / 14.0` |
+| `sensed-rock-1` remove | exact solid identity | `12.5 / 15.5` |
+
+Unlike R2's lower-side walls, the additional upper-side solids preserve a lower outer
+passage across the complete `0.15..0.25 m` clearance range. The real 8,192-state
+planner selects all 12 event-stage/clearance witnesses with at most `3,846`
+expansions. Budget exhaustion remains `INCONCLUSIVE_BUDGET`, never geometrical
+infeasibility. The implementation must execute this same geometry through preview,
+scenario/perception truth, planning, continuous feasibility certification, runtime
+physics, and retained evaluation rather than substitute a component-only fixture.
+
+For every nominal event, the execution head must obtain a current observation, an
+independent safe-prefix certificate and abort-route certificate, a selected corridor
+with independent feasibility/moving-cutover certificates, one exact Supervisor
+preparation receipt, one accepted atomic epoch commit, and one post-commit replacement
+dispatch. Missing/tampered safe-prefix or abort authority, feasibility/cutover
+certificate, proposal/receipt identity, or receipt cardinality causes zero replacement
+commits and zero replacement dispatches. Late trusted state may execute a certified
+stationary prefix; otherwise only a certified abort route may command
+`ABORT_AND_LAND`. Unqualified evidence never becomes a normal replacement.
+
+### Motion continuity, freshness, and truthful evaluation
+
+1. Dynamic preparation safety-caps a request above `0.30 m/s` before Play and retains
+   requested/resolved values plus the reaction envelope as binding reason. Runtime
+   urgency still grows from signed clearance, observed speed, uncertainty, jerk-
+   limited stopping/turn authority, and the complete latency envelope.
+2. Corridor search seeds its initial heading from fresh observed horizontal velocity
+   above the `0.02 m/s` stop threshold. Selection is lexicographic over path length,
+   `0.10 m/rad × integrated absolute heading change`, protected clearance, and
+   canonical state. Source enumeration/object order never decides the side.
+3. Immediately before preparation, capture a final source-time observation and
+   rebase/recertify the exact trajectory. Normal limits remain age `<=0.25 s` and
+   start error `<=0.10 m`. At most one complete fresh search follows an unusable stale
+   corridor, and initial/retry/rebase/cumulative timing is retained even on failure.
+4. `OBSTACLE_REMOVED` and `PASSAGE_OPENED` reoptimize from fresh committed state and
+   cannot trigger immediate fallback solely because another retained solid is near.
+   A beneficial direct continuation is collinear and cannot manufacture a side
+   reversal.
+5. Dynamic route Accuracy/path-tube and `PATH_ADHERENCE` objective are not applicable.
+   Evaluation instead joins every sample to its accepted initial/replacement authority
+   epoch and independently checks temporal trajectory tracking, clearance, dynamics,
+   continuity, goal capture, and landing.
+6. An unintended stop is speed `<=0.02 m/s` continuously for `>=0.20 s` strictly
+   inside one moving accepted epoch. Takeoff/stabilization, observation, preparation,
+   acknowledgement, cutover boundary, final capture, landing, and completed authority
+   do not each create a stop. Root cause comes from normalized terminal codes and exact
+   execution-head dispositions, not configured prose.
+
+### Independent guard oracle
+
+The authoritative guard universe is derived from the originating operator terms,
+named durable requirement rows, and real production contracts in the audit artifact.
+The complete default three-object repeat uses these independently computed conjuncts:
+
+| Conjunct | Passing boundary | Isolated failure |
+| --- | --- | --- |
+| Speed lower / upper / coverage | `0.24..0.34 m/s` around target `0.29`, accepted moving-epoch coverage `>=0.95` | `0.239`, `0.341`, and `0.949` independently |
+| Acceleration | raw route peak `<=1.0 m/s²` | `1.001 m/s²` |
+| Jerk | raw route peak `<=8.0 m/s³` | `8.001 m/s³` |
+| Initial heading change | `<=π/2` from observed pre-cutover velocity to first replacement tangent | `π/2 + 0.001` |
+| Side reversal | zero reversals between accepted detours around the same retained blocking set | one sign reversal |
+| Clearance | nominal envelope-to-solid surface margin `>=0.15 m` or requested tighter value | `0.149 m` at default |
+| Collision | exactly zero | one configured contact |
+| Freshness | final observation age `<=0.25 s` | `0.251 s` |
+| Start error | rebased replacement start `<=0.10 m` | `0.101 m` |
+| Budget | cumulative search `<=2.0 s` | `2.001 s` |
+| Goal capture | captured inside the immutable terminal region | missing capture |
+| Landing | admitted target/contact/disarm evidence complete | missing landing completion |
+
+Every failure vector changes only its named input and leaves all other conjuncts
+passing. Raw acceleration/jerk/contact extrema may not be hidden by percentile or
+resampling. Corridor side is the signed cross product against the immutable start-goal
+chord, ignores direct/collinear paths, and compares only successive accepted detours
+around the same blocking set.
+
+### Operator surface and retained explanation
+
+In the Campaign workspace, dynamic Motion uses `Balance`, `Speed`, `Clearance`, and
+`Smoothness`; static mission Motion keeps `Accuracy`. A compact Environment row below
+Motion provides `Obstacles` and `Variation`, with the explicit seed visible only for
+seeded stress. The primary calculated readout is `Opening ≥ <planner guarantee>` with
+units and concise meaning; physical opening and inflation components remain in closed
+technical detail. Requested and resolved speed/clearance values and binding caps remain
+truthful. This durable case-specific pattern updates `design.md` and
+`docs/project/DESIGN.md` and follows `[SIM-01..03]`, `[TXT-01..02]`, `[LAY-01..02]`,
+`[CMP-01..02]`, `[STA-01]`, `[RSP-01]`, `[A11Y-01]`, `[TRU-01]`, and `[VAL-01]`.
+
+Each event record retains resolved source/child/world/package identities, observation
+source/receive/effective clocks, state/speed/age, response witness, search disposition/
+expansions/wall/cumulative time, inflation and opening components, selected path and
+side/heading costs, feasibility/cutover/safe-prefix/abort certificates, final rebase,
+Supervisor receipt, commit epoch, dispatch acknowledgement, post-cutover observation,
+and exact failure code. Manifest and download retain exact dirty production source
+hashes. API OpenAPI and TypeScript outputs are regenerated through the real
+`generate:api` command.
+
+### Complete affected-boundary and implementation contract
+
+The audit's 70-path manifest is authoritative for implementation reconciliation. It
+unions runtime-loaded modules, exact symbol occurrences, explicit public/test owners,
+implementation owners, and generated outputs; every path is classified `MODIFY`,
+`PRESERVE`, `NEW`, or `GENERATED` with an exact preimage or absent/new state. It
+explicitly includes previously omitted `api/runtime.py`, `export_openapi.py`,
+`mark_campaign_runs_old.py`, API/dynamic/evaluation/UI tests, `ui/openapi.json`, and
+`api.generated.ts`. The implementation manifest must compare the actual postimage
+against this independently discovered set, explain every added/changed/preserved/
+generated/deleted path, and fail if a newly traversed owner or output is absent.
+
+The intended change owns request/package/world resolution, planning/corridor,
+replanning/execution head, simulator truth, evaluator/analyzer/storage, API/runtime,
+generated contracts, Campaign UI, design/system maps, and focused tests. New proposed
+owners are `campaign/dynamic_obstacles.py`, `test_dynamic_preparation.py`, and
+`test_dynamic_guard_oracle.py`. Paths classified `PRESERVE` are mandatory regression
+boundaries, not permission to edit them. Any substantive implementation edit outside
+the verified manifest invalidates the design and requires operator-authorized scope,
+not silent expansion.
+
+### Claim and exit-evidence matrix
+
+| Claim | Real trigger / production transit | State or command effect | Independent oracle / counterexample | Boundary |
+| --- | --- | --- | --- | --- |
+| Preparation and identity are truthful | Campaign UI/request → API model → service resolver → package/lock/download/run | Clearance changes policy/package only; count/seed changes exact hidden world/child; dynamic Accuracy rejects | Recompute real parent/world/event/child/package hashes; same seed across run IDs equal; seeds 43/44 change geometry+timing; static dynamic-field and dynamic Accuracy inputs reject | `PRODUCTION_ENTRY / NO_RUNTIME / NOT_APPLICABLE` |
+| Opening and population are feasible | Resolved child → preview/planner → schedule/scenario/perception | `1..4` objects produce `3..6` events; displayed lattice guarantee matches planner | Exact `0.61/0.66` and `0.81/0.86` arithmetic; all 12 stage/clearance searches select below 8,192; R2 lower-wall geometry reproduces exhaustion | `INTEGRATION / FAST_SIM / ACCELERATED` |
+| Nominal events remain moving replans | Perception source → execution head → safe-prefix/abort → plan/rebase → Supervisor receipt → atomic commit → dispatch | Each event replaces one authority epoch without routine fallback and reaches goal/landing | Actual retained receipts/certificates/commands; missing/tampered cert or receipt yields zero commit/dispatch; late/close event uses only certified fallback | `PRODUCTION_ENTRY / FAST_SIM / ACCELERATED + OBSERVED_REALTIME` |
+| Hesitation and side churn fail independently | Accepted epoch telemetry + trajectory/certificate records → evaluator/analyzer/API | Exact 14-conjunct vector and named root causes; dynamic path tube N/A | Whole passing vector plus one isolated failure each; mirrored heading, reordered obstacles, beneficial removal, raw-extrema counterexamples | `INTEGRATION / FAST_SIM / ACCELERATED` |
+| Served surface is usable and truthful | Current API/release/assets → Campaign workspace | Dynamic controls swap Accuracy→Clearance, show Opening/Environment, bind requests; static Accuracy unchanged | Desktop/narrow, keyboard/focus, long values, loading/disabled/error, seed visibility, request capture, no overflow/console error | `PRODUCTION_ENTRY / NO_RUNTIME / NOT_APPLICABLE` |
+| Historical boundary precedes retained replacement evidence | No-active-run check → committed revision → mark-old script → API restart/state reload | Runs 2–6 remain inspectable Old and ineligible; later runs remain current | Exact revision/actor/reason/count/run IDs; active-run rejection and idempotence; persisted old/current state after restart | `PRODUCTION_ENTRY / FAST_SIM / OBSERVED_REALTIME` |
+
+Implementation evidence must include:
+
+1. Failure-first focused regressions where practical, then request/hash/world identity,
+   `1..4` populations, fixed/stress repeat identity, speed cap, opening/lattice,
+   feasible three/four-object planner stages, fresh rebase/retry, beneficial events,
+   certificate/receipt/commit/dispatch tamper cases, exact guard vectors, path-tube N/A,
+   stop/root-cause semantics, goal capture/landing, API persistence/export, and
+   generated-contract tests.
+2. Ruff, targeted Mypy, documentation routing/map checks, focused backend tests,
+   ESLint, TypeScript, Vitest, and a production UI build. Unrelated dirty-tree failures
+   are retained with exact commands and attribution; expectations are not weakened.
+3. Three isolated default `obstacle_count=3`, `FIXED`, seed `42`, requested
+   `0.29 m/s`, accelerated repeats before operator evidence. World/event/child identity
+   must match across run IDs; every repeat individually passes all 14 guards, every
+   event certificate/receipt/commit/dispatch join, goal capture, landing, and zero
+   fallback/collision.
+4. One distinct seeded-stress child and one fixed four-object run. Both retain exact
+   geometry/timing identity and execute all configured events. Four objects may remain
+   a P2 stress limit only after default three-object success and truthful UI labeling.
+5. After implementation verification and an applied committed revision identity—but
+   before any new retained affected campaign run—confirm no active mission/preparation,
+   execute `scripts/mark_campaign_runs_old.py` for the exact affected source and hidden
+   child scope with actor and reason
+   `WP-84 dynamic-world/preparation/replanning semantics replaced`, retain prior/new
+   counts and run IDs, restart the campaign-state API, and verify persisted state.
+   The current broad `operator-review-1d-2026-08-20:40cd9947f87e` Old marker is not a
+   substitute for the WP-84 applied revision boundary; idempotent reconciliation must
+   preserve existing Old records and explicitly report whether Runs 2–6 required zero
+   additional changes.
+6. Before served qualification, verify no active unsafe operation, regenerate OpenAPI
+   and TypeScript, rebuild/restart affected API/UI/worker/state owners, bind exact
+   served release/API/assets, and inspect the real desktop and narrow interface with
+   keyboard and failure states under `REQ-WFL-038` and `053`.
+
+Self-authored evidence establishes at most `IMPLEMENTED_UNVERIFIED`. After the author
+loop, freeze exact base commit, every scoped preimage/postimage, changed/new/deleted
+path or delimited section, generated artifacts, commands/results, and implementation
+payload hash. A different fresh `work_packet_verifier` must trace the real production
+path and independently perturb certificates, receipts, identity, geometry, guards,
+and served state before `IMPLEMENTATION_VERIFIED`. Only mechanical verification/status
+records may follow a passing verdict.
+
+### Model, cost, and stop boundary
+
+- Author/design route: frontier/high reasoning is justified by the inherited
+  cross-layer safety/authority, geometry, identity, dirty-tree, generated-contract,
+  and served-release dependencies. Exact token/time telemetry is unavailable; proxies
+  are one fresh packet, one design review plus at most one focused recheck, one
+  implementation review plus at most one focused recheck, 70 frozen boundary paths,
+  14 isolated guard conjuncts, 12 planner geometry witnesses, and declared runtime
+  runs.
+- Once `DESIGN_VERIFIED`, implementation is concrete and follows `REQ-WFL-050`: edit
+  the smallest complete production slices, run focused checks once, and avoid another
+  open-ended design cycle.
+- One consolidated design correction and same-verifier recheck are the maximum. A
+  remaining `MUST_FIX_NOW` P0/P1 blocks implementation. P2 polish or optional
+  four-object limitations are retained/disabled without reopening unaffected default
+  value. Any `SCOPE_CHALLENGE` stops for operator direction.
+
+<!-- WP84-DESIGN-PAYLOAD-END -->
+
+### WP-84 design verification handoff
+
+- Frozen design payload: inclusive bytes from `WP84-DESIGN-PAYLOAD-BEGIN` through
+  `WP84-DESIGN-PAYLOAD-END`, `25,638` bytes, SHA-256
+  `c993df7c80b18a5fe5b4e3fe950d94ce736d1fb6c851dbb9b69cf2f2cc17d4a0`.
+- Reproduced author audit: all 13 checks passed; audit-program SHA-256
+  `60dd7295f843ca21e769a829ebff20575eb2bbbb186d3f4ce94dda3008459d41` and
+  artifact SHA-256
+  `3e5720bbca22c1c4a888a9fee9638e92f1a7c16a8d5b44238de833366fe6633c`.
+- Gate state remains `DRAFT_UNVERIFIED`. No production implementation is authorized
+  until a fresh project-scoped verifier records `DESIGN_VERIFIED` for this exact
+  payload. One consolidated correction and one focused same-verifier recheck are the
+  maximum permitted design-review loop.
+
+### WP-84 initial independent design verdict
+
+- Fresh project-scoped verifier reproduced the 25,638-byte payload and audit
+  byte-for-byte, accepted the opening arithmetic, parent identity, and 12 bounded
+  searches, and returned `BLOCKED_WITH_FINDINGS` with no P0 and five P1
+  `MUST_FIX_NOW` clusters.
+- The P1 clusters were: non-independent/incoherent guard vectors; no coherent
+  proposed-world production transit or real negative dispatch proof; incomplete
+  boundary discovery/preimage reconstruction; metadata-only seed collisions; and
+  incomplete Runs 2--6 watchdog/Run-5 gates plus circular Old/review/run ordering.
+- The following R1 overlay is the one permitted consolidated correction. It does not
+  edit or erase the initially reviewed bytes. The same verifier may perform one
+  focused recheck; no further automatic design pass is permitted.
+
+<!-- WP84-DESIGN-R1-PAYLOAD-BEGIN -->
+
+## WP-84 design R1 — consolidated correction overlay
+
+This overlay supersedes the initial payload where the two conflict. Everything not
+changed here remains frozen by initial payload SHA-256
+`c993df7c80b18a5fe5b4e3fe950d94ce736d1fb6c851dbb9b69cf2f2cc17d4a0`.
+Canonical **Status:** `PLANNED`; **Independent verification:** `DRAFT_UNVERIFIED`.
+Production implementation remains unauthorized pending the focused recheck.
+
+### R1 executable identities and limitations
+
+| Artifact | Frozen R1 identity |
+| --- | --- |
+| Audit program | `scripts/audit_wp84_design.py`, SHA-256 `38b61ff58f203cf34953a98ef5dbe72eb639ac93206ed35902baf34c289e555b` |
+| Audit artifact | `missions/campaigns/sim/qualification/wp84-design-audit-v1.json`, SHA-256 `8140602daeb08845dc242f5e3be94620e37b3fcbedab83c87e8d31e05bfbabab` |
+| Base/provenance | `40cd9947f87eb9bf2719d72e7c72ea867eab9977`; dirty-tree preimages remain path-specific |
+| Retrospective | SHA-256 `6a0ce39707fa63a415d49699c72e3bc450280745f0805816c3b7f7366b93ba8d`, implementation-preserved |
+
+The earlier whole-file `ACTIVE.md` hash is historical provenance only and is not used
+as a reconstructable implementation preimage. R1 instead freezes the immutable
+initial payload and this exact delimited overlay independently. After
+`DESIGN_VERIFIED`, the implementation preimage manifest captures every existing
+boundary byte, while ledger identity uses only these delimited payloads and later
+mechanical verdict/status sections. The audit artifact and ledger are self-referential
+freeze outputs, so their identities are owned by this external handoff rather than
+embedded recursively inside the JSON.
+
+The R1 audit passes 15 checks and records 29 required guards, three explicit
+not-applicable classifications, 29 coherent isolated failures, 12 planner snapshots,
+one normal-entry sequential three-object run, a passed abort/landing certificate, the
+complete 35-seed stress domain, the Runs 2--6 table, and 76 classified boundaries.
+
+### Corrected independent guard universe and coherent vectors
+
+The production motion-guard membership is parsed from the AST literal check IDs in
+`_motion_guard_verdict` and reconciled with `MotionQualityVector` and
+`MotionQualityContract`; online-transition membership is parsed from the named
+`REQ-RPL-003`, `005`, `011`, `012`, and `REQ-EVI-005` rows. The originating speed
+request splits the existing production speed-compliance guard into p05 lower, p96
+upper, and in-band coverage conjuncts. The audit does not compare two adjacent
+hand-written guard registries.
+
+The 29 required gates are: p05/p96/coverage speed; acceleration; jerk; speed ripple;
+angular activity; motor headroom, spread, saturation, sign agreement, and normalized
+differential error; energy; temporal tracking RMS; clearance; collision; continuous
+knot speed; unintended stop; terminal secondary peak and reversal; Supervisor safety;
+initial replacement heading; accepted-detour side reversal; observation freshness;
+replacement start error; cumulative planning budget; normal-event fallback count;
+goal capture; and complete landing. Dynamic path tube is explicitly
+`NOT_APPLICABLE_ROUTE_FREE_DYNAMIC_GOAL_SEEKING`; checkpoint hold is not applicable to
+continuous fly-through; duration has no case maximum. None is silently dropped.
+
+Each speed fixture contains 100 time-ordered moving-epoch samples. The passing fixture
+contains 100 samples at `0.29 m/s`. The isolated lower failure has five samples at
+`0.239` and 95 at `0.29`, so p05 fails while coverage remains exactly `0.95`; the
+upper failure is symmetric with five at `0.341`; the isolated coverage failure has
+three low, 94 in-band, and three high samples, so coverage is `0.94` while p05/p96
+remain in band. All other isolated vectors change one real signal only.
+
+Initial heading is computed from the final fresh observation's horizontal velocity
+to the first non-zero replacement tangent. Side reversal is computed from the signed
+cross product against the immutable start-goal chord for successive accepted detours
+sharing the same blocking-set hash; direct/collinear paths are excluded. Freshness is
+`decision_source_s - final_observation_source_s`. Budget is the sum of initial,
+optional one retry, and rebase search latencies retained in the execution-head record.
+Landing requires captured outcome plus contact source identity, disarm time,
+post-contact settling, and motor cut—not contact alone. Run-5 raw/p95 non-regression
+gates remain independently visible rather than hidden by the new dynamic metrics.
+
+Implementation must use the evaluator/analyzer production calculation and a separate
+test oracle over coherent telemetry/event/authority fixtures. It must perturb sample
+order, obstacle order, route-point order, blocking-set identity, clock age, and raw
+extrema and prove the intended single or joined failures. The AST-derived set and
+the independently computed results must be exact-equal; additions cannot pass merely
+because an authored subset remains internally consistent.
+
+### Corrected world identity domain
+
+`FIXED` has no behavior-driving seed. The API may display the conventional default
+`42`, but the resolver canonicalizes it to `variation_seed=null` before geometry,
+event, world, child-case, package, preview, execution, and download identity. Fixed
+requests with supplied seeds 42 and 43 therefore resolve to identical behavior and
+world/child identities; alternatively the public validator may reject the supplied
+seed. It may not hash irrelevant seed metadata.
+
+`SEEDED_STRESS` admits exactly integer seeds `0..34`. The deterministic X residue
+modulo seven and Y/timing residue modulo five form an injective behavior tuple over
+that full Chinese-remainder domain. R1 exhaustively resolves all 35 seeds and proves
+35 distinct geometry/event behavior hashes. Same seed across run IDs is identical;
+different admitted seeds change behavior before identity is computed. Values outside
+`0..34`, booleans, floats, and strings reject. Clearance, speed, smoothness, and run
+ID remain excluded from immutable world truth.
+
+### Corrected coherent sensed-world and dispatch evidence
+
+R1 registers a temporary `replan.wp84-three-object-design-prototype` child from the
+real parent hash and executes the normal entry:
+
+`CampaignService.run_active → FastSimCampaignExecutor → CampaignExecutionHead →`
+`Supervisor preparation → atomic commit → execute_replanned_trajectory`.
+
+No off-loop planning or analysis method is substituted. The five sequential events
+(add/move object 1, add objects 2 and 3, remove object 1) use the corrected upper-side
+geometry, reach maximum simultaneous population three, and derive each next state
+from the preceding accepted replacement epoch. The trace retains five observations,
+five safe-prefix certificates, five Supervisor receipts, five commits, five actual
+dispatches, five distinct resulting world/trajectory identities, and zero fallback.
+The outer bundle still fails under the pre-fix evaluator and has no final capture
+record; this is an explicit implementation target and is not qualification evidence.
+
+Four-object feasibility remains independently bounded by the real planner at every
+stage and both clearance extremes. Implementation must additionally run one coherent
+four-object normal entry after the three-object default passes; a failure remains a
+labeled optional stress limitation, never a claim that the default failed.
+
+R1 also constructs a passed abort-route certificate with protected clearance
+`0.155 m` and a bound safe-prefix certificate whose actual command is
+`ABORT_AND_LAND`. The pre-fix commit gate proves missing/tampered safe-prefix and
+Supervisor receipt inputs yield zero commit-eligible replacements, but R1 no longer
+mislabels those records as actual device dispatches. The implementation's
+failure-first tests must drive missing/tampered safe-prefix, abort-route, feasibility,
+moving-cutover, proposal, and receipt identities through `CampaignExecutionHead` with
+a command-boundary spy. Every negative must produce a normalized rejection and
+exactly zero `execute_replanned_trajectory` calls; incidental `AttributeError` is a
+failure. The accepted control must produce exactly one real call. Those tests are
+required before self-authored `IMPLEMENTED_UNVERIFIED` and will be independently
+perturbed by the implementation verifier.
+
+### Corrected affected-boundary discovery
+
+The 76-path R1 manifest is the exact union of: runtime-loaded repository modules;
+full-repository semantic-symbol occurrences; explicit API/runtime/persistence/export/
+test owners; intended production owners; generator inputs and outputs; source/config
+inputs; and frozen design files. The closure check compares the classified manifest
+to that union with exact set equality, rejects empty discovery provenance, excludes
+`.venv`, and reports `40 MODIFY`, `3 NEW`, `2 GENERATED`, and `31 PRESERVE`.
+
+Newly explicit preserved inputs include `config/app.yaml`,
+`config/worlds/one_drone.yaml`, the dynamic source-case YAML, `ui/package.json`, the
+audit program/artifact, the WP-84 ledger payloads, and the retrospective. Newly
+explicit production transit owners include the Supervisor, fleet coordinator, and
+simulated vehicle command boundary. Generated OpenAPI and TypeScript remain derived
+from the real package command. Frozen design material is implementation-preserved;
+mechanical verdict/status appendices do not mutate the reviewed payload.
+
+At implementation freeze, rediscover the union from the postimage and require exact
+set equality with the verified classifications. Capture whole-byte pre/post hashes
+for ordinary files, absent/new identities for additions, generator input/output
+hashes, and delimited hashes for the two WP-84 design payloads. Any newly traversed
+owner or output is a scope change requiring operator direction.
+
+### Runs 2--6 translation and non-circular execution order
+
+| Run | Retained status | Stops | Frozen repair gates |
+| --- | --- | ---: | --- |
+| 2 / `campaign-run-3ff32ba7a8b626401142` | succeeded | 12 | Dynamic path tube N/A; source-epoch stop semantics; speed band remains truthful. |
+| 3 / `campaign-run-bca84c9fe606b1633c03` | failed | 8 | Source schedule progressed while wall watchdog expired; dynamic evidence incomplete. |
+| 4 / `campaign-run-c090c0065373b905b128` | failed | 6 | Same watchdog/source-clock defect and incomplete evidence. |
+| 5 / `campaign-run-cd4e1c1dfb0638bd83fb` | failed | 2 | Same watchdog defect plus acceleration, ripple, angular activity, motor spread, and tracking regressions. |
+| 6 / `campaign-run-9f9e042f474753fa29b0` | failed | 6 | Same watchdog/source-clock defect and incomplete evidence. |
+
+The watchdog follows authoritative source-clock progress in accelerated execution;
+wall delay alone cannot expire a progressing source schedule. A separate injected
+counterexample freezes source progress and ages authoritative telemetry beyond
+`0.50 s`, which must fail with normalized `AUTHORITATIVE_TELEMETRY_LOST`. Tests cover
+both, plus paused execution and genuine executor deadlock. The stop oracle counts only
+`<=0.02 m/s` continuously for `>=0.20 s` strictly inside one moving accepted epoch;
+the named preparation/cutover/terminal exclusions are derived from authority epochs,
+not prose labels.
+
+The required order is now two-phase and non-circular:
+
+1. Implement only after `DESIGN_VERIFIED`; run failure-first tests, focused backend/UI
+   checks, generated-contract checks, and isolated temporary campaign runs in a fresh
+   temporary state/evidence directory. Include three accelerated fixed repeats, one
+   accelerated stress run, one four-object stress run, and one realtime smoke. These
+   are verifier inputs, not retained operator campaign evidence.
+2. Freeze exact pre/post identities and obtain a different fresh implementation
+   verifier. One fix/recheck maximum; unresolved P0/P1 blocks deployment.
+3. After `IMPLEMENTATION_VERIFIED`, commit exactly the reviewed production bytes and
+   record the commit/revision identity. Confirm no active mission, preparation,
+   queued run, or dispatch.
+4. Do not rewrite existing Old metadata. Runs 2--6 were prematurely marked Old by
+   `operator-review-1d-2026-08-20:40cd9947f87e`; retain that immutable historical
+   limitation. Append a separate WP-84 evidence-generation boundary record binding
+   exact source/hidden-child scope, reviewed commit, actor, reason, the five run IDs,
+   and prior marker. Enhance `mark_campaign_runs_old.py`/storage so this append-only
+   boundary is recorded even when the selected runs are already Old; idempotent repeat
+   produces the same boundary identity and no duplicate.
+5. Restart/rebuild the affected API, worker/state owner, and UI; verify health, exact
+   served release/API/assets, persisted Old state, new generation boundary, and no
+   active unsafe state.
+6. Only then collect retained operator evidence: three fixed accelerated repeats,
+   one seeded stress, one fixed four-object stress, and one realtime run. Evaluate
+   every run individually against all applicable gates; do not pool a failed repeat.
+
+This sequence replaces the initial exit-evidence items 3--6. Retained evidence is
+qualification after implementation verification and deployment boundary, not an
+input used circularly to earn implementation verification.
+
+<!-- WP84-DESIGN-R1-PAYLOAD-END -->
+
+### WP-84 R1 focused-recheck handoff
+
+- Frozen correction overlay: inclusive bytes from
+  `WP84-DESIGN-R1-PAYLOAD-BEGIN` through `WP84-DESIGN-R1-PAYLOAD-END`, `13,381`
+  bytes, SHA-256
+  `1dc093e440d8e2e624e060d8fb37370f761ca99b4d68506bc7927e0076641c73`.
+- Accepted base candidate for the focused recheck is the immutable initial payload
+  SHA-256 `c993df7c80b18a5fe5b4e3fe950d94ce736d1fb6c851dbb9b69cf2f2cc17d4a0`
+  plus this R1 overlay. Audit identities are frozen inside R1 and reproduce all 15
+  checks.
+- Gate state remains `DRAFT_UNVERIFIED`. This is the one permitted correction; the
+  same verifier's focused recheck is the final automatic design pass.
+
+### WP-84 final independent design verdict
+
+- Canonical **Status:** `REVIEW_BLOCKED`.
+- **Independent verification:** `BLOCKED_WITH_FINDINGS`.
+- The same fresh verifier completed the one permitted focused recheck. No P0 was
+  found. Two P1 `MUST_FIX_NOW` findings remain, so production implementation is not
+  authorized and no third automatic WP-84 design pass may occur.
+- Remaining P1: the negative audit still stops at the direct commit gate and treats
+  an incidental missing-certificate `AttributeError` as zero-dispatch success. It
+  does not yet drive the accepted control plus missing/tampered safe-prefix, abort,
+  feasibility, cutover, proposal, and receipt cases through
+  `CampaignExecutionHead` to an actual `execute_replanned_trajectory` command spy.
+- Remaining P1: the audit-local stress resolver accepts `True`, `False`, and `1.0`
+  because Python considers them members of `range(35)`. The frozen oracle therefore
+  does not yet execute the specified exact-integer public boundary or retain boolean,
+  float, string, and out-of-range rejection vectors.
+- Retained P2: the normal-entry three-object witness reproducibly satisfies its 15
+  semantic checks, but run-local decision/trajectory/world identities make the whole
+  JSON byte hash non-reproducible. A successor should label it a single-run structural
+  witness and compare stable fields, or deterministically normalize run-local fields.
+- The verifier otherwise accepted the corrected 29-guard universe/coherent vectors,
+  positive sequential three-object transit, planner feasibility, 76-path boundary
+  manifest, Runs 2--6 translation, seed behavior domain, and non-circular historical/
+  restart ordering.
+
+<!-- WP85-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-85 — final flexible dynamic-replanning successor correction
+
+### Authorization, value, and predecessor boundary
+
+On 2026-08-21 the operator explicitly authorized continuing with WP-85 after WP-84
+exhausted its design review and focused recheck. The operator also instructed that,
+after the work is genuinely complete, the scoped changes be committed and pushed.
+Unrelated dirty-tree changes remain operator-owned and may not be staged, reset,
+reverted, overwritten, or attributed to WP-85.
+
+WP-85 is a fresh review unit, not a third WP-84 pass. It adopts the immutable WP-84
+initial payload and R1 overlay as its full baseline and supersedes only the two final
+P1 findings plus the retained evidence-reproducibility P2. A fresh verifier must
+review the complete composite rather than treating predecessor acceptance as an
+automatic verdict.
+
+| Intent/value category | Frozen WP-85 content |
+| --- | --- |
+| Minimum useful outcome | The WP-84 minimum remains unchanged: a route-free one-drone, three-object default shows Clearance and planner-guaranteed Opening, performs moving certified replacements without routine fallback or side churn, and reaches capture/landing with complete truthful evidence. |
+| Required correction | Prove every named missing/tampered authority causes zero actual replacement command calls through `CampaignExecutionHead`; enforce an exact-integer `0..34` stress-seed domain; make the focused evidence byte-reproducible through a stable semantic projection. |
+| Necessary inherited behavior | The verified candidate still includes the 29-guard oracle, feasible `0.15..0.25 m` geometry, `0.61/0.66 m` opening truth, world/policy separation, full request/API/UI/generated transit, source-clock watchdog fix, append-only Old boundary, restart, and retained qualification order specified by WP-84 R1. |
+| Optional experiment | A fixed four-object stress run remains optional after the three-object default succeeds. |
+| Safe fallback | Keep the current source case and `0.15 m` clearance/`0.30 m/s` cap; no replacement command may dispatch without all exact authorities. |
+| Non-goals | No physical flight, multi-drone online replanning, learned perception, continuous-space completeness, or unrelated WP-71 through WP-83 requalification. |
+
+Canonical **Status:** `PLANNED`
+**Independent verification:** `DRAFT_UNVERIFIED`
+
+### Frozen composite and author evidence
+
+| Field | Identity |
+| --- | --- |
+| Base commit provenance | `40cd9947f87eb9bf2719d72e7c72ea867eab9977` |
+| `ACTIVE.md` preimage before WP-85 | `faec8e6656860ad460017db3b0ba62e8a3c30ae202681601c2d5f2c293214e0e` |
+| WP-84 initial payload | 25,638 bytes, SHA-256 `c993df7c80b18a5fe5b4e3fe950d94ce736d1fb6c851dbb9b69cf2f2cc17d4a0` |
+| WP-84 R1 overlay | 13,381 bytes, SHA-256 `1dc093e440d8e2e624e060d8fb37370f761ca99b4d68506bc7927e0076641c73` |
+| WP-85 audit program | `scripts/audit_wp85_design.py`, SHA-256 `23fe4eb07788443c41c0757620c487f105c4850d45147b09e7b8a6bdb6c060c0` |
+| WP-85 audit artifact | `missions/campaigns/sim/qualification/wp85-design-audit-v1.json`, SHA-256 `e0ad016d537059d413830aca3c4e19c924acbba73f8ed8fb8cb84b0bd9cbe81e` |
+| Durable feedback requirement | `REQ-WFL-054`; cost/scope file SHA-256 `790358ffc3d55f1fcae3d3cd669ebcb5bdf4d6d90921b56a01b121c8617c5a6f` |
+| Requirements index/check | index `ab22a90174ccd19c0c13a496dd114d78eb460f1726fc9bd66cb9fcec774a5235`; checker `84b49da15fd95b1fc72f0f61aa54654d542031c16b0060f62b11244df941eadd` |
+| Changelog/retrospective | `d24e0426bc93f5d00caf9245311a165fffd33085da5ad50e0e1dd6e2ffee1ebf`; `bdbc5d3c14002bf66579030fff09ffb66ab80a452fc56f4585c05060298c07a6` |
+
+Reproduce with:
+
+```bash
+.venv/bin/python scripts/audit_wp85_design.py /tmp/wp85-design-replay.json
+shasum -a 256 \
+  missions/campaigns/sim/qualification/wp85-design-audit-v1.json \
+  /tmp/wp85-design-replay.json
+```
+
+Both hashes must equal
+`e0ad016d537059d413830aca3c4e19c924acbba73f8ed8fb8cb84b0bd9cbe81e`.
+The audit passes seven checks. `scripts/check_requirement_catalog.py` independently
+reports 148 unique definitions.
+
+### Exact public seed contract and identity oracle
+
+`DynamicWorldPreparationRequest` uses strict validation. `variation_mode=FIXED`
+rejects a supplied public seed or canonicalizes the UI-only default out before
+identity. `variation_mode=SEEDED_STRESS` requires `type(seed) is int` and
+`0 <= seed <= 34`. Because Python booleans are integer subclasses and JSON clients
+may coerce numeric types, validation explicitly rejects `false`, `true`, `1.0`,
+`1.5`, `"1"`, `null`, `-1`, and `35`; it accepts exact integers `0`, `1`, and `34`.
+The API request, resolver, package lock, generated OpenAPI/TypeScript types, UI request
+capture, and replay/download round trip the same exact type/domain result.
+
+Only the validated integer enters seeded geometry/timing. The WP-84 exhaustive
+behavior-injectivity proof over all 35 values remains inherited. Tests independently
+recompute geometry/event behavior identity for all admitted seeds, confirm fixed mode
+has no seed identity, confirm the same seed is identical across run IDs, and reject
+all type/range aliases before catalog child, package, preview, or run mutation.
+
+### Actual execution-head command-boundary oracle
+
+The WP-85 audit drives thirteen cases through the real
+`CampaignExecutionHead._orchestrate` production sequence. It uses real planning,
+changed-world proposal construction, moving-cutover rebase boundary, safe-prefix and
+abort monitor, Supervisor-shaped preparation receipt, atomic commit, and the actual
+context method named `execute_replanned_trajectory`. A command spy is attached only
+at that final device-command boundary.
+
+The accepted control makes exactly one replacement-command call and no fallback.
+Each of the following twelve isolated cases makes exactly zero replacement-command
+calls and never ends in incidental `AttributeError`:
+
+- missing and tampered safe-prefix certificate;
+- missing and tampered abort-route certificate;
+- missing and tampered feasibility certificate;
+- missing and tampered moving-cutover certificate;
+- missing and tampered proposal identity;
+- missing and tampered Supervisor preparation receipt.
+
+Upstream missing/tampered planning or safety authority rejects with normalized
+`ValueError`; cases that reach the existing certified fallback terminate with the
+normalized domain `CrazySwarmError` and retain the fallback acknowledgement. The
+production implementation must preserve this zero-command relation with explicit
+error codes rather than rely on the audit's injection labels. It must additionally
+assert zero atomic accepted epoch for pre-commit failures, discard any preparation
+receipt, retain exact failure stage/identity, and ensure the accepted control still
+has one receipt, one commit, and one dispatch.
+
+Failure-first tests are mandatory in
+`tests/campaign/test_one_drone_execution_head.py`,
+`tests/campaign/test_dynamic_perception_replanning.py`, and
+`tests/campaign/test_dynamic_replanning.py`. The implementation verifier must create
+its own tamper values and observe the real command spy; replaying the author artifact
+alone is insufficient.
+
+### Deterministic evidence projection
+
+The WP-84 normal-entry three-object run is explicitly reclassified as
+`SINGLE_RUN_STRUCTURAL_PREIMAGE`. Fresh-state decision, trajectory, observation, and
+replacement-world hashes remain valid within-run join identities but are not claimed
+equal across independent runs. The WP-85 artifact serializes only stable semantic
+fields: normal production entry, no off-loop substitution, maximum population three,
+five ordered events, five observations/certificates/receipts/commits/dispatches, zero
+fallback, and distinct within-run epoch identities. It excludes the actual run-local
+hash values from the cross-run projection.
+
+Two independent WP-85 audit executions are byte-identical. Implementation evidence
+must retain both layers: complete unnormalized per-run artifacts for traceability and
+a versioned normalized semantic projection whose exact bytes/hash are reproducible.
+Changing event order, dropping a receipt/commit/dispatch, adding fallback, or claiming
+cross-run equality for local transaction hashes fails the projection.
+
+### Composite affected-boundary contract
+
+WP-85 inherits the independently discovered 76-path WP-84 manifest and exact-unions
+six focused successor owners, producing 82 classified paths. The delta is:
+
+- `docs/project/REQUIREMENTS_CHANGELOG.md`;
+- `docs/project/requirements/README.md`;
+- `docs/project/requirements/workflow/COST_SCOPE_AND_HANDOFF.md`;
+- `scripts/check_requirement_catalog.py`;
+- `scripts/audit_wp85_design.py`;
+- `missions/campaigns/sim/qualification/wp85-design-audit-v1.json`.
+
+The audit program/artifact, requirements feedback, retrospective, and immutable WP-84
+payloads are implementation-preserved. `ACTIVE.md` uses delimited payload and
+mechanical verdict identities. All 82 paths must be rediscovered and reconciled at
+implementation freeze; any additional traversed production owner requires an
+operator-authorized scope revision. Whole-file hashes are used except for externally
+frozen self-output/delimited ledger identities.
+
+### Implementation and evidence sequence
+
+After and only after `DESIGN_VERIFIED`, implement the complete composite production
+transit from WP-84 initial + R1 + this correction. The inherited implementation and
+exit matrix remains binding, with these refinements:
+
+1. Add the strict sibling motion/world preparation contracts, real parent-bound hidden
+   child resolver, feasible 1--4 object schedule, clearance/opening readout, dynamic
+   evaluator/stop/watchdog semantics, deterministic corridor continuity, complete
+   certificates/receipts/commit/dispatch evidence, API/runtime/storage/export, UI,
+   generated artifacts, design/system maps, and focused tests.
+2. Run failure-first strict-type and execution-head command-spy tests, then the
+   inherited 29-guard, planner, identity, watchdog, evaluator, API, UI, generation,
+   Ruff, Mypy, ESLint, TypeScript, Vitest, build, and requirement/map checks.
+3. Use only isolated temporary campaign state/evidence for author and implementation-
+   verifier runs. Freeze exact dirty-tree pre/post identities and obtain a different
+   fresh implementation verifier, with at most one correction/recheck.
+4. After `IMPLEMENTATION_VERIFIED`, create a local commit containing exactly the
+   reviewed scoped production bytes. Do not stage unrelated dirty changes. This commit
+   is the applied revision identity required by `REQ-WFL-052`; defer pushing until the
+   final closeout so the operator's “after done” instruction is honored.
+5. Confirm no active mission/preparation/queued run/dispatch. Append the exact WP-85
+   generation boundary without rewriting the premature Old marker, rebuild/restart
+   all affected state/API/worker/UI services, wait for health, and verify the exact
+   served release/API/assets and persisted state.
+6. Only then collect retained fixed accelerated repeats, seeded stress, optional fixed
+   four-object stress, and realtime evidence. Reconcile qualification/ledger records.
+   If this closeout changes only evidence and mechanical packet records, create a
+   second scoped closeout commit. Push the complete scoped commit chain to the current
+   branch. Report commit hashes, remote branch, and push result.
+
+No production code, generated API, service restart, historical transition, retained
+replacement run, commit, or push is authorized before the applicable gate/order.
+
+### Review economy and stop boundary
+
+This successor exists only because two safety/identity P1s survived WP-84's final
+recheck and the operator explicitly authorized WP-85 under `REQ-WFL-044`. The design
+review unit is the complete composite but the new proof surface is seven checks,
+thirteen command-spy cases, eight rejected seed aliases, and six boundary deltas.
+One design review and one consolidated correction/recheck are the maximum. Any
+remaining P0/P1 `MUST_FIX_NOW` blocks implementation; P2 polish is explicitly deferred
+unless it makes the minimum outcome or a user-visible claim false.
+
+<!-- WP85-DESIGN-PAYLOAD-END -->
+
+### WP-85 design verification handoff
+
+- Frozen inclusive design payload: `12,179` bytes, SHA-256
+  `e3ec8097c64e0af93f735ed6a59615b5ad1b2e8883e00e7105e9cd0863d5ef3d`.
+- Composite review inputs are the immutable WP-84 initial/R1 payloads plus this exact
+  WP-85 payload. The focused audit is independently byte-reproducible and passes all
+  seven checks.
+- Gate state remains `DRAFT_UNVERIFIED`. A fresh project-scoped verifier must return
+  `DESIGN_VERIFIED` before any production implementation. One consolidated correction
+  and one focused same-verifier recheck are the maximum.
+
+### WP-85 initial independent design verdict
+
+- The fresh verifier reproduced all three composite payload identities, the real
+  source-case identity, the strict seed/type vectors, and the byte-stable projection,
+  but returned `BLOCKED_WITH_FINDINGS` with no P0 and three P1 `MUST_FIX_NOW` items.
+- The three findings were: label-triggered exceptions instead of malformed authority
+  objects at real consumption boundaries; a false 82-path closure that omitted the
+  transitive runner/watchdog/perception/export transit; and a requirement checker that
+  allowed the index to display total 147 while 148 definitions existed.
+- The following overlay is the one permitted consolidated correction. The same
+  verifier may perform one focused recheck; no further automatic WP-85 design pass is
+  permitted.
+
+<!-- WP85-DESIGN-R1-PAYLOAD-BEGIN -->
+
+## WP-85 design R1 — semantic mutation and transitive-boundary correction
+
+This overlay supersedes conflicting WP-85 initial clauses. The immutable initial
+WP-85 payload remains SHA-256
+`e3ec8097c64e0af93f735ed6a59615b5ad1b2e8883e00e7105e9cd0863d5ef3d`.
+Canonical **Status:** `PLANNED`; **Independent verification:** `DRAFT_UNVERIFIED`.
+
+### Corrected focused identities
+
+| Artifact | R1 identity |
+| --- | --- |
+| Audit program | SHA-256 `f2b7828aa00a0de61b30d0b1e4aec496d403934c337c8535a0246e1bdbe90caf` |
+| Audit artifact | SHA-256 `e3a47e7128d42a8ad4197c52e7b3bab47d3817b76a37c1ea8665570d465f1da7` |
+| Requirements index | SHA-256 `6e4995ede722a9302cae51a81885ee4ea007f5efa8197416b3cdd47d9c7285ed` |
+| Requirement checker | SHA-256 `bcc12ab5f58e1757adab3ce7a97f4990929883510b7763b70b43abd0f9cefeea` |
+
+Two independent audit runs produce exact artifact SHA-256
+`e3a47e7128d42a8ad4197c52e7b3bab47d3817b76a37c1ea8665570d465f1da7`.
+The revised audit passes eight checks.
+
+### Authority-semantic command-spy oracle
+
+The audit no longer branches on display labels. Each case is an immutable
+`Mutation(boundary enum, fault enum, label)` where behavior uses only the semantic
+boundary/fault. Three mutations are rerun with unrelated renamed labels; boundary,
+fault, actual command count, fallback count, error type, regression status, and
+expected post-fix result remain identical.
+
+Every case first constructs the real changed-world proposal. The semantic mutator then
+passes the exact malformed value to its real consumer:
+
+- safe-prefix: the monitor returns `None` or an exact certificate with wrong case;
+- abort: the monitor passes `None` or a wrong-case abort certificate into safe-prefix
+  certification;
+- feasibility: the real proposal's `BoundedPlanningResult` receives a missing
+  certificate or a certificate whose passed verdict is false;
+- cutover: the real `rebase_changed_world_replacement` runs, then the rebased proposal
+  receives a missing cutover certificate or a failed certificate with a violation;
+- proposal: the planner boundary returns `None` or the real proposal with a wrong
+  proposal hash;
+- receipt: the preparation boundary returns `None` or a real receipt with a wrong
+  proposal hash.
+
+The accepted control runs real proposal construction and real rebase, then reaches
+one actual `execute_replanned_trajectory` call. The audit does not manufacture passing
+exceptions for the negatives. Instead it truthfully records the current pre-fix
+production result:
+
+| Current result | Cases |
+| --- | --- |
+| Already fail closed with zero command and normalized domain outcome | tampered safe-prefix; tampered receipt |
+| Zero command but unnormalized missing-authority failure | missing safe-prefix, abort, feasibility, cutover, proposal, receipt |
+| Incorrectly reaches one replacement command | tampered abort, feasibility, cutover, proposal |
+
+All twelve freeze `expected_post_fix_replacement_command_calls=0`. A design check
+passes only when at least one genuine pre-fix regression is observed, all already
+fail-closed cases remain zero/normalized, every semantic boundary/fault pair is
+covered, and rename perturbations are invariant. Implementation must make all ten
+retained failures pass by adding production validators/error normalization, while
+preserving the two current fail-closed cases and one-command accepted control. This is
+the mandatory failure-first regression set and may not be replaced with injected
+exceptions.
+
+Implementation evidence adds, for each pre-commit negative, zero accepted epoch, zero
+replacement command, discarded preparation, exact normalized error code, and retained
+fault boundary/authority identity. The different implementation verifier must mutate
+new values at the same real consumers and reject any label-based behavior.
+
+### Transitive production-boundary closure
+
+The initial 82-path assertion is withdrawn. R1 starts from six named normal-entry
+roots—API app/runtime, Campaign service/runtime executor/execution head, and retained
+storage—and parses Python AST imports recursively for repository-local
+`crazyswarm_app` modules. It exact-unions that 112-path transitive production closure
+with the 76-path predecessor manifest and focused design owners, yielding 170 unique
+classified paths with exact preimages or external self-output identity.
+
+This mechanically includes the verifier's omitted examples:
+`campaign/execution.py`, `missions/runner.py`, `campaign/perception.py`,
+`observability/csv_export.py`, `campaign/geometry.py`, `domain/commands.py`,
+`fleet/preparation.py`, `missions/script.py`, `simulation/clock.py`, and
+`vehicles/providers.py`. The execution compiler and mission runner are now explicit
+owners of source/wall watchdog repair; perception owns observation/world identity;
+CSV export owns retained download bytes.
+
+Existing WP-84 classifications remain binding. Newly discovered transitive paths are
+`PRESERVE` unless implementation tracing proves the verified behavior requires a
+listed owner to be `MODIFY`; such a reclassification is allowed only within this
+170-path verified union and must retain the exact preimage plus rationale. A path
+outside the union is a scope change. The implementation freeze reruns the AST closure
+from the same roots on the postimage and requires exact equality, while the
+implementation verifier independently traces the API → service → executor → runner/
+execution-head → evaluation/storage/export sequence.
+
+### Requirement-index reconciliation
+
+The ownership index now displays total `148`. The checker no longer validates source
+definitions alone: it parses the displayed ownership rows, requires exact equality to
+the expected prefix/range/owner/count tuples, requires the displayed-row sum to equal
+the discovered definition count, and requires the displayed total to equal that same
+count. It still validates unique definitions, sequential IDs, canonical owner files,
+non-normative separation, links, and AGENTS routing.
+
+Both human index and executable checker now agree on 148 definitions and `WFL=54`.
+Implementation evidence runs both plain and JSON checker modes and retains empty error
+output. The requirements index/checker and all frozen design artifacts are preserved
+during production implementation except mechanical verified-status records.
+
+### R1 stop boundary
+
+The complete accepted candidate is WP-84 initial + WP-84 R1 + WP-85 initial + this
+overlay. The strict seed and stable projection corrections remain unchanged. No
+production implementation, generation, restart, retained run, commit, or push is
+authorized until the same verifier's one focused recheck returns `DESIGN_VERIFIED`.
+
+<!-- WP85-DESIGN-R1-PAYLOAD-END -->
+
+### WP-85 R1 focused-recheck handoff
+
+- Frozen correction overlay: 6,730 bytes, SHA-256 `c604a4d8fdd6833490ae166878f7a10809f0a2881c764671ffbf33f0ccceb6eb`.
+- Accepted composite: WP-84 initial `c993df7c80b18a5fe5b4e3fe950d94ce736d1fb6c851dbb9b69cf2f2cc17d4a0` plus WP-84 R1 `1dc093e440d8e2e624e060d8fb37370f761ca99b4d68506bc7927e0076641c73` plus WP-85 initial `e3ec8097c64e0af93f735ed6a59615b5ad1b2e8883e00e7105e9cd0863d5ef3d` plus this R1 overlay.
+- Corrected audit script: `f2b7828aa00a0de61b30d0b1e4aec496d403934c337c8535a0246e1bdbe90caf`.
+- Corrected retained audit artifact: `e3a47e7128d42a8ad4197c52e7b3bab47d3817b76a37c1ea8665570d465f1da7`.
+- Gate remains `DRAFT_UNVERIFIED`; this is WP-85's only correction, and the same verifier's focused recheck is final.
+
+### WP-85 final independent design verdict
+
+- **Status:** `REVIEW_BLOCKED`.
+- **Independent verification:** `BLOCKED_WITH_FINDINGS`.
+- The authority-semantic command-spy oracle and exact 148-definition requirement-catalog reconciliation passed the focused recheck.
+- One P1 `MUST_FIX_NOW` remains: the claimed exact transitive boundary closure did not include parent-package `__init__.py` execution and imports introduced by those initializers. An independent fresh-process comparison found 128 actually loaded repository modules versus the declared 112-module AST closure, leaving seventeen runtime-loaded paths outside the 170-path final manifest, including the API, campaign, domain, fleet, missions, observability, safety, simulation, and vehicles initializers plus the Isaac vehicle/package transit.
+- WP-85 consumed its one revision and focused recheck. No third automatic WP-85 design pass is permitted, and no production implementation, qualification, commit, or push is authorized from this blocked design.
+
+### WP-83 implementation handoff
+
+- Exact implementation manifest:
+  `missions/campaigns/sim/qualification/wp83-implementation-manifest-v1.json`, SHA-256
+  `ade996ffe2723105e1a0f3efa389711bacec42751b5dfa2133a0448894401115`.
+- The manifest freezes all eight owned files with artifact-derived preimage hashes and
+  whole-file postimage hashes; no implementation file was added, deleted, or renamed.
+- Preimage regression failed as intended at `schema_version 2 != 3`. Postimage evidence:
+  9/9 trajectory tests, 13/13 simulator vehicle tests, 20/20 supervisor tests, 2/2
+  mission-authority tests, and the long-duration landing qualification test pass.
+  Ruff, mypy, requirement-catalog validation, and complete v1/v2 production parsing
+  also pass.
+- Retained out-of-boundary failures: one simulator collision test expects an older
+  contact receipt, and API repeat-run suites encounter the workspace’s existing
+  unknown-vehicle/404 cleanup defect. Neither failure traverses a WP-83-owned path.
+- Status remains `IMPLEMENTED_UNVERIFIED` pending a different fresh verifier’s
+  production-path, oracle-sensitivity, regression, and documentation review.
+
+### WP-83 independent implementation verdict
+
+- Fresh verifier verdict: `IMPLEMENTATION_VERIFIED`; no P0/P1 findings.
+- All 44 frozen boundary identities matched. Both production clock modes retained 316
+  capture-through-contact samples with exact endpoint identity, 6.9 mm maximum XY
+  displacement, 5.4 mm maximum centerward progress, zero terminal Z, and zero nominal
+  alignment duration.
+- Independent perturbations removing capture coverage and injecting center-seeking
+  failed the oracle. Exact diversion retained a 0.5 s alignment phase; wrong-Z,
+  near-diversion, and outside-region commands were rejected. Historical v1/v2 parsing,
+  44 affected tests, Ruff, mypy, and all 147 requirement definitions passed.
+- Retained P2: the schema-v3 model permits a manually constructed `CAPTURED` record
+  with new evidence fields absent. The verified WP-83 production path always emits the
+  complete evidence, so this is a bounded future model-hardening item rather than a
+  false integration claim.
+- This verification record and the verification-field change are mechanical closeout
+  only; the reviewed eight-file implementation payload is unchanged.
+<!-- WP86-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-86 — truthful quick-switch Digital Twin projection and props-off diagnostics
+
+Status: `PLANNED`
+
+Independent verification: `DRAFT_UNVERIFIED`
+
+Base commit: `40cd9947f87eb9bf2719d72e7c72ea867eab9977`.
+
+Ledger preimage SHA-256:
+`831eb89d5681cdd0eb978f8e1c96c82ed08530024860d262fca0666ba9c5d638`.
+
+WP-86 is the bounded successor to WP-80's implementation-blocked observation entry.
+It does not reopen or upgrade WP-80's verdict. It uses the operator's first real-radio
+sessions to correct source-context projection, expose useful observation-only sensor
+truth, and repair paired-session time before any residual is trusted.
+
+### Frozen originating operator request
+
+> the jump from x y could be because i picked it up so delete that data there, i now
+> started a second sample read that data and maybe take that data, for the others of
+> coruse you can also use those data for the successor wp, so i have it running now
+> anazle again with your previous finding etc. just be aware that i think it is ok that
+> it is connected to the drone while in simulation so it is meant to be quick switch,
+> just make sure that then e.g. in digital twin no planned missions e.g. here
+> bottleckenc from simulation are in and it claims there two drones there, there is
+> only one and it should be called by the name it was given in the edit mode. ok so
+> scan again and structure the wp
+>
+> also can it be theat the measured batery is measured once at the beginning because
+> it always drops lower when i restart the conenction but does not move while it
+> catching samples
+
+The operator then stopped the observer and confirmed that the retained second sample
+was sufficient. The pickup-contaminated session
+`twin-43d3f75cb2374a00ba0c63c69be472ae` was removed from the active append-only twin
+journal after disconnect. A timestamped recovery copy exists outside the active
+journal; this operational cleanup is evidence curation, not a WP-86 product feature.
+
+### Intent/value card
+
+- **Minimum useful operator outcome:** Simulation and Digital twin switch quickly
+  without reconnecting an already paired command-inert observer, while Digital twin
+  shows exactly one observation subject named with the configured operator label and
+  contains no simulation mission, campaign, plan, fleet, target, or quick-action
+  state.
+- **Explicitly requested behavior:** preserve the observation link in the background
+  when selecting Simulation; remove `Bottleneck` or any other simulation plan from the
+  Digital twin context; replace the false two-drone/simulation count with one
+  `Drone#1 - Nike` subject; use the clean props-off data to make battery, IMU, Flow,
+  range, estimator, freshness, and sample semantics understandable.
+- **Necessary prerequisites:** retain WP-80's service-private zero-command boundary;
+  make backend status authoritative over the edit form; separate simulation command
+  state from the Digital twin presentation model; repair the paired-session clock so
+  source-aligned diagnostics do not compare unrelated raw producer clocks.
+- **Optional experiments:** later firmware A/B comparison, Flow surface/lighting
+  experiments, world calibration, residual thresholds, and retained-session charts.
+  They remain visible future evidence needs and are not required to implement WP-86.
+- **Non-goals:** no Crazyflie firmware update, calibration promotion, HOME-to-WORLD
+  transform, trustworthy position residual, scan, command permit, preflight, motor,
+  arm, takeoff, hover, landing, hotkey, emergency-stop, or physical-flight authority.
+
+### Frozen clean hardware observation
+
+The design input is completed session
+`twin-f33a1e55c4f2431480f1f41cd6f45a19`, labeled `Drone#1 - Nike`, with exact URI
+identity already retained by WP-80. It is `HARDWARE / OBSERVED_REALTIME` observation
+evidence only, has no ground truth, and does not qualify physical accuracy.
+
+- 1,264 paired observation cycles produced 70,784 channel records: 28 observed and 28
+  predicted records per cycle. UI copy must say `channel samples` or show cycles and
+  records separately; it must not call 70,784 independent time steps.
+- Measured battery has 1,263 available readings and eight exact quantized values. It
+  changes from 3.9061584473 V to 3.8692083359 V; therefore it is not sampled only at
+  connection time. Two-decimal rendering hides the approximately 5.279 mV steps.
+- Props-off motion evidence is quiet: median acceleration norm 9.8214 m/s², 95th
+  percentile angular-rate norm 0.00842 rad/s, and attitude spans 0.01624/0.02380/
+  0.00683 rad. This supports a stationary interpretation for this session only.
+- Observed Flow is reported `VALID` by the existing model but has 3.529% median
+  quality, 3.846 m/s median horizontal velocity, 7.005 m/s 95th percentile velocity,
+  and 0.018 m median ground distance. WP-86 must show the literal raw status and
+  numeric quality and must keep usability `UNQUALIFIED`; it may not present this as
+  real motion or invent a new acceptance threshold.
+- The estimator is unconverged in 1,232 of 1,263 available readings. Position variance
+  grows from x/y/z 3.5223/3.4714/0.00853 m² to
+  6.7814/5.0028/0.01533 m². The retained x/y drift is therefore an estimator/Flow
+  diagnostic, not observed world displacement.
+- The first observed cycle is a missing placeholder at mapped time 0. The next real
+  observation arrives with raw firmware time 1,933.909 s and is incorrectly mapped to
+  that value. After the same 1,264 paired cycles, observed mapped time is 2,271.529 s
+  while predicted mapped time is 126.300 s. Until corrected, all cross-source time
+  alignment and residuals remain unavailable/incompatible.
+
+### Quick-switch lifecycle and source isolation
+
+Simulation/Digital twin is a presentation/source-context selector, not the observer
+connection switch. Selecting Simulation while the observer is `PAIRED` keeps the
+private physical and predicted observation adapters connected and recording. Selecting
+Digital twin while already paired performs a status refresh only and reuses the same
+session; it must not reconnect or create another session. Explicit `Disconnect
+observer`, edit/rebind, service shutdown, connection failure, and application shutdown
+retain the existing serialized disconnect path.
+
+The background observer remains command-inert. A simultaneous Simulation mission can
+target only registered Fast Sim vehicles. Private `physical:*` and
+`fast-sim:*` observation IDs never enter command target, fleet, selected-vehicle,
+mission, Engineering, parameter, or SafetySupervisor registries. A persistent observer
+therefore improves switching latency without weakening WP-80's zero-command boundary.
+
+Simulation may show one quiet `Observer connected` state beside the Digital twin
+selector. It must not merge measured telemetry into simulation values, counts, paths,
+or command targets. Simulation continues to show its own configured scenario and
+mission state.
+
+### Digital twin presentation projection
+
+When the source context is Digital twin, the served Control Center derives a dedicated
+observation projection instead of continuing to render `DashboardModel` simulation
+selection state:
+
+1. The top mode is `SHADOW`, reinforced by `Observation only`; it is not `LIVE` and
+   never implies command authority.
+2. The subject capsule shows exactly the configured binding label, for example
+   `Drone#1 - Nike`, and `1 observed`. The predicted source is a model for that subject,
+   not a second drone. Private IDs remain in technical detail only.
+3. `RoomScene` receives no simulation vehicles, mission preview, planned path, campaign
+   fleet, home bases, command selection, or replay state. With HOME-only position it
+   shows one named observation subject and `Position unavailable in world frame`; it
+   does not place a fabricated world marker.
+4. Mission deployment, simulation campaign/Python mission content, Run action,
+   simulation quick actions, Run files, Engineering command targeting, and simulation
+   flight readout are absent. The bottom source capsule reads `Drone#1 - Nike` and
+   `Digital twin · Observation only`, with no retained `Bottleneck` or other mission
+   title.
+5. Switching back to Simulation restores the unchanged simulation presentation while
+   the observer continues recording until explicit disconnect.
+
+Disconnected, error, pending-confirmation, and configured states keep the same
+single-subject projection. A refresh may default the presentation to Simulation even
+while the private observer is paired, matching the operator's quick-switch choice; the
+quiet connection state must remain truthful.
+
+### Authoritative edit/transition reconciliation
+
+`GET /physical-twin/status` remains authoritative. The UI polls it while the observer
+is `CONNECTING`, `PENDING_CONFIRMATION`, or `PAIRED`, including while Simulation is the
+selected presentation. A successful binding save exits edit mode before connect is
+awaited. Any authoritative `CONNECTING`, `PENDING_CONFIRMATION`, or `PAIRED` response
+clears the local edit flag and renders that state immediately. An operator-entered
+edit form remains only while the backend is disconnected/error/configuration-invalid;
+an obsolete error stays hidden during that deliberate edit.
+
+The regression oracle starts in error, opens Edit, saves a confirmed exact URI, makes
+the connect response time out locally while the backend advances to
+`PENDING_CONFIRMATION`, and then observes the pending identity prompt without reload.
+The negative case keeps the form and unchecked exact-URI guard when the backend remains
+disconnected and configuration has not been saved.
+
+### Props-off diagnostic surface
+
+Add `TwinObservationReadout` inside the existing bottom-right readout boundary; it is
+not a second dashboard. Its compact state shows the configured label, connection and
+freshness, measured battery to three decimals, paired-cycle/channel-record counts, and
+the explicit `Observation only` authority. Its expanded state exposes current measured
+and predicted battery; measured IMU acceleration/angular velocity; attitude; Flow raw
+status, quality, body velocity, and range height; six-direction range values/statuses;
+estimator convergence and x/y/z variance; source/raw/alignment clocks; epoch; and
+availability/quality for each family.
+
+The physical-twin status contract may add typed current diagnostic fields from the
+already-held latest envelopes; no model value fills a missing observed value. Flow
+quality remains numeric and `UNQUALIFIED` until a separately frozen hardware policy
+defines usability. Estimator `converged=false` is degraded and prominent. Battery uses
+three decimals and freshness so its measured quantization is visible. Technical IDs,
+raw hashes, and exact clocks remain in the existing disclosure hierarchy.
+
+The completed session remains reviewable after disconnect through its retained
+session/timeline identity, but multi-page historical plots and a new deletion product
+surface are deferred. Missing, stale, disconnected, first-placeholder, partial-sensor,
+and incompatible-frame states have explicit text equivalents.
+
+### Paired-session clock correction
+
+WP-86 supersedes only WP-80 R1's mapped-time algorithm. Each accepted service pair
+already has one authoritative admission monotonic timestamp. The service establishes a
+session origin from the first non-placeholder pair and assigns both OBSERVED and
+PREDICTED samples in that pair the same session-relative
+`source_timestamp_s = admitted_monotonic_s - origin`. Raw producer clock ID, raw time,
+and producer epoch remain unchanged in their existing fields. An all-measured-channels-
+missing placeholder neither establishes the origin nor emits a retained pair.
+
+Raw firmware jumps do not move paired session time. Admission-time jitter does, because
+it is real observation cadence. Raw rollback increments the affected producer epoch;
+residual derivation still rejects cross-epoch pairing. The frozen prototype covers:
+
+- nominal admission times 100.00/100.11/100.21 s with observed raw times
+  1933.909/1934.603/1935.071 s and predicted raw times 0.1/0.2/0.3 s, producing
+  0.00/0.11/0.21 s on both mapped sides;
+- a raw-clock perturbation to 10/5000/5001 s with identical admissions, producing the
+  same mapped vector while preserving the changed raw vector;
+- an admission perturbation to 100.00/100.15/100.28 s, producing
+  0.00/0.15/0.28 s and proving the oracle is not a constant; and
+- an all-missing placeholder that emits no pair and establishes no clock origin.
+
+No position residual is enabled. A battery residual may become available only when
+unit, frame, epoch, availability, and paired-session time all pass the existing
+independent ingestion oracle.
+
+### Claim and exit matrix
+
+| Claim key | Production entry and effect | Retained observation | Independent oracle / counterexample | Boundary |
+| --- | --- | --- | --- | --- |
+| `background_observer_isolation` | served selector changes presentation only; explicit disconnect remains the sole ordinary stop action | one unchanged paired session ID/count continues while Simulation commands target only `sim01` | fake command-spy plus real route family rejects both private IDs; Simulation mission changes only Fast Sim while observer samples advance | `PRODUCTION_ENTRY / FAST_SIM+HARDWARE / OBSERVED_REALTIME` |
+| `single_subject_projection` | Digital twin projects binding/status instead of simulation dashboard selection | `Drone#1 - Nike`, `1 observed`, SHADOW, no campaign/plan/fleet/quick actions | seed Simulation with renamed `Bottleneck` and reordered two-drone preview, then switch context; neither name nor fleet survives and no world marker appears for HOME-only position | `PRODUCTION_ENTRY / SERVED_UI / OBSERVED_REALTIME` |
+| `authoritative_transition_reconciliation` | status poll overrides stale edit state | pending confirmation appears without refresh after local connect timeout | backend stays disconnected before save: edit values and unchecked guard remain; obsolete error stays hidden | `PRODUCTION_ENTRY / SERVED_UI / OBSERVED_REALTIME` |
+| `literal_props_off_diagnostics` | latest envelopes -> typed status -> `TwinObservationReadout` | battery 3 decimals, cycle/record counts, IMU, Flow, range, estimator, freshness and authority | remove each observed family while prediction remains; UI says missing and never substitutes. Low-quality `VALID` Flow stays raw/UNQUALIFIED, not motion | `PRODUCTION_ENTRY / HARDWARE / OBSERVED_REALTIME` |
+| `paired_session_clock` | accepted pair admission time -> mapper -> ingestion -> timeline/residual | identical mapped pair time, preserved raw clocks/epochs, no placeholder anchor | frozen nominal/raw/admission/placeholder vectors plus rollback/cross-epoch rejection | `INTEGRATION / HARDWARE-LIKE FIXTURE / OBSERVED_REALTIME` |
+
+### Exact implementation boundary
+
+Production ownership is limited to:
+
+- `src/crazyswarm_app/hardware/observation_twin.py` for background lifecycle status,
+  typed latest diagnostics, cycle/record semantics, placeholder rejection, and paired
+  admission time;
+- `src/crazyswarm_app/twin/ingestion.py` and `src/crazyswarm_app/twin/models.py` only
+  if needed to preserve explicit quality/epoch/residual fail-closed semantics;
+- `src/crazyswarm_app/api/app.py`, `ui/openapi.json`, and
+  `ui/app/lib/api.generated.ts` for the generated typed status contract;
+- `ui/app/lib/api.ts` and `ui/app/lib/models.ts` for exact adaptation;
+- `ui/app/components/ControlCenter.tsx`, `RoomScene.tsx`, `TelemetryDock.tsx`, and new
+  `TwinObservationReadout.tsx` for source projection and diagnostics;
+- `ui/app/globals.css`, `design.md`, and `docs/project/DESIGN.md` for the corrected
+  durable quick-switch/SHADOW pattern; no responsibility owner or entry point moves,
+  so `docs/system/README.md` is relied upon unchanged; and
+- focused existing tests plus new `ui/tests/twin-observation-readout.test.tsx`.
+
+The machine audit derives recursive Python and UI transit closures from the production
+seeds, derives the OpenAPI output pair from `ui/package.json`, hashes every existing
+boundary, marks both intended new UI files absent, and reconciles claim owners/entries
+to the manifest. Implementation must freeze a separate postimage reconciliation
+manifest because production and generated identities are expected to change.
+
+### Declared implementation evidence
+
+1. Establish sensitivity with failing pre-fix UI tests for the two-drone/Bottleneck
+   leak, persistent-observer switch, renamed binding label, edit-to-pending race,
+   two-decimal battery concealment, missing family, and HOME-only marker rejection.
+2. Add service tests for same-session background recording, explicit disconnect,
+   zero command calls, current typed diagnostics, exact cycle/record counts, placeholder
+   rejection, paired admission mapping, raw-clock perturbation, admission perturbation,
+   rollback epoch, and cross-epoch residual rejection.
+3. Run focused Python/UI tests, typecheck, ESLint, Ruff, mypy, generated OpenAPI drift,
+   production build, and the WP-86 audit/implementation manifest.
+4. Rebuild/restart the managed service only with no active mission/observer, bind the
+   exact release/API/asset identities, and inspect port 3001 at desktop and narrow
+   widths. Served states include Simulation with background observer, Digital twin
+   paired/disconnected/pending/error/edit, expanded/collapsed diagnostics, missing
+   sensors, keyboard/focus, and reduced motion.
+5. Use a controlled fake link for automated paired interaction. No additional real
+   radio connection or firmware change occurs without separate operator authorization.
+
+### Exit and limits
+
+WP-86 exits the design gate only after an independent verifier accepts this exact
+payload and its audit. This request is design/structure work; implementation does not
+begin in this packet turn. Later implementation remains `IMPLEMENTED_UNVERIFIED` until
+a different fresh verifier checks the exact postimage manifest and served release.
+
+Success does not qualify estimator position, Flow usability, world calibration,
+battery model accuracy, command readiness, motors, or flight. The safe fallback for
+any blocked UI projection is to keep Digital twin observation-only, suppress every
+simulation mission/fleet/command surface in that context, and show unavailable data
+literally.
+
+<!-- WP86-DESIGN-PAYLOAD-END -->
+
+### WP-86 design-review handoff
+
+- Delimited payload: 18,386 bytes, SHA-256
+  `33aff815719a6ce14a9973b2d9f19ed58c66415f80432a63035442955aa269e4`.
+- Pre-freeze artifact: `missions/campaigns/sim/qualification/wp86-design-audit-v1.json`,
+  SHA-256 `0de38f83213b06068f6c294ce674a212ae7ef772b4e20912fd624d47c3201ad5`.
+- Audit implementation: `scripts/audit_wp86_design.py`, SHA-256
+  `13ed0de359ee8422a26b51a897a8d3d034b4c75de9cf19848e80540133d74f0c`.
+- Audit result: zero errors; 114-file recursive Python closure, 15-file recursive
+  UI/worker/CSS closure, 150 total frozen boundaries, five reconciled claim rows,
+  exact generated API pair, and sensitive nominal/raw/admission/placeholder clock
+  witnesses.
+- Review count: `0`; correction count: `0`; focused recheck count: `0`.
+- Model route: author used frontier reasoning because hardware clock semantics,
+  source/command isolation, and user-visible truth cross safety-relevant boundaries.
+  Token/time counts are not exposed; proxies are one hardware session analysis, one
+  served release inspection, one deletion/recovery operation, two changed design files,
+  and one generated audit artifact.
+- Hardware authority: observation only; command/motor/flight authority absent.
+- Independent verification: `DRAFT_UNVERIFIED`.
+
+<!-- WP86-R1-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-86 R1 — consolidated design correction
+
+Status: `PLANNED`
+
+Independent verification: `DRAFT_UNVERIFIED`
+
+This is the one permitted consolidated design correction. It supersedes only the
+conflicting lifecycle, clock/residual, evidence-boundary, hardware-freeze, exact
+implementation-boundary, and declared-evidence text in the initial WP-86 payload.
+All other initial scope and safety limits remain frozen. No implementation is
+authorized by this correction.
+
+### Active Simulation operation guard
+
+Quick switching is permitted only when it cannot hide an active Simulation
+operation. Define `simulationOperationActive` from the existing production state as:
+
+- a fleet execution whose `runStatus` is `SCHEDULED`, `PREPARING`, `READY`, or
+  `RUNNING`;
+- a non-terminal Python mission represented by `runningRunId` or a latest run whose
+  status is `RUNNING`; or
+- a campaign run whose status is `QUEUED` or `RUNNING`.
+
+An abort/cancel request does not clear this guard: the operation remains active until
+the authoritative run becomes terminal (`SUCCEEDED`, `ABORTED`, `FAILED`, or
+`CANCELLED_BEFORE_LAUNCH`, as applicable). While the guard is true, the Digital twin
+selector is disabled with the visible reason `Finish or abort the active Simulation
+run before opening Digital twin.` The Control Center stays in Simulation and retains
+the live run, progress, and Abort and land control. It may not switch presentation
+first and thereby conceal the operation.
+
+When no Simulation operation is active, selecting Digital twin changes presentation
+only. A `PAIRED` observer is reused without reconnecting; a disconnected observer is
+shown as disconnected and is connected only by an explicit `Connect observer` action.
+Selecting Simulation never disconnects a paired observer. Explicit `Disconnect
+observer` remains the ordinary connection stop action. Thus the requested background
+observer and quick switch do not redefine or obscure Simulation execution ownership.
+
+The counterexample seeds a `Bottleneck` fleet in `SCHEDULED`, `RUNNING`, and an
+abort-requested-but-not-terminal state: Digital twin remains disabled, Simulation and
+Abort and land remain visible, and the observer session/sample count may continue.
+After the run becomes terminal the selector enables; Digital twin then shows one
+configured-label observation subject and no `Bottleneck`, plan, fleet, deployment,
+command target, quick action, or Simulation flight readout.
+
+### Exact pair and epoch semantics
+
+The initial promise to compare by mapped-time proximity and reject numerically unequal
+producer epochs was underspecified. Producer epochs are independent: an observed
+Crazyflie rollback can legitimately increment its raw epoch while the predictor raw
+epoch stays unchanged. R1 replaces nearest-neighbour residual alignment with an exact
+service-pair contract:
+
+1. After rejecting an all-measured-channels-missing placeholder, the observation
+   service increments a positive `pair_sequence` once per admitted observed/predicted
+   envelope pair. It derives an unambiguous `pair_id` from the session ID,
+   `pair_sequence`, and admitted monotonic timestamp. Every emitted channel sample on
+   both sides carries that same pair identity and the same session-relative admitted
+   `source_timestamp_s`.
+2. The service owns a positive `alignment_epoch`. It begins at one and increments
+   before emission whenever either producer clock ID or producer epoch changes. Both
+   sides of that exact admitted pair receive the new common alignment epoch. Raw
+   producer clock ID, raw timestamp, and producer epoch remain unchanged and separate.
+3. A residual can be `AVAILABLE` only for samples with the same session, channel,
+   unit, frame, `pair_id`, `pair_sequence`, and `alignment_epoch`, with both samples
+   available and subtractable. The retained residual identifies both input hashes,
+   both raw producer epochs, the common alignment epoch, and the pair identity.
+   Mapped-time nearest-neighbour reach-back is removed for paired hardware sessions.
+4. A producer rollback therefore creates a new common alignment segment. Observed raw
+   epoch 2 and predicted raw epoch 1 may be compared only when they belong to the same
+   newly admitted pair and common alignment epoch; observed pair 2 can never borrow
+   predicted pair 1. Numeric equality between independent raw epochs is not an oracle.
+5. Historical samples without retained pair identity never fall back to time-nearest
+   matching. Their residual is `MISSING / UNQUALIFIED` until an exact pair identity is
+   available. No position residual becomes available because HOME/WORLD remains
+   incompatible.
+
+The executable rollback witness admits pair 1 in alignment epoch 1, then rolls only
+the observed producer and admits pair 2 in alignment epoch 2. Exact pair 2 is
+available when both inputs exist; removing predicted pair 2 produces
+`MISSING / UNQUALIFIED` and cannot select predicted pair 1. The executable partial-
+sensor witness emits the pair when IMU is available but observed battery is missing:
+the IMU residual may be available, while battery is `MISSING / UNQUALIFIED` and never
+uses predicted battery as measured truth. The all-measured-channels-missing witness
+emits no pair, consumes no `pair_sequence`, and establishes no session-clock origin.
+
+This makes `src/crazyswarm_app/twin/replay.py` and
+`tests/twin/test_replay.py` implementation-owned claim boundaries, alongside the
+initial service, ingestion, and model owners.
+
+### Canonical claim/evidence boundaries
+
+All implementation claims use the exact `REQ-WFL-018` vocabularies. Controlled link
+and served-browser fixtures exercise changed production entries under `FAST_SIM`; they
+cannot close a new `HARDWARE` implementation claim. The retained real-radio run is a
+separate pre-change observation baseline and diagnostic input only.
+
+| Claim key | Production entry and effect | Independent oracle / counterexample | Boundary / environment / clock |
+| --- | --- | --- | --- |
+| `background_observer_isolation` | served selector changes presentation only; explicit disconnect stops observation | controlled link command-spy rejects private IDs; samples advance in Simulation while Fast Sim commands target only `sim01` | `PRODUCTION_ENTRY / FAST_SIM / OBSERVED_REALTIME` |
+| `single_subject_projection` | Digital twin derives one configured-label observation projection | renamed/reordered two-drone `Bottleneck` fixture cannot leak; active run disables switching and keeps Abort visible; terminal run enables it | `PRODUCTION_ENTRY / FAST_SIM / OBSERVED_REALTIME` |
+| `authoritative_transition_reconciliation` | served status poll overrides stale edit state | connect response times out while status advances to pending; disconnected-before-save retains guarded edit | `PRODUCTION_ENTRY / FAST_SIM / OBSERVED_REALTIME` |
+| `literal_props_off_diagnostics` | latest controlled envelopes traverse typed status into the served readout | remove each observed family while prediction remains; UI renders missing and never substitutes; low-quality `VALID` Flow remains raw/UNQUALIFIED | `PRODUCTION_ENTRY / FAST_SIM / OBSERVED_REALTIME` |
+| `paired_session_clock` | controlled pair admission traverses service, ingestion, retained timeline, and residual derivation | executable raw/admission perturbations, rollback/reach-back rejection, partial-sensor and all-missing placeholder witnesses | `INTEGRATION / FAST_SIM / OBSERVED_REALTIME` |
+| `retained_hardware_observation` | existing production observer session, before WP-86 implementation | deterministic journal reconstruction and normalized-sample hash; no ground truth or changed-code claim | `PRODUCTION_ENTRY / HARDWARE / OBSERVED_REALTIME` |
+
+The implementation gate must report the changed-code hardware row as `NOT_RUN` unless
+the operator separately authorizes another real-radio observation. Existing hardware
+data may be replayed through changed readers as `INTEGRATION / FAST_SIM /
+OBSERVED_REALTIME`; replay does not promote it to a new hardware result.
+
+### Reconstructable clean hardware observation
+
+The retained clean session is frozen in
+`missions/campaigns/sim/qualification/wp86-hardware-observation-v1.json`. The extractor
+validates every exact-session journal envelope and compressed-batch hash, removes
+run-random sample IDs/hashes and receipt clocks from the normalized projection, sorts
+70,784 samples by sequence/side/channel, and hashes all remaining causal observation
+fields. Reconstruction is:
+
+`python scripts/extract_wp86_hardware_observation.py --check missions/campaigns/sim/qualification/wp86-hardware-observation-v1.json`
+
+The immutable facts are 1,266 exact-session journal envelopes, 1,264 paired cycles,
+35,392 records per side, 70,784 normalized channel records, and normalized SHA-256
+`d2a4a91399f4a5f902e9e01fdce7a9da9c7bbb44df19efc6343421692c80e1b7`.
+The artifact independently reconstructs battery, Flow, estimator, stationary-check,
+and clock-counterexample summaries. With its explicit linear percentile rule, Flow
+horizontal-speed p95 is 7.0050827846 m/s; this replaces the initial rounded value from
+a different percentile convention and does not change `UNQUALIFIED` usability.
+
+This artifact closes only the `retained_hardware_observation` baseline. Its label and
+binding context remain status/identity evidence outside the telemetry journal; the
+artifact does not fabricate them or physical ground truth.
+
+### Corrected exact boundary and evidence
+
+Add the following to the initial implementation-owned boundary:
+
+- `src/crazyswarm_app/twin/replay.py` for exact-pair residual selection and fail-closed
+  legacy behavior; and
+- `tests/twin/test_replay.py` for direct residual sensitivity and counterexamples.
+
+Add the following frozen design-evidence boundaries, relied upon unchanged during
+implementation:
+
+- `scripts/extract_wp86_hardware_observation.py`;
+- `missions/campaigns/sim/qualification/wp86-hardware-observation-v1.json`;
+- `scripts/audit_wp86_design_r1.py`; and
+- `missions/campaigns/sim/qualification/wp86-r1-design-audit-v2.json`.
+
+Implementation evidence must include failing-before/fixed-after tests for the active-
+operation switch guard, terminal re-enable, paired-observer preservation in both
+presentation contexts, explicit disconnect, disconnected Digital twin with no implicit
+connect, and one-subject mission-free projection. Clock tests must execute nominal,
+raw-clock perturbation, admission perturbation, observed-only rollback, removed-current-
+prediction reach-back, partial-sensor, all-missing placeholder, incompatible frame,
+and legacy-no-pair cases through the real residual owner. Served evidence remains on
+port 3001 and uses a controlled link; no additional hardware connection, firmware
+change, motor action, or flight authority is authorized.
+
+<!-- WP86-R1-DESIGN-PAYLOAD-END -->
+
+### WP-86 R1 focused-recheck handoff
+
+- Initial independent verdict: `BLOCKED_WITH_FINDINGS`; no P0 and four P1
+  `MUST_FIX_NOW` findings covering active-run concealment, non-executable epoch
+  rejection, noncanonical/mixed evidence labels, and an unreconstructable hardware
+  summary.
+- Frozen initial payload: 18,386 bytes, SHA-256
+  `33aff815719a6ce14a9973b2d9f19ed58c66415f80432a63035442955aa269e4`.
+- Frozen R1 correction: 10,868 bytes, SHA-256
+  `c7532e883502314bdb79b1fa71767bfe41c8d6edb4c01b2ff4b2a1c3d98e0791`.
+- Corrected audit: `scripts/audit_wp86_design_r1.py`, SHA-256
+  `6a1505079a0f1f92fb2e6a058bd27d4b574a24585a422b70dc89b2b546d56f94`.
+- Corrected audit artifact:
+  `missions/campaigns/sim/qualification/wp86-r1-design-audit-v2.json`, SHA-256
+  `4b5e224f331e39481bc44fb7331c8b4511d0fb7678d8ea0fd7915f0827e2c84c`.
+- Hardware extractor: `scripts/extract_wp86_hardware_observation.py`, SHA-256
+  `e363b7ece3c676928503c422b639468ace08c0146e9657384a2da4016131b57a`.
+- Reconstructable hardware artifact:
+  `missions/campaigns/sim/qualification/wp86-hardware-observation-v1.json`, SHA-256
+  `b70e38c8bfafb2693a7d250a14d51061847e6559b1d83354364c6d469804d5fd`;
+  70,784 normalized samples, normalized SHA-256
+  `d2a4a91399f4a5f902e9e01fdce7a9da9c7bbb44df19efc6343421692c80e1b7`.
+- Audit result: zero errors across 154 exact boundaries, six executable pair/rollback/
+  partial/legacy witnesses, canonical claim triples, and live journal reconstruction.
+- Review count: `1`; correction count: `1`; focused recheck count: `0`.
+- Hardware authority: retained observation baseline only; changed-code hardware claim
+  `NOT_RUN`; command/motor/flight authority absent.
+- Independent verification remains `DRAFT_UNVERIFIED`. This is the sole correction;
+  the same verifier's focused recheck is the final automatic WP-86 design pass.
+
+### WP-86 final design-gate outcome
+
+Status: `PLANNED`
+
+Independent verification: `DESIGN_VERIFIED`
+
+- The same verifier completed the sole focused recheck and found no residual P0/P1.
+  All four initial P1 findings are resolved by the exact initial payload
+  `33aff815719a6ce14a9973b2d9f19ed58c66415f80432a63035442955aa269e4`
+  plus R1 payload
+  `c7532e883502314bdb79b1fa71767bfe41c8d6edb4c01b2ff4b2a1c3d98e0791`.
+- Reviewer: `/root/wp86_design_verifier`; initial review count `1`; correction count
+  `1`; focused recheck count `1`. The design-review cycle is exhausted.
+- Verdict: `DESIGN_VERIFIED`. WP-80 remains `BLOCKED_WITH_FINDINGS`; this successor
+  verdict does not upgrade WP-80.
+- Changed-code hardware evidence remains `NOT_RUN`. Implementation authority is
+  observation-only and excludes firmware, command, motor, and flight behavior.
+
+### WP-86 fast-loop implementation handoff
+
+Status: `IMPLEMENTED`
+
+Independent verification: `IMPLEMENTED_UNVERIFIED`
+
+- Implemented the accepted bounded projection, diagnostics, authoritative edit-state
+  reconciliation, and exact-pair clock/residual behavior without adding command,
+  motor, mission, or flight authority.
+- Normal author checks passed: 20 focused backend tests, Ruff, mypy, 62 focused UI
+  tests, targeted ESLint, UI typecheck, and the production UI build.
+- Published managed UI release `release-ca6aa2d0e52549c4bbcda890aca108d1`
+  and exercised the served workflow on port 3001. Digital twin showed `SHADOW`,
+  configured label `Drone#1 - Nike`, `1 observed`, no simulation mission/fleet/control
+  surfaces, no implicit connection, and a successful return to Simulation.
+- Final observer state is `DISCONNECTED`; changed-code hardware evidence remains
+  `NOT_RUN`. The operator explicitly chose the fast feedback loop, so no independent
+  implementation gate was run. Operator behavioral review is the next step.
+
+<!-- WP87-88-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-87 and WP-88 — Digital Twin flight safety and basic-flight laboratory
+
+This related pair is one design-review unit but preserves two responsibility owners.
+WP-87 is the separately requested flight-safety packet. WP-88 is the Digital Twin
+Campaign Laboratory and its first one-drone mission cluster. A mission may depend on
+WP-87, but no mission definition, catalog selection, browser state, or calibration
+candidate may implement or relax WP-87 safety authority.
+
+### Frozen originating request
+
+> Design and independently verify a separate flight-safety packet covering arming,
+> limits, containment, abort, landing, and emergency behavior.
+>
+> i thik i already did tell you this but now again, same as simulation where it is
+> structured in different campaign laboratory and you can choose different clusters
+> here as well just for digital twin
+>
+> so know mission cluster 1 should be basic behavior like takeoff, arming whatver you
+> think as next step if drone has never flown before, checking beahvior at different
+> battery levels, checking flight hover stability, sensor drift, implement calibration
+> pipeline of sensors bla bla but only that not use any sensors just basic flight
+> missions like spinning motors 30%, 40%, ..., takeoff to set distance keep that
+> distacne for x seconds, in another move forward backward, spin around, do a circle
+> whatever build up, imagine which missions could be implemented there
+
+Design interpretation: “only that not use any sensors” means Cluster 1 adds no
+perception, obstacle, ranging, sensor-drift, or calibration experiment. Physical
+flight still requires source-qualified position/height, attitude, battery, link, and
+firmware-supervisor observations for safety; unavailable safety observations block
+flight instead of being bypassed. The cluster records those observations but does not
+turn them into a sensor mission or automatically tune a model.
+
+Base commit: `40cd9947f87eb9bf2719d72e7c72ea867eab9977`.
+
+Ledger preimage before this payload: SHA-256
+`39a90e2d66b7a520e61e791d1388195e3013f506b190154441576ac2d0e99776`.
+
+### Intent/value card
+
+- **Minimum useful outcome:** Digital twin has a selectable Campaign Laboratory whose
+  first cluster teaches one never-flown Crazyflie from ground authority through
+  takeoff, hover, basic translation, yaw, simple shapes, battery behavior, and safety
+  drills, while every propeller-capable action remains blocked by one separate,
+  non-bypassable flight-safety authority.
+- **Explicitly requested:** separate arming/limits/containment/abort/landing/emergency
+  design; Digital twin-only cluster selection; first-flight basics; bounded motor,
+  takeoff/hold, forward/back, turn, circle, hover-stability, and battery cases.
+- **Necessary prerequisites:** exact paired identity; qualified command-capable
+  Crazyflie adapter; source-qualified safety telemetry; current bench and flight-entry
+  records; one-shot permit; operator and observer; approved physical containment;
+  onboard emergency-stop watchdog; immutable case/plan/evidence identity; and normal
+  API/Play-path integration.
+- **Optional experiments:** a direct 30% or 40% collective props-off diagnostic and
+  low-but-admissible battery comparison. They remain disabled until their additional
+  gates pass and do not block ordinary official motor diagnostics or high/mid battery
+  basics.
+- **Non-goals:** perception or obstacle missions, sensor drift qualification,
+  autonomous calibration or promotion, arbitrary PWM controls, physical battery
+  override/deep discharge, multi-drone flight, outdoor flight, dynamic replanning,
+  payload tests, or physical-accuracy claims from Fast Sim.
+- **Safe fallback:** retain the current observation-only Digital twin projection and
+  preparation-only catalog. No radio, command, motor, or flight action is authorized
+  by this design review.
+
+### Current production trace and claim boundary
+
+The current served path selects Digital twin in `ControlCenter.tsx`, calls only the
+authenticated `/api/v1/physical-twin/*` observation service, and deliberately keeps
+the private observer outside `ApplicationRuntime.vehicles` and `SafetySupervisor`.
+Both mission and campaign Play return an observation-only lock message. The existing
+Crazyflie adapter can translate arm, takeoff, hover, move, land, abort, and emergency
+payloads, but its observation-only instance rejects permits and commands. In the
+current adapter, `_require_permit()` runs before the emergency payload is classified,
+so emergency stop does not yet provide the permit-independent safety preemption this
+packet requires. There is no Digital Twin campaign execution entry point.
+
+The accepted implementation must trace:
+
+`served Digital twin selection -> exact case/variant -> immutable plan and one-shot permit -> campaign/mission execution owner -> SafetySupervisor + WP-87 flight authority -> command-capable Crazyflie adapter -> pinned link -> source-qualified observations -> recorder/export/evaluator -> Campaign Review`.
+
+The official Crazyflie supervisor contract says emergency stop immediately stops all
+motors, is latching until reboot, and sends no response. Evidence therefore separates
+host dispatch from a later observed supervisor state; it never fabricates an
+acknowledgement. The onboard watchdog is activated for every command-capable session.
+The official commander supplies smooth takeoff/go-to/land trajectories and its
+watchdog behavior remains authoritative. The official motor self-test is preferred;
+direct ratios are not treated as normal flight profiles.
+
+Primary references:
+
+- [Bitcraze supervisor CRTP contract](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/functional-areas/crtp/crtp_supervisor/)
+- [Bitcraze commander framework](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/functional-areas/sensor-to-control/commanders_setpoints/)
+- [Bitcraze cflib supervisor API](https://www.bitcraze.io/documentation/repository/crazyflie-lib-python/master/api/cflib/crazyflie/supervisor/)
+- [Bitcraze Flow deck first-flight guidance](https://www.bitcraze.io/documentation/tutorials/getting-started-with-flow-deck/)
+
+### Packet state and dependency order
+
+| Packet | Status | Independent verification | Depends on | Owner and value |
+| --- | --- | --- | --- | --- |
+| WP-87 — non-bypassable Digital Twin flight safety | `PLANNED` | `DRAFT_UNVERIFIED` | accepted WP-71–75 design; implemented WP-80/WP-86 observation boundary | Safety supervisor, physical flight authority, permits, adapter/link, evidence, and always-available operator safety actions. |
+| WP-88 — Digital Twin Campaign Laboratory, Cluster 1 | `PLANNED` | `DRAFT_UNVERIFIED` | WP-87 `IMPLEMENTATION_VERIFIED` plus retained hardware/permit gates | Twin-specific cluster catalog and staged one-drone basic-flight learning cases using the normal mission/evidence pipeline. |
+
+This request is design-only. Implementation must start with WP-87 and obtain a fresh
+implementation verdict before WP-88 may send any physical command. Catalog structure
+may be implemented preparation-only earlier, but Play remains locked.
+
+### WP-87 — non-bypassable Digital Twin flight safety
+
+WP-87 owns arming, hard limits, containment, abort, landing, emergency behavior,
+permit lifecycle, safety audit, and the server-side authority behind visible controls.
+Its rules apply independently of the selected case.
+
+1. **Arming.** Connect, identity verification, observation, preflight, permit issue,
+   and arm are separate states. Arm requires the exact pinned vehicle/session, a
+   fresh approved preflight, firmware `canBeArmed`/`canFly` truth as applicable,
+   landed/not-flying state, valid positioning, battery/link/health gates, operator and
+   observer presence, containment, and an unconsumed one-shot case-bound permit. Arm
+   is followed immediately by its bounded action or disarm; there is no indefinite
+   armed idle state or browser-only authority.
+2. **Limits.** The permit freezes requested and safety-resolved altitude, horizontal
+   extent, speed, vertical rate, yaw rate, acceleration, duration, battery reserve,
+   observation freshness, watchdog, landing region, and allowed command kinds. A
+   mission may tighten but never relax them. Cluster 1 commands stay at or below
+   `0.40 m` height, `0.15 m/s` horizontal speed, `0.20 m/s` vertical speed,
+   `30 deg/s` yaw rate, `0.50 m/s²` acceleration, and `45 s` airborne duration; lower
+   measured limits win.
+3. **Containment.** A permit binds an inspected physical containment/exclusion volume,
+   launch point, conservative vehicle swept radius, localization uncertainty, warning
+   center radius, hard center radius, observer, and stop criteria. The initial
+   horizontal contract uses a `0.10 m` commanded route radius, `0.20 m` warning center
+   radius, `0.35 m` hard center radius, and `0.50 m` physical containment radius.
+   Boundary prediction triggers supervised braking/hold/land before the hard radius;
+   a missing certificate blocks arming or escalates an active flight.
+4. **Abort.** Abort is a distinct supervisor-owned action that preempts mission/fleet
+   ownership, atomically cancels undispatched future commands, and performs a bounded
+   controlled landing only while link, estimator, height, landing region, and command
+   outcome remain trustworthy. It never reports mission success.
+5. **Landing.** Normal and aborted landing use an immutable landing goal region.
+   Descent starts only after fresh capture and speed checks; accepted X/Y is retained
+   through descent, and disarm occurs only after observed landed/not-flying supervisor
+   state. A command return alone is not touchdown evidence. If controlled landing can
+   no longer be certified, emergency policy owns the next action.
+6. **Emergency.** A permanent visible control and Space hotkey, enabled only for the
+   deliberately hot exact physical session and suppressed in editable fields, invoke
+   one immediate lowest-level motor cutoff without modal confirmation, mission lease,
+   or ordinary permit dependency. Repeated keydown is deduplicated. Dispatch is
+   recorded separately from later state because the firmware command has no response.
+   The result is `EMERGENCY`, never successful landing, and the command-capable session
+   remains locked until physical reboot and fresh observation/preflight.
+7. **Battery.** Takeoff requires the maximum of configured minimum, mission energy plus
+   reserve, and a physically validated voltage floor. Critical/reserve crossings stop
+   useful work and request bounded landing. No physical run-anyway override exists.
+8. **Priority and cleanup.** Emergency preempts containment/abort; containment and
+   critical health preempt mission behavior; abort/land preempts useful work. Browser,
+   API task, adapter, link, or recorder failure cannot leave future commands, permits,
+   leases, or watchdog state live. Restart returns observation-only.
+
+An airborne emergency cut is not a success test and is never intentionally required.
+Props-off dispatch/watchdog evidence and controlled failure injection prove the
+software path; the operator retains real emergency authority during every flight.
+
+### WP-88 — Digital Twin Campaign Laboratory and Cluster 1
+
+Digital twin receives its own catalog source and the same numbered preparation
+hierarchy used in Simulation:
+
+1. `Mission cluster`
+2. `Major mission`
+3. `Variant`
+4. `Motion`
+
+The initial catalog exposes exactly one real cluster, `Basic flight commissioning`.
+Future clusters appear only when they contain behaviorally admitted cases; no empty
+sensor/calibration placeholders are created. Simulation selections never leak into
+Digital twin. Selecting a Twin case binds its first descendant immediately, but Play
+is absent/locked until WP-87 and all case prerequisites pass. The default surface
+shows the next safe step and exact blocking gate; hashes, permits, and raw evidence
+stay in technical detail. Abort/land and emergency remain outside the catalog and
+visible whenever physical controls are hot.
+
+Cluster 1 progression is manual and one drone only:
+
+- **Stage 0 — Ground checks:** props-off arm/disarm and official motor sequence.
+  Requested 30% and 40% collective steps are listed but disabled until exact motor
+  command semantics, current/thermal bounds, props-removed restraint, and a calibrated
+  mapping all pass. No generic PWM slider is added.
+- **Stage 1 — First lift:** take off to `0.30 m`, hold `3 s`, land at origin; repeat as
+  separately initiated trials before promotion. Negative start-battery and containment
+  admission cases must reject before arm.
+- **Stage 2 — Hover and abort:** hold `0.30 m` for `10 s`, then `30 s`; measure drift,
+  speed, attitude/body-rate activity, motor balance/headroom, energy, and landing.
+  Execute a controlled abort-from-hover drill. These are vehicle-behavior metrics, not
+  sensor-calibration missions.
+- **Stage 3 — One-axis motion:** bounded vertical step, `0.10 m` +X out/back, `0.10 m`
+  +Y out/back, and `+30/-30 deg` yaw return.
+- **Stage 4 — Combined basics:** slow `360 deg` yaw, `0.10 m` square, and `0.10 m`
+  radius circle only after their one-axis primitives pass. The circle is a smooth
+  continuous route, not stop-and-go waypoints.
+
+The same hover case is compared across naturally observed battery bands: `HIGH`
+(`>=75%`), `MID` (`>=50%` and `<75%`), `LOW_ALLOWED` (derived admission floor through
+`<50%`), and `REJECTED` (below the derived floor). Battery is run/environment truth,
+not a cloned mission identity. Every band retains raw voltage, reported percentage,
+load/current when available, start/minimum/end values, and the derived admission
+floor. No physical “set battery” control, run-anyway bypass, or intentional deep
+discharge is permitted.
+
+### Core claim and exit-evidence matrix
+
+| Claim | Real trigger / production path | Retained observation | Independent oracle | Failure / counterexample | Boundary |
+| --- | --- | --- | --- | --- | --- |
+| Non-bypassable safety | Served Play or safety action -> API -> flight authority -> supervisor -> adapter/link | permit, state, command/dispatch, telemetry, watchdog, terminal audit | independent state/geometry/clock reconstruction plus link spy | stale/mismatched/expired permit; browser loss; active lease; missing telemetry | `PRODUCTION_ENTRY / HARDWARE / OBSERVED_REALTIME` |
+| Twin cluster hierarchy | Served Digital twin selector -> twin catalog API -> exact cluster/major/variant binding | selected source, case/hash, lifecycle, prerequisite block | DOM/API set equality and renamed/reordered fixture | Simulation selection or unavailable cluster leaks into Twin | `PRODUCTION_ENTRY / NO_RUNTIME / NOT_APPLICABLE` |
+| Basic progression | Served Twin Play -> canonical case -> WP-87 -> hardware -> evidence/review | case/permit/plan hashes, commands, telemetry, outcome, promotion state | independent route/time/terminal reconstruction | child/renamed case, skipped prerequisite, wrong axis, or premature promotion | `PRODUCTION_ENTRY / HARDWARE / OBSERVED_REALTIME` |
+| Battery comparison | Same hover case selected under observed start band | voltage/percent/source, start/min/end, energy, dynamics, terminal result | independent band/floor recomputation and per-run guard vector | forced percentage, below-floor start, or average hiding a failed repeat | `PRODUCTION_ENTRY / HARDWARE / OBSERVED_REALTIME` |
+| Props-off diagnostics | Served Stage 0 action -> bench permit -> supervisor -> adapter official diagnostic | attestations, command mapping, current/thermal evidence, motor result | link spy plus raw firmware variables and physical restraint record | props installed, no restraint, arbitrary ratio, stale attestation | `PRODUCTION_ENTRY / HARDWARE / OBSERVED_REALTIME` |
+| Served safety controls | Hot physical session -> visible control/Space/Enter -> authenticated server safety action | focus/session identity, dispatch clock, later observed state | browser event plus monotonic link trace | editable focus, key repeat, modal/lease delay, stale session | `PRODUCTION_ENTRY / HARDWARE / OBSERVED_REALTIME` |
+
+### Numerical pre-freeze witness
+
+The machine contract below freezes the design arithmetic, not measured aircraft
+qualification. At `0.15 m/s`, a `0.25 s` complete response budget and `0.50 m/s²`
+minimum certified deceleration require `0.060 m`, below the `0.15 m` warning-to-hard
+center interval. A `0.90 s` response requires `0.1575 m` and fails. The nominal
+`0.10 m` route plus `0.10 m` swept radius and `0.05 m` uncertainty occupies `0.25 m`,
+inside the `0.50 m` physical containment. The `0.40 m` maximum command plus `0.05 m`
+overshoot and `0.05 m` height uncertainty reaches the `0.50 m` hard height exactly;
+`0.41 m` is rejected. These authored budgets must be replaced by equal-or-tighter
+measured evidence at implementation/physical entry; missing deceleration, timing,
+geometry, or uncertainty evidence blocks flight.
+
+<!-- WP87-88-MACHINE-CONTRACT-BEGIN -->
+
+```json
+{
+  "packets": [
+    {"packet_id": "WP-87", "depends_on": []},
+    {"packet_id": "WP-88", "depends_on": ["WP-87"]}
+  ],
+  "guard_registry": [
+    {"category": "arming", "metric": "exact state/identity/preflight/permit conjunction", "pass_relation": "all required fields current and exact before arm", "isolated_failure": "expired case-bound permit produces zero arm dispatch"},
+    {"category": "battery", "metric": "observed start percent/voltage versus derived admission floor", "pass_relation": "start >= max(configured minimum, mission need + reserve, validated voltage floor)", "isolated_failure": "one value immediately below the derived floor rejects before arm"},
+    {"category": "flight_limits", "metric": "raw and reconstructed altitude/speed/rate/acceleration/duration extrema", "pass_relation": "every raw and reconstructed maximum <= frozen resolved limit", "isolated_failure": "one 0.41 m command exceeds the 0.40 m Cluster 1 command cap"},
+    {"category": "containment", "metric": "continuous protected occupancy and stopping reach versus physical and hard bounds", "pass_relation": "protected occupancy <= physical bound and certified stopping reach < warning-to-hard interval", "isolated_failure": "0.90 s response budget exceeds the warning-to-hard interval"},
+    {"category": "abort", "metric": "preemption-to-future-cancel and controlled terminal trace", "pass_relation": "no superseded command dispatch and observed landed/disarmed terminal state", "isolated_failure": "missing landing observation prevents ordinary abort completion"},
+    {"category": "landing", "metric": "capture interval, descent target, terminal membership/speed/state/contact", "pass_relation": "fresh capture through observed landed/not-flying and disarmed terminal state", "isolated_failure": "command completion without landed telemetry remains incomplete"},
+    {"category": "emergency", "metric": "hot-session input-to-lowest-level dispatch and later observed latch", "pass_relation": "one immediate dispatch independent of lease/ordinary permit; no fabricated acknowledgement", "isolated_failure": "editable focus/repeat is suppressed while a valid Space press still dispatches once"}
+  ],
+  "mission_inventory": [
+    {"key": "ground.arm_disarm_props_off", "major": "Ground checks", "stage": 0, "prerequisites": [], "disposition": "EXECUTABLE_AFTER_GATE", "causal_question": "Can exact physical authority arm then disarm without lift or stale authority?", "oracle": "supervisor state changes and zero flight command/airborne observation", "enablement_gates": ["props_removed", "restrained", "bench_permit"]},
+    {"key": "ground.official_motor_sequence_props_off", "major": "Ground checks", "stage": 0, "prerequisites": [], "disposition": "EXECUTABLE_AFTER_GATE", "causal_question": "Does the official bounded motor sequence preserve identity/order and return disarmed?", "oracle": "firmware result plus per-motor raw evidence and terminal disarm", "enablement_gates": ["props_removed", "restrained", "official_interface"]},
+    {"key": "ground.collective_30_percent_props_off", "major": "Ground checks", "stage": 1, "prerequisites": ["ground.official_motor_sequence_props_off"], "disposition": "PLANNED_NOT_EXECUTABLE", "causal_question": "Does a calibrated 30 percent bench command remain bounded and symmetric?", "oracle": "independent current/thermal/motor comparison under exact mapping", "enablement_gates": ["props_removed", "restrained", "calibrated_mapping", "current_thermal_bound"]},
+    {"key": "ground.collective_40_percent_props_off", "major": "Ground checks", "stage": 2, "prerequisites": ["ground.collective_30_percent_props_off"], "disposition": "PLANNED_NOT_EXECUTABLE", "causal_question": "Does a calibrated 40 percent bench command add a distinct bounded load point?", "oracle": "independent current/thermal/motor comparison and 30-to-40 response delta", "enablement_gates": ["props_removed", "restrained", "calibrated_mapping", "current_thermal_bound"]},
+    {"key": "takeoff.takeoff_0_30_hold_3_land", "major": "Takeoff and landing", "stage": 1, "prerequisites": ["ground.arm_disarm_props_off", "ground.official_motor_sequence_props_off"], "disposition": "EXECUTABLE_AFTER_GATE", "causal_question": "Can the never-flown vehicle lift vertically, hold 0.30 m, and land at origin?", "oracle": "independent altitude/time/containment/landing reconstruction", "enablement_gates": ["contained_flight_permit", "observer", "watchdog"]},
+    {"key": "hover.hover_0_30_10", "major": "Hover", "stage": 2, "prerequisites": ["takeoff.takeoff_0_30_hold_3_land"], "disposition": "EXECUTABLE_AFTER_GATE", "causal_question": "Is 10 second hover stable within the first-flight envelope?", "oracle": "drift/speed/attitude/body-rate/motor/energy/landing guard vector", "enablement_gates": ["three_first_lift_passes"]},
+    {"key": "hover.hover_0_30_30", "major": "Hover", "stage": 3, "prerequisites": ["hover.hover_0_30_10"], "disposition": "EXECUTABLE_AFTER_GATE", "causal_question": "Does stability persist for 30 seconds without hiding a failed repeat?", "oracle": "per-repeat hover guard vector and time-window comparison", "enablement_gates": ["two_hover_10_passes"]},
+    {"key": "vertical.vertical_step_0_30_0_40_0_30", "major": "Vertical motion", "stage": 3, "prerequisites": ["hover.hover_0_30_10"], "disposition": "EXECUTABLE_AFTER_GATE", "causal_question": "Can the vehicle make one bounded vertical step and return without overshoot?", "oracle": "independent Z/rate/settling/headroom reconstruction", "enablement_gates": ["hover_10_qualified"]},
+    {"key": "translation.x_out_back_0_10", "major": "Translation", "stage": 3, "prerequisites": ["hover.hover_0_30_10"], "disposition": "EXECUTABLE_AFTER_GATE", "causal_question": "Can the vehicle move +X 0.10 m and return to origin?", "oracle": "signed HOME-frame displacement and landing reconstruction", "enablement_gates": ["hover_10_qualified"]},
+    {"key": "translation.y_out_back_0_10", "major": "Translation", "stage": 3, "prerequisites": ["hover.hover_0_30_10"], "disposition": "EXECUTABLE_AFTER_GATE", "causal_question": "Can the vehicle move +Y 0.10 m and return to origin?", "oracle": "signed HOME-frame displacement and landing reconstruction", "enablement_gates": ["hover_10_qualified"]},
+    {"key": "turn.yaw_plus_minus_30", "major": "Turn", "stage": 3, "prerequisites": ["hover.hover_0_30_10"], "disposition": "EXECUTABLE_AFTER_GATE", "causal_question": "Can yaw move +30 then -30 degrees while position remains bounded?", "oracle": "unwrapped yaw, yaw rate, position drift, and landing reconstruction", "enablement_gates": ["hover_10_qualified"]},
+    {"key": "turn.yaw_full_360_slow", "major": "Turn", "stage": 4, "prerequisites": ["turn.yaw_plus_minus_30"], "disposition": "EXECUTABLE_AFTER_GATE", "causal_question": "Can one slow complete turn preserve hover and yaw continuity?", "oracle": "unwrapped 360 degree progress without modulo shortcut plus drift guard", "enablement_gates": ["yaw_30_qualified"]},
+    {"key": "shape.square_side_0_10", "major": "Shapes", "stage": 4, "prerequisites": ["translation.x_out_back_0_10", "translation.y_out_back_0_10"], "disposition": "EXECUTABLE_AFTER_GATE", "causal_question": "Can two qualified axes compose into a bounded square and return?", "oracle": "ordered corner regions, containment, return, and landing reconstruction", "enablement_gates": ["x_y_translation_qualified"]},
+    {"key": "shape.circle_radius_0_10", "major": "Shapes", "stage": 4, "prerequisites": ["translation.x_out_back_0_10", "translation.y_out_back_0_10", "turn.yaw_plus_minus_30"], "disposition": "EXECUTABLE_AFTER_GATE", "causal_question": "Can the vehicle follow one continuous 0.10 m radius circle without waypoint stops?", "oracle": "independent radial error, continuity, speed, containment, return, and landing reconstruction", "enablement_gates": ["x_y_yaw_qualified"]},
+    {"key": "battery.start_below_admission_reject", "major": "Battery behavior", "stage": 1, "prerequisites": ["ground.arm_disarm_props_off"], "disposition": "EXECUTABLE_AFTER_GATE", "causal_question": "Does an observed below-floor battery block flight before arm?", "oracle": "independent floor recomputation and zero arm/takeoff dispatch", "enablement_gates": ["observed_battery_truth"]},
+    {"key": "safety.controlled_abort_from_hover", "major": "Safety drills", "stage": 2, "prerequisites": ["takeoff.takeoff_0_30_hold_3_land"], "disposition": "EXECUTABLE_AFTER_GATE", "causal_question": "Does controlled abort cancel future work and land while state remains healthy?", "oracle": "link dispatch trace plus independent landing/terminal reconstruction", "enablement_gates": ["contained_flight_permit", "landing_state_healthy"]},
+    {"key": "safety.containment_boundary_reject", "major": "Safety drills", "stage": 1, "prerequisites": ["ground.arm_disarm_props_off"], "disposition": "EXECUTABLE_AFTER_GATE", "causal_question": "Does a plan outside protected containment reject before arm?", "oracle": "independent protected-occupancy calculation and zero command dispatch", "enablement_gates": ["containment_contract"]}
+  ],
+  "battery_policy": {
+    "bands": ["HIGH", "MID", "LOW_ALLOWED", "REJECTED"],
+    "physical_override_allowed": false,
+    "case_identity_rule": "same_case_grouped_by_observed_start_band"
+  },
+  "sensor_scope": {
+    "perception_missions": false,
+    "automatic_calibration": false,
+    "required_safety_observations": ["position_height", "attitude", "battery", "link", "firmware_supervisor"]
+  },
+  "claims": [
+    {"claim_id": "non_bypassable_flight_safety", "boundary": "PRODUCTION_ENTRY", "environment": "HARDWARE", "clock": "OBSERVED_REALTIME", "trigger": "served Play, abort, land, or emergency action", "effect": "server flight authority admits, preempts, lands, or cuts motors", "observation": "permit/state/dispatch/watchdog/telemetry/terminal audit", "oracle": "independent state geometry and clock reconstruction plus link spy", "counterexample": "expired or mismatched permit, active lease, stale telemetry, and browser loss"},
+    {"claim_id": "digital_twin_cluster_hierarchy", "boundary": "PRODUCTION_ENTRY", "environment": "NO_RUNTIME", "clock": "NOT_APPLICABLE", "trigger": "served Digital twin selection and catalog load", "effect": "Twin-specific cluster/major/variant hierarchy binds exact case", "observation": "API and DOM selection identities and locked Play state", "oracle": "catalog-to-DOM set equality", "counterexample": "renamed/reordered Simulation selection cannot leak"},
+    {"claim_id": "basic_flight_progression", "boundary": "PRODUCTION_ENTRY", "environment": "HARDWARE", "clock": "OBSERVED_REALTIME", "trigger": "served Twin case Play after gates", "effect": "one bounded canonical intent executes through WP-87", "observation": "case/plan/permit/command/telemetry/outcome/promotion identities", "oracle": "independent route time terminal reconstruction", "counterexample": "skipped prerequisite, wrong axis, renamed child, or premature promotion"},
+    {"claim_id": "battery_band_comparison", "boundary": "PRODUCTION_ENTRY", "environment": "HARDWARE", "clock": "OBSERVED_REALTIME", "trigger": "same hover case under naturally observed start battery", "effect": "run is admitted/rejected and grouped without changing case identity", "observation": "voltage/percent/source/start/min/end/energy/terminal result", "oracle": "independent band and admission-floor recomputation", "counterexample": "forced battery value, below-floor start, or failed repeat hidden by average"},
+    {"claim_id": "props_off_motor_diagnostics", "boundary": "PRODUCTION_ENTRY", "environment": "HARDWARE", "clock": "OBSERVED_REALTIME", "trigger": "served Stage 0 action under bench permit", "effect": "official diagnostic executes or optional ratio stays blocked", "observation": "attestations/mapping/raw motor/current/thermal/result/disarm", "oracle": "link spy and raw firmware variable comparison", "counterexample": "props installed, no restraint, stale attestation, or uncalibrated ratio"},
+    {"claim_id": "served_safety_controls", "boundary": "PRODUCTION_ENTRY", "environment": "HARDWARE", "clock": "OBSERVED_REALTIME", "trigger": "visible control or valid Space/Enter input in hot session", "effect": "immediate emergency dispatch or supervised abort/land", "observation": "focus/session/input/dispatch and later state clocks", "oracle": "browser event trace correlated with monotonic link trace", "counterexample": "editable focus, repeat, modal delay, lease conflict, or stale session"}
+  ],
+  "numerical_witness": {
+    "horizontal": {
+      "route_center_radius_m": 0.10,
+      "warning_center_radius_m": 0.20,
+      "hard_center_radius_m": 0.35,
+      "physical_containment_radius_m": 0.50,
+      "vehicle_swept_radius_m": 0.10,
+      "position_uncertainty_m": 0.05,
+      "maximum_speed_m_s": 0.15,
+      "response_budget_s": 0.25,
+      "late_response_budget_s": 0.90,
+      "minimum_deceleration_m_s2": 0.50,
+      "expected_nominal_protected_radius_m": 0.25
+    },
+    "vertical": {
+      "maximum_commanded_height_m": 0.40,
+      "overshoot_budget_m": 0.05,
+      "height_uncertainty_m": 0.05,
+      "hard_height_m": 0.50,
+      "perturbed_commanded_height_m": 0.41
+    },
+    "battery": {
+      "configured_takeoff_minimum_percent": 30.0,
+      "mission_need_percent": 15.0,
+      "reserve_percent": 20.0,
+      "validated_voltage_floor_as_percent": 40.0,
+      "passing_start_percent": 55.0,
+      "failing_start_percent": 39.9
+    }
+  }
+}
+```
+
+<!-- WP87-88-MACHINE-CONTRACT-END -->
+
+### Affected boundaries and implementation ownership
+
+The pre-freeze audit recursively discovers the Python and UI production closure from
+the API, campaign, observer, safety, adapter, recorder, Campaign Lab, Control Center,
+and API-client entry points. It additionally binds the routed requirements, safety and
+landing contracts, system/design maps, generated OpenAPI pair, focused API/campaign/
+hardware/safety/UI tests, existing real mirror catalog, and intended new physical
+catalog/authority/test paths. Implementation must update `docs/system/README.md`
+because it introduces a flight-authority owner and public Digital Twin campaign
+transit, and must update `design.md`/`docs/project/DESIGN.md` because Twin-specific
+cluster selection plus always-available physical safety controls are durable surface
+patterns.
+
+The retained audit command is:
+
+`./.venv/bin/python scripts/audit_wp87_88_design.py`
+
+Its artifact is
+`missions/campaigns/real/qualification/wp87-88-design-audit-v1.json`. The artifact
+binds every current preimage by exact hash, every intended new path as absent, the
+payload hash, the source-derived guard coverage, exact mission/claim sets, dependency
+order, generated outputs, and isolated numerical failures. An implementation manifest
+must reconcile this discovered set rather than naming “the dirty diff.”
+
+### Measurable exit gates
+
+WP-87 exits only when:
+
+1. Normal served Play and every safety action traverse the production API, exact
+   flight authority, SafetySupervisor, command-capable adapter, link, and retained
+   evidence path with no observer-ID or generic vehicle-route bypass.
+2. Each arming, battery, limit, containment, abort, landing, emergency, cleanup, and
+   priority guard has intended, isolated failure, and boundary evidence. No command is
+   sent for stale/missing/mismatched identity, permit, telemetry, geometry, or battery.
+3. Emergency is one permit/lease-independent lowest-level dispatch, has no fabricated
+   acknowledgement, latches session state until reboot, and remains available while
+   every ordinary command path is blocked or busy.
+4. Controlled abort cancels future commands and either reaches observed landed/
+   disarmed state or truthfully escalates; normal landing satisfies the frozen landing
+   region contract through terminal observation.
+5. Props-off, controlled-fake, and Fast Sim evidence may verify software paths, but
+   real command/flight claims remain `NOT_RUN` until authorized hardware evidence is
+   retained. Source check, tests, and a design-verdict do not authorize flight.
+
+WP-88 exits only when:
+
+1. Digital twin shows the exact four-level hierarchy and only behaviorally admitted
+   Twin clusters; Simulation state cannot leak, and Play is locked with the exact
+   prerequisite reason until WP-87 and case gates pass.
+2. All 17 inventory rows exist exactly once. The 30%/40% rows remain disabled until
+   their four additional gates pass; no arbitrary motor/PWM UI exists.
+3. Every enabled case executes the same backend-neutral intent through the normal
+   production path and retains independent geometry/time/terminal evidence plus its
+   declared negative/renamed/reordered/boundary case.
+4. Progression is manual, dependency-ordered, and based on per-repeat evidence. One
+   pass, an average, a Simulation run, or a battery-band label cannot promote a later
+   hardware stage.
+5. Hover battery comparison reuses one immutable case across naturally observed
+   bands, retains raw source values, and rejects below-floor starts with zero arm/
+   takeoff dispatch. No physical battery override exists.
+6. Served desktop/narrow, loading, empty, blocked, paired, hot-control, failure,
+   keyboard/focus, and reduced-motion states pass `design.md`; exact served release,
+   API, and assets are bound before rendered evidence.
+
+### Implementation and verification order
+
+1. This design gate reviews WP-87 and WP-88 together for scope and dependency truth.
+2. Implementation begins only on explicit request, with WP-87. The implementation
+   author must freeze exact pre/post hashes, evidence, production traces, and physical
+   `NOT_RUN` limits, then use a fresh implementation verifier.
+3. WP-88 may implement its preparation-only catalog while flight remains locked, but
+   no command-capable Play route may merge or deploy before WP-87 receives
+   `IMPLEMENTATION_VERIFIED` and the hardware permit prerequisites are actually met.
+4. Physical actions require explicit later operator authorization and present
+   hardware. Design verification is not flight authorization.
+
+<!-- WP87-88-DESIGN-PAYLOAD-END -->
+
+### WP-87 and WP-88 design-review handoff
+
+- Status: `PLANNED`.
+- Independent verification: `DRAFT_UNVERIFIED`.
+- Design audit/reviewer identity and verdict are recorded outside the immutable
+  payload so the verifier can reproduce the payload hash without self-reference.
+
+### WP-87 and WP-88 initial independent review
+
+- Reviewer: `/root/wp87_88_design_verifier`.
+- Initial payload: 35,197 bytes; SHA-256
+  `8b5a1cb6a0241395b3b63a176aac36a42169621aad716b3e98ce73bc21c0537b`.
+- Initial audit artifact: SHA-256
+  `78cfdd69628cf44a92f5496e23617a59a335972b5274d5f2b84e3e82987971e9`;
+  authored audit reported zero errors across 152 boundaries, seven guard categories,
+  17 mission rows, and six claims.
+- Verdict: `BLOCKED_WITH_FINDINGS`; two P0 and five P1 `MUST_FIX_NOW` findings.
+- P0 scope: strict-margin containment/landing/stopping evidence and exact emergency/
+  watchdog timing/lifecycle.
+- P1 scope: blocked-predecessor dependency, guard-vector completeness, exact catalog
+  hierarchy/progression, real serving-boundary closure, and preimage/cost record.
+- Review count: `1`; correction count before R1: `0`; focused recheck count: `0`.
+
+<!-- WP87-88-R1-DESIGN-PAYLOAD-BEGIN -->
+
+## WP-87 and WP-88 R1 — consolidated safety-oracle and catalog correction
+
+This is the sole permitted consolidated design correction. It is authoritative over
+every conflicting threshold, dependency, catalog stage/key, oracle, and claim in the
+initial payload. The original request, intent/value card, non-goals, observation-only
+safe fallback, packet split, and design-only stop remain unchanged.
+
+### Blocked predecessor and corrective retrospective
+
+WP-71 through WP-75 did **not** produce an accepted design. Their final state is
+`REVIEW_BLOCKED / BLOCKED_WITH_FINDINGS`, with `WP71-75-DES-002` (self-certified
+emergency/flight-envelope arithmetic) and `WP71-75-DES-006` (non-transitive boundary
+closure) unresolved. The current operator request explicitly authorizes WP-87/WP-88
+as a successor. WP-87 supersedes only the blocked safety, physical-command, and basic
+physical-curriculum scope of WP-71–75; it does not upgrade those packets.
+
+The reusable failure modes are already codified by `REQ-WFL-047`, `REQ-WFL-048`, and
+`REQ-WFL-049`: derive the production transit from real roots, freeze exact
+clock/geometry/certificate vectors, and derive every guard metric independently of its
+registry. R1 applies those requirements directly. WP-80 remains an observation-only
+implementation with `BLOCKED_WITH_FINDINGS` at its implementation gate. WP-86 is a
+`DESIGN_VERIFIED`, fast-loop `IMPLEMENTED_UNVERIFIED` observation/presentation
+successor. Neither supplies flight authority, motor authority, physical landing
+evidence, or changed-code hardware qualification. WP-87 depends only on the currently
+implemented observation boundary as an unverified integration preimage; it must
+independently verify every new command/safety transit.
+
+### Strict physical containment and landing contract
+
+Cluster 1 flight is confined to an inspected **netted cylindrical enclosure**, not a
+software geofence plus an open exclusion zone. Its measured inner usable volume is a
+HOME-frame cylinder of radius `0.50 m`, from the launch floor `z=0` to `z=0.60 m`.
+The conservative vehicle swept envelope is a cylinder of radius `0.10 m` and vertical
+half-height `0.05 m`; position and height uncertainty are each `0.03 m`. A separately
+identified observer signs the measurement method, dimensions, timestamp, enclosure
+identity, launch-center mark, photo/video hash, and clear-volume inspection. Without
+that independent cage record, every props-on case is `BLOCKED`.
+
+The commanded center path remains within radius `0.10 m`. The warning center radius
+is `0.18 m`; the hard estimated-center radius is `0.34 m`. At the hard radius, vehicle
+envelope plus uncertainty reaches `0.47 m`, retaining a strict `0.03 m` radial margin
+inside the physical net. The maximum commanded height is corrected from `0.40 m` to
+`0.35 m`. With `0.03 m` overshoot, `0.03 m` uncertainty, and `0.05 m` vehicle
+half-height, protected occupancy reaches `0.46 m`, leaving a strict `0.14 m` physical
+ceiling margin. The hard estimated-center height is `0.45 m`; a `0.41 m` commanded
+target fails the `0.35 m` command cap even though it does not touch the cage.
+
+The Fast-Sim-only landing-goal-region contract remains a planning/evidence precedent,
+not physical contact proof. Implementation must add
+`docs/reference/PHYSICAL_LANDING_TERMINAL_V1.md` and its typed record. Physical
+terminal success requires one closed source-clock descent interval, fresh range and
+state capture, raw firmware `isArmed=false` and `isFlying=false`, downward range at or
+below `0.05 m`, an independent observer record that the aircraft is settled on the
+enclosure floor/landing mat, and no simulated-contact field. Without an external
+position reference, the result is a functional contained-flight baseline only; it
+does not qualify centimeter landing accuracy, tracking truth, or digital-twin model
+accuracy.
+
+### Full clock, jerk, response, and certificate witness
+
+The complete worst-case source-to-command-effect budget is `0.22 s`: source sampling
+`0.10`, source-to-receive `0.03`, freshness validation `0.02`, Safety Kernel compute
+`0.01`, host dispatch `0.02`, radio transport `0.02`, and firmware apply `0.02`.
+Admission allows at most `0.25 s`, retaining `0.03 s` budget reserve. These are design
+limits to be met by measured evidence; any unavailable component blocks flight.
+
+At `0.15 m/s`, minimum independently demonstrated deceleration `0.50 m/s²`, and
+maximum jerk `2.0 m/s³`, deceleration ramps for `0.25 s`. Including the complete
+`0.25 s` response delay, jerk ramp, and constant-deceleration tail gives a stopping
+reach of approximately `0.07745 m`, strictly inside the `0.16 m` warning-to-hard
+interval. A `0.90 s` late source gap produces approximately `0.17495 m` and fails.
+At the warning threshold the accepted result is `STOP_AND_HOLD` only when the exact
+hold set remains certified, followed by controlled landing after fresh recapture.
+Missing/tampered pre-arm certificates reject with zero commands. Stale, late,
+insufficient-clearance, or lost active-flight certificates invoke emergency stop
+inside the physical cage; they never continue an uncertified prefix.
+
+The numerical artifact freezes isolated nominal-warning, certified-land, stale,
+tampered, late, insufficient-clearance, missing-certificate, and lost-certificate
+vectors with exact resulting commands. It also freezes original/densified/simplified
+circle and square geometry, renamed/reordered children, axis inversion, incompatible
+child, and yaw-modulo counterexamples.
+
+### Emergency and watchdog lifecycle
+
+One valid hot-session emergency input must reach the lowest-level link call within
+`0.100 s` on every one of `100` exact production-route software vectors; equality is
+accepted only for that dispatch deadline. Firmware sends no response, so the event is
+`DISPATCHED_UNCONFIRMED_REBOOT_REQUIRED` until a later raw state is observed. An
+active lease, expired ordinary permit, busy mission, or recorder failure cannot delay
+the link call. Editable focus and repeated keydown remain zero-dispatch cases.
+
+The emergency watchdog begins with the first command-capable session keepalive, runs
+on a monotonic owner outside the browser/mission task at `0.25 s`, budgets `0.10 s`
+scheduler jitter and `0.10 s` link stall, and accepts only a maximum observed gap
+strictly below `0.50 s`. The firmware timeout is `1.0 s`. A gap equal to `0.50 s` is a
+failed margin vector; link/process loss deliberately lets the onboard timeout stop
+motors and enters `LOCKED_REBOOT_REQUIRED`. Because the protocol exposes no disable,
+even a normal command session continues keepalives through observed landing/disarm
+and then ends as `REBOOT_REQUIRED_AFTER_COMMAND_SESSION`. No reconnect, new permit,
+or observation-to-command promotion occurs until physical reboot and fresh identity,
+observation, preflight, cage, operator, and observer checks.
+
+### Exact Digital Twin catalog projection and progression
+
+R1 freezes one catalog projection over exactly 17 rows. Every row has the same cluster
+ID, one exact major ID, one exact variant ID, one exact motion ID, one stage enum/order,
+an acyclic prerequisite set, repeat count, acceptance profile, and promotion rule.
+The five stages are consistently `GROUND_CHECKS`, `FIRST_LIFT`,
+`HOVER_AND_ABORT`, `ONE_AXIS`, and `COMBINED_BASICS`. The 30% and 40% collective rows
+remain Ground checks but have repeat count zero and
+`DISABLED_UNTIL_NEW_DESIGN`; their internal prerequisite order does not promote them
+to later flight stages. The vertical mission is corrected to `0.30 -> 0.35 -> 0.30 m`
+and receives a successor key; the initial `0.40 m` draft key is not implemented.
+
+The accepted motion registry freezes HOME/BODY frame, route coordinates, dwell,
+traversal, direction, and analytic shape identity. The square is centered on HOME with
+five closed vertices at `(+/-0.05, +/-0.05, 0.30)`. The circle is the analytic HOME
+circle centered `(0,0,0.30)`, radius `0.10 m`, one CCW turn, continuous fly-through;
+32 samples are preview serialization only, and 16/32/64-sample evidence must agree
+within the same analytic oracle. Full yaw uses unwrapped `+360 deg`; modulo-zero alone
+cannot pass. Signed +X/+Y progress catches axis inversion.
+
+Acceptance profiles freeze hover drift/RMS/speed/attitude/body-rate/motor thresholds,
+translation/yaw/vertical progress and error, square/circle tube/radial/closure and
+no-stop gates, landing, abort, and zero-dispatch negative cases. Every required repeat
+must pass every guard; no mean or median hides a failed repeat. Promotion is manual
+after all prerequisite repeats pass and no anomaly remains. Typed public stage,
+repeat, sample-count, and emergency-vector fields reject booleans, integral/fractional
+floats, strings, null, and out-of-range values.
+
+Battery comparison names the immutable `hover.hover_0_30_10` case. It is descriptive,
+not a promotion or physical-accuracy qualification: HIGH and MID each require two
+safe passing runs; LOW_ALLOWED is optional and only above the derived floor plus the
+`5%` start-margin guard; REJECTED is the zero-dispatch negative case. HIGH is the
+frozen display comparator, all fixed inputs besides naturally observed battery are
+identical, and every run is reported individually with deltas for hover position RMS,
+drift, speed P95, attitude/body-rate activity, motor current/headroom/saturation,
+energy, and landing. No between-band delta is declared “better” or “qualified” in
+this packet.
+
+### Complete guard and boundary closure
+
+The R1 audit independently derives 45 metric IDs from the operator request,
+requirements, claim/exit matrix, and cleanup priority. Its immutable specification
+records category, exact direction/threshold, independent oracle, numeric tolerance,
+per-repeat/aggregate semantics, one passing whole-repeat value, and one isolated
+failure value per metric. The retained artifact contains the full specification and
+computed pass/fail vector for each ID; the payload binds the exact registry identity
+and ID set. Replacing any metric with prose, an implementation success flag, or an
+unlisted metric changes the artifact or fails the audit.
+
+Boundary discovery now starts from the actual `cli.py`, dashboard, dashboard service,
+API app/runtime, UI `page.tsx`, layout, and worker roots, follows recursive Python and
+UI imports, and unions independently derived safety, adapter/link, persistence,
+export, analyzer/review, generator, test, requirements, and generated-output owners.
+An independent claim-owner map requires every API/UI/safety/adapter/recorder/serving
+transit to be present. It explicitly includes `ui/vite.config.ts`, the OpenAPI pair,
+CSV export, storage, Campaign analyzer, and both catalog/OpenAPI generators. Removing
+any root or owner fails set reconciliation before review.
+
+<!-- WP87-88-R1-MACHINE-CONTRACT-BEGIN -->
+
+```json
+{
+  "supersedes": ["WP-71", "WP-72", "WP-73", "WP-74", "WP-75"],
+  "guard_registry_identity": "wp87-flight-safety-guard-registry-v2",
+  "guard_metric_ids": [
+    "identity_exact", "preflight_age_s", "permit_case_exact", "permit_unconsumed",
+    "firmware_can_arm", "landed_disarmed_before_arm", "operator_observer_present",
+    "position_observation_age_s", "battery_start_margin_percent",
+    "battery_voltage_margin_v", "battery_terminal_reserve_percent",
+    "maximum_height_m", "height_protected_margin_m",
+    "maximum_horizontal_speed_m_s", "maximum_vertical_speed_m_s",
+    "maximum_yaw_rate_rad_s", "maximum_acceleration_m_s2", "maximum_jerk_m_s3",
+    "maximum_airborne_duration_s", "motor_saturation_count", "motor_current_margin_a",
+    "nominal_physical_margin_m", "hard_physical_margin_m", "stopping_margin_m",
+    "independent_containment_record_present", "abort_future_cancel_s",
+    "superseded_dispatch_count", "abort_terminal_observed", "landing_capture_age_s",
+    "terminal_height_m", "terminal_speed_m_s", "terminal_armed", "terminal_flying",
+    "observer_settled", "simulated_contact_used", "emergency_input_to_link_s",
+    "emergency_dispatch_count", "emergency_ack_claimed", "watchdog_max_gap_s",
+    "reboot_required", "emergency_lease_independent", "live_permit_count",
+    "live_lease_count", "pending_command_count", "restart_observation_only"
+  ],
+  "motion_registry_identity": "wp88-basic-flight-motion-registry-v2",
+  "motion_ids": [
+    "motion.no-command", "motion.arm-disarm", "motion.official-motor-sequence",
+    "motion.collective-30", "motion.collective-40",
+    "motion.takeoff-030-hold-3-land", "motion.hover-030-10", "motion.hover-030-30",
+    "motion.vertical-030-035-030", "motion.x-out-back-010", "motion.y-out-back-010",
+    "motion.yaw-plus-minus-30", "motion.yaw-360", "motion.square-side-010",
+    "motion.circle-radius-010", "motion.abort-from-hover"
+  ],
+  "catalog_projection": [
+    {"key": "ground.arm_disarm_props_off", "cluster_id": "basic-flight-commissioning", "major_id": "ground-checks", "variant_id": "arm-disarm-props-off", "motion_id": "motion.arm-disarm", "stage": "GROUND_CHECKS", "stage_order": 0, "prerequisites": [], "repeat_count": 3, "acceptance_profile": "acceptance.ground-authority", "promotion_rule": "ALL_REPEATS_PASS_AND_MANUAL_PROMOTION"},
+    {"key": "ground.official_motor_sequence_props_off", "cluster_id": "basic-flight-commissioning", "major_id": "ground-checks", "variant_id": "official-motor-sequence-props-off", "motion_id": "motion.official-motor-sequence", "stage": "GROUND_CHECKS", "stage_order": 0, "prerequisites": [], "repeat_count": 3, "acceptance_profile": "acceptance.ground-authority", "promotion_rule": "ALL_REPEATS_PASS_AND_MANUAL_PROMOTION"},
+    {"key": "ground.collective_30_percent_props_off", "cluster_id": "basic-flight-commissioning", "major_id": "ground-checks", "variant_id": "collective-30-percent-props-off", "motion_id": "motion.collective-30", "stage": "GROUND_CHECKS", "stage_order": 0, "prerequisites": ["ground.official_motor_sequence_props_off"], "repeat_count": 0, "acceptance_profile": "acceptance.disabled-collective", "promotion_rule": "DISABLED_UNTIL_NEW_DESIGN"},
+    {"key": "ground.collective_40_percent_props_off", "cluster_id": "basic-flight-commissioning", "major_id": "ground-checks", "variant_id": "collective-40-percent-props-off", "motion_id": "motion.collective-40", "stage": "GROUND_CHECKS", "stage_order": 0, "prerequisites": ["ground.collective_30_percent_props_off"], "repeat_count": 0, "acceptance_profile": "acceptance.disabled-collective", "promotion_rule": "DISABLED_UNTIL_NEW_DESIGN"},
+    {"key": "takeoff.takeoff_0_30_hold_3_land", "cluster_id": "basic-flight-commissioning", "major_id": "takeoff-and-landing", "variant_id": "takeoff-030-hold-3-land", "motion_id": "motion.takeoff-030-hold-3-land", "stage": "FIRST_LIFT", "stage_order": 1, "prerequisites": ["ground.arm_disarm_props_off", "ground.official_motor_sequence_props_off"], "repeat_count": 3, "acceptance_profile": "acceptance.first-lift", "promotion_rule": "ALL_REPEATS_PASS_AND_MANUAL_PROMOTION"},
+    {"key": "hover.hover_0_30_10", "cluster_id": "basic-flight-commissioning", "major_id": "hover", "variant_id": "hover-030-10", "motion_id": "motion.hover-030-10", "stage": "HOVER_AND_ABORT", "stage_order": 2, "prerequisites": ["takeoff.takeoff_0_30_hold_3_land"], "repeat_count": 2, "acceptance_profile": "acceptance.hover", "promotion_rule": "ALL_REPEATS_PASS_AND_MANUAL_PROMOTION"},
+    {"key": "hover.hover_0_30_30", "cluster_id": "basic-flight-commissioning", "major_id": "hover", "variant_id": "hover-030-30", "motion_id": "motion.hover-030-30", "stage": "HOVER_AND_ABORT", "stage_order": 2, "prerequisites": ["hover.hover_0_30_10"], "repeat_count": 2, "acceptance_profile": "acceptance.hover", "promotion_rule": "ALL_REPEATS_PASS_AND_MANUAL_PROMOTION"},
+    {"key": "vertical.vertical_step_0_30_0_35_0_30", "cluster_id": "basic-flight-commissioning", "major_id": "vertical-motion", "variant_id": "vertical-030-035-030", "motion_id": "motion.vertical-030-035-030", "stage": "ONE_AXIS", "stage_order": 3, "prerequisites": ["hover.hover_0_30_10"], "repeat_count": 2, "acceptance_profile": "acceptance.vertical", "promotion_rule": "ALL_REPEATS_PASS_AND_MANUAL_PROMOTION"},
+    {"key": "translation.x_out_back_0_10", "cluster_id": "basic-flight-commissioning", "major_id": "translation", "variant_id": "x-out-back-010", "motion_id": "motion.x-out-back-010", "stage": "ONE_AXIS", "stage_order": 3, "prerequisites": ["hover.hover_0_30_10"], "repeat_count": 2, "acceptance_profile": "acceptance.translation", "promotion_rule": "ALL_REPEATS_PASS_AND_MANUAL_PROMOTION"},
+    {"key": "translation.y_out_back_0_10", "cluster_id": "basic-flight-commissioning", "major_id": "translation", "variant_id": "y-out-back-010", "motion_id": "motion.y-out-back-010", "stage": "ONE_AXIS", "stage_order": 3, "prerequisites": ["hover.hover_0_30_10"], "repeat_count": 2, "acceptance_profile": "acceptance.translation", "promotion_rule": "ALL_REPEATS_PASS_AND_MANUAL_PROMOTION"},
+    {"key": "turn.yaw_plus_minus_30", "cluster_id": "basic-flight-commissioning", "major_id": "turn", "variant_id": "yaw-plus-minus-30", "motion_id": "motion.yaw-plus-minus-30", "stage": "ONE_AXIS", "stage_order": 3, "prerequisites": ["hover.hover_0_30_10"], "repeat_count": 2, "acceptance_profile": "acceptance.yaw", "promotion_rule": "ALL_REPEATS_PASS_AND_MANUAL_PROMOTION"},
+    {"key": "turn.yaw_full_360_slow", "cluster_id": "basic-flight-commissioning", "major_id": "turn", "variant_id": "yaw-full-360-slow", "motion_id": "motion.yaw-360", "stage": "COMBINED_BASICS", "stage_order": 4, "prerequisites": ["turn.yaw_plus_minus_30"], "repeat_count": 2, "acceptance_profile": "acceptance.yaw", "promotion_rule": "ALL_REPEATS_PASS_AND_MANUAL_PROMOTION"},
+    {"key": "shape.square_side_0_10", "cluster_id": "basic-flight-commissioning", "major_id": "shapes", "variant_id": "square-side-010", "motion_id": "motion.square-side-010", "stage": "COMBINED_BASICS", "stage_order": 4, "prerequisites": ["translation.x_out_back_0_10", "translation.y_out_back_0_10"], "repeat_count": 2, "acceptance_profile": "acceptance.square", "promotion_rule": "ALL_REPEATS_PASS_AND_MANUAL_PROMOTION"},
+    {"key": "shape.circle_radius_0_10", "cluster_id": "basic-flight-commissioning", "major_id": "shapes", "variant_id": "circle-radius-010", "motion_id": "motion.circle-radius-010", "stage": "COMBINED_BASICS", "stage_order": 4, "prerequisites": ["translation.x_out_back_0_10", "translation.y_out_back_0_10", "turn.yaw_plus_minus_30"], "repeat_count": 2, "acceptance_profile": "acceptance.circle", "promotion_rule": "ALL_REPEATS_PASS_AND_MANUAL_PROMOTION"},
+    {"key": "battery.start_below_admission_reject", "cluster_id": "basic-flight-commissioning", "major_id": "battery-behavior", "variant_id": "start-below-admission-reject", "motion_id": "motion.no-command", "stage": "GROUND_CHECKS", "stage_order": 0, "prerequisites": ["ground.arm_disarm_props_off"], "repeat_count": 1, "acceptance_profile": "acceptance.negative-zero-dispatch", "promotion_rule": "NEGATIVE_CASE_PASSES_ON_ZERO_DISPATCH"},
+    {"key": "safety.controlled_abort_from_hover", "cluster_id": "basic-flight-commissioning", "major_id": "safety-drills", "variant_id": "controlled-abort-from-hover", "motion_id": "motion.abort-from-hover", "stage": "HOVER_AND_ABORT", "stage_order": 2, "prerequisites": ["takeoff.takeoff_0_30_hold_3_land"], "repeat_count": 3, "acceptance_profile": "acceptance.abort", "promotion_rule": "ALL_REPEATS_PASS_AND_MANUAL_PROMOTION"},
+    {"key": "safety.containment_boundary_reject", "cluster_id": "basic-flight-commissioning", "major_id": "safety-drills", "variant_id": "containment-boundary-reject", "motion_id": "motion.no-command", "stage": "GROUND_CHECKS", "stage_order": 0, "prerequisites": ["ground.arm_disarm_props_off"], "repeat_count": 1, "acceptance_profile": "acceptance.negative-zero-dispatch", "promotion_rule": "NEGATIVE_CASE_PASSES_ON_ZERO_DISPATCH"}
+  ],
+  "battery_comparison": {
+    "case_key": "hover.hover_0_30_10",
+    "qualification_bearing": false,
+    "comparator_band": "HIGH",
+    "required_bands": ["HIGH", "MID"],
+    "optional_bands": ["LOW_ALLOWED"],
+    "required_repeats_per_required_band": 2,
+    "fixed_context": "same case, vehicle, firmware, cage, motion, safety limits, and evidence profile",
+    "aggregate": "median shown only after every repeat passes; all repeats remain visible"
+  },
+  "safety_geometry": {
+    "frame": "HOME",
+    "physical_enclosure": "NETTED_CYLINDER",
+    "enclosure_radius_m": 0.50,
+    "enclosure_height_m": 0.60,
+    "vehicle_swept_radius_m": 0.10,
+    "vehicle_half_height_m": 0.05,
+    "position_uncertainty_m": 0.03,
+    "height_uncertainty_m": 0.03,
+    "route_center_radius_m": 0.10,
+    "warning_center_radius_m": 0.18,
+    "hard_center_radius_m": 0.34,
+    "independent_source": "SIGNED_CAGE_INSPECTION_WITH_MEASUREMENT_AND_PHOTO_HASH"
+  },
+  "clock_and_stopping_witness": {
+    "sense_to_effect_budget_s": {
+      "source_sampling": 0.10,
+      "source_to_receive": 0.03,
+      "freshness_validation": 0.02,
+      "safety_compute": 0.01,
+      "host_dispatch": 0.02,
+      "radio_transport": 0.02,
+      "firmware_apply": 0.02
+    },
+    "admitted_budget_s": 0.25,
+    "speed_m_s": 0.15,
+    "deceleration_m_s2": 0.50,
+    "jerk_m_s3": 2.0,
+    "late_source_gap_s": 0.90
+  },
+  "reaction_vectors": [
+    {"vector_id": "nominal_warning", "resulting_command": "STOP_AND_HOLD_THEN_LAND"},
+    {"vector_id": "certified_land", "resulting_command": "CONTROLLED_LAND"},
+    {"vector_id": "stale_active_state", "resulting_command": "EMERGENCY_STOP"},
+    {"vector_id": "tampered_prearm_certificate", "resulting_command": "REJECT_ZERO_COMMAND"},
+    {"vector_id": "late_active_observation", "resulting_command": "EMERGENCY_STOP"},
+    {"vector_id": "insufficient_active_clearance", "resulting_command": "EMERGENCY_STOP"},
+    {"vector_id": "missing_prearm_certificate", "resulting_command": "REJECT_ZERO_COMMAND"},
+    {"vector_id": "lost_active_certificate", "resulting_command": "EMERGENCY_STOP"}
+  ],
+  "vertical_witness": {
+    "commanded_height_m": 0.35,
+    "overshoot_m": 0.03,
+    "uncertainty_m": 0.03,
+    "vehicle_half_height_m": 0.05,
+    "hard_estimated_center_height_m": 0.45,
+    "perturbed_commanded_height_m": 0.41,
+    "expected_positive_margin_m": 0.14
+  },
+  "watchdog_contract": {
+    "keepalive_period_s": 0.25,
+    "scheduler_jitter_budget_s": 0.10,
+    "link_stall_budget_s": 0.10,
+    "maximum_accepted_gap_s": 0.50,
+    "firmware_timeout_s": 1.0,
+    "gap_relation": "STRICTLY_LESS_THAN",
+    "emergency_input_to_link_deadline_s": 0.10,
+    "software_repeat_count": 100,
+    "normal_end_state": "REBOOT_REQUIRED_AFTER_COMMAND_SESSION",
+    "timeout_end_state": "LOCKED_REBOOT_REQUIRED",
+    "no_response_state": "DISPATCHED_UNCONFIRMED_REBOOT_REQUIRED"
+  },
+  "physical_landing_terminal": {
+    "contract_path": "docs/reference/PHYSICAL_LANDING_TERMINAL_V1.md",
+    "required_clauses": [
+      "raw_supervisor_disarmed", "raw_supervisor_not_flying",
+      "fresh_downward_range_at_or_below_0_05_m", "independent_observer_settled",
+      "no_simulated_contact_claim"
+    ],
+    "claim_limit": "FUNCTIONAL_CONTAINED_FLIGHT_BASELINE_WITHOUT_EXTERNAL_POSITION_TRUTH"
+  },
+  "typed_integer_domains": [
+    {"name": "stage_order", "minimum": 0, "maximum": 4},
+    {"name": "repeat_count", "minimum": 0, "maximum": 10},
+    {"name": "route_sample_count", "minimum": 8, "maximum": 128},
+    {"name": "emergency_vector_count", "minimum": 100, "maximum": 100}
+  ],
+  "semantic_perturbations": [
+    "renamed_child", "reordered_catalog", "circle_samples_16", "circle_samples_64",
+    "square_collinear_densification", "axis_sign_flip", "incompatible_child",
+    "yaw_modulo_shortcut"
+  ]
+}
+```
+
+<!-- WP87-88-R1-MACHINE-CONTRACT-END -->
+
+### R1 reconstruction, exit evidence, and stop rule
+
+The initial ledger preimage is reconstructed exactly with:
+
+`perl -0pe 's/\n<!-- WP87-88-DESIGN-PAYLOAD-BEGIN -->[\s\S]*\z//' docs/work-packages/ACTIVE.md | shasum -a 256`
+
+It must equal
+`39a90e2d66b7a520e61e791d1388195e3013f506b190154441576ac2d0e99776`.
+The R1 audit asserts that value, the unchanged initial payload and audit identities,
+the complete R1 payload identity, 45 exact metrics/vectors, 17 catalog rows, motion
+and acceptance specifications, all integer alias probes, the full numerical
+certificate matrix, actual serving roots, claim-owner sets, generated outputs, and
+every existing/new boundary preimage.
+
+The retained command is:
+
+`./.venv/bin/python scripts/audit_wp87_88_design_r1.py`
+
+The retained artifact is:
+
+`missions/campaigns/real/qualification/wp87-88-r1-design-audit-v2.json`.
+
+WP-87 implementation exit additionally requires the new physical landing contract,
+100/100 exact emergency software vectors, watchdog nominal/equality/late/link-loss/
+process-loss/normal-end vectors, independent cage record schema and negative cases,
+every 45-metric whole-repeat/isolated-failure vector through the real public trigger,
+and `NOT_RUN` for every absent physical observation. WP-88 implementation exit
+requires exact API/DOM set equality to the 17-row projection, every motion/acceptance
+profile and semantic perturbation, descriptive battery contexts, and Play locked until
+WP-87 is independently implementation-verified plus all hardware/permit gates pass.
+
+This is the only correction. The same verifier receives one focused recheck. Any
+remaining P0/P1 leaves WP-87/WP-88 `BLOCKED_WITH_FINDINGS`; no third automatic design
+pass or implementation is permitted.
+
+<!-- WP87-88-R1-DESIGN-PAYLOAD-END -->
+
+### WP-87 and WP-88 R1 focused-recheck handoff
+
+- Status: `PLANNED`.
+- Independent verification: `DRAFT_UNVERIFIED`.
+- Initial review count: `1`; correction count: `1`; focused recheck count: `0`.
+- Author model/effort route: Codex GPT-5 frontier safety/control reasoning; exact
+  effort setting, token count, and wall time are not exposed. Escalation trigger was
+  real-aircraft emergency, containment, and landing authority plus two verifier-owned
+  P0 findings.
+- Reviewer model/effort: `work_packet_verifier`; exact underlying model, effort,
+  tokens, and wall time are not exposed.
+- Cost proxies: one initial review, one consolidated correction, two packet IDs,
+  three packet-owned files before the R1 artifact, and zero runtime/hardware runs.
+- R1 payload: SHA-256
+  `4e0dee8365eee642067def27de2e7870e0387b2afb1051150591eb5980c33c0e`.
+- R1 audit implementation: `scripts/audit_wp87_88_design_r1.py`; exact preimage is
+  bound inside the V2 artifact.
+- R1 audit artifact: SHA-256
+  `24bde83b72269b0a1ef925298180737af7cf12e68122164db6eeb2afc77bcc4c`.
+- R1 audit result: zero errors across 162 exact boundaries, 45 independently derived
+  metrics with one whole-pass vector and 45 isolated-failure vectors, 17 catalog rows,
+  16 motion contracts, 11 acceptance profiles, eight certificate/reaction vectors,
+  four typed-integer alias matrices, and the exact generated API pair.
+
+### WP-87 and WP-88 final design-gate outcome
+
+| Packet | Status | Independent verification |
+| --- | --- | --- |
+| WP-87 | `REVIEW_BLOCKED` | `BLOCKED_WITH_FINDINGS` |
+| WP-88 | `REVIEW_BLOCKED` | `BLOCKED_WITH_FINDINGS` |
+
+- Reviewer: `/root/wp87_88_design_verifier`.
+- Initial review count: `1`; correction count: `1`; focused recheck count: `1`.
+  The formal design-review cycle is exhausted.
+- Accepted/reproduced identities: initial payload
+  `8b5a1cb6a0241395b3b63a176aac36a42169621aad716b3e98ce73bc21c0537b`;
+  R1 payload
+  `4e0dee8365eee642067def27de2e7870e0387b2afb1051150591eb5980c33c0e`;
+  V2 audit artifact
+  `24bde83b72269b0a1ef925298180737af7cf12e68122164db6eeb2afc77bcc4c`.
+- Resolved on focused recheck: strict containment/stopping/physical-landing evidence;
+  emergency/watchdog deadlines and reboot lifecycle; blocked-predecessor
+  supersession; actual serving-boundary closure; and exact preimage/model/cost record.
+- Residual `WP87-88-DES-004` (P1 `MUST_FIX_NOW`, smallest scope WP-87): the guard
+  registry still combines independently binding arming, preflight, link, positioning,
+  health, permit, landing-clock/region, and emergency-input clauses. An incomplete
+  safety implementation could therefore satisfy the authored 45-metric audit.
+- Residual `WP87-88-DES-005` (P1 `MUST_FIX_NOW`, smallest scope WP-88): square and
+  circle identities do not freeze HOME-to-shape entry, canonical circle phase/start,
+  exit/return connectors, or their evidence windows. Multiple behaviorally different
+  command sequences can satisfy the current analytic shape oracle.
+- Verdict: `BLOCKED_WITH_FINDINGS`. No implementation, connection, permit, arming,
+  motor action, or physical flight is authorized. Hardware evidence remains
+  `NOT_RUN`. A successor correction requires explicit operator authorization; it may
+  address only the two residual P1 scopes and must start a new bounded design cycle.
+
+## Operator-present fast loop — hover evidence and physical-flight readability
+
+- Status: `IMPLEMENTED`.
+- Independent verification: `IMPLEMENTED_UNVERIFIED`.
+- Operator feedback date: `2026-08-23`.
+- Scope: analyze the retained `20260823` Digital Twin hover/move/shape runs; preserve
+  the Digital Twin flight projection across a temporary observer reconnect; separate
+  measured takeoff capture from horizontal motion; and enlarge the checkpoint shapes
+  without exceeding the retained contained-flight center-radius boundary.
+- Baseline evidence: the two complete 12-second hover commands
+  `twin-basic-real-6ae0eb9cd9d0452981cad904f2c48cac` and
+  `twin-basic-real-306dfde6f93d40b49424bdba6aa6b11d`, plus the bounded failed hover
+  windows and the successful forward-return and L-shape runs retained under
+  `run-files/20260823T*`.
+- Disturbance classification: the operator reports deliberately blowing down on and
+  touching the aircraft during one hover, but has not bound that event to a retained
+  run identity. Treat that run only as disturbance-recovery evidence once identified;
+  the current two-run range is descriptive and is not a clean-repeat qualification.
+- Causal findings: complete hovers show about `1.5 cm` lateral estimator RMS around
+  their run mean, `2.5 cm` p95 radial deviation, a repeatable roughly `1.2 s` sway,
+  and `8–13 deg` yaw range; failed hover attempts are dominated by command-link loss
+  and unknown acknowledgement rather than a recorded controller rejection. The
+  successful forward-return run issued translation only milliseconds after the
+  two-second takeoff command completed, while measured altitude was still about
+  `0.14 m` with upward velocity about `0.21 m/s`.
+- Tuning disposition: do not change onboard PID gains from these runs. Ground truth,
+  retained controller targets, and ordinary-flight motor output are unavailable, so
+  the current evidence cannot separate true aircraft drift, estimator drift, and
+  downstream control response strongly enough for a bounded gain decision.
+- Implementation bounds: the scene anchor resets only at a physical-flight boundary
+  or measured vehicle identity change, not at a reconnect epoch; task motion starts
+  only after three distinct samples are within `0.05 m` of target altitude and at or
+  below `0.03 m/s` vertical speed; checkpoint L/square/triangle geometry is
+  centered on HOME with `0.40 m` legs/sides, `<=0.10 m/s` motion, and maximum authored
+  center radius below `0.29 m`. The retained `0.10 m` mission identities remain
+  unchanged in the catalog but are no longer physical-enabled; the larger geometry
+  uses successor IDs.
+- Exit gates: focused Twin shadow tests cover reconnect epoch continuity and new-flight
+  reset; physical-flight tests cover takeoff capture ordering, centered shape bounds,
+  motion duration, and updated catalog copy; relevant UI/Python tests pass without
+  touching the live dashboard or hardware runtime.
+- Author checks: `33` basic-flight tests and `20` Crazyflie-adapter tests passed; the
+  final successor-ID/authority adjustment passed `4` focused flight-lab tests; `19`
+  focused UI tests, the generated-schema API contract test, ESLint, TypeScript, Ruff,
+  the requirement-catalog check, and the project-map check passed. No live service
+  restart, radio connection, or flight was performed.
+
+## Operator-present fast loop — controller-fixture survey markers
+
+- Status: `IMPLEMENTED`.
+- Independent verification: `IMPLEMENTED_UNVERIFIED`.
+- Operator feedback date: `2026-08-25`.
+- Scope: retain the physical box survey in the Controller characterization & tuning
+  fixture; use the closest inner floor corner as origin, the short side as `+X`, the
+  long side as `+Y`, and expose the actual five marked calibration placements A–E.
+- Survey inputs: preliminary scan-derived A–D centers and base footprint; direct
+  measurements `EC = 0.268 m`, `EB = 0.441 m`, and `EA = 0.502 m` for the newly added
+  E marker; four horizontal ranger optical centers `0.012 m` from the drone center;
+  and a baseline placement with the drone centered over the selected floor X, front
+  toward `+Y` at `0 deg`, turning toward `+X` through `+45 deg` to `+90 deg`.
+- Derived value: least-squares trilateration against the scan-derived A/B/C anchors
+  places E at approximately `(0.603, 0.665) m`, with about `0.0042 m` RMS distance
+  residual. Preserve the three direct measurements as source observations rather than
+  replacing them with only the derived coordinate.
+- Non-goals: no survey-complete claim, fixture-baseline acceptance, controller/gain
+  change, hardware deployment, radio connection, motor action, or flight. Wall height,
+  bowed wall profiles, flight stations, ranger angular uncertainty, and other
+  characterization inputs stay open and advisory. Implemented B–E commands remain
+  operator-selectable; F–H remain raw because they have no command workflow.
+- Exit gates: the strict fixture contract validates the corner frame, unique A–E
+  markers, distance endpoints, and base bounds; Mission A catalog variants bind A–E;
+  range prediction, heading conversion, horizontal-ranger selection, and flight-relative
+  station commands remain correct under the corner-origin frame; focused Python/UI
+  contract checks pass.
+- Author checks: `43` focused controller-tuning/basic-flight Python tests and `34`
+  focused Twin/API-adapter UI tests passed; Ruff, ESLint, TypeScript, generated OpenAPI,
+  JSON parsing, the requirement-catalog check, and the project-map check passed. No
+  live service restart, radio connection, motor action, or physical flight occurred.
+
+## Operator-present fast loop — physical link dropout and stale presentation
+
+- Status: `IMPLEMENTED`.
+- Independent verification: `IMPLEMENTED_UNVERIFIED`.
+- Operator feedback date: `2026-08-25`.
+- Observed evidence: the station-B observation was deleted at the operator's request
+  and is not retained as evidence for this finding. The following station-C operation
+  was stopped before ordinary retention completed. Later observer sessions failed
+  after the installed cflib `0.1.32` transport emitted
+  repeated `Too many packets lost` callbacks. This establishes an abrupt radio-ACK
+  loss, but it does not by itself identify the environmental source of that RF loss.
+- Software finding: a completed SSE frame marked `CURRENT` could remain cached in the
+  readout and override a later lifecycle poll reporting `STALE` or `ERROR`. The
+  backend also kept the failed session's last presentation pointers populated after
+  durable failure retention. Together these paths made frozen values remain visible
+  after the connection had stopped.
+- Implementation: cflib's consecutive missed-ACK disconnect budget is raised from
+  its library default of `100` to `1,000`, leaving the application's measured
+  one-second freshness watchdog as the authoritative fail-closed boundary. The exact
+  cflib connection-loss reason now reaches the snapshot/status path. Stream failure
+  retains the failed journal session but clears its live presentation pointers, and
+  the UI refuses to let an older current frame mask an authoritative stale/error
+  lifecycle state.
+- Safety boundary: the larger cflib ACK budget does not extend usable telemetry or
+  command authority. `CrazyflieVehicle.snapshot` still rejects a sample older than
+  the configured one-second timeout, after which the existing bounded disconnect,
+  recovery, and operation-stop paths apply. No automatic command retry was added.
+- Author checks: `48` focused Crazyflie-adapter/observer tests and `25` focused
+  physical-twin UI tests passed; Ruff, TypeScript, ESLint, and diff-whitespace checks
+  passed. An adjacent `36`-test flight/API run had `35` passes and one existing-checkout
+  catalog expectation mismatch for the unrelated cushioned-acrobatics setup state.
+  No dashboard restart, hardware deployment, radio connection, motor command, or
+  physical flight was performed for this fix.
+
+## Operator-present fast loop — Mission A baseline analysis and advisory-only flight availability
+
+- Status: `IMPLEMENTED`.
+- Independent verification: `IMPLEMENTED_UNVERIFIED`.
+- Operator feedback date: `2026-08-25`.
+- Durable policy: implemented Controller characterization & tuning motions B–E are not
+  unlocked by survey completion, baseline acceptance, earlier mission results,
+  coverage, amplitude progression, or per-mission enable flags. Those gate fields were
+  deleted from the fixture schema and runtime. Missing wall geometry, clearance, and
+  uncertainty remain visible characterization advisories. Exact marker/heading/height,
+  command inputs, default-PID/Kalman experiment identity, and the shared generic
+  link/supervisor/permit/abort/stop-integrity boundary remain authoritative.
+- Retained batch: the main heading-0 observations at A–E completed for approximately
+  30 seconds each. At heading 90, A and D completed; E retained 28.5 seconds, C retained
+  13.3 seconds, and B retained 4.4 seconds before `Crazyflie telemetry is unavailable`.
+  A separate 2.9-second D attempt failed the same way before its successful repeat.
+  Those shorter records are partial observations, not equivalent completed repeats.
+  The deliberately deleted run `twin-tuning-real-39b9b2dedc16489f9cd4122991e53b37`
+  was not restored or analyzed.
+- Raw-range finding: all retained rows in the post-19:19 batch reported valid
+  front/back/left/right ranges. Per-run channel standard deviations were approximately
+  `1.4..2.3 mm`; first-versus-last-fifth drift stayed within `1.4 mm` for the meaningful
+  windows. This supports a quiet short-term ranger-noise baseline at this setup, not a
+  controller conclusion.
+- Rectangle/placement finding: against the preliminary `1.062 m x 1.260 m` base and
+  12 mm optical-center offsets, the five successful heading-0 runs had individual mean
+  residuals from about `-28..+16 mm` and opposing-pair inconsistencies of
+  `0.7..24.9 mm`. The fixed-rectangle opposing-range position estimates differed from
+  the configured marker coordinates by A `(-1.1,+4.5) mm`, B `(-15.6,+5.0) mm`,
+  C `(-5.4,+0.6) mm`, D `(-6.9,-8.7) mm`, and E `(-11.4,+7.5) mm`. The two complete
+  heading-90 runs gave A `(-10.5,+8.2) mm` and D `(-2.4,-7.7) mm`. This is consistent
+  with a combination of manual centering/heading error, preliminary marker coordinates,
+  sensor offsets/bias, and height-dependent bowed walls; this batch cannot separate
+  those causes.
+- Height/attitude limitation: the operator states that the horizontal measurements
+  were made at `0.144 m` to avoid close-to-ground artifacts. Historical run preparation
+  nevertheless retained `target_height_m=null` and `height_m=0.0`; down-range means
+  varied from about `0.098..0.147 m`. Therefore `0.144 m` is operator-supplied batch
+  context, not hash-bound per-run height evidence, and this batch cannot fit a
+  height-indexed wall profile. Static estimator tilt also varied by placement (up to
+  about `2.9 deg` roll or pitch), while estimator yaw stayed near zero for both entered
+  headings and cannot independently verify manual heading. The swapped range geometry
+  does support the intended 0/90-degree orientation change.
+- Disposition: `NO_CONTROLLER_CHANGE`. Mission A characterizes sensor/fixture/placement
+  effects only. Mission B should collect default-PID takeoff/hover/landing telemetry and
+  landing surveys before any controller diagnosis, and no gain tuning follows from this
+  baseline alone.
+- Implementation: removed the fixture-baseline, default-PID-baseline,
+  enabled-amplitude, yaw-enable, and speed/position-enable schema fields and every
+  runtime/UI unlock derived from them; converted incomplete characterization to one
+  non-blocking warning; retained local command prerequisites and generic runtime
+  integrity. No live dashboard deployment or physical action was performed in this
+  change, so the persistent service continues serving its prior release until the
+  operator explicitly authorizes deployment.
+- Author checks: `45` focused controller-tuning/basic-flight hardware tests, `15`
+  physical-twin/API contract tests, `36` focused UI component/adapter tests, Ruff,
+  TypeScript, ESLint, OpenAPI export/type regeneration, the 150-definition requirement
+  catalog check, the project-map check, and diff-whitespace validation passed. These
+  are author checks only; no independent verification is claimed.
+
+## Controller-fixture A–E run workflow and tuning evidence plan
+
+- Status: `PLANNED`.
+- Independent verification: `DRAFT_UNVERIFIED`.
+- Operator feedback date: `2026-08-25`.
+- Objective: turn the existing controller-characterization catalog into a repeatable
+  physical experiment workflow in which A–E are reusable placement variants, heading
+  and height are exact run inputs, post-landing trilateration is retained evidence, and
+  measured fixture geometry can support truthful analysis without becoming a software
+  flight unlock.
+- Implementation progress: the catalog had hard-coded motion IDs and the run request
+  originally contained only `motion_id`. The first implemented slice now
+  projects floor markers A–E as variants in every implemented major mission, accepts
+  typed `0..90 deg` heading and optional height, binds them with the fixture hash into
+  the operation marker and retained run, and keeps implemented B–E commands directly
+  operator-selectable. Repetition indexing, landing measurements, compressed bowed-wall
+  geometry, and the complete geometry-aware resolver remain open. This section does not
+  authorize flight or gain changes.
+- Setup refinement: the heading and height inputs now appear in a prominent `Run setup`
+  card in the selected mission pane. Flight runs require an explicit height. Global
+  readiness no longer treats the obsolete named-station grid or descriptive lighting,
+  finish, and texture metadata as missing A–E geometry; the draft now reports the two
+  unresolved characterization values exactly: wall height and wall safety clearance
+  including the drone envelope. The repeated controller-tuning setup banner and all
+  survey/baseline/progression flight gates are removed. One non-blocking
+  `Characterization incomplete` warning preserves the exact missing fields.
+  Mission-specific named targets remain local command prerequisites for motions that
+  directly use them.
+- Operator deployment: after confirming motor actuation `IDLE` with
+  `stop_required=false` and terminal flight state with `stop_required=false`, the
+  dashboard was deployed once as release `release-e02cf3314d4f418ebed0483d98e697ee`.
+  Rendered-page inspection confirmed a visible, editable Heading input for A and B,
+  the required B flight-height input, and no visible `Setup required` copy. The service
+  is healthy and owns the canonical hardware lane; observer reconnection currently
+  reports `RADIO_UNAVAILABLE` because no Crazyradio dongle is detected.
+- Implemented-slice author checks: `46` focused Python hardware/API tests and `12`
+  focused Campaign Laboratory UI tests passed; Ruff, TypeScript, ESLint, generated
+  OpenAPI, and diff-whitespace checks passed. The catalog probe reports A–E variants
+  for each major mission A–E and `Raw` only for F–H. No dashboard restart, radio
+  connection, motor command, or physical flight occurred.
+
+### WP-CT-1 — Immutable fixture source and compressed geometry
+
+1. Import the unchanged `Scaniverse 2026-08-25 185658.glb` source into a retained
+   fixture-survey artifact location and record its `11,967,612` byte size and SHA-256
+   `0546087236cc762792d0b464de8655679952e738f1138cec7503b61825d214e5`.
+   Do not depend on a mutable Downloads path or conversation memory.
+2. Generate a compact derived artifact that records the source hash, GLB-to-fixture
+   transform, inner floor boundary, A–E coordinates/uncertainties, and wall profiles at
+   relevant ranger/vehicle heights. Preserve raw E–A/B/C distances beside the derived E
+   coordinate.
+3. Represent bowed cardboard walls with height-indexed profiles and uncertainty, not
+   one constant rectangle. Version any material, wall-shape, marker, or coordinate-frame
+   change as a new fixture baseline.
+4. Exit: regeneration is deterministic; source and derived hashes are retained; known
+   A–E distances reproduce within declared uncertainty; malformed or mismatched source
+   metadata fails closed.
+
+### WP-CT-2 — Parameterized preparation and exact run identity
+
+1. Replace heading/station motion proliferation with an immutable preparation contract:
+   `major_mission`, `station_id`, `heading_deg`, `height_preset/target_z_m`,
+   `motion_id`, `movement_frame`, fixture/version/geometry hash, controller/estimator
+   snapshot, and an automatically assigned repetition index.
+2. Use A–E as the layer-3 variants in every implemented major mission. Heading is a
+   numeric input with default `0`, initial range `0..90`, and the fixture convention
+   `0 = front +Y`, `45 = between +Y/+X`, `90 = front +X`. Height uses surveyed presets;
+   Mission A starts with grounded ranger height unless a measured jig is selected.
+3. Motion labels must state whether displacement is BODY or fixture/HOME relative.
+   Never present an ambiguous `X` move when those frames differ. The selected setup is
+   frozen before Play and displayed in Active run and Review.
+4. Remove repetitive per-row setup copy. Show incomplete fixture characterization once
+   as a non-blocking supporting warning and expose exact missing values in the closed
+   technical disclosure. F–H retain one truthful `Raw` state.
+5. Exit: API, generated schema, adapters, UI, retained artifacts, reload/recovery, and
+   tests preserve exact inputs; changing a field creates a distinct run identity; Play
+   remains unavailable only when an implemented command lacks required direct inputs or
+   the shared runtime-integrity checks do not permit execution.
+
+### WP-CT-3 — Mission A fixture/ranger baseline
+
+1. Major A exposes variants A, B, C, D, and E and one `Observe baseline` motion. The
+   operator centers the drone over the selected red X, types the heading, chooses the
+   admitted height, and starts one motors-off observation.
+2. Retain raw front/back/left/right ranges and validity, source/receive timestamps,
+   estimator pose/attitude, sensor offsets, predicted wall intersections, per-sensor
+   residuals, and opposing-range consistency. Up and down remain excluded from the
+   horizontal wall model.
+3. Use A–D to fit or characterize the baseline and reserve E as the default holdout.
+   E remains fully selectable and reports validation error; it is not silently folded
+   into a refit. Repeats are separate Play actions and coverage is shown as a
+   station × heading × height matrix rather than a chat checklist.
+4. Exit: range predictions use the bowed-wall profile at the actual ranger height,
+   invalid readings remain invalid, residual distributions and repeat spread are
+   visible, and no baseline is accepted automatically.
+
+### WP-CT-4 — Mission B hover and landing survey
+
+1. Major B reuses variants A–E and the same heading/height preparation. One Play action
+   performs one default-PID takeoff, settled hover, landing, and disarm at the selected
+   placement; the operator manually repositions between repetitions.
+2. Bind command targets, estimator state, ranges, attitude/body rates, battery, motor
+   activity when available, controller/estimator readback, and exact preparation to the
+   run. Operational completion and manual external evaluation are separate states.
+3. After landing, Campaign Review marks the run `AWAITING_LANDING_SURVEY` and accepts
+   planar distances from the vertical floor projection of the drone center to at least
+   three non-collinear A–E markers. Four or five are preferred. Retain marker IDs, raw
+   distances, stated uncertainty, units, solver/version, derived `(x,y)`, covariance or
+   uncertainty, and every residual. A correction is a new revision; contradictory
+   circles produce `INCONSISTENT`, never a silently averaged success.
+4. Compare command versus estimator, estimator versus fixture/ranges, and command
+   versus externally reconstructed final position as separate error chains. Landing
+   truth does not prove the airborne path, overshoot, settling time, or speed.
+5. Exit: a landing form cannot attach to the wrong run; three-marker synthetic cases,
+   redundant good measurements, one perturbed measurement, impossible circles, unit
+   errors, and revision history are tested.
+
+### WP-CT-5 — Missions C–E and geometry-aware analysis
+
+1. Mission C recommends BODY-labeled 5 cm forward/back/left/right probes and return
+   before 15 cm and 30 cm motions, but does not lock any implemented amplitude. Mission D
+   applies small bounded yaw holds/sweeps relative to the typed initial heading, while
+   keeping the resolved absolute heading inside the initial `0..90 deg` domain. Mission
+   E compares only margin-rich slow profiles before any higher-stress speed.
+2. A run resolver transforms the selected A–E start, heading, height, and BODY/HOME
+   motion into the fixture frame. It reports the swept vehicle envelope,
+   sensor-center rays, return path, landing region, and stopping reach against the
+   height-indexed wall profiles after subtracting safety clearance, geometry/placement
+   uncertainty, estimator allowance, and vehicle radius. Checking endpoints alone is
+   insufficient.
+3. The UI and backend report the resolved amplitude, speed, yaw, height, and any known
+   wall-margin shortfall for the exact setup. Missing or adverse characterization does
+   not disable an implemented command and must not be presented as measured safety.
+4. Reuse the Mission B landing survey for every flight. Use the final reconstructed
+   position only for endpoint/return/landing error; derive trajectory and dynamic
+   metrics from retained in-flight evidence.
+5. Exit: boundary starts, `0/45/90 deg`, each station, each height preset, every motion
+   direction, bowed-wall slices, stopping reach, return, and landing are covered by
+   analysis tests that distinguish known, violated, and unavailable margins without
+   changing command availability.
+
+### WP-CT-6 — Analysis checkpoint before any controller change
+
+1. Do not tune after only A and B. First pass Mission A model/holdout checks, collect
+   repeatable Mission B baselines, then execute the margin-rich Mission C 5 cm probes
+   plus a small Mission D yaw and Mission E slow-profile guard set. Broader station and
+   heading coverage may continue without forcing a full Cartesian product before the
+   first analysis checkpoint.
+2. Diagnose ranger/wall-model error, estimator error, command tracking, axis/yaw
+   coupling, and final-position error separately. Use repeats and show every run; no
+   average may hide a failed or disturbed run.
+3. Any candidate change happens only while landed and disarmed: change one bounded
+   parameter family, retain old/new values and readback, then create a new run. No live
+   airborne tuning and no automatic gain persistence are permitted.
+4. A–E remain characterization/evidence missions. F controller comparison, G bounded
+   gain refinement, and H robustness confirmation remain raw until a separate design
+   defines their commands, rollback, comparison oracle, and promotion criteria.
+5. Exit: the analysis produces a bounded diagnosis and either `NO_CHANGE` or a future
+   F/G design proposal. It cannot label a gain set better, accepted, or qualified from
+   A/B hover averages or touchdown coordinates alone.
+
+### Recommended operator progression after implementation
+
+1. Complete Mission A at A–E for the planned headings, repeating outliers or unstable
+   readings; accept the geometry/ranger baseline only after E holdout error is credible.
+2. Fly Mission B as separate station/heading repetitions and enter the landing survey
+   immediately after each run so measurements cannot be attached to the wrong run.
+3. Run only 5 cm Mission C probes, then the smallest D yaw and slow E guard cases that
+   resolve the diagnosis. Expand coverage where repeat spread or position dependence
+   requires it.
+4. Stop for offline analysis while disarmed. Do not select larger/faster motions or
+   implement F/G solely because a mean plot looks improved.
+
+### Plan-level non-goals and safety boundary
+
+- No hardware deployment, radio ownership, arming, motor command, flight, fixture
+  acceptance, controller/gain write, or service restart is authorized by this plan.
+- No automatic movement between physical A–E markers, live in-flight tuning, chat-only
+  placement identity, GLB-in-memory assumption, rectangular-wall claim, or conversion
+  of landing distances into claimed airborne trajectory truth.
+- The existing persistent hardware runtime remains untouched until the operator
+  explicitly requests deployment or a physical run in a later task.
+
+## WP-89 — switchable sparse-ranger basic avoidance
+
+Status: `PLANNED`
+
+Independent verification: `DRAFT_UNVERIFIED`
+
+Originating operator request date: `2026-08-27`.
+
+<!-- WP89-DESIGN-PAYLOAD-START -->
+
+### Intent and value
+
+- Minimum useful outcome: place one explicit avoidance toggle immediately beside the
+  physical Play control and carry its frozen value through the real start request so
+  the operator can compare the same hover/translation mission with and without
+  enforcement.
+- Explicit behavior: reject stale, missing, and out-of-range closing-direction ranger
+  data; project measured and commanded horizontal velocity onto each horizontal
+  ranger ray; compute a speed-, latency-, uncertainty-, and braking-dependent protected
+  distance; progressively slow a not-yet-dispatched translation; and fail closed via
+  the existing controlled abort/land path if an enforced in-flight evaluation becomes
+  unsafe.
+- Necessary prerequisites: range-value receive freshness must survive normalization;
+  the selected mode and latest decision summary must survive status polling and the
+  durable operation marker; existing physical permit, containment, Abort, telemetry,
+  and operator-owned-runtime boundaries remain authoritative.
+- Optional later value, excluded here: a commander-priority takeover that can certify
+  an indefinite stop-and-hold, bounded retreat, wall following, corridor centering,
+  corner escape, mapping, and localization recovery.
+- Safe fallback: `MONITOR_ONLY` is the default and preserves the exact authored
+  command payload. `ENFORCED` never claims a physical hold; when safe progressive
+  limiting is no longer possible after dispatch it terminates the mission through the
+  existing abort/land recovery path.
+
+### Frozen contract and invariants
+
+1. The public request admits exactly `MONITOR_ONLY` and `ENFORCED`; aliases such as
+   booleans, numbers, `ON`, `OFF`, and null are rejected. The value freezes at Play,
+   is disabled for editing while an operation is active, and is returned by status.
+   UI copy is `Avoidance off` for `MONITOR_ONLY` and `Avoidance on` for `ENFORCED`.
+2. The toggle is shown only for physical flight motions. Props-off observation,
+   arm/disarm, and cushioned acrobatics send `MONITOR_ONLY` and do not advertise an
+   enforcement choice in this slice.
+3. The policy evaluates front/back/left/right only. For body ray `u_i`, closing speed
+   is `max(0, u_i dot v_body_measured, u_i dot v_body_commanded)`. HOME velocity is
+   rotated by measured yaw before projection. A missing yaw or velocity blocks only an
+   `ENFORCED` horizontal move that needs that projection; it cannot fabricate zero.
+4. A range is usable only when its direction status is `VALID`, its finite distance is
+   present and below the declared maximum, and its receive age is at most `0.4 s`.
+   `STALE`, `UNAVAILABLE`, `CLIPPED`, and `NO_HIT` are rejected. Invalid data in a
+   non-closing direction does not block motion away from it; invalid data in a closing
+   or commanded direction blocks a new enforced translation or requests recovery once
+   airborne.
+5. Ranger distance is measured from the sensor origin. The protected center distance
+   is:
+
+   `0.055 m vehicle radius + 0.050 m position uncertainty + 0.020 m range uncertainty
+   + 0.050 m margin + closing_speed * 0.800 s complete latency
+   + jerk_limited_stop(closing_speed, 1.0 m/s^2, 8.0 m/s^3)`.
+
+   The required sensor range subtracts the surveyed `0.012 m` horizontal sensor-origin
+   offset. These are conservative provisional software bounds for the existing
+   `<=0.10 m/s` laboratory motions, not measured braking qualification or controller
+   gains.
+6. Safe speed is the greatest speed in `[0, 0.10] m/s` whose required sensor range is
+   no greater than measured clearance. It is solved deterministically to `1e-6 m/s`.
+   A horizontal move above that value has duration increased to preserve displacement;
+   no endpoint or direction changes. Values below `0.02 m/s`, invalid closing data, or
+   negative margin block dispatch in `ENFORCED`.
+7. While a guarded hover or move is executing, each adapter sample is reevaluated.
+   `MONITOR_ONLY` records transitions and extrema but never changes a command, raises
+   an intervention, or changes the existing success/failure path. `ENFORCED` requests
+   recovery when the current measured closing speed exceeds the newly safe speed or
+   the binding direction becomes invalid. The already-dispatched command outcome is
+   retained as unknown where appropriate, and the existing physical failure recovery
+   performs controlled abort/land. No emergency motor stop is introduced.
+8. Existing hard containment, estimator convergence, permit, link freshness, motor
+   stop, operator Abort, landing, disarm, and stop-confirmation logic cannot be disabled
+   by either avoidance mode. No live service, radio, or aircraft is touched by this
+   packet's implementation or verification.
+
+### Claim and evidence matrix
+
+| Claim | Real trigger / production entry | Effect and retained observation | Independent oracle and counterexample | Boundary |
+| --- | --- | --- | --- | --- |
+| `WP89-C1-TOGGLE_TRANSIT` | Bottom-left physical Play start through `/api/v1/physical-twin/lab/physical-flight/start` | Frozen mode in request, active status, and marker; toggle locks during run | Captured API body/status plus invalid typed-mode and retoggle cases | `PRODUCTION_ENTRY / FAST_SIM / ACCELERATED` |
+| `WP89-C2-DYNAMIC_POLICY` | Normalized Crazyflie ranges, pose, velocity, yaw, and requested motion | Per-ray margin, binding ray, maximum safe speed, decision | Independently recomputed exact numerical vectors; clearance/latency/uncertainty monotonic perturbations | `COMPONENT / NO_RUNTIME / NOT_APPLICABLE` |
+| `WP89-C3-PHYSICAL_COMMAND_GUARD` | Contained-flight command helper and adapter sample loop | Unchanged monitor payload, lengthened safe enforced duration, or existing abort/land recovery | Fake-link command capture; stale closing ray, near obstacle, moving-away, and mid-command clearance-loss cases | `PRODUCTION_ENTRY / FAST_SIM / ACCELERATED` |
+| `WP89-C4-RETAINED_TRUTH` | Status polling, command evidence, telemetry artifact, and marker reload | Mode plus counts, minimum margin, last decision, and intervention reason remain attributable | Marker restart/reload and terminal artifact assertions with run-local IDs normalized | `INTEGRATION / FAST_SIM / ACCELERATED` |
+
+### Affected-boundary manifest and pre-freeze oracle
+
+The exact existing/new/generated manifest, preimage hashes, typed-mode perturbations,
+policy constants, numerical vectors, and claim-owner closure are retained by
+`scripts/audit_wp89_design.py` in
+`missions/campaigns/real/qualification/wp89-design-audit.json`. The audit derives the
+OpenAPI pair from `ui/package.json`, requires every claim owner in the manifest, and
+fails if an intended-new path already exists.
+
+The numerical witness contains zero, half, and maximum speed plus isolated increased
+latency and increased uncertainty perturbations. Implementation tests must recompute
+the relation independently rather than importing expected results from the policy.
+
+### Implementation ownership
+
+- Policy and sensor truth: `src/crazyswarm_app/safety/avoidance.py`,
+  `src/crazyswarm_app/domain/telemetry.py`, and
+  `src/crazyswarm_app/vehicles/crazyflie.py`.
+- Physical production transit and durable evidence:
+  `src/crazyswarm_app/hardware/basic_flight_lab.py` and
+  `src/crazyswarm_app/api/app.py`.
+- Public/generated/UI transit: `ui/app/lib/api.ts`, `ui/app/lib/models.ts`,
+  `ui/openapi.json`, `ui/app/lib/api.generated.ts`,
+  `ui/app/components/TwinBasicFlightLab.tsx`, and `ui/app/globals.css`.
+- Durable maps: `design.md` and `docs/system/README.md`.
+- Test owners: `tests/safety/test_avoidance.py`,
+  `tests/hardware/test_crazyflie_adapter.py`,
+  `tests/hardware/test_basic_flight_lab.py`,
+  `ui/tests/api-adapter.test.ts`, and
+  `ui/tests/twin-basic-flight-lab.test.tsx`.
+
+### Exit evidence and limits
+
+1. The pre-freeze audit passes and its payload hash is reproduced before design review.
+2. New policy tests fail against the absent implementation for the intended reason,
+   then pass intended, invalid/stale, monotonic, moving-away, and boundary vectors.
+3. API/component tests enter through the normal start control and prove exact mode
+   transit, lockout, default, and invalid input behavior.
+4. Fake-link contained-flight tests prove command identity in `MONITOR_ONLY`, increased
+   duration without changed displacement in `ENFORCED`, and the existing abort/land
+   recovery after a mid-command adverse sample. No hardware claim follows.
+5. OpenAPI regeneration, Python and UI focused suites, Ruff, TypeScript, ESLint,
+   requirement-catalog validation, project-map validation, and diff whitespace pass.
+6. One isolated simulation/software verification run exercises the production request
+   and fake Crazyflie link. Environment is `FAST_SIM`, clock is `ACCELERATED`; physical
+   stopping distance, realtime latency, illumination robustness, and hardware safety
+   remain `NOT_RUN` and unqualified.
+
+### Non-goals
+
+- No physical deployment, dashboard restart, radio ownership, motor command, flight,
+  PID/estimator tuning, lighthouse dependency, SLAM, mapping, general exploration,
+  certified stop-and-hold, retreat, wall following, corridor centering, or corner
+  escape.
+- No claim that five sparse rays prove free space between rays or behind `NO_HIT` data.
+- No use of avoidance to relax another safety or readiness gate.
+
+<!-- WP89-DESIGN-PAYLOAD-END -->
+
+### WP-89 design-review handoff
+
+- Base commit: `40cd9947f87eb9bf2719d72e7c72ea867eab9977`.
+- Author model/effort route: frontier safety/control reasoning because this crosses a
+  real-aircraft command boundary; exact effort, token count, and wall time are not
+  exposed. Cost proxies before review: one packet, four claims, zero correction passes,
+  zero runtime/hardware runs.
+- Independent verification remains `DRAFT_UNVERIFIED` until a fresh verifier reproduces
+  the design payload and audit identities.
+
+## WP-89 R1 — consolidated freshness, uncertainty, oracle, and scope correction
+
+Status: `PLANNED`
+
+Independent verification: `DRAFT_UNVERIFIED`
+
+This is the single correction permitted after findings `WP89-D1` through
+`WP89-D4`. The initial payload remains immutable above. This R1 payload supersedes
+it for implementation eligibility.
+
+<!-- WP89-R1-DESIGN-PAYLOAD-START -->
+
+### Originating request and partial-slice truth
+
+The originating operator request is retained verbatim:
+
+> “ok then make a detailed plan for 2 avoidance for this second
+>
+> 2. Implement basic avoidance before mapping
+> Make this a general command-safety layer, not a mission behavior. Every requested
+> movement passes through it—manual control, planned routes, exploration or
+> return-to-home.
+> The first version should:
+> Reject stale, missing and out-of-range sensor data.
+>
+> Project the drone’s velocity toward each sensed obstacle.
+>
+> Calculate a dynamic protected distance:
+> vehicle radius + uncertainty + latency travel + braking distance + margin
+>
+> Progressively limit forward speed as clearance decreases.
+>
+> Stop and hold when stopping remains safe.
+>
+> Land or retreat only when hold is unsafe or localization becomes invalid.
+>
+> This is better than a fixed rule such as “stop at 30 cm”: the safe threshold must
+> grow with speed, latency and uncertainty.
+>
+> After reliable stopping, add wall following, corridor centering and bounded escape
+> from corners. Pure reactive rules can deadlock, so these remain local
+> safety/navigation primitives, not yet general exploration.
+> The Multi-ranger provides five sparse distance directions and no avoidance
+> automatically; software must interpret them.
+>
+> make it switchable on and off for now as a simple toggle next to the play button
+> bottom left so i can test hover tests with and without”
+
+The implementation authorization is also retained verbatim:
+
+> “ok start implementation and do one isolated verifaction run like in the
+> workpacket workflow”
+
+WP-89 is explicitly the first partial vertical slice of that broader request, not its
+completion. It serves the immediately requested A/B hover and slow-translation test
+control plus dynamic sparse-ranger limiting. A certified commander-takeover
+stop-and-hold is a prerequisite for the requested hold-before-land hierarchy and
+remains open. Until that later primitive is designed and verified, WP-89 uses the
+existing controlled abort/land recovery after an unsafe post-dispatch sample and must
+not be presented as general avoidance, hold, retreat, mapping, or exploration.
+
+### Intent/value card
+
+- Minimum useful outcome: a toggle immediately beside physical Play whose exact
+  `MONITOR_ONLY` or `ENFORCED` value freezes into the real request, status, marker,
+  and evidence; a dynamic policy can leave, retime, block, or recover slow laboratory
+  hover/translation commands without changing another safety gate.
+- Required prerequisites: per-variable freshness for ranges, yaw, horizontal velocity,
+  and estimator variance; measured uncertainty; full reaction budget; exact public/UI
+  transit; deterministic policy evidence; existing abort/land recovery.
+- Optional/deferred: low-level commander takeover and certified indefinite hold,
+  bounded retreat, wall following, corridor centering, corner escape, SLAM, mapping,
+  and mission-independent integration outside this physical laboratory entry.
+- Non-goals: physical qualification, realtime latency proof, measured braking
+  qualification, controller or estimator tuning, live deployment, radio access, motor
+  action, or flight.
+- Safe fallback: default `MONITOR_ONLY` preserves authored command identity. In
+  `ENFORCED`, failure to prove a safe new translation blocks dispatch; loss of a
+  binding certificate after dispatch invokes existing controlled abort/land.
+
+### Exact input, clock, and uncertainty contract
+
+1. The public request admits exactly `MONITOR_ONLY` and `ENFORCED`. Pydantic strict
+   typing rejects booleans, integer/fractional numbers, `ON`, `OFF`, empty string,
+   and null. The UI labels them `Avoidance off` and `Avoidance on`, defaults to
+   `MONITOR_ONLY`, freezes the selection at Play, and disables it until the operation
+   reaches a backend-terminal state. Observation, arm/disarm, and acrobatics remain
+   fixed `MONITOR_ONLY` and do not show the control.
+2. The adapter preserves host monotonic receive timestamps independently for
+   `range.front/back/left/right`, `stabilizer.yaw`, `stateEstimate.vx/vy`, and
+   `kalman.varPX/varPY`. A timestamp is the exact
+   `CrazyflieRawSample.value_received_at_monotonic_s` entry for that variable. An
+   empty timestamp map is admitted only by injected test links, where the enclosing
+   raw sample receive time is the explicit fallback; a partially populated map never
+   fabricates a missing variable timestamp.
+3. Effective evaluation time is host monotonic time sampled once per policy
+   evaluation. Every binding variable must have
+   `0 <= effective_time - variable_received_time <= 0.400000 s`. Negative age,
+   missing timestamp, age `>0.4 s`, missing/non-finite value, or a reset clock epoch
+   rejects the binding certificate. Firmware source timestamp remains evidence but is
+   not subtracted from the host clock.
+4. HOME `vx/vy` rotates through the fresh measured yaw into body velocity. BODY
+   commands are already body-relative; HOME commands rotate by the same yaw. For body
+   ray `u_i`, closing speed is
+   `max(0, dot(u_i, measured_body_velocity),
+   dot(u_i, commanded_body_velocity))`. Front/back/left/right rays are
+   `(+x,-x,+y,-y)`. During hover, missing or stale yaw/velocity means closing motion
+   is unknown and requests recovery in `ENFORCED`; it is not treated as zero.
+5. A binding range is usable only with status `VALID`, a finite distance in
+   `[0,max_range_m)`, and fresh receive time. `STALE`, `UNAVAILABLE`, `CLIPPED`,
+   `NO_HIT`, null, non-finite, negative, equality with maximum range, and greater
+   values reject it. Invalid data on a ray proven non-closing by fresh measured and
+   commanded velocity is ignored for that ray only.
+6. Position uncertainty is
+   `max(0.050 m, 2 * sqrt(max(varPX,varPY)))` using fresh, finite, nonnegative
+   variances. Missing/stale/negative/non-finite variance rejects the certificate.
+   Thus the adapter's `0.01 m^2` convergence edge contributes `0.200 m`, rather
+   than being understated by a fixed `0.050 m` allowance.
+
+### Numerical policy and reaction budget
+
+The range measurement begins at the horizontal sensor origin. For closing speed
+`v`, required sensor range is:
+
+`0.055 vehicle radius + measured position uncertainty
++ 0.020 range uncertainty + 0.050 policy margin
++ v * 0.800 complete latency + jerk_limited_stop(v, 1.0 m/s^2, 8.0 m/s^3)
+- 0.012 sensor-origin offset`.
+
+The provisional `0.800 s` complete latency is the sum of independently named
+budgets:
+
+| Budget | Seconds | Clock boundary |
+| --- | ---: | --- |
+| Maximum already-accepted per-variable sample age | 0.40 | host variable receive to effective evaluation |
+| Host evaluation and next adapter poll | 0.02 | effective evaluation to dispatch decision |
+| Command transport and acknowledgement | 0.08 | host dispatch to acknowledged delivery |
+| Onboard commit and braking onset | 0.30 | delivery to assumed deceleration onset |
+
+These bounds are deliberately provisional and conservative for software tests. No
+physical or observed-realtime claim may use them until measured.
+
+The jerk-limited stop relation is identical in shape to the existing replanning
+oracle: triangular when `v <= a^2/j`, otherwise acceleration-ramp, constant
+deceleration, and ramp-out. Maximum safe speed is the greatest value in
+`[0,0.10] m/s` whose required sensor range is no greater than measured range,
+resolved by deterministic bisection to `1e-6 m/s`.
+
+- Requested speed at or below safe speed remains unchanged.
+- A not-yet-dispatched horizontal move above safe speed but with safe speed
+  `>=0.02 m/s` retains displacement/direction/yaw and changes duration to
+  `horizontal_distance / safe_speed`.
+- Safe speed below `0.02 m/s`, a negative margin, or rejected binding input blocks a
+  new enforced move.
+- `MONITOR_ONLY` computes and retains the same decision but never changes duration,
+  displacement, command ordering, outcome, or recovery.
+- During an executing hover or move, each adapter sample is reevaluated. If current
+  measured closing speed exceeds the new safe speed, or a binding input becomes
+  invalid, `ENFORCED` raises a typed avoidance intervention. The dispatched command
+  is retained as outcome-unknown and the existing contained-flight failure path sends
+  controlled Abort/land. No emergency-stop or no-op `StopAndHoldCommand` is used.
+
+### Claim/evidence matrix
+
+| Claim | Real trigger / production entry | Effect and retained observation | Independent oracle and counterexample | Boundary |
+| --- | --- | --- | --- | --- |
+| `WP89-C1-TOGGLE_TRANSIT` | Bottom-left physical Play through `/api/v1/physical-twin/lab/physical-flight/start` | Exact mode in request, status, operation marker, and disabled active control | Captured request/status; boolean, numeric, alias, null, observation, arm/disarm, acrobatics, and active-retoggle cases | `PRODUCTION_ENTRY / FAST_SIM / ACCELERATED` |
+| `WP89-C2-DYNAMIC_POLICY` | Fresh per-variable Crazyflie observation plus requested motion | Per-ray closing speed/margin, binding ray, measured uncertainty, safe speed, decision | Independent zero/equality/adjacent/minimum/maximum/high-variance/yaw-rotation/moving-away vectors and monotonic perturbations | `COMPONENT / NO_RUNTIME / NOT_APPLICABLE` |
+| `WP89-C3-PHYSICAL_COMMAND_GUARD` | Contained-flight command helper and adapter sample loop | Unchanged monitor payload, retimed enforced move, pre-dispatch block, or existing abort/land | Fake-link command capture for nominal, retimed, invalid/stale, below-floor, moving-away, hover-drift, and mid-command loss | `PRODUCTION_ENTRY / FAST_SIM / ACCELERATED` |
+| `WP89-C4-RETAINED_TRUTH` | Status polling, command evidence, telemetry artifact, and marker reload | Mode, evaluation count, minimum margin, binding ray, last decision, and intervention reason | Marker restart/reload and terminal artifact comparison after normalizing run-local identity/timing | `INTEGRATION / FAST_SIM / ACCELERATED` |
+
+### Complete guard and counterexample registry
+
+The design oracle derives these semantic categories from the retained request,
+requirements, and matrix: typed mode authority; range validity; range freshness;
+kinematic freshness; estimator uncertainty; vehicle/sensor geometry; complete reaction
+latency; braking authority; speed cap/floor; post-dispatch recovery; and retained
+truth. Each has at least one isolated perturbation while the remaining inputs pass.
+
+Required vectors include exact zero, `0.02`, `0.05`, and `0.10 m/s` relations;
+equality, `-1e-6 m`, and `+1e-6 m` clearance; yaw `0` and `pi/2`; moving away;
+stale/missing/`NO_HIT`/`CLIPPED`/out-of-range; stale yaw, vx, vy, and variance;
+missing variance; a high-variance state; `0.10 m` retimed from one to two seconds at
+the exact `0.05 m/s` boundary; monitor command identity; and mid-command clearance
+loss selecting outcome-unknown plus existing abort/land. Detour, certified hold,
+retreat, and no-certificate hold vectors are inapplicable because those capabilities
+are explicitly excluded, not silently passed.
+
+### Independently derived affected-boundary closure
+
+`scripts/audit_wp89_design.py` derives claim keys from this matrix, generated outputs
+from `ui/package.json`, and production/test transit paths by scanning for the public
+request, API start, Crazyflie raw/link, component, and route symbols. It compares
+those independently derived sets with the paths declared here and freezes every
+preimage or intended-new state:
+
+- policy/sensor/link: `src/crazyswarm_app/safety/avoidance.py`,
+  `src/crazyswarm_app/domain/telemetry.py`,
+  `src/crazyswarm_app/vehicles/crazyflie.py`,
+  `src/crazyswarm_app/vehicles/crazyflie_link.py`, and
+  `src/crazyswarm_app/vehicles/_cflib_link.py`;
+- physical owners/transits: `src/crazyswarm_app/hardware/basic_flight_lab.py`,
+  `src/crazyswarm_app/hardware/controller_tuning_lab.py`,
+  `src/crazyswarm_app/hardware/observation_twin.py`, and
+  `src/crazyswarm_app/api/app.py`;
+- UI/public/generated: `ui/app/components/TwinBasicFlightLab.tsx`,
+  `ui/app/components/ControlCenter.tsx`, `ui/app/lib/api.ts`,
+  `ui/app/lib/models.ts`, `ui/app/globals.css`, `ui/openapi.json`, and
+  `ui/app/lib/api.generated.ts`;
+- tests: `tests/safety/test_avoidance.py`,
+  `tests/hardware/test_basic_flight_lab.py`,
+  `tests/hardware/test_controller_tuning_lab.py`,
+  `tests/hardware/test_crazyflie_adapter.py`,
+  `tests/hardware/test_observation_twin_service.py`,
+  `tests/api/test_physical_twin.py`, `ui/tests/api-adapter.test.ts`, and
+  `ui/tests/twin-basic-flight-lab.test.tsx`, and
+  `ui/tests/control-api-timeout.test.ts`;
+- durable maps and generator inputs: `design.md`, `docs/system/README.md`, and
+  `scripts/export_openapi.py`.
+
+The retained R1 artifact is
+`missions/campaigns/real/qualification/wp89-design-audit-r1.json`. It contains the
+exact boundary manifest, claim/category closure, typed aliases, clocks and latency
+budgets, complete numerical vectors, resulting commands/recovery actions, and payload
+identity. Its `--check` mode compares byte-for-byte without rewriting.
+
+### Exit gates and implementation limits
+
+1. The same design verifier reproduces the R1 payload/artifact and returns
+   `DESIGN_VERIFIED` before implementation.
+2. Independent policy tests recompute the formulas without importing implementation
+   expected values and cover every frozen vector and monotonic direction.
+3. API/UI tests prove exact request/status/marker transit, default, lockout, scope
+   exclusions, and strict alias rejection through normal entry points.
+4. Fake Crazyflie integration proves per-variable freshness, monitor command identity,
+   progressive retiming, blocked dispatch, and mid-command existing abort/land.
+5. The isolated run uses only injected links and a temporary cache/evidence store.
+   It records `FAST_SIM / ACCELERATED`; hardware and observed realtime remain
+   `NOT_RUN`.
+6. Generated OpenAPI/types, focused Python/UI suites, Ruff, TypeScript, ESLint,
+   requirement catalog, project map, and whitespace checks pass. Failures outside the
+   scoped manifest remain explicit.
+7. Implementation completion language is limited to this WP-89 slice. The originating
+   general avoidance and hold/retreat hierarchy remains open.
+
+<!-- WP89-R1-DESIGN-PAYLOAD-END -->
+
+### WP-89 R1 focused-recheck handoff
+
+- Initial review: one; consolidated correction: one; focused recheck: pending.
+- Initial payload SHA-256:
+  `fe259a07bf682c45b731104f66be235281db15e752ad3dd45ab40270c6e41512`.
+- Initial retained artifact SHA-256:
+  `5d003f99b4eb74ac629375b617a3b3f8d7039f1019e7cbfb015a1b4c93d9f9cd`.
+- Findings addressed: `WP89-D1` per-variable freshness and measured uncertainty;
+  `WP89-D2` clocks, latency breakdown, inverse/command/recovery vectors, and isolated
+  guards; `WP89-D3` current exact preimages and independently derived transit closure;
+  `WP89-D4` verbatim request plus explicit partial-slice status.
+- Author model/effort remains frontier safety/control reasoning; exact tokens, effort,
+  and wall time are not exposed. Cost proxies: one review, one correction, zero runtime
+  or hardware runs.
+- R1 payload SHA-256:
+  `18a7d8186543ba688c52fdabe4a196998f5eecbf860827b804ce1317e3ff4089`.
+- R1 audit artifact SHA-256:
+  `2572e5e7ac90130705d1734a1bd2f6d3576ef0da41a17f65916c9452fadbf094`;
+  `--check` reproduces byte-for-byte with 31 exact boundaries and zero errors.
+
+### WP-89 final design-gate outcome
+
+Status: `REVIEW_BLOCKED`
+
+Independent verification: `BLOCKED_WITH_FINDINGS`
+
+- Reviewer: `/root/wp89_design_verifier`; initial review: one; consolidated
+  correction: one; focused recheck: one. The permitted design cycle is exhausted.
+- Resolved: `WP89-D1` per-variable kinematic/range/variance freshness and measured
+  two-sigma position uncertainty; `WP89-D4` verbatim originating request and truthful
+  partial-slice boundary.
+- Remaining `WP89-D2` (P1 `MUST_FIX_NOW`, C2/C3): the improved pre-freeze oracle still
+  declares its guard categories rather than deriving a complete
+  source-to-category-to-metric map. It lacks isolated executable perturbations for
+  geometry, braking authority, retained truth, negative/non-finite variance, partial
+  timestamp maps, negative clock age, and the existing recovery production trace.
+- Remaining `WP89-D3` (P1 `MUST_FIX_NOW`, exact design identity): during the focused
+  recheck, concurrent preimages changed for
+  `src/crazyswarm_app/vehicles/_cflib_link.py` (current prefix `c383352e`, retained
+  `9cee7837`) and `src/crazyswarm_app/vehicles/crazyflie_link.py` (current prefix
+  `42c68007`, retained `03b35add`). The required `--check` therefore became stale and
+  no longer identifies the current implementation base.
+- Verdict: `BLOCKED_WITH_FINDINGS`. No implementation, isolated runtime run, service
+  restart, radio connection, motor action, or physical flight is authorized by this
+  packet. A successor design needs explicit operator authorization and a fresh bounded
+  gate; it may address only the two remaining P1 scopes.
+
+## WP-90 — WP-89 D2/D3 successor correction
+
+Status: `PLANNED`
+
+Independent verification: `DRAFT_UNVERIFIED`
+
+Operator authorization: `2026-08-27`, verbatim: “WP-89 successor correction for D2
+and D3”.
+
+<!-- WP90-DESIGN-PAYLOAD-START -->
+
+### Scope and inherited design
+
+WP-90 is limited to the two authorized residuals:
+
+- `D2`: replace the declared guard list with a mechanically closed
+  source-to-category-to-metric registry, one whole-pass input, one isolated sensitive
+  failure per binding metric, complete numerical command vectors, and an executable
+  injected-link trace of the existing abort/land fallback plus its landing-failure
+  counterexample.
+- `D3`: bind the current implementation base through exact file hashes and
+  syntax-delimited hashes for the two shared link files, so unrelated edits outside
+  the receive-timestamp contract do not invalidate the gate while changes to the
+  relevant raw-sample/log-callback sections do.
+
+All product behavior, constants, limitations, original operator requests, claim
+matrix, and exit gates in the WP-89 R1 payload with SHA-256
+`18a7d8186543ba688c52fdabe4a196998f5eecbf860827b804ce1317e3ff4089`
+are incorporated unchanged. In particular this remains a partial physical-laboratory
+slice: `MONITOR_ONLY` versus `ENFORCED`, dynamic ranger limiting, and existing
+controlled abort/land after an unsafe dispatched sample. It is not certified
+stop-and-hold, retreat, general avoidance, mapping, hardware qualification, or
+observed-realtime evidence.
+
+### Independently derived semantic sources
+
+The successor audit extracts these source IDs and required categories from this table
+before reading its metric registry:
+
+| Source ID | Immutable source meaning | Required categories |
+| --- | --- | --- |
+| `SRC-OP-SENSOR` | Operator: reject stale, missing, and out-of-range sensor data | `RANGE_VALIDITY`, `RANGE_FRESHNESS` |
+| `SRC-OP-PROJECTION` | Operator: project drone velocity toward each sensed obstacle | `KINEMATIC_VALUE`, `KINEMATIC_FRESHNESS` |
+| `SRC-OP-DISTANCE` | Operator: radius + uncertainty + latency travel + braking + margin | `ESTIMATOR_UNCERTAINTY`, `GEOMETRY`, `LATENCY`, `BRAKING` |
+| `SRC-OP-LIMIT` | Operator: progressively limit speed as clearance decreases | `SPEED_LIMITING` |
+| `SRC-OP-TOGGLE` | Operator: on/off toggle beside bottom-left Play | `MODE_AUTHORITY` |
+| `SRC-RPL-012` | Runtime urgency depends on clearance, speed, uncertainty, authority, and full latency | `GEOMETRY`, `LATENCY`, `BRAKING`, `SPEED_LIMITING` |
+| `SRC-WFL-017-024-048` | Production claims need retained observation, independent oracle, adverse path, clocks, geometry, and resulting command | `RECOVERY_TRACE`, `RETAINED_TRUTH` |
+| `SRC-WP89-D1` | Resolved contract requires fresh yaw/vx/vy/variance and measured 2-sigma uncertainty | `KINEMATIC_VALUE`, `KINEMATIC_FRESHNESS`, `ESTIMATOR_UNCERTAINTY` |
+
+No metric category may exist without one of those sources, and every required category
+must contain at least one binding metric. The machine artifact retains exact metric
+definitions, pass direction, source IDs, and mutations.
+
+### Complete metric and isolated-vector contract
+
+The registry distinguishes every binding subclause rather than collapsing a category:
+
+- exact mode enum and monitor-only payload identity;
+- range status, presence, finiteness, nonnegativity, strict below-maximum bound,
+  receive-timestamp presence, nonnegative clock age, and `<=0.4 s` age;
+- yaw, vx, and vy presence, finiteness, per-variable timestamp presence, nonnegative
+  age, and maximum age independently;
+- varPX and varPY presence, finiteness, nonnegativity, timestamp presence,
+  nonnegative age, and maximum age independently;
+- positive vehicle radius, sensor offset bounded inside the vehicle radius,
+  nonnegative range uncertainty and margin;
+- nonnegative accepted-age, host, transport/ack, and onboard-commit latency components;
+- positive acceleration and jerk authority; positive speed cap; controllable floor
+  inside the cap; monotonic inverse safe speed; displacement-preserving retiming;
+- successful fallback land dispatch, grounded confirmation, and fail-closed
+  `stop_required=true` when landing acknowledgement fails;
+- retained exact mode, decision, evaluation count, minimum margin, binding ray, and
+  intervention reason.
+
+One canonical whole-pass input satisfies every metric. For each metric, exactly one
+input is perturbed while all other inputs remain the canonical pass values. The
+independent design evaluator must report exactly that metric and no other failure.
+Required aliases include missing, `NaN`, negative, equality/just-over bounds,
+partial timestamp maps, and negative clock age.
+
+### Numerical and command oracle
+
+The corrected audit independently evaluates the unchanged WP-89 formula and freezes:
+
+- speeds `0`, `0.02`, `0.05`, and `0.10 m/s`;
+- exact required-range equality and `±1e-6 m` perturbations;
+- yaw `0` and `pi/2`, closing and moving-away rays;
+- higher latency and higher estimator variance monotonicity;
+- `0.10 m` displacement at `0.10 m/s` unchanged with ample clearance;
+- the same displacement retimed from `1.0` to `2.0 s` at the exact `0.05 m/s`
+  safe-speed boundary;
+- below-`0.02 m/s` pre-dispatch block;
+- `MONITOR_ONLY` byte-equivalent command projection;
+- post-dispatch clearance loss mapped to outcome-unknown and the existing
+  controlled abort/land recovery.
+
+Expected values come from the successor's independent prototype, not from the future
+implementation.
+
+### Executable existing-recovery trace
+
+Before design review, the audit executes these existing production-entry tests with
+injected links and a temporary cache/evidence store:
+
+- `tests/hardware/test_basic_flight_lab.py::test_airborne_stability_guard_uses_existing_failure_abort_and_land_path`
+  enters `BasicFlightLabService.run_physical`, creates an airborne adverse sample,
+  asserts one landing command, and independently confirms the firmware flying bit is
+  clear.
+- `tests/hardware/test_basic_flight_lab.py::test_recovered_observer_ground_state_clears_unconfirmed_abort`
+  perturbs landing acknowledgement to fail, asserts `FAILED` with
+  `stop_required=true` and outcome-unknown, then confirms only a fresh grounded
+  observation reconciles the stop.
+
+The retained artifact records the exact command, test node IDs, exit code, and
+normalized semantic result without nondeterministic test duration. These tests run
+without hardware-authority environment variables and cannot open the radio.
+
+### Stable exact preimage identity
+
+The affected-boundary closure remains the independently discovered WP-89 R1 set.
+Existing implementation files receive exact full-file preimage hashes except:
+
+- `src/crazyswarm_app/vehicles/crazyflie_link.py` is preservation-only and binds the
+  syntax-delimited `CrazyflieRawSample` class containing
+  `value_received_at_monotonic_s`;
+- `src/crazyswarm_app/vehicles/_cflib_link.py` is preservation-only and binds
+  `LOG_GROUPS`, `CflibCrazyflieLink._cached_sample`, and
+  `CflibCrazyflieLink._on_log_data`.
+
+The successor implementation is forbidden to edit either preservation-only link file.
+Any change to a bound section invalidates the design. Unrelated changes elsewhere in
+those already-dirty files are outside the payload identity and remain operator-owned.
+Every intended-new path is frozen as absent. The design payload hash excludes its
+verification record and self-referential artifact.
+
+`scripts/audit_wp90_design.py` extracts the source/category table, derives the
+required category universe independently of the metric registry, checks exact
+source/category/metric coverage, executes every isolated vector, computes numerical
+and command outputs, runs the two injected-link recovery tests, derives generated
+outputs and production transit, and freezes the full/section preimages in
+`missions/campaigns/real/qualification/wp90-design-audit.json`.
+
+### Successor exit and stop rules
+
+1. A fresh `work_packet_verifier` reproduces the payload, audit, preimages, 60-metric
+   whole-pass/isolated-failure matrix, and recovery trace before returning
+   `DESIGN_VERIFIED`.
+2. One consolidated correction and one focused recheck are the maximum for WP-90.
+3. After design verification, implementation may change only the R1 implementation
+   owners that are not preservation-only, must derive its tests from the frozen metric
+   and claim matrices, and remains `IMPLEMENTED_UNVERIFIED` until a different fresh
+   implementation verifier accepts the exact manifest.
+4. Author and verifier runs use injected links only. No persistent service restart,
+   hardware deployment, radio connection, motor command, or flight is authorized.
+5. Any missing category/metric/vector, non-isolated mutation, stale bound section,
+   failed recovery trace, or claim beyond the partial slice blocks the smallest
+   affected gate.
+
+<!-- WP90-DESIGN-PAYLOAD-END -->
+
+### WP-90 design-review handoff
+
+- Base commit: `40cd9947f87eb9bf2719d72e7c72ea867eab9977`.
+- Author model/effort: frontier safety/control reasoning due the command-recovery
+  boundary and prior P1 findings; exact token/time/effort counters are unavailable.
+- Review/correction/runtime proxies before review: zero reviews, zero corrections, one
+  packet, two authorized residual findings, two injected-link recovery test nodes,
+  zero live-runtime/hardware runs.
+- Independent verification remains `DRAFT_UNVERIFIED` until the frozen identities
+  below are reproduced.
+- WP-90 payload SHA-256:
+  `d1ebe1a395856fe52b520ea426fcf5eb977840f7646cc5c9b7ae3b3f38b4be0b`.
+- WP-90 audit artifact SHA-256:
+  `dc49c57a4740da542b7145e8bbd9557bde673add60f500b2c590bdb5cb01c3a7`.
+- Pre-freeze result: `PASS`; 12 independently derived categories, 60 unique metrics,
+  one whole-pass input, 60 exact isolated failures, 32 exact boundaries, and two
+  injected-link recovery nodes passed. Hardware/realtime evidence remains `NOT_RUN`.
+
+## WP-90 R1 — consolidated oracle independence and lifecycle-identity correction
+
+Status: `PLANNED`
+
+Independent verification: `DRAFT_UNVERIFIED`
+
+This is WP-90's single permitted correction for `WP90-D2A`, `WP90-D2B`, and
+`WP90-D3A`. The initial successor payload remains retained above; this payload
+supersedes it for implementation eligibility without changing the inherited product
+behavior or scope.
+
+<!-- WP90-R1-DESIGN-PAYLOAD-START -->
+
+### Frozen inherited behavior
+
+The complete WP-89 R1 behavior remains incorporated at SHA-256
+`18a7d8186543ba688c52fdabe4a196998f5eecbf860827b804ce1317e3ff4089`.
+The operator-authorized successor scope remains only D2/D3: oracle completeness and
+exact current preimage identity. No stop-and-hold, retreat, general avoidance, mapping,
+hardware, realtime, or deployment claim is added.
+
+### Source-derived binding schema
+
+The audit reads the originating-request and durable-requirement meanings below, then
+derives the category universe and binding schema before constructing any candidate
+metric registry:
+
+| Source ID | Source meaning | Categories |
+| --- | --- | --- |
+| `SRC-OP-SENSOR` | reject stale, missing, and out-of-range sensor data | `RANGE_VALIDITY`, `RANGE_FRESHNESS` |
+| `SRC-OP-PROJECTION` | project measured and commanded drone velocity toward each sensed obstacle | `KINEMATIC_VALUE`, `KINEMATIC_FRESHNESS` |
+| `SRC-OP-DISTANCE` | radius + uncertainty + latency travel + braking + margin | `ESTIMATOR_UNCERTAINTY`, `GEOMETRY`, `LATENCY`, `BRAKING` |
+| `SRC-OP-LIMIT` | progressively limit speed as clearance decreases | `SPEED_LIMITING` |
+| `SRC-OP-TOGGLE` | exact on/off control beside Play | `MODE_AUTHORITY` |
+| `SRC-RPL-012` | clearance, speed, uncertainty, authority, and full reaction latency bind urgency | `GEOMETRY`, `LATENCY`, `BRAKING`, `SPEED_LIMITING` |
+| `SRC-WFL-017-024-048` | production effect, retained observation, independent oracle, adverse recovery, exact clocks/geometry/resulting command | `RECOVERY_TRACE`, `RETAINED_TRUTH` |
+| `SRC-WP89-D1` | fresh range/yaw/vx/vy/variance, host clock ordering, measured 2-sigma uncertainty | `RANGE_FRESHNESS`, `KINEMATIC_VALUE`, `KINEMATIC_FRESHNESS`, `ESTIMATOR_UNCERTAINTY` |
+
+The machine-readable schema parsed from this payload is:
+
+<!-- WP90-R1-BINDING-SCHEMA-START -->
+```json
+{
+  "mode": ["exact_enum", "monitor_input_output_identity"],
+  "range": ["status_valid", "value_present", "value_finite", "value_nonnegative", "max_present", "max_finite", "max_positive", "value_strictly_below_max", "timestamp_present", "timestamp_finite", "age_nonnegative", "age_at_most_0_4"],
+  "measured_kinematics": {
+    "yaw": ["present", "finite", "timestamp_present", "timestamp_finite", "age_nonnegative", "age_at_most_0_4"],
+    "vx": ["present", "finite", "timestamp_present", "timestamp_finite", "age_nonnegative", "age_at_most_0_4"],
+    "vy": ["present", "finite", "timestamp_present", "timestamp_finite", "age_nonnegative", "age_at_most_0_4"]
+  },
+  "commanded_kinematics": {
+    "frame": ["exact_BODY_or_HOME"],
+    "vx": ["present", "finite"],
+    "vy": ["present", "finite"]
+  },
+  "clock": {
+    "evaluation_time": ["present", "finite"],
+    "maximum_age": ["present", "finite", "nonnegative"]
+  },
+  "variance": {
+    "varPX": ["present", "finite", "nonnegative", "timestamp_present", "timestamp_finite", "age_nonnegative", "age_at_most_0_4"],
+    "varPY": ["present", "finite", "nonnegative", "timestamp_present", "timestamp_finite", "age_nonnegative", "age_at_most_0_4"]
+  },
+  "geometry": ["radius_positive", "sensor_offset_inside_radius", "range_uncertainty_nonnegative", "margin_nonnegative"],
+  "latency": ["sample_age_nonnegative", "host_nonnegative", "transport_ack_nonnegative", "onboard_commit_nonnegative"],
+  "braking": ["acceleration_positive", "jerk_positive"],
+  "speed": ["cap_positive", "floor_inside_cap", "inverse_monotonic", "retime_preserves_displacement"],
+  "recovery": ["one_land_dispatched", "ground_confirmed", "landing_failure_retains_stop_required"],
+  "evidence": ["mode_exact", "decision_enum", "evaluation_count_positive_integer", "minimum_margin_finite", "binding_ray_enum", "intervention_reason_enum"]
+}
+```
+<!-- WP90-R1-BINDING-SCHEMA-END -->
+
+The schema mechanically expands to exactly 79 unique metrics. No separately authored
+expected-category constant is permitted. Exact set equality is checked among schema
+rules, generated metric IDs, source coverage, one whole-pass vector, and 79 isolated
+mutations. Removing or adding any rule fails the audit.
+
+### Independent inputs, candidate outputs, and isolated sensitivity
+
+The canonical input contains raw values and candidate outputs, never pass booleans:
+
+- finite evaluation time and maximum age;
+- full/partial per-variable timestamp maps;
+- range value/status/maximum;
+- measured HOME yaw/vx/vy and explicit commanded BODY/HOME vx/vy;
+- asymmetric varPX/varPY, geometry, uncertainty, latency, acceleration, jerk, speed
+  cap/floor, clearance vectors, and requested command;
+- candidate per-ray projection, per-clearance safe-speed vector, transformed command,
+  monitor output payload, decision evidence, and structured recovery observation.
+
+The independent evaluator recomputes yaw rotation, measured/commanded ray projections,
+2-sigma uncertainty, required range, inverse safe speed, action, retimed duration,
+displacement/direction preservation, and canonical payload hashes. Each isolated vector
+changes exactly one raw input or candidate output and must produce exactly its one
+metric failure.
+
+Additional one-variable admissible numerical witnesses hold all other values fixed:
+
+- radius `0.055 -> 0.065 m` increases required range;
+- sensor offset `0.012 -> 0.010 m` increases required range;
+- acceleration `1.0 -> 0.8 m/s^2` increases stopping distance;
+- jerk `8.0 -> 6.0 m/s^3` increases stopping distance;
+- varPX `0.0004 -> 0.0025 m^2` with unchanged varPY raises 2-sigma uncertainty
+  from `0.05` to `0.10 m`;
+- latency `0.8 -> 1.0 s` increases required range;
+- less clearance never increases safe speed.
+
+Projection and action fields in the retained artifact are computed outputs, not labels:
+yaw `0`, yaw `pi/2`, moving-away, commanded-closing-only, ample-clearance
+`CLEAR`, exact half-speed `LIMIT`, below-floor `BLOCK_BEFORE_DISPATCH`, monitor
+identity, and post-dispatch certificate loss mapped through the observed recovery
+contract.
+
+### Structured production recovery oracle
+
+The audit invokes `BasicFlightLabService.run_physical` and
+`BasicFlightLabService.start_physical_flight/abort_physical_flight` directly with
+injected `FakeCrazyflieLink` instances, temporary cache/evidence paths, and no
+hardware-authority environment.
+
+The nominal adverse-hover probe returns independently observed fields:
+`exception_code=PREFLIGHT_FAILED`, `trigger=near_floor`, exact command kinds,
+`land_count=1`, and `flying=false`. The landing-acknowledgement perturbation returns
+`state=FAILED`, `stop_required=true`, and final
+`command_phase=OUTCOME_UNKNOWN`. Each recovery metric compares its own structured
+field; no recovery fact is inferred merely from one pytest exit code. The two existing
+pytest nodes remain an adjacent regression check, not the source of these facts.
+
+### Current-path and timestamp-lifecycle identity
+
+Boundary closure is re-derived from current sources, not copied from a WP-89 artifact:
+
+1. extract implementation paths and four claim keys from the inherited WP-89 R1
+   payload;
+2. scan current Python/UI/test sources for the public request, API route/start method,
+   physical service, Crazyflie raw/link/adapter, and component symbols;
+3. derive `ui/openapi.json` and `ui/app/lib/api.generated.ts` from
+   `ui/package.json`;
+4. require exact equality between discovered transits/generated outputs and the
+   current manifest.
+
+All existing non-link boundaries receive current full-file hashes. The two
+preservation-only link files receive syntax-delimited hashes for every relevant
+timestamp lifecycle section:
+
+- `src/crazyswarm_app/vehicles/crazyflie_link.py`:
+  `CrazyflieRawSample`;
+- `src/crazyswarm_app/vehicles/_cflib_link.py`: `LOG_GROUPS`,
+  `CflibCrazyflieLink.__init__`, `CflibCrazyflieLink.connect`,
+  `CflibCrazyflieLink.restart_observation_logs`,
+  `CflibCrazyflieLink._cached_sample`,
+  `CflibCrazyflieLink._start_logs`, and
+  `CflibCrazyflieLink._on_log_data`.
+
+Implementation remains forbidden to edit either preservation-only file. A change to
+any bound syntax section invalidates the design; unrelated edits elsewhere in those
+already-dirty operator-owned files do not.
+
+`scripts/audit_wp90_design.py` extracts this R1 schema/source table, generates and
+executes the 79-metric oracle, runs structured and pytest recovery probes, derives
+current paths/generated outputs, and retains exact identities in
+`missions/campaigns/real/qualification/wp90-design-audit-r1.json`.
+
+### R1 exit rules
+
+1. The same verifier reproduces the R1 payload and artifact, confirms all initial
+   findings resolved, and returns `DESIGN_VERIFIED`; otherwise WP-90 remains blocked.
+2. Implementation may begin only after that verdict, changes no preservation-only
+   file, and stays within the inherited partial-slice behavior.
+3. Author checks and the one isolated software run use injected links only. A different
+   fresh verifier owns the implementation gate.
+4. No live service restart, hardware deployment, radio connection, motor command, or
+   flight is authorized.
+
+<!-- WP90-R1-DESIGN-PAYLOAD-END -->
+
+### WP-90 R1 focused-recheck handoff
+
+- Initial successor review: one; consolidated correction: one; focused recheck:
+  pending.
+- Initial payload:
+  `d1ebe1a395856fe52b520ea426fcf5eb977840f7646cc5c9b7ae3b3f38b4be0b`.
+- Initial artifact:
+  `dc49c57a4740da542b7145e8bbd9557bde673add60f500b2c590bdb5cb01c3a7`.
+- Correction is limited to `WP90-D2A`, `WP90-D2B`, and `WP90-D3A`; no product
+  behavior or optional scope changed.
+- R1 payload SHA-256:
+  `7640512cac6eead362a0211cb7acefb6615898329e7aa4efe379d8c3f4bbe43d`.
+- R1 audit artifact SHA-256:
+  `6673a2c4a88453042a6dae724308727c0ec8084c040855040d8c06f067a5a0ee`.
+- R1 pre-freeze result: `PASS`; 79 schema-derived metrics, one whole pass, 79 exact
+  isolated failures, structured nominal/failure recovery observations, two adjacent
+  injected-link tests, computed projections/actions/command transforms, current-path
+  derivation, and eight preservation-only timestamp lifecycle sections.
+
+### WP-90 final design-gate outcome
+
+Status: `REVIEW_BLOCKED`
+
+Independent verification: `BLOCKED_WITH_FINDINGS`
+
+- Reviewer: `/root/wp90_design_verifier`; initial review: one; consolidated
+  correction: one; focused recheck: one. The successor design cycle is exhausted.
+- Resolved: `WP90-D3A` current production/generator derivation and exact relevant
+  timestamp-lifecycle section identities; structured nominal/failure recovery evidence;
+  finite/partial/negative-clock and invalid-value mutations; D2/D3 scope containment.
+- Remaining `WP90-R1-D2A` (P1 `MUST_FIX_NOW`): schema leaves and metrics have equal
+  counts but no exact rule-identity mapping, so a renamed/omitted semantic rule can
+  leave the gate passing. Three declared source/category pairs also have no metric
+  linkage.
+- Remaining `WP90-R1-D2B` (P1 `MUST_FIX_NOW`): retained evidence accepts type-valid but
+  semantically wrong mode-relative decisions, counts, margins, rays, and reasons. The
+  variance witness does not independently exercise asymmetric varPX/varPY; HOME-frame
+  yaw projection and yaw-preserving retiming are not frozen.
+- Verdict: `BLOCKED_WITH_FINDINGS`. Implementation and the implementation-verification
+  run remain unauthorized. No persistent service restart, hardware deployment, radio
+  connection, motor command, or physical flight occurred.
+- Any further design work requires a new explicit operator-authorized successor and
+  may address only `WP90-R1-D2A` and `WP90-R1-D2B`.
+
+## WP-91 — final bounded WP-90 D2 closure
+
+Status: `DEFINED_NOT_STARTED`
+
+Independent verification: `DESIGN_VERIFIED`
+
+Operator authorization: `2026-08-27`, verbatim: “ok then continue with one run,
+after that do the implementation and verify once and then analze what is missing i
+cannot do so many work package iterations”.
+
+Review budget: exactly one design review with no automatic correction/recheck. On a
+passing design verdict, implement immediately, run one isolated injected-link author
+verification, then use one different independent implementation verifier with no
+automatic correction/recheck and analyze residual gaps.
+
+<!-- WP91-DESIGN-PAYLOAD-START -->
+
+### Exact bounded scope
+
+WP-91 addresses only `WP90-R1-D2A` and `WP90-R1-D2B`. It incorporates unchanged:
+
+- WP-89 R1 product behavior and limitations at
+  `18a7d8186543ba688c52fdabe4a196998f5eecbf860827b804ce1317e3ff4089`;
+- WP-90 R1 source schema, structured recovery, current boundary derivation, and
+  timestamp-lifecycle identity at
+  `7640512cac6eead362a0211cb7acefb6615898329e7aa4efe379d8c3f4bbe43d`;
+- the reproduced WP-90 R1 artifact at
+  `6673a2c4a88453042a6dae724308727c0ec8084c040855040d8c06f067a5a0ee`.
+
+No product behavior, implementation owner, live-runtime authority, or capability claim
+is added except the missing yaw-preservation subclause already promised by the
+inherited retiming contract.
+
+### Exact schema-rule identity closure
+
+`scripts/audit_wp91_design.py` flattens every WP-90 R1 binding-schema leaf to its
+canonical dotted identity, for example `range.status_valid`,
+`measured_kinematics.vx.timestamp_finite`, and
+`evidence.minimum_margin_finite`. It extends that schema with exactly
+`speed.retime_preserves_yaw`.
+
+An independently constructed rule-to-metric map must satisfy both exact equalities:
+
+- mapping keys = all 80 flattened schema rule identities;
+- mapping values = all 79 WP-90 R1 metric IDs plus
+  `M_RETIME_YAW`.
+
+Renaming, deleting, duplicating, or adding one rule or metric fails. The retained
+artifact contains every rule/metric pair, not only equal cardinalities.
+
+Every declared source/category pair must link to at least one exact metric. In
+particular the previously absent links are frozen:
+
+- `SRC-OP-DISTANCE -> LATENCY` links the four latency metrics;
+- `SRC-OP-PROJECTION -> KINEMATIC_FRESHNESS` links yaw/vx/vy timestamp and age
+  metrics;
+- `SRC-WP89-D1 -> KINEMATIC_VALUE` links yaw/vx/vy presence and finite metrics.
+
+The audit compares the complete source/category pair set derived from the payload with
+the complete linked pair set; subset or count-only proofs fail.
+
+### Exact retained-evidence oracle
+
+Evidence values are recomputed from the raw canonical observation and command:
+
+- `mode` equals the frozen request mode;
+- `decision` equals the independently computed command action;
+- `evaluation_count` equals the number of evaluated observations;
+- `minimum_margin` equals measured binding-ray range minus independently computed
+  required range within `1e-9 m`;
+- `binding_ray` equals the ray producing that margin;
+- `intervention_reason` is derived from the decision and input validity.
+
+The canonical whole-pass evidence is compared with isolated type-valid wrong values:
+`CLEAR -> LIMIT`, count `1 -> 999`, computed margin `->999`, front `->back`,
+and `none -> unsafe_closing_speed`. Each must fail only its exact evidence metric.
+
+### Missing generalized numerical and command vectors
+
+1. Asymmetric estimator variance is evaluated from separate varPX/varPY:
+   `(0.0025,0.0004)` and `(0.0004,0.0025)` must produce the same `0.10 m`
+   2-sigma uncertainty and required range. A minimum-axis implementation produces the
+   smaller baseline and fails.
+2. Command projection freezes both frames at yaw `pi/2`:
+   BODY `(+0.06,0)` binds `front=0.06`; HOME `(+0.06,0)` rotates to body
+   `(0,-0.06)` and binds `right=0.06`. Treating HOME as BODY fails.
+3. Progressive retiming preserves displacement, direction, and yaw exactly. The
+   canonical input/output retain yaw `0.30 rad`; changing only output yaw to
+   `0.40 rad` fails `M_RETIME_YAW`.
+
+All values are computed by the design oracle from explicit inputs. No pass boolean,
+authored action label, or single scalar variance is accepted as proof.
+
+### Exit and execution rule
+
+1. One fresh verifier reproduces the WP-91 payload/artifact and returns
+   `DESIGN_VERIFIED` or `BLOCKED_WITH_FINDINGS`. There is no automatic correction
+   or recheck.
+2. On `DESIGN_VERIFIED`, implementation begins immediately against the inherited
+   owners while preserving the section-bound link files.
+3. Author verification is one isolated injected-link software run plus necessary
+   static/generated checks; then a different verifier receives the exact manifest once.
+4. Regardless of the implementation verdict, handoff analyzes remaining functionality
+   and evidence without opening another automatic packet.
+5. No dashboard restart, hardware deployment, radio access, motor command, or flight is
+   authorized.
+
+<!-- WP91-DESIGN-PAYLOAD-END -->
+
+### WP-91 design-review handoff
+
+- Base commit: `40cd9947f87eb9bf2719d72e7c72ea867eab9977`.
+- Accepted-review candidate payload SHA-256:
+  `8b31bb73849ea1b9b2bffc63ded11ddf6b36e5bd67d5a95eedf89f87c8013bb6`.
+- Reproducible design-audit artifact SHA-256:
+  corrected candidate
+  `19acf0efa1e7107c841a2af6e1cc889abfd4fb5fa2258f77257d8dcb1c15c81d`.
+- Model/effort route: frontier reasoning because this is the final safety-oracle gate;
+  exact tokens/time/effort are unavailable.
+- Cost proxies: one packet, two residual findings, zero permitted design corrections,
+  one planned design review, one planned isolated author run, one planned
+  implementation review, zero hardware runs.
+
+### WP-91 final design-gate outcome
+
+- Reviewer: `/root/wp91_design_verifier`; exactly one review, with no correction or
+  recheck, as authorized.
+- P1 `WP91-D1`: the recorded artifact identity has an extra leading `2`, so the exact
+  supplied artifact identity is not reproducible.
+- P1 `WP91-D2A`: source/category closure checks only for a nonempty list; replacing a
+  linked metric with unknown `M_NOT_A_REAL_METRIC` can still pass.
+- P1 `WP91-D2B`: retained evidence chooses the maximum closing-speed ray from one
+  scalar range instead of the minimum margin across per-ray ranges, and missing range
+  input raises rather than deriving `invalid_binding_input`.
+- Verdict: `BLOCKED_WITH_FINDINGS`. The design review budget is exhausted, so no
+  implementation, author run, implementation review, dashboard restart, hardware
+  deployment, radio connection, motor command, or physical flight followed.
+
+### WP-91 operator-authorized consolidated correction
+
+- Authorization: `2026-08-27`, verbatim: “fix the issues in the work packet and then i
+  need you to start implementing the shit!!” The follow-up requires the corrected
+  pre-implementation state to be committed and pushed before implementation begins on
+  a new branch.
+- Scope remains exactly `WP91-D1`, `WP91-D2A`, and `WP91-D2B`; no product behavior or
+  implementation owner changed. The delimited design payload remains byte-identical at
+  `8b31bb73849ea1b9b2bffc63ded11ddf6b36e5bd67d5a95eedf89f87c8013bb6`.
+- `WP91-D1`: the handoff artifact identity is corrected to the actual original
+  `19acf0efa1e7107c841a2af6e1cc889abfd4fb5fa2258f77257d8dcb1c15c81d`.
+- `WP91-D2A`: every linked metric is checked against the exact canonical 80-metric
+  identity set, duplicate identities within a source/category list fail, the complete
+  linked union must have no missing or extra identity, and replacement with
+  `M_NOT_A_REAL_METRIC` is a retained failing mutation.
+- `WP91-D2B`: the oracle accepts four separate ray ranges, selects the minimum
+  `measured_range(ray) - required_range(ray)`, retains the front/right reviewer
+  counterexample, and derives `invalid_binding_input` for a missing ray without an
+  exception.
+- Corrected audit program SHA-256 after the focused correction:
+  `c001d41ded7273114f0a29595107c43499750bee4514feae0123798b60848023`.
+- Corrected reproducible artifact:
+  `missions/campaigns/real/qualification/wp91-design-audit.json`, SHA-256
+  `afff2b12729789415881ad9e1a0d7b811bf1b18d13fbb35cb50d579fdcae619d`;
+  generation and byte-check both pass.
+- Initial correction review: `/root/wp91_final_design_verifier` returned
+  `BLOCKED_WITH_FINDINGS` with two P1s. A duplicated flattened rule was hidden by set
+  comparison, and a canonical-but-wrong metric could be moved into
+  `SRC-OP-DISTANCE/LATENCY` without failing exact per-pair identity.
+- Focused correction: the audit now rejects non-unique flattened rule lists and
+  compares every source/category metric set with the exact frozen mapping. It retains
+  both the duplicated-rule mutation and the canonical-but-wrong `M_MODE_ENUM`
+  replacement as passing negative probes.
+- The same verifier receives one focused recheck of only these two findings. A passing
+  verdict changes the separate verification field to `DESIGN_VERIFIED`; a blocking
+  verdict stops implementation. No third automatic review is authorized.
+
+### WP-91 corrected design-gate outcome
+
+- Verifier: `/root/wp91_final_design_verifier`; one initial correction review, one
+  focused correction, and one focused recheck. No third review is permitted.
+- The accepted payload remains
+  `8b31bb73849ea1b9b2bffc63ded11ddf6b36e5bd67d5a95eedf89f87c8013bb6`.
+- The verifier reproduced the corrected script and artifact hashes, generated a
+  byte-identical temporary artifact, and confirmed the baseline audit remains `PASS`.
+- Duplicate inherited `speed.retime_preserves_displacement` produces 81 flattened
+  rules, 80 unique identities, and `FAIL` with the exact duplicate-rule error.
+- Replacing the exact `SRC-OP-DISTANCE/LATENCY` member with canonical-but-wrong
+  `M_MODE_ENUM` produces the exact per-pair metric-identity mismatch.
+- Verdict: `DESIGN_VERIFIED`. Product implementation is authorized only after the
+  requested checkpoint commit/push and creation of a new implementation branch. The
+  hardware/runtime prohibitions remain unchanged.

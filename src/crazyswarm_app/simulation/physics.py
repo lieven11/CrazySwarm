@@ -942,12 +942,12 @@ class SixDofPhysics:
         )
         desired_acceleration = Vector3(
             x=_clamp(
-                target_acceleration_world_m_s2.x + 3.0 * position_error.x + 2.4 * velocity_error.x,
+                target_acceleration_world_m_s2.x + 3.2 * position_error.x + 2.6 * velocity_error.x,
                 -4.0,
                 4.0,
             ),
             y=_clamp(
-                target_acceleration_world_m_s2.y + 3.0 * position_error.y + 2.4 * velocity_error.y,
+                target_acceleration_world_m_s2.y + 3.2 * position_error.y + 2.6 * velocity_error.y,
                 -4.0,
                 4.0,
             ),

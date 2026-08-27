@@ -1,5 +1,50 @@
 # CrazySwarm agent instructions
 
+## Context routing
+
+Start repository orientation with `docs/README.md` and
+`docs/project/requirements/README.md`. Read only the domain and workflow documents
+selected by their routing tables; do not load the complete requirements catalog,
+historical decisions, retrospectives, run evidence, or CSV files by default. For run
+analysis, read `docs/guides/RUN_ANALYSIS_PROTOCOL.md` and summarize artifacts before
+inspecting row-level CSV windows.
+
+When a change moves an entry point, responsibility owner, public transit boundary,
+contract location, or primary test boundary, update `docs/system/README.md`. Ordinary
+internal edits do not require map churn.
+
+## Shared hardware and live-runtime ownership
+
+The Crazyradio, physical drone, macOS dashboard service, ports `3001`/`8011`, and the
+Local checkout's `.cache/crazyswarm` state form one operator-owned hardware runtime.
+They are shared external state, not per-chat test fixtures.
+
+- Ordinary coding, review, diagnosis, and test tasks must not start, stop, restart,
+  install, uninstall, rebuild, or replace the persistent dashboard service; kill its
+  processes or ports; call physical-flight, readiness, observer-connect, motor-bench,
+  or global-motor-stop endpoints; or set/pass `CRAZYSWARM_PHYSICAL_HARDWARE_ENABLED`,
+  `CRAZYSWARM_HARDWARE_OWNER`, or `--hardware-owner`.
+- A task may touch the live runtime only when the user explicitly asks that same task
+  to deploy to hardware, operate the drone, or perform a physical test. Code changes
+  and a generic request to test do not imply hardware authority.
+- Background/parallel Codex work belongs in a Git worktree. Worktree dashboards are
+  simulation-only and receive isolated default ports. They must use injected/fake
+  Crazyflie links for tests. Run `scripts/setup_worktree.sh` once when dependencies
+  are absent. Never hand a background task physical-radio authority.
+- The persistent macOS service is the sole normal hardware owner. Inspect it with
+  `.venv/bin/crazyswarm-control hardware-owner status`. If another owner is recorded,
+  fail closed; do not bypass, delete, or replace the lease.
+- For an explicitly authorized deployment, first confirm backend motor actuation is
+  `IDLE` with `stop_required=false`, tell the user that the live runtime will restart,
+  deploy exactly once through `scripts/deploy_hardware_dashboard.sh`, then wait for
+  service health and report observer state. Never loop on restarts.
+- `SUSPENDED` means a named physical operation temporarily owns the radio. Preserve
+  and display the authoritative suspension reason, release in `finally`, and resume
+  observation automatically. Unrelated work must never suspend the observer.
+
+The operator procedure and failure recovery are in
+`docs/guides/HARDWARE_RUNTIME_OWNERSHIP.md`.
+
 ## UI design guide
 
 Before creating, changing, or reviewing any user-facing interface, read and follow
@@ -11,16 +56,20 @@ pattern.
 
 ## Independent verification for work packets
 
-Apply this protocol only when the user explicitly asks to create, structure, refine,
-implement, execute, complete, verify, qualify, or transition one or more work
-packets/work packages. It applies whether packet numbers already exist or the user asks
-to create them. A mere mention, explanation, status question, ordinary numbered plan,
-or unrelated small task does not activate it. An explicit work-packet request takes
-precedence over the small-task exemption.
+Apply this full protocol only when the user explicitly asks for independent
+verification, a formal gate, qualification, or the strict work-packet workflow. Merely
+asking to create, structure, refine, implement, execute, or change a work packet does
+not activate independent review. The default for a user-present iteration is the fast
+loop: make the bounded change, run proportionate author checks once, deploy when
+applicable, and hand it to the user for feedback. Fast-loop work remains
+`IMPLEMENTED_UNVERIFIED` and must not be described as independently verified,
+qualified, or complete.
 
-Use the detailed requirements in
-`docs/project/WORKFLOW_AND_REQUIREMENTS.md` (`REQ-WFL-013` through `REQ-WFL-027`).
-One related packet batch is one review unit unless the user asks for a different split.
+Read `docs/project/requirements/workflow/WORK_PACKET_GATES.md` and
+`docs/project/requirements/workflow/COST_SCOPE_AND_HANDOFF.md`. Also read
+`docs/project/requirements/workflow/PREFREEZE_AND_ORACLES.md` only under the triggers
+listed in the requirements index. One related packet batch is one review unit unless
+the user asks for a different split.
 
 ### Design gate
 

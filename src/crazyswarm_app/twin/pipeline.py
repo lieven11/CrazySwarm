@@ -116,6 +116,18 @@ _CONTRACTS = {
     **{f"motor.m{index}.pwm": ("percent", "body") for index in range(1, 5)},
     **{f"motor.m{index}.state": ("json", "body") for index in range(1, 5)},
 }
+_RETENTION_BOUNDARY_COLUMNS = (
+    "state",
+    "safety_state",
+    "armed",
+    "flying",
+    "battery_cutoff_active",
+    "powertrain_current_limited",
+    "perceived_world_revision",
+    "accepted_execution_program_sha256",
+    "accepted_plan_sha256",
+    "replacement_authority_sha256",
+)
 
 
 def telemetry_csv_twin_batches(
@@ -123,6 +135,7 @@ def telemetry_csv_twin_batches(
     session_id: str,
     config: TwinSessionConfig,
     csv_bytes: bytes,
+    minimum_source_period_s: float | None = None,
 ) -> tuple[TwinIngestionBatch, ...]:
     """Translate retained run telemetry through the common twin ingestion contract.
 
@@ -132,10 +145,8 @@ def telemetry_csv_twin_batches(
     """
 
     rows = list(csv.DictReader(csv_bytes.decode("utf-8-sig").splitlines()))
-    selected_rows = [
-        row
-        for row in rows
-        if str(row.get("vehicle_id") or "") == config.observed_vehicle_id
+    selected_rows: list[Mapping[str, str]] = [
+        row for row in rows if str(row.get("vehicle_id") or "") == config.observed_vehicle_id
     ]
     if not selected_rows:
         raise ValueError("telemetry CSV does not contain the twin observed vehicle")
@@ -151,6 +162,13 @@ def telemetry_csv_twin_batches(
         ):
             by_source_time[source_s] = row
     selected_rows = [by_source_time[source_s] for source_s in sorted(by_source_time)]
+    if minimum_source_period_s is not None:
+        if not math.isfinite(minimum_source_period_s) or minimum_source_period_s <= 0.0:
+            raise ValueError("twin retention source period must be finite and positive")
+        selected_rows = _retain_bounded_source_rows(
+            selected_rows,
+            minimum_source_period_s=minimum_source_period_s,
+        )
     samples: list[TwinStreamSample] = []
     for sequence, row in enumerate(selected_rows, start=1):
         source_s = _first_float(row, "simulation_timestamp_s", "source_timestamp_s")
@@ -164,9 +182,7 @@ def telemetry_csv_twin_batches(
             for channel_id in _CONTRACTS:
                 value = _channel_value(row, channel_id, side)
                 availability = (
-                    TwinAvailability.AVAILABLE
-                    if value is not None
-                    else TwinAvailability.MISSING
+                    TwinAvailability.AVAILABLE if value is not None else TwinAvailability.MISSING
                 )
                 unit, frame = _CONTRACTS[channel_id]
                 sample_key = {
@@ -184,6 +200,9 @@ def telemetry_csv_twin_batches(
                         vehicle_id=vehicle_id,
                         channel_id=channel_id,
                         sequence=sequence,
+                        pair_id=f"pair-{session_id}-{sequence}",
+                        pair_sequence=sequence,
+                        alignment_epoch=1,
                         source_timestamp_s=source_s,
                         received_timestamp_s=received_s,
                         availability=availability,
@@ -196,9 +215,7 @@ def telemetry_csv_twin_batches(
                         frame=frame,
                         value=value,
                         calibration_id=(
-                            config.calibration_id
-                            if side is TwinStreamSide.PREDICTED
-                            else None
+                            config.calibration_id if side is TwinStreamSide.PREDICTED else None
                         ),
                         raw_payload_sha256=raw_hash,
                     )
@@ -207,6 +224,39 @@ def telemetry_csv_twin_batches(
         TwinIngestionBatch(session_id=session_id, samples=tuple(samples[index : index + 512]))
         for index in range(0, len(samples), 512)
     )
+
+
+def _retain_bounded_source_rows(
+    rows: list[Mapping[str, str]],
+    *,
+    minimum_source_period_s: float,
+) -> list[Mapping[str, str]]:
+    """Keep a bounded derived twin stream without discarding causal boundaries.
+
+    The exact high-rate source remains available in the campaign CSV. The twin is a
+    derived comparison stream, so it retains the configured evidence cadence plus
+    every state, safety, world, command, plan, or replan identity transition and the
+    final source row.
+    """
+
+    if len(rows) <= 2:
+        return rows
+    retained = [rows[0]]
+    last_source_s = _first_float(rows[0], "simulation_timestamp_s", "source_timestamp_s")
+    last_boundary = _retention_boundary(rows[0])
+    for row in rows[1:-1]:
+        source_s = _first_float(row, "simulation_timestamp_s", "source_timestamp_s")
+        boundary = _retention_boundary(row)
+        if source_s - last_source_s + 1e-12 >= minimum_source_period_s or boundary != last_boundary:
+            retained.append(row)
+            last_source_s = source_s
+            last_boundary = boundary
+    retained.append(rows[-1])
+    return retained
+
+
+def _retention_boundary(row: Mapping[str, str]) -> tuple[str, ...]:
+    return tuple(str(row.get(column) or "") for column in _RETENTION_BOUNDARY_COLUMNS)
 
 
 def _channel_value(
@@ -224,11 +274,7 @@ def _channel_value(
         return _vector(row, prefix, suffix)
     if channel_id in _SCALAR_CHANNELS:
         observed_column, predicted_column = _SCALAR_CHANNELS[channel_id]
-        column = (
-            observed_column
-            if side is TwinStreamSide.OBSERVED
-            else predicted_column
-        )
+        column = observed_column if side is TwinStreamSide.OBSERVED else predicted_column
         return _optional_float(row.get(column)) if column is not None else None
     if channel_id in _STATE_CHANNELS:
         return _state_value(row, _STATE_CHANNELS[channel_id], side)
@@ -261,13 +307,15 @@ def _state_value(
 def _vector(row: Mapping[str, str], prefix: str, suffix: str) -> Vector3 | None:
     return _vector_columns(
         row,
-        tuple(f"{prefix}_{axis}{suffix}" for axis in ("x", "y", "z")),
+        (
+            f"{prefix}_x{suffix}",
+            f"{prefix}_y{suffix}",
+            f"{prefix}_z{suffix}",
+        ),
     )
 
 
-def _vector_columns(
-    row: Mapping[str, str], columns: tuple[str, str, str]
-) -> Vector3 | None:
+def _vector_columns(row: Mapping[str, str], columns: tuple[str, str, str]) -> Vector3 | None:
     values = tuple(_optional_float(row.get(column)) for column in columns)
     if any(value is None for value in values):
         return None
@@ -283,7 +331,7 @@ def _first_float(row: Mapping[str, str], *columns: str) -> float:
 
 
 def _optional_float(value: str | None) -> float | None:
-    if value in {None, ""}:
+    if value is None or value == "":
         return None
     parsed = float(value)
     return parsed if math.isfinite(parsed) else None

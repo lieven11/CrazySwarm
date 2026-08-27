@@ -5,11 +5,15 @@ import type {
   AuthorityClass,
   BackendRole,
   CampaignCatalogView,
+  CampaignCoordinationPreparationRequest,
   CampaignLifecycle,
+  CampaignMotionPreparationRequest,
   CampaignRunMode,
   CampaignRunStartView,
   CampaignSnapshotView,
   CampaignWorkspaceView,
+  ControllerTuningPreparationInput,
+  ControllerTuningRunPreparationView,
   DashboardModel,
   DeckView,
   EvidenceClass,
@@ -20,6 +24,13 @@ import type {
   MissionPreview,
   MissionRunView,
   ParameterView,
+  PhysicalBasicFlightMotionId,
+  PhysicalFlightOperationStatusView,
+  PhysicalTwinLiveFrameView,
+  PhysicalTwinSourceStatusView,
+  PhysicalTwinStatusView,
+  RadioFailureKindView,
+  RadioTransportDiagnosticsView,
   PreflightReportView,
   RangeRay,
   ReplayView,
@@ -29,6 +40,11 @@ import type {
   TelemetryView,
   TransportView,
   TwinSessionView,
+  TwinBasicFlightCatalogView,
+  TwinBasicFlightRunView,
+  MotorActuationStatusView,
+  MotorBenchSelection,
+  MotorBenchSessionView,
   TwinTimelineSampleView,
   TwinTimelineView,
   Vec3,
@@ -59,6 +75,71 @@ export interface LiveDashboardSnapshot {
 }
 
 const DIRECTIONS: RangeRay["direction"][] = ["front", "back", "left", "right", "up", "down"];
+const PHYSICAL_BASIC_FLIGHT_MOTION_IDS: readonly PhysicalBasicFlightMotionId[] = [
+  "commissioning-baseline",
+  "arm-disarm",
+  "hover-12s",
+  "forward-10cm-return",
+  "left-10cm-return",
+  "right-10cm-return",
+  "forward-20cm-return",
+  "land-forward-10cm",
+  "land-forward-20cm",
+  "land-diagonal-20cm",
+  "l-shape-stops",
+  "square-stops",
+  "triangle-stops",
+  "l-shape-stops-40cm",
+  "square-stops-40cm",
+  "triangle-stops-40cm",
+  "straight-out-back-continuous",
+  "tuning-a-floor-start",
+  "tuning-a-raised-center",
+  "tuning-a-station-a",
+  "tuning-a-station-b",
+  "tuning-a-station-c",
+  "tuning-a-station-d",
+  "tuning-a-station-e",
+  "tuning-a-yaw-minus-45",
+  "tuning-a-yaw-minus-30",
+  "tuning-a-yaw-minus-15",
+  "tuning-a-yaw-zero",
+  "tuning-a-yaw-plus-15",
+  "tuning-a-yaw-plus-30",
+  "tuning-a-yaw-plus-45",
+  "tuning-a-height-low",
+  "tuning-a-height-nominal",
+  "tuning-a-height-high",
+  "tuning-a-holdout-one",
+  "tuning-a-holdout-two",
+  "tuning-b-center-hover",
+  "tuning-c-x-plus-05",
+  "tuning-c-x-minus-05",
+  "tuning-c-y-plus-05",
+  "tuning-c-y-minus-05",
+  "tuning-c-x-plus-15",
+  "tuning-c-x-minus-15",
+  "tuning-c-y-plus-15",
+  "tuning-c-y-minus-15",
+  "tuning-c-x-plus-30",
+  "tuning-c-x-minus-30",
+  "tuning-c-y-plus-30",
+  "tuning-c-y-minus-30",
+  "tuning-d-yaw-zero",
+  "tuning-d-yaw-plus-15",
+  "tuning-d-yaw-minus-15",
+  "tuning-d-yaw-plus-30",
+  "tuning-d-yaw-minus-30",
+  "tuning-d-slow-sweep",
+  "tuning-d-off-center",
+  "tuning-e-slow-x",
+  "tuning-e-stress-x",
+  "tuning-e-hold-x-positive",
+  "tuning-e-hold-x-negative",
+  "tuning-e-hold-y-positive",
+  "tuning-e-hold-y-negative",
+  "acro-single-roll",
+];
 
 export class ControlApi {
   constructor(private readonly credentials: ApiCredentials) {}
@@ -95,6 +176,181 @@ export class ControlApi {
       this.request<unknown[]>("/api/v1/twins"),
     ]);
     return adaptDashboard(state, missions, world, fidelity, this.credentials.clientId, twins);
+  }
+
+  async physicalTwinStatus(): Promise<PhysicalTwinStatusView> {
+    return mapPhysicalTwinStatus(
+      await this.request<Record<string, unknown>>("/api/v1/physical-twin/status"),
+    );
+  }
+
+  async streamPhysicalTwin(
+    onFrame: (frame: PhysicalTwinLiveFrameView) => void,
+    signal: AbortSignal,
+  ): Promise<void> {
+    const response = await fetch(
+      `${this.credentials.endpoint}/api/v1/physical-twin/live`,
+      {
+        headers: {
+          "Accept": "text/event-stream",
+          "X-Client-ID": this.credentials.clientId,
+          ...(this.credentials.token ? { "X-Local-Token": this.credentials.token } : {}),
+        },
+        cache: "no-store",
+        signal,
+      },
+    );
+    if (!response.ok) {
+      throw new Error(`Physical twin stream returned ${response.status}`);
+    }
+    if (!response.body) throw new Error("Physical twin stream has no response body");
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      buffer += decoder.decode(value, { stream: !done }).replaceAll("\r\n", "\n");
+      let boundary = buffer.indexOf("\n\n");
+      while (boundary >= 0) {
+        const event = buffer.slice(0, boundary);
+        buffer = buffer.slice(boundary + 2);
+        const data = event
+          .split("\n")
+          .filter((line) => line.startsWith("data:"))
+          .map((line) => line.slice(5).trimStart())
+          .join("\n");
+        if (data) onFrame(mapPhysicalTwinLiveFrame(JSON.parse(data) as Record<string, unknown>));
+        boundary = buffer.indexOf("\n\n");
+      }
+      if (done) return;
+    }
+  }
+
+  async configurePhysicalTwin(
+    selectedUri: string,
+    vehicleLabel: string,
+  ): Promise<PhysicalTwinStatusView> {
+    return mapPhysicalTwinStatus(await this.request<Record<string, unknown>>(
+      "/api/v1/physical-twin/binding",
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          selected_uri: selectedUri,
+          vehicle_label: vehicleLabel,
+          confirm_exact_uri: true,
+        }),
+      },
+    ));
+  }
+
+  async connectPhysicalTwin(): Promise<PhysicalTwinStatusView> {
+    return mapPhysicalTwinStatus(await this.post("/api/v1/physical-twin/connect", {}));
+  }
+
+  async confirmPhysicalTwin(
+    connectionNonce: string,
+    observedIdentitySha256: string,
+  ): Promise<PhysicalTwinStatusView> {
+    return mapPhysicalTwinStatus(await this.post("/api/v1/physical-twin/confirm", {
+      connection_nonce: connectionNonce,
+      observed_identity_sha256: observedIdentitySha256,
+    }));
+  }
+
+  async disconnectPhysicalTwin(): Promise<PhysicalTwinStatusView> {
+    return mapPhysicalTwinStatus(await this.post("/api/v1/physical-twin/disconnect", {}));
+  }
+
+  async twinBasicFlightCatalog(): Promise<TwinBasicFlightCatalogView> {
+    return mapTwinBasicFlightCatalog(
+      await this.request<Record<string, unknown>>("/api/v1/physical-twin/lab/catalog"),
+    );
+  }
+
+  async runTwinBasicFlight(motionId: string): Promise<TwinBasicFlightRunView> {
+    return mapTwinBasicFlightRun(await this.post("/api/v1/physical-twin/lab/runs", {
+      motion_id: motionId,
+    }));
+  }
+
+  async runTwinBasicFlightPhysical(
+    motionId: PhysicalBasicFlightMotionId,
+  ): Promise<TwinBasicFlightRunView> {
+    return mapTwinBasicFlightRun(await this.post("/api/v1/physical-twin/lab/physical-runs", {
+      motion_id: motionId,
+    }));
+  }
+
+  async physicalFlightStatus(): Promise<PhysicalFlightOperationStatusView> {
+    return mapPhysicalFlightOperation(await this.request<Record<string, unknown>>(
+      "/api/v1/physical-twin/lab/physical-flight",
+    ));
+  }
+
+  async startPhysicalFlight(
+    motionId: PhysicalBasicFlightMotionId,
+    preparation?: ControllerTuningPreparationInput,
+  ): Promise<PhysicalFlightOperationStatusView> {
+    return mapPhysicalFlightOperation(await this.post(
+      "/api/v1/physical-twin/lab/physical-flight/start",
+      {
+        motion_id: motionId,
+        ...(preparation ? {
+          station_id: preparation.stationId,
+          heading_deg: preparation.headingDeg,
+          target_height_m: preparation.targetHeightM,
+        } : {}),
+      },
+    ));
+  }
+
+  async abortPhysicalFlight(): Promise<PhysicalFlightOperationStatusView> {
+    return mapPhysicalFlightOperation(await this.post(
+      "/api/v1/physical-twin/lab/physical-flight/abort",
+      {},
+    ));
+  }
+
+  async triggerAcrobaticsFlip(): Promise<PhysicalFlightOperationStatusView> {
+    return mapPhysicalFlightOperation(await this.post(
+      "/api/v1/physical-twin/lab/physical-flight/flip",
+      {},
+    ));
+  }
+
+  async startMotorBench(motorSelection: MotorBenchSelection): Promise<MotorBenchSessionView> {
+    return mapMotorBenchSession(await this.post("/api/v1/physical-twin/lab/motor-bench/start", {
+      motor_selection: motorSelection,
+      props_removed_confirmed: true,
+      physically_restrained_confirmed: true,
+    }));
+  }
+
+  async updateMotorBench(sessionId: string, outputPercent: number): Promise<MotorBenchSessionView> {
+    return mapMotorBenchSession(await this.post("/api/v1/physical-twin/lab/motor-bench/output", {
+      session_id: sessionId,
+      output_percent: outputPercent,
+    }));
+  }
+
+  async stopMotorBench(sessionId: string): Promise<MotorBenchSessionView> {
+    return mapMotorBenchSession(await this.post("/api/v1/physical-twin/lab/motor-bench/stop", {
+      session_id: sessionId,
+    }));
+  }
+
+  async motorActuationStatus(): Promise<MotorActuationStatusView> {
+    return mapMotorActuationStatus(
+      await this.request<Record<string, unknown>>(
+        "/api/v1/physical-twin/lab/motor-actuation",
+      ),
+    );
+  }
+
+  async stopAllMotorOutput(): Promise<MotorActuationStatusView> {
+    return mapMotorActuationStatus(
+      await this.post("/api/v1/physical-twin/lab/motor-actuation/stop", {}),
+    );
   }
 
   async loadLiveDashboard(current: DashboardModel, activeRunId?: string): Promise<LiveDashboardSnapshot> {
@@ -486,10 +742,18 @@ export class ControlApi {
   async previewActiveCampaign(
     submissionId?: string,
     planningSubmissionId?: string,
+    motionPreparation?: CampaignMotionPreparationRequest,
+    coordinationPreparation?: CampaignCoordinationPreparationRequest,
   ): Promise<Record<string, unknown>> {
     const query = new URLSearchParams();
-    if (submissionId) query.set("submission_id", submissionId);
+    if (motionPreparation) {
+      query.set("balance", String(motionPreparation.balance));
+      if (motionPreparation.speed_m_s !== undefined) query.set("speed_m_s", String(motionPreparation.speed_m_s));
+      if (motionPreparation.accuracy_m !== undefined) query.set("accuracy_m", String(motionPreparation.accuracy_m));
+      if (motionPreparation.smoothness !== undefined) query.set("smoothness", String(motionPreparation.smoothness));
+    } else if (submissionId) query.set("submission_id", submissionId);
     if (planningSubmissionId) query.set("planning_submission_id", planningSubmissionId);
+    if (coordinationPreparation) query.set("launch_gap_s", String(coordinationPreparation.launch_gap_s));
     const suffix = query.size ? `?${query.toString()}` : "";
     return this.request(`/api/v1/campaign/active/preview${suffix}`);
   }
@@ -497,10 +761,18 @@ export class ControlApi {
   campaignResolvedPackageUrl(
     submissionId?: string,
     planningSubmissionId?: string,
+    motionPreparation?: CampaignMotionPreparationRequest,
+    coordinationPreparation?: CampaignCoordinationPreparationRequest,
   ): string {
     const query = new URLSearchParams();
-    if (submissionId) query.set("submission_id", submissionId);
+    if (motionPreparation) {
+      query.set("balance", String(motionPreparation.balance));
+      if (motionPreparation.speed_m_s !== undefined) query.set("speed_m_s", String(motionPreparation.speed_m_s));
+      if (motionPreparation.accuracy_m !== undefined) query.set("accuracy_m", String(motionPreparation.accuracy_m));
+      if (motionPreparation.smoothness !== undefined) query.set("smoothness", String(motionPreparation.smoothness));
+    } else if (submissionId) query.set("submission_id", submissionId);
     if (planningSubmissionId) query.set("planning_submission_id", planningSubmissionId);
+    if (coordinationPreparation) query.set("launch_gap_s", String(coordinationPreparation.launch_gap_s));
     const suffix = query.size ? `?${query.toString()}` : "";
     return `${this.credentials.endpoint}/api/v1/campaign/active/package${suffix}`;
   }
@@ -509,11 +781,15 @@ export class ControlApi {
     mode: CampaignRunMode,
     submissionId?: string,
     planningSubmissionId?: string,
+    motionPreparation?: CampaignMotionPreparationRequest,
+    coordinationPreparation?: CampaignCoordinationPreparationRequest,
   ): Promise<CampaignRunStartView> {
     return this.post<CampaignRunStartView>("/api/v1/campaign/runs", {
       mode,
-      submission_id: submissionId,
+      submission_id: motionPreparation ? undefined : submissionId,
       planning_submission_id: planningSubmissionId,
+      motion_preparation: motionPreparation,
+      coordination_preparation: coordinationPreparation,
     });
   }
 
@@ -1500,6 +1776,512 @@ function mapFidelity(source: Record<string, unknown>): FidelityManifest | undefi
     modeledOutputs: stringArray(source.modeled_outputs),
     omittedOutputs: stringArray(source.omitted_outputs),
     limitations: stringArray(source.limitations),
+  };
+}
+
+function mapTwinBasicFlightCatalog(source: Record<string, unknown>): TwinBasicFlightCatalogView {
+  const motions = (Array.isArray(source.motions) ? source.motions : []).flatMap((value) => {
+    const motion = asRecord(value);
+    if (
+      !motion
+      || typeof motion.motion_id !== "string"
+      || typeof motion.major_mission !== "string"
+      || typeof motion.variant !== "string"
+      || typeof motion.motion !== "string"
+    ) return [];
+    const scope = motion.physical_scope === "PROPS_OFF_BENCH"
+      ? "PROPS_OFF_BENCH" as const
+      : motion.physical_scope === "FIXTURE_OBSERVATION"
+        ? "FIXTURE_OBSERVATION" as const
+        : "CONTAINED_FLIGHT" as const;
+    const physicalExecution = motion.physical_execution === "OPERATOR_GATED"
+      ? "OPERATOR_GATED" as const
+      : "NOT_ENABLED" as const;
+    const implementationState = motion.implementation_state === "RAW"
+      ? "RAW" as const
+      : motion.implementation_state === "SETUP_REQUIRED"
+        ? "SETUP_REQUIRED" as const
+        : "READY" as const;
+    return [{
+      motionId: motion.motion_id,
+      clusterId: stringValue(motion.cluster_id, "basic-flight"),
+      majorMission: motion.major_mission,
+      variant: motion.variant,
+      placementMarker: ["A", "B", "C", "D", "E"].includes(String(motion.placement_marker))
+        ? motion.placement_marker as "A" | "B" | "C" | "D" | "E"
+        : undefined,
+      motion: motion.motion,
+      summary: stringValue(motion.summary, ""),
+      physicalScope: scope,
+      physicalExecution,
+      catalogVisibility: motion.catalog_visibility === true || physicalExecution === "OPERATOR_GATED",
+      implementationState,
+      blockReason: typeof motion.block_reason === "string" ? motion.block_reason : undefined,
+      steps: (Array.isArray(motion.steps) ? motion.steps : []).flatMap((value) => {
+        const step = asRecord(value);
+        if (!step || typeof step.step_id !== "string" || typeof step.title !== "string") return [];
+        return [{
+          stepId: step.step_id,
+          title: step.title,
+          behavior: stringValue(step.behavior, ""),
+          containment: stringValue(step.containment, ""),
+        }];
+      }),
+      learningSignals: stringArray(motion.learning_signals),
+    }];
+  });
+  const clusters = (Array.isArray(source.clusters) ? source.clusters : []).flatMap((value) => {
+    const cluster = asRecord(value);
+    if (!cluster || typeof cluster.cluster_id !== "string" || typeof cluster.cluster_name !== "string") {
+      return [];
+    }
+    return [{
+      clusterId: cluster.cluster_id,
+      clusterName: cluster.cluster_name,
+      purpose: stringValue(cluster.purpose, ""),
+      state: cluster.state === "SETUP_REQUIRED" ? "SETUP_REQUIRED" as const : "READY" as const,
+      detail: typeof cluster.detail === "string" ? cluster.detail : undefined,
+    }];
+  });
+  const fixture = asRecord(source.controller_tuning_fixture);
+  const fixtureState = fixture && [
+    "AWAITING_MEASUREMENTS",
+    "READY",
+    "INVALID",
+  ].find((candidate) => candidate === fixture.state);
+  return {
+    clusterId: "basic-flight",
+    clusterName: "Basic flight",
+    purpose: stringValue(source.purpose, "Basic flight learning rehearsals"),
+    qualificationClaim: "NONE",
+    clusters: clusters.length > 0 ? clusters : [{
+      clusterId: "basic-flight",
+      clusterName: "Basic flight",
+      purpose: stringValue(source.purpose, "Basic flight learning rehearsals"),
+      state: "READY",
+    }],
+    controllerTuningFixture: fixture && fixtureState ? {
+      fixtureId: stringValue(fixture.fixture_id, "controller-tuning-box"),
+      fixtureVersion: stringValue(fixture.fixture_version, "unknown"),
+      artifactPath: stringValue(fixture.artifact_path, ""),
+      state: fixtureState as "AWAITING_MEASUREMENTS" | "READY" | "INVALID",
+      implementedFlightsAvailable: fixture.implemented_flights_available === true,
+      missingFields: stringArray(fixture.missing_fields),
+      detail: stringValue(fixture.detail, "Fixture setup is incomplete"),
+    } : undefined,
+    motions,
+  };
+}
+
+function mapTwinBasicFlightRun(value: unknown): TwinBasicFlightRunView {
+  const source = asRecord(value);
+  const learning = asRecord(source?.learning_sample);
+  const rangeSummary = asRecord(source?.controller_tuning_range_summary);
+  const preparation = mapControllerTuningPreparation(
+    source?.controller_tuning_preparation,
+  );
+  if (!source || typeof source.run_id !== "string" || typeof source.motion_id !== "string" || !learning) {
+    throw new Error("Basic flight run response is incomplete");
+  }
+  return {
+    runId: source.run_id,
+    motionId: source.motion_id,
+    status: source.status === "FAILED" ? "FAILED" : "COMPLETED",
+    executionBackend: source.execution_backend === "REAL_CRAZYFLIE"
+      ? "REAL_CRAZYFLIE"
+      : "FAST_SIM",
+    evidenceClass: source.evidence_class === "MEASURED_REAL"
+      ? "MEASURED_REAL"
+      : "SIMULATED_MODEL",
+    learningDisposition: "SIMULATOR_INPUT_CANDIDATE",
+    qualificationClaim: "NONE",
+    steps: (Array.isArray(source.steps) ? source.steps : []).flatMap((value) => {
+      const step = asRecord(value);
+      if (!step || typeof step.step_id !== "string") return [];
+      return [{
+        stepId: step.step_id,
+        status: step.status === "MODELED_ONLY" ? "MODELED_ONLY" as const : "COMPLETED" as const,
+        detail: stringValue(step.detail, ""),
+      }];
+    }),
+    learningSample: {
+      batteryStartPercent: finiteNumber(learning.battery_start_percent) ?? 0,
+      batteryMinimumPercent: finiteNumber(learning.battery_minimum_percent) ?? 0,
+      batteryEndPercent: finiteNumber(learning.battery_end_percent) ?? 0,
+      batteryDeltaPercent: finiteNumber(learning.battery_delta_percent) ?? 0,
+      minimumVoltageV: finiteNumber(learning.minimum_voltage_v),
+      maximumCurrentA: finiteNumber(learning.maximum_current_a),
+      peakMotorCommandPercent: finiteNumber(learning.peak_motor_command_percent),
+      hoverRmsDriftM: finiteNumber(learning.hover_rms_drift_m),
+      maximumAltitudeM: finiteNumber(learning.maximum_altitude_m) ?? 0,
+      landingContactObserved: learning.landing_contact_observed === true,
+      finalState: stringValue(learning.final_state, "UNKNOWN"),
+    },
+    artifactPath: stringValue(source.artifact_path, ""),
+    telemetryRowCount: finiteNumber(source.telemetry_row_count),
+    telemetryCsvSha256: typeof source.telemetry_csv_sha256 === "string"
+      ? source.telemetry_csv_sha256
+      : undefined,
+    controllerTuningPreparation: preparation,
+    controllerTuningRangeSummary: rangeSummary ? {
+      fixtureId: stringValue(rangeSummary.fixture_id, "controller-tuning-box"),
+      fixtureVersion: stringValue(rangeSummary.fixture_version, "unknown"),
+      modelStatus: rangeSummary.model_status === "EVALUATED" ? "EVALUATED" : "RAW_ONLY",
+      predictionSource: rangeSummary.prediction_source === "CONFIGURED_PLACEMENT"
+        ? "CONFIGURED_PLACEMENT"
+        : rangeSummary.prediction_source === "ESTIMATOR_POSE"
+          ? "ESTIMATOR_POSE"
+          : "UNAVAILABLE",
+      validRangeValueCount: finiteNumber(rangeSummary.valid_range_value_count) ?? 0,
+      posePredictionResidualRmsM: finiteNumber(
+        rangeSummary.pose_prediction_residual_rms_m,
+      ),
+      opposingRangeSumResidualRmsM: finiteNumber(
+        rangeSummary.opposing_range_sum_residual_rms_m,
+      ),
+      fittedPoseSampleCount: finiteNumber(rangeSummary.fitted_pose_sample_count) ?? 0,
+      estimatorToRangeXyRmsM: finiteNumber(rangeSummary.estimator_to_range_xy_rms_m),
+      continuityConstrained: true,
+      qualificationClaim: "NONE",
+      detail: stringValue(rangeSummary.detail, "Range summary retained"),
+    } : undefined,
+  };
+}
+
+function mapControllerTuningPreparation(
+  value: unknown,
+): ControllerTuningRunPreparationView | undefined {
+  const source = asRecord(value);
+  const stationId = ["A", "B", "C", "D", "E"].find(
+    (candidate) => candidate === source?.station_id,
+  );
+  const headingDeg = finiteNumber(source?.heading_deg);
+  if (!source || !stationId || headingDeg === undefined) return undefined;
+  return {
+    fixtureId: stringValue(source.fixture_id, "controller-tuning-box"),
+    fixtureVersion: stringValue(source.fixture_version, "unknown"),
+    fixtureSha256: stringValue(source.fixture_sha256, ""),
+    stationId: stationId as "A" | "B" | "C" | "D" | "E",
+    headingDeg,
+    targetHeightM: finiteNumber(source.target_height_m),
+  };
+}
+
+function mapPhysicalFlightOperation(value: unknown): PhysicalFlightOperationStatusView {
+  const source = asRecord(value);
+  const allowedStates = [
+    "IDLE", "STARTING", "RUNNING", "HOVERING_READY", "FLIPPING", "ABORTING", "STOP_UNCONFIRMED", "COMPLETED", "ABORTED", "FAILED",
+  ] as const;
+  const state = allowedStates.find((candidate) => candidate === source?.state);
+  if (!source || !state) throw new Error("Physical flight status response is incomplete");
+  return {
+    state,
+    stopRequired: source.stop_required === true,
+    operationId: typeof source.operation_id === "string" ? source.operation_id : undefined,
+    motionId: PHYSICAL_BASIC_FLIGHT_MOTION_IDS.find(
+      (candidate) => candidate === source.motion_id,
+    ),
+    startedAtUtc: typeof source.started_at_utc === "string" ? source.started_at_utc : undefined,
+    detail: typeof source.detail === "string" ? source.detail : undefined,
+    result: source.result ? mapTwinBasicFlightRun(source.result) : undefined,
+    controllerTuningPreparation: mapControllerTuningPreparation(
+      source.controller_tuning_preparation,
+    ),
+    availableAction: source.available_action === "FLIP" ? "FLIP" : undefined,
+  };
+}
+
+function mapMotorBenchSession(value: unknown): MotorBenchSessionView {
+  const source = asRecord(value);
+  const selection = source?.motor_selection;
+  if (
+    !source
+    || typeof source.session_id !== "string"
+    || !["all", "m1", "m2", "m3", "m4"].includes(String(selection))
+  ) {
+    throw new Error("Motor bench response is incomplete");
+  }
+  const measured = Array.isArray(source.measured_pwm_percent)
+    && source.measured_pwm_percent.length === 4
+    && source.measured_pwm_percent.every((item) => finiteNumber(item) !== undefined)
+    ? source.measured_pwm_percent.map((item) => finiteNumber(item) ?? 0) as [number, number, number, number]
+    : undefined;
+  return {
+    sessionId: source.session_id,
+    status: source.status === "FAILED" ? "FAILED" : source.status === "STOPPED" ? "STOPPED" : "ACTIVE",
+    motorSelection: selection as MotorBenchSelection,
+    outputPercent: finiteNumber(source.output_percent) ?? 0,
+    measuredPwmPercent: measured,
+    maximumOutputPercent: 70,
+    watchdogTimeoutMs: 750,
+    firmwareWatchdogArmed: source.firmware_watchdog_armed === true,
+    rebootRequired: source.reboot_required === true,
+    telemetryRowCount: finiteNumber(source.telemetry_row_count) ?? 0,
+    telemetryArtifactPath: typeof source.telemetry_artifact_path === "string" ? source.telemetry_artifact_path : undefined,
+    motorCsvPath: typeof source.motor_csv_path === "string" ? source.motor_csv_path : undefined,
+    motorCsvSha256: typeof source.motor_csv_sha256 === "string" ? source.motor_csv_sha256 : undefined,
+    error: typeof source.error === "string" ? source.error : undefined,
+  };
+}
+
+function mapMotorActuationStatus(value: unknown): MotorActuationStatusView {
+  const source = asRecord(value);
+  const state = source?.state;
+  if (
+    !source
+    || !["IDLE", "ACTIVE", "POSSIBLY_ACTIVE", "STOPPING", "STOP_FAILED"].includes(String(state))
+    || typeof source.stop_required !== "boolean"
+  ) {
+    throw new Error("Motor actuation status is incomplete");
+  }
+  const selection = source.motor_selection;
+  const measured = Array.isArray(source.measured_pwm_percent)
+    && source.measured_pwm_percent.length === 4
+    && source.measured_pwm_percent.every((item) => finiteNumber(item) !== undefined)
+    ? source.measured_pwm_percent.map((item) => finiteNumber(item) ?? 0) as [number, number, number, number]
+    : undefined;
+  return {
+    state: state as MotorActuationStatusView["state"],
+    stopRequired: source.stop_required,
+    sessionId: typeof source.session_id === "string" ? source.session_id : undefined,
+    motorSelection: ["all", "m1", "m2", "m3", "m4"].includes(String(selection))
+      ? selection as MotorBenchSelection
+      : undefined,
+    commandedOutputPercent: finiteNumber(source.commanded_output_percent),
+    measuredPwmPercent: measured,
+    measuredOutputActive: typeof source.measured_output_active === "boolean"
+      ? source.measured_output_active
+      : undefined,
+    firmwareWatchdogArmed: source.firmware_watchdog_armed === true,
+    rebootRequired: source.reboot_required === true,
+    detail: typeof source.detail === "string" ? source.detail : undefined,
+  };
+}
+
+function mapPhysicalTwinStatus(source: Record<string, unknown>): PhysicalTwinStatusView {
+  const state = source.state;
+  if (!["UNCONFIGURED", "DISCONNECTED", "CONNECTING", "PENDING_CONFIRMATION", "PAIRED", "SUSPENDED", "ERROR", "CONFIGURATION_INVALID"].includes(String(state))) {
+    throw new Error("Physical twin status response is invalid");
+  }
+  return {
+    state: state as PhysicalTwinStatusView["state"],
+    configured: source.configured === true,
+    autoConnectEnabled: source.auto_connect_enabled === true,
+    vehicleLabel: typeof source.vehicle_label === "string" ? source.vehicle_label : undefined,
+    redactedUri: typeof source.redacted_uri === "string" ? source.redacted_uri : undefined,
+    uriSha256: typeof source.uri_sha256 === "string" ? source.uri_sha256 : undefined,
+    connectionNonce: typeof source.connection_nonce === "string" ? source.connection_nonce : undefined,
+    observedIdentitySha256: typeof source.observed_identity_sha256 === "string" ? source.observed_identity_sha256 : undefined,
+    commandReadiness: source.command_readiness === "UNQUALIFIED" ? "UNQUALIFIED" : "NOT_ASSESSED",
+    commandReadinessIssues: stringArray(source.command_readiness_issues),
+    sessionId: typeof source.session_id === "string" ? source.session_id : undefined,
+    observedSourceClass: source.observed_source_class === "MEASURED_REAL" || source.observed_source_class === "TEST" ? source.observed_source_class : undefined,
+    predictedSourceClass: source.predicted_source_class === "SIMULATED_MODEL" || source.predicted_source_class === "TEST" ? source.predicted_source_class : undefined,
+    provenance: source.provenance === "MEASURED_REAL" || source.provenance === "TEST" ? source.provenance : undefined,
+    testOnly: source.test_only === true,
+    sampleCount: finiteNumber(source.sample_count) ?? 0,
+    pairedCycleCount: finiteNumber(source.paired_cycle_count) ?? 0,
+    observed: mapPhysicalTwinSource(source.observed),
+    predicted: mapPhysicalTwinSource(source.predicted),
+    lastErrorCode: typeof source.last_error_code === "string" ? source.last_error_code : undefined,
+    lastErrorMessage: typeof source.last_error_message === "string" ? source.last_error_message : undefined,
+    lastFailureKind: radioFailureKind(source.last_failure_kind),
+    lastFailureAtUtc: typeof source.last_failure_at_utc === "string" ? source.last_failure_at_utc : undefined,
+    reconnectAttempt: finiteNumber(source.reconnect_attempt),
+    reconnectMode: ["IDLE", "FAST", "LOW_DUTY"].includes(String(source.reconnect_mode))
+      ? source.reconnect_mode as "IDLE" | "FAST" | "LOW_DUTY"
+      : undefined,
+    nextReconnectAtUtc: typeof source.next_reconnect_at_utc === "string" ? source.next_reconnect_at_utc : undefined,
+    suspensionReason: typeof source.suspension_reason === "string" ? source.suspension_reason : undefined,
+    suspensionOwner: typeof source.suspension_owner === "string" ? source.suspension_owner : undefined,
+    suspendedAtUtc: typeof source.suspended_at_utc === "string" ? source.suspended_at_utc : undefined,
+    telemetryOwner: source.telemetry_owner === "PHYSICAL_OPERATION"
+      ? "PHYSICAL_OPERATION"
+      : "OBSERVER",
+    operationSampleCount: finiteNumber(source.operation_sample_count) ?? 0,
+  };
+}
+
+function mapPhysicalTwinLiveFrame(source: Record<string, unknown>): PhysicalTwinLiveFrameView {
+  const state = String(source.state);
+  if (!["UNCONFIGURED", "DISCONNECTED", "CONNECTING", "PENDING_CONFIRMATION", "PAIRED", "SUSPENDED", "ERROR", "CONFIGURATION_INVALID"].includes(state)) {
+    throw new Error("Physical twin live frame is invalid");
+  }
+  return {
+    state: state as PhysicalTwinStatusView["state"],
+    vehicleLabel: typeof source.vehicle_label === "string" ? source.vehicle_label : undefined,
+    liveSequence: finiteNumber(source.live_sequence) ?? 0,
+    pairedCycleCount: finiteNumber(source.paired_cycle_count) ?? 0,
+    channelRecordCount: finiteNumber(source.channel_record_count) ?? 0,
+    observed: mapPhysicalTwinSource(source.observed),
+    telemetryOwner: source.telemetry_owner === "PHYSICAL_OPERATION"
+      ? "PHYSICAL_OPERATION"
+      : "OBSERVER",
+    operationSampleCount: finiteNumber(source.operation_sample_count) ?? 0,
+  };
+}
+
+function mapPhysicalTwinSource(value: unknown): PhysicalTwinStatusView["observed"] {
+  const source = asRecord(value);
+  if (!source) return undefined;
+  const role = source.role === "OBSERVED" || source.role === "PREDICTED" ? source.role : undefined;
+  const sourceClass = source.source_class === "MEASURED_REAL"
+    || source.source_class === "SIMULATED_MODEL"
+    || source.source_class === "TEST"
+    ? source.source_class
+    : undefined;
+  const freshness = source.freshness === "CURRENT"
+    || source.freshness === "STALE"
+    || source.freshness === "MISSING"
+    ? source.freshness
+    : undefined;
+  const positionAvailability = source.position_availability === "AVAILABLE"
+    || source.position_availability === "MISSING"
+    || source.position_availability === "INCOMPATIBLE"
+    ? source.position_availability
+    : undefined;
+  const batteryAvailability = source.battery_availability === "AVAILABLE"
+    || source.battery_availability === "MISSING"
+    ? source.battery_availability
+    : undefined;
+  if (!role || !sourceClass || !freshness || !positionAvailability || !batteryAvailability) {
+    return undefined;
+  }
+  const frame = ["world", "home", "body", "sensor"].includes(String(source.frame))
+    ? source.frame as "world" | "home" | "body" | "sensor"
+    : undefined;
+  const attitude = asRecord(source.attitude);
+  const rollRad = finiteNumber(attitude?.roll_rad);
+  const pitchRad = finiteNumber(attitude?.pitch_rad);
+  const yawRad = finiteNumber(attitude?.yaw_rad);
+  const imu = asRecord(source.imu);
+  const acceleration = vec3(imu?.acceleration_body_m_s2);
+  const angularVelocity = vec3(imu?.angular_velocity_body_rad_s);
+  const flow = asRecord(source.flow);
+  const ranges = asRecord(source.ranges);
+  const estimator = asRecord(source.estimator);
+  const motorPwmValues = Array.isArray(source.motor_pwm_percent)
+    ? source.motor_pwm_percent.map(finiteNumber)
+    : [];
+  const motorPwmPercent = motorPwmValues.length === 4
+    && motorPwmValues.every((entry): entry is number => entry !== undefined)
+    ? motorPwmValues as [number, number, number, number]
+    : undefined;
+  const familyAvailabilitySource = asRecord(source.family_availability);
+  const familyAvailability = Object.fromEntries(
+    Object.entries(familyAvailabilitySource ?? {}).flatMap(([key, entry]) =>
+      ["AVAILABLE", "MISSING", "STALE", "REJECTED", "INCOMPATIBLE"].includes(String(entry))
+        ? [[key, entry as "AVAILABLE" | "MISSING" | "STALE" | "REJECTED" | "INCOMPATIBLE"]]
+        : [],
+    ),
+  );
+  return {
+    role,
+    vehicleId: stringValue(source.vehicle_id, "unknown-source"),
+    sourceClass,
+    freshness,
+    frame,
+    sourceClockId: typeof source.source_clock_id === "string" ? source.source_clock_id : undefined,
+    sourceEpoch: finiteNumber(source.source_epoch),
+    rawSourceTimestampS: finiteNumber(source.raw_source_timestamp_s),
+    sourceTimestampS: finiteNumber(source.source_timestamp_s),
+    pairSequence: finiteNumber(source.pair_sequence),
+    alignmentEpoch: finiteNumber(source.alignment_epoch),
+    positionAvailability,
+    position: vec3(source.position_m) ?? undefined,
+    batteryAvailability,
+    batteryVoltage: finiteNumber(source.battery_voltage_v),
+    armed: typeof source.armed === "boolean" ? source.armed : undefined,
+    flying: typeof source.flying === "boolean" ? source.flying : undefined,
+    faults: Array.isArray(source.faults)
+      ? source.faults.filter((item): item is string => typeof item === "string")
+      : undefined,
+    attitude: rollRad !== undefined && pitchRad !== undefined && yawRad !== undefined
+      ? { rollRad, pitchRad, yawRad }
+      : undefined,
+    imu: acceleration && angularVelocity ? { acceleration, angularVelocity } : undefined,
+    flow: flow ? {
+      velocity: vec3(flow.velocity_body_m_s) ?? undefined,
+      groundDistanceM: finiteNumber(flow.ground_distance_m),
+      qualityPercent: finiteNumber(flow.quality_percent) ?? 0,
+      status: stringValue(flow.status, "UNAVAILABLE"),
+    } : undefined,
+    ranges: ranges ? {
+      frontM: finiteNumber(ranges.front_m),
+      backM: finiteNumber(ranges.back_m),
+      leftM: finiteNumber(ranges.left_m),
+      rightM: finiteNumber(ranges.right_m),
+      upM: finiteNumber(ranges.up_m),
+      downM: finiteNumber(ranges.down_m),
+      statuses: Object.fromEntries(
+        Object.entries(asRecord(ranges.statuses) ?? {}).map(([key, entry]) => [key, String(entry)]),
+      ),
+    } : undefined,
+    estimator: estimator ? {
+      converged: typeof estimator.converged === "boolean" ? estimator.converged : undefined,
+      positionVariance: vec3(estimator.position_variance_m2) ?? undefined,
+      qualityMetricId: typeof estimator.quality_metric_id === "string" ? estimator.quality_metric_id : undefined,
+    } : undefined,
+    motorPwmPercent,
+    transport: mapPhysicalTransport(source.transport),
+    familyAvailability,
+  };
+}
+
+function radioFailureKind(value: unknown): RadioFailureKindView | undefined {
+  return [
+    "NONE",
+    "USB_UNAVAILABLE",
+    "TARGET_OFFLINE",
+    "RF_ACK_LOSS",
+    "OUTBOUND_QUEUE_SATURATED",
+    "TELEMETRY_STALE",
+    "PROTOCOL_SETUP_FAILED",
+    "UNKNOWN",
+  ].includes(String(value)) ? value as RadioFailureKindView : undefined;
+}
+
+function mapPhysicalTransport(value: unknown): PhysicalTwinSourceStatusView["transport"] {
+  const source = asRecord(value);
+  if (!source || !["physical_radio", "modeled_transport", "replay"].includes(String(source.kind))) {
+    return undefined;
+  }
+  const radio = asRecord(source.radio);
+  const radioState = radio?.state;
+  const failureKind = radioFailureKind(radio?.failure_kind);
+  const diagnostics = radio
+    && ["HEALTHY", "DEGRADED", "STALE", "DISCONNECTED"].includes(String(radioState))
+    && failureKind
+    ? {
+      connectionEpoch: finiteNumber(radio.connection_epoch) ?? 1,
+      state: radioState as RadioTransportDiagnosticsView["state"],
+      failureKind,
+      ackedPacketCount: finiteNumber(radio.acked_packet_count) ?? 0,
+      lostPacketCount: finiteNumber(radio.lost_packet_count) ?? 0,
+      packetLossPercent: finiteNumber(radio.packet_loss_percent),
+      consecutiveLostPacketCount: finiteNumber(radio.consecutive_lost_packet_count) ?? 0,
+      maximumConsecutiveLostPacketCount: finiteNumber(radio.maximum_consecutive_lost_packet_count) ?? 0,
+      retryQualityPercent: finiteNumber(radio.retry_quality_percent),
+      uplinkRssiRaw: finiteNumber(radio.uplink_rssi_raw),
+      uplinkRateHz: finiteNumber(radio.uplink_rate_hz),
+      downlinkRateHz: finiteNumber(radio.downlink_rate_hz),
+      uplinkCongestionPercent: finiteNumber(radio.uplink_congestion_percent),
+      downlinkCongestionPercent: finiteNumber(radio.downlink_congestion_percent),
+      outboundQueueDepth: finiteNumber(radio.outbound_queue_depth) ?? 0,
+      outboundQueueCapacity: finiteNumber(radio.outbound_queue_capacity) ?? 1,
+      queueSaturationCount: finiteNumber(radio.queue_saturation_count) ?? 0,
+      usbErrorCount: finiteNumber(radio.usb_error_count) ?? 0,
+      lastAckAgeMs: finiteNumber(radio.last_ack_age_ms),
+      lastEventAtUtc: typeof radio.last_event_at_utc === "string" ? radio.last_event_at_utc : undefined,
+      lastEventMessage: typeof radio.last_event_message === "string" ? radio.last_event_message : undefined,
+    } satisfies RadioTransportDiagnosticsView
+    : undefined;
+  return {
+    kind: source.kind as "physical_radio" | "modeled_transport" | "replay",
+    deliveryQualityPercent: finiteNumber(source.delivery_quality_percent),
+    latencyMs: finiteNumber(source.latency_ms),
+    packetLossPercent: finiteNumber(source.packet_loss_percent),
+    radio: diagnostics,
   };
 }
 

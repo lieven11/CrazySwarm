@@ -5,7 +5,7 @@ import math
 import time
 from collections.abc import Iterable
 from contextlib import suppress
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import cast
 
 from crazyswarm_app.domain.commands import (
@@ -24,6 +24,7 @@ from crazyswarm_app.domain.commands import (
     MoveRelativeCommand,
     StopAndHoldCommand,
     TakeoffCommand,
+    TrajectoryReplacementPreparationReceipt,
 )
 from crazyswarm_app.domain.errors import CrazySwarmError, ErrorCode
 from crazyswarm_app.domain.goals import LandingGoalRegion
@@ -35,6 +36,7 @@ from crazyswarm_app.domain.models import (
     VehicleCapability,
     VehicleState,
 )
+from crazyswarm_app.domain.simulation import canonical_sha256
 from crazyswarm_app.domain.telemetry import TelemetryEnvelope, VehicleTelemetry
 from crazyswarm_app.domain.trajectory import sample_trajectory_segment
 from crazyswarm_app.safety.audit import SupervisorAuditSink
@@ -65,6 +67,10 @@ class VehicleSession:
     active_command_payload: CommandPayload | None = None
     command_interruption_error: CrazySwarmError | None = None
     safety_interruption_pending: bool = False
+    prepared_trajectory_replacements: dict[
+        str,
+        tuple[TrajectoryReplacementPreparationReceipt, ExecuteTrajectoryCommand],
+    ] = field(default_factory=dict)
 
 
 class SafetySupervisor:
@@ -514,6 +520,71 @@ class SafetySupervisor:
         telemetry = cast(TelemetryEnvelope, session.telemetry)
         self._validate_trajectory(telemetry, command)
 
+    async def prepare_trajectory_replacement(
+        self,
+        vehicle_id: str,
+        owner_id: str,
+        command: ExecuteTrajectoryCommand,
+        *,
+        role_id: str,
+        proposal_sha256: str,
+        safe_prefix_certificate_sha256: str,
+        active_trajectory_sha256: str,
+        mission_run_id: str,
+        fleet_binding: FleetCommandBinding,
+    ) -> TrajectoryReplacementPreparationReceipt:
+        """Acknowledge an exact replacement without interrupting the live command."""
+
+        self.validate_trajectory_command(vehicle_id, owner_id, command)
+        session = self.session(vehicle_id)
+        active = session.active_command_payload
+        if (
+            not isinstance(active, ExecuteTrajectoryCommand)
+            or session.active_execute_task is None
+            or session.active_execute_task.done()
+        ):
+            raise CrazySwarmError(
+                ErrorCode.INVALID_STATE,
+                "replacement preparation requires one live trajectory command",
+            )
+        if active.trajectory_sha256 != active_trajectory_sha256:
+            raise CrazySwarmError(
+                ErrorCode.IDENTITY_MISMATCH,
+                "replacement preparation active-trajectory identity mismatch",
+            )
+        receipt = TrajectoryReplacementPreparationReceipt(
+            vehicle_id=vehicle_id,
+            role_id=role_id,
+            mission_run_id=mission_run_id,
+            fleet_binding_sha256=canonical_sha256(fleet_binding),
+            proposal_sha256=proposal_sha256,
+            safe_prefix_certificate_sha256=safe_prefix_certificate_sha256,
+            active_trajectory_sha256=active_trajectory_sha256,
+            replacement_trajectory_sha256=command.trajectory_sha256,
+            replacement_route_sha256=command.route_sha256,
+            replacement_plan_sha256=command.accepted_plan_sha256,
+            replacement_authority_sha256=command.execution_program_sha256,
+            prepared_at_monotonic_s=time.monotonic(),
+        )
+        session.prepared_trajectory_replacements[receipt.receipt_sha256] = (receipt, command)
+        self._event(
+            vehicle_id,
+            "TRAJECTORY_REPLACEMENT_PREPARED",
+            receipt.receipt_sha256,
+            source=CommandSource.SUPERVISOR,
+        )
+        return receipt
+
+    def discard_trajectory_replacement_preparation(
+        self,
+        vehicle_id: str,
+        receipt: TrajectoryReplacementPreparationReceipt,
+    ) -> None:
+        self.session(vehicle_id).prepared_trajectory_replacements.pop(
+            receipt.receipt_sha256,
+            None,
+        )
+
     async def replace_trajectory(
         self,
         vehicle_id: str,
@@ -526,6 +597,54 @@ class SafetySupervisor:
     ) -> CommandAcknowledgement:
         session = self.session(vehicle_id)
         self._require_flying(session, owner_id)
+        await self._interrupt_active_command(
+            session,
+            CrazySwarmError(
+                ErrorCode.INVALID_STATE,
+                f"active trajectory superseded by accepted replacement: {reason}",
+            ),
+        )
+        return await self.execute_trajectory(
+            vehicle_id,
+            owner_id,
+            command,
+            source=CommandSource.SUPERVISOR,
+            mission_run_id=mission_run_id,
+            fleet_binding=fleet_binding,
+        )
+
+    async def replace_prepared_trajectory(
+        self,
+        vehicle_id: str,
+        owner_id: str,
+        command: ExecuteTrajectoryCommand,
+        *,
+        receipt: TrajectoryReplacementPreparationReceipt,
+        proposal_sha256: str,
+        reason: str,
+        mission_run_id: str,
+        fleet_binding: FleetCommandBinding,
+    ) -> CommandAcknowledgement:
+        """Consume the exact pre-commit receipt and dispatch after fleet commit."""
+
+        session = self.session(vehicle_id)
+        prepared = session.prepared_trajectory_replacements.get(receipt.receipt_sha256)
+        if prepared is None or prepared != (receipt, command):
+            raise CrazySwarmError(
+                ErrorCode.MODE_NOT_AUTHORIZED,
+                "replacement dispatch lacks its exact Supervisor preparation receipt",
+            )
+        if (
+            receipt.vehicle_id != vehicle_id
+            or receipt.mission_run_id != mission_run_id
+            or receipt.proposal_sha256 != proposal_sha256
+            or receipt.fleet_binding_sha256 != canonical_sha256(fleet_binding)
+        ):
+            raise CrazySwarmError(
+                ErrorCode.IDENTITY_MISMATCH,
+                "replacement preparation receipt does not match dispatch authority",
+            )
+        session.prepared_trajectory_replacements.pop(receipt.receipt_sha256)
         await self._interrupt_active_command(
             session,
             CrazySwarmError(

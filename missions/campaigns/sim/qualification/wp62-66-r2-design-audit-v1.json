@@ -1,0 +1,6011 @@
+{
+  "base_design_sha256": "52570fcfcef8c7e5d62f79eb8c111522c236fe2a590500bcf086092bbc5e43c6",
+  "batch": "WP-62-through-WP-66-R2",
+  "guard_count": 29,
+  "isolated_failure_overrides": {
+    "acceleration_p95_m_s2": {
+      "acceleration_p95_m_s2": 1.01
+    },
+    "angular_rate_p95_rad_s": {
+      "angular_rate_p95_rad_s": 0.41
+    },
+    "checkpoint_hold_conformance_fraction": {
+      "checkpoint_hold_conformance_fraction": 0.99
+    },
+    "collision_count": {
+      "collision_count": 1
+    },
+    "duration_s": {
+      "duration_s": 181.0
+    },
+    "electrical_energy_used_j": {
+      "electrical_energy_used_j": 221.0
+    },
+    "goal_error_m": {
+      "goal_error_m": 0.081
+    },
+    "jerk_p95_m_s3": {
+      "jerk_p95_m_s3": 8.1
+    },
+    "landing_horizontal_error_m": {
+      "landing_horizontal_error_m": 0.101
+    },
+    "landing_vertical_error_m": {
+      "landing_vertical_error_m": 0.081
+    },
+    "minimum_clearance_m": {
+      "minimum_clearance_m": 0.149
+    },
+    "minimum_continuous_knot_speed_ratio": {
+      "minimum_continuous_knot_speed_ratio": 0.84
+    },
+    "minimum_crossover_knot_speed_ratio": {
+      "minimum_crossover_knot_speed_ratio": 0.94
+    },
+    "minimum_motor_thrust_headroom_n": {
+      "minimum_motor_thrust_headroom_n": 0.029
+    },
+    "motor_differential_normalized_error_p95": {
+      "motor_differential_normalized_error_p95": 0.11
+    },
+    "motor_differential_sign_agreement_fraction": {
+      "motor_differential_sign_agreement_fraction": 0.94
+    },
+    "motor_saturation_fraction": {
+      "motor_saturation_fraction": 0.021
+    },
+    "motor_spread_p95_percent": {
+      "motor_spread_p95_percent": 0.51
+    },
+    "path_tube_max_error_m": {
+      "path_tube_max_error_m": 0.051
+    },
+    "realtime_factor": {
+      "realtime_factor": 0.79
+    },
+    "speed_compliance_fraction": {
+      "speed_compliance_fraction": 0.94
+    },
+    "speed_ripple_m_s": {
+      "speed_ripple_m_s": 0.051
+    },
+    "stale_abort_count": {
+      "stale_abort_count": 1
+    },
+    "supervisor_safety_gate_passed": {
+      "supervisor_safety_gate_passed": false
+    },
+    "terminal_landed_disarmed": {
+      "terminal_landed_disarmed": false
+    },
+    "terminal_reversal_count": {
+      "terminal_reversal_count": 1
+    },
+    "terminal_secondary_peak_m_s": {
+      "terminal_secondary_peak_m_s": 0.021
+    },
+    "tracking_rms_m": {
+      "tracking_rms_m": 0.051
+    },
+    "unintended_fly_through_stop_count": {
+      "unintended_fly_through_stop_count": 1
+    }
+  },
+  "passing_whole_vector": {
+    "acceleration_p95_m_s2": 0.99,
+    "angular_rate_p95_rad_s": 0.39,
+    "checkpoint_hold_conformance_fraction": 1.0,
+    "collision_count": 0,
+    "duration_s": 179.0,
+    "electrical_energy_used_j": 219.0,
+    "goal_error_m": 0.079,
+    "jerk_p95_m_s3": 7.9,
+    "landing_horizontal_error_m": 0.099,
+    "landing_vertical_error_m": 0.079,
+    "minimum_clearance_m": 0.151,
+    "minimum_continuous_knot_speed_ratio": 0.86,
+    "minimum_crossover_knot_speed_ratio": 0.96,
+    "minimum_motor_thrust_headroom_n": 0.031,
+    "motor_differential_normalized_error_p95": 0.09,
+    "motor_differential_sign_agreement_fraction": 0.96,
+    "motor_saturation_fraction": 0.019,
+    "motor_spread_p95_percent": 0.49,
+    "path_tube_max_error_m": 0.049,
+    "realtime_factor": 0.81,
+    "speed_compliance_fraction": 0.96,
+    "speed_ripple_m_s": 0.049,
+    "stale_abort_count": 0,
+    "supervisor_safety_gate_passed": true,
+    "terminal_landed_disarmed": true,
+    "terminal_reversal_count": 0,
+    "terminal_secondary_peak_m_s": 0.019,
+    "tracking_rms_m": 0.049,
+    "unintended_fly_through_stop_count": 0
+  },
+  "reaction_budget": {
+    "insufficient": {
+      "jerk_limited_stop_distance_m": 0.10500000000000002,
+      "jerk_limited_stop_time_s": 0.525,
+      "margin_m": -0.15600000000000014,
+      "required_distance_m": 0.6560000000000001,
+      "response_distance_m": 0.4010000000000001,
+      "speed_m_s": 0.4,
+      "surface_distance_m": 0.5,
+      "total_latency_s": 0.7400000000000001,
+      "urgency": 1.0
+    },
+    "lower-speed": {
+      "jerk_limited_stop_distance_m": 0.0325,
+      "jerk_limited_stop_time_s": 0.325,
+      "margin_m": 0.3145,
+      "required_distance_m": 0.4355,
+      "response_distance_m": 0.18050000000000002,
+      "speed_m_s": 0.2,
+      "surface_distance_m": 0.75,
+      "total_latency_s": 0.7400000000000001,
+      "urgency": 0.0
+    },
+    "nominal": {
+      "jerk_limited_stop_distance_m": 0.10500000000000002,
+      "jerk_limited_stop_time_s": 0.525,
+      "margin_m": 0.2939999999999998,
+      "required_distance_m": 0.6560000000000001,
+      "response_distance_m": 0.4010000000000001,
+      "speed_m_s": 0.4,
+      "surface_distance_m": 0.95,
+      "total_latency_s": 0.7400000000000001,
+      "urgency": 0.0
+    },
+    "progressive": {
+      "jerk_limited_stop_distance_m": 0.10500000000000002,
+      "jerk_limited_stop_time_s": 0.525,
+      "margin_m": 0.09399999999999986,
+      "required_distance_m": 0.6560000000000001,
+      "response_distance_m": 0.4010000000000001,
+      "speed_m_s": 0.4,
+      "surface_distance_m": 0.75,
+      "total_latency_s": 0.7400000000000001,
+      "urgency": 0.6240000000000006
+    }
+  },
+  "reaction_witnesses": [
+    {
+      "abort_certificate": {
+        "certificate_sha256": "a51740932a53b1e62ff36843fb76b22ac4119a9dc4c09d30604a87a3ef7d080f",
+        "entry_speed_m_s": 0.4,
+        "maximum_vertical_abort_entry_speed_m_s": 0.02,
+        "minimum_center_to_obstacle_surface_m": 0.95,
+        "oracle": "independent-vertical-descent-0.01m-v1",
+        "passed": false,
+        "path": [
+          [
+            -0.95,
+            0.0,
+            0.4
+          ],
+          [
+            -0.95,
+            0.0,
+            0.39
+          ],
+          [
+            -0.95,
+            0.0,
+            0.38
+          ],
+          [
+            -0.95,
+            0.0,
+            0.37
+          ],
+          [
+            -0.95,
+            0.0,
+            0.36
+          ],
+          [
+            -0.95,
+            0.0,
+            0.35
+          ],
+          [
+            -0.95,
+            0.0,
+            0.34
+          ],
+          [
+            -0.95,
+            0.0,
+            0.33
+          ],
+          [
+            -0.95,
+            0.0,
+            0.32
+          ],
+          [
+            -0.95,
+            0.0,
+            0.31
+          ],
+          [
+            -0.95,
+            0.0,
+            0.3
+          ],
+          [
+            -0.95,
+            0.0,
+            0.29
+          ],
+          [
+            -0.95,
+            0.0,
+            0.28
+          ],
+          [
+            -0.95,
+            0.0,
+            0.27
+          ],
+          [
+            -0.95,
+            0.0,
+            0.26
+          ],
+          [
+            -0.95,
+            0.0,
+            0.25
+          ],
+          [
+            -0.95,
+            0.0,
+            0.24
+          ],
+          [
+            -0.95,
+            0.0,
+            0.23
+          ],
+          [
+            -0.95,
+            0.0,
+            0.22
+          ],
+          [
+            -0.95,
+            0.0,
+            0.21
+          ],
+          [
+            -0.95,
+            0.0,
+            0.2
+          ],
+          [
+            -0.95,
+            0.0,
+            0.19
+          ],
+          [
+            -0.95,
+            0.0,
+            0.18
+          ],
+          [
+            -0.95,
+            0.0,
+            0.17
+          ],
+          [
+            -0.95,
+            0.0,
+            0.16
+          ],
+          [
+            -0.95,
+            0.0,
+            0.15
+          ],
+          [
+            -0.95,
+            0.0,
+            0.14
+          ],
+          [
+            -0.95,
+            0.0,
+            0.13
+          ],
+          [
+            -0.95,
+            0.0,
+            0.12
+          ],
+          [
+            -0.95,
+            0.0,
+            0.11
+          ],
+          [
+            -0.95,
+            0.0,
+            0.1
+          ],
+          [
+            -0.95,
+            0.0,
+            0.09
+          ],
+          [
+            -0.95,
+            0.0,
+            0.08
+          ],
+          [
+            -0.95,
+            0.0,
+            0.07
+          ],
+          [
+            -0.95,
+            0.0,
+            0.06
+          ],
+          [
+            -0.95,
+            0.0,
+            0.05
+          ],
+          [
+            -0.95,
+            0.0,
+            0.04
+          ]
+        ],
+        "required_padding_m": 0.255
+      },
+      "braking_certificate": {
+        "certificate_sha256": "1ea9105d2b3f97911cf22344c71ab0ea764939c3b9f938dfdc4da102878e5b28",
+        "minimum_center_to_obstacle_surface_m": 0.5489999999999999,
+        "oracle": "independent-0.01m-swept-centerline-v1",
+        "passed": true,
+        "path": [
+          [
+            -0.95,
+            0.0
+          ],
+          [
+            -0.5489999999999999,
+            0.0
+          ]
+        ],
+        "protected_padding_m": 0.255
+      },
+      "clocks": {
+        "budgets_s": {
+          "acknowledge": 0.0006,
+          "commit_guard": 0.0994,
+          "plan_and_certificate": 0.5,
+          "prediction_horizon": 3.0,
+          "sense_process": 0.12,
+          "total": 0.7400000000000001,
+          "validate": 0.02
+        },
+        "effective_cutover_s": 5.74,
+        "observation": {
+          "authenticated_payload_sha256": "9533e24fddc77a42069394f314bb3cc61ca2b748f0db6316d11f4275a007907e",
+          "current_generation": 1,
+          "current_source_s": 5.2,
+          "generation": 2,
+          "payload": {
+            "region": {
+              "id": "sensed-rock",
+              "max_m": [
+                0.35,
+                0.2
+              ],
+              "min_m": [
+                0.0,
+                -0.2
+              ]
+            },
+            "solid_id": "sensed-rock"
+          },
+          "received_s": 5.12,
+          "source_s": 5.0
+        },
+        "source_clock_epoch": 1,
+        "source_clock_id": "fast-sim-Alpha"
+      },
+      "decision_certificate_sha256": "c8dde612a4ae7ec657507060b93d725009d85cbedfc3d463374a966b8071de1d",
+      "hold_certificate": {
+        "certificate_sha256": "3b6ea3d4cc39c3701bd41a7c7f091d6d93ba0d4170e2a4a6af43963ee5238373",
+        "clearance_margin_m": 0.695,
+        "maximum_hold_speed_m_s": 0.02,
+        "maximum_hover_s": 60.0,
+        "oracle": "independent-invariant-hold-v1",
+        "passed": false,
+        "prediction_horizon_s": 3.0,
+        "speed_m_s": 0.4
+      },
+      "observation_status": "TRUSTED_FRESH",
+      "protection": {
+        "jerk_limited_stop_distance_m": 0.10500000000000002,
+        "jerk_limited_stop_time_s": 0.525,
+        "margin_m": 0.2939999999999998,
+        "policy_clearance_m": 0.15,
+        "position_uncertainty_m": 0.05,
+        "required_center_surface_distance_m": 0.6560000000000001,
+        "response_distance_m": 0.4010000000000001,
+        "urgency_0_to_1": 0.0
+      },
+      "resulting_command": "CONTINUE_WITH_MOVING_REPLAN",
+      "search": {
+        "certificate": {
+          "certificate_sha256": "091d0e279f1d29d9d8cee7a6391e054edfa5b9cde3f072877d7c81f36a99629d",
+          "minimum_center_to_obstacle_surface_m": 0.3,
+          "oracle": "independent-0.01m-swept-centerline-v1",
+          "passed": true,
+          "path": [
+            [
+              -0.95,
+              0.0
+            ],
+            [
+              -0.9,
+              0.0
+            ],
+            [
+              -0.85,
+              0.0
+            ],
+            [
+              -0.8,
+              0.0
+            ],
+            [
+              -0.75,
+              0.0
+            ],
+            [
+              -0.7,
+              0.0
+            ],
+            [
+              -0.65,
+              0.0
+            ],
+            [
+              -0.6,
+              -0.05
+            ],
+            [
+              -0.55,
+              -0.1
+            ],
+            [
+              -0.5,
+              -0.15
+            ],
+            [
+              -0.45,
+              -0.2
+            ],
+            [
+              -0.4,
+              -0.25
+            ],
+            [
+              -0.35,
+              -0.3
+            ],
+            [
+              -0.3,
+              -0.35
+            ],
+            [
+              -0.25,
+              -0.4
+            ],
+            [
+              -0.2,
+              -0.45
+            ],
+            [
+              -0.15,
+              -0.5
+            ],
+            [
+              -0.1,
+              -0.5
+            ],
+            [
+              -0.05,
+              -0.5
+            ],
+            [
+              0.0,
+              -0.5
+            ],
+            [
+              0.05,
+              -0.5
+            ],
+            [
+              0.1,
+              -0.5
+            ],
+            [
+              0.15,
+              -0.5
+            ],
+            [
+              0.2,
+              -0.5
+            ],
+            [
+              0.25,
+              -0.5
+            ],
+            [
+              0.3,
+              -0.5
+            ],
+            [
+              0.35,
+              -0.5
+            ],
+            [
+              0.4,
+              -0.5
+            ],
+            [
+              0.45,
+              -0.5
+            ],
+            [
+              0.5,
+              -0.5
+            ],
+            [
+              0.55,
+              -0.5
+            ],
+            [
+              0.6,
+              -0.5
+            ],
+            [
+              0.65,
+              -0.5
+            ],
+            [
+              0.7,
+              -0.5
+            ],
+            [
+              0.75,
+              -0.5
+            ],
+            [
+              0.8,
+              -0.5
+            ],
+            [
+              0.85,
+              -0.5
+            ],
+            [
+              0.9,
+              -0.45
+            ],
+            [
+              0.95,
+              -0.4
+            ],
+            [
+              1.0,
+              -0.35
+            ],
+            [
+              1.05,
+              -0.3
+            ],
+            [
+              1.1,
+              -0.25
+            ],
+            [
+              1.15,
+              -0.2
+            ],
+            [
+              1.2,
+              -0.15
+            ],
+            [
+              1.25,
+              -0.1
+            ],
+            [
+              1.3,
+              -0.05
+            ],
+            [
+              1.35,
+              0.0
+            ]
+          ],
+          "protected_padding_m": 0.255
+        },
+        "disposition": "FOUND_CERTIFIED",
+        "expanded_nodes": 3176,
+        "integrated_turn_rad": 2.356194490191,
+        "maximum_expansions": 8192,
+        "minimum_center_clearance_m": 0.3,
+        "path": [
+          [
+            -0.95,
+            0.0
+          ],
+          [
+            -0.9,
+            0.0
+          ],
+          [
+            -0.85,
+            0.0
+          ],
+          [
+            -0.8,
+            0.0
+          ],
+          [
+            -0.75,
+            0.0
+          ],
+          [
+            -0.7,
+            0.0
+          ],
+          [
+            -0.65,
+            0.0
+          ],
+          [
+            -0.6,
+            -0.05
+          ],
+          [
+            -0.55,
+            -0.1
+          ],
+          [
+            -0.5,
+            -0.15
+          ],
+          [
+            -0.45,
+            -0.2
+          ],
+          [
+            -0.4,
+            -0.25
+          ],
+          [
+            -0.35,
+            -0.3
+          ],
+          [
+            -0.3,
+            -0.35
+          ],
+          [
+            -0.25,
+            -0.4
+          ],
+          [
+            -0.2,
+            -0.45
+          ],
+          [
+            -0.15,
+            -0.5
+          ],
+          [
+            -0.1,
+            -0.5
+          ],
+          [
+            -0.05,
+            -0.5
+          ],
+          [
+            0.0,
+            -0.5
+          ],
+          [
+            0.05,
+            -0.5
+          ],
+          [
+            0.1,
+            -0.5
+          ],
+          [
+            0.15,
+            -0.5
+          ],
+          [
+            0.2,
+            -0.5
+          ],
+          [
+            0.25,
+            -0.5
+          ],
+          [
+            0.3,
+            -0.5
+          ],
+          [
+            0.35,
+            -0.5
+          ],
+          [
+            0.4,
+            -0.5
+          ],
+          [
+            0.45,
+            -0.5
+          ],
+          [
+            0.5,
+            -0.5
+          ],
+          [
+            0.55,
+            -0.5
+          ],
+          [
+            0.6,
+            -0.5
+          ],
+          [
+            0.65,
+            -0.5
+          ],
+          [
+            0.7,
+            -0.5
+          ],
+          [
+            0.75,
+            -0.5
+          ],
+          [
+            0.8,
+            -0.5
+          ],
+          [
+            0.85,
+            -0.5
+          ],
+          [
+            0.9,
+            -0.45
+          ],
+          [
+            0.95,
+            -0.4
+          ],
+          [
+            1.0,
+            -0.35
+          ],
+          [
+            1.05,
+            -0.3
+          ],
+          [
+            1.1,
+            -0.25
+          ],
+          [
+            1.15,
+            -0.2
+          ],
+          [
+            1.2,
+            -0.15
+          ],
+          [
+            1.25,
+            -0.1
+          ],
+          [
+            1.3,
+            -0.05
+          ],
+          [
+            1.35,
+            0.0
+          ]
+        ],
+        "path_length_m": 2.71421356238,
+        "result_sha256": "b6da2285a06bb7862923c42264e492bf3383bc86b6f70c7a746c4a8102e9caf9",
+        "wall_budget_s": 0.5
+      },
+      "vehicle": {
+        "acceleration_m_s2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "maximum_acceleration_m_s2": 1.0,
+        "maximum_jerk_m_s3": 8.0,
+        "nominal_radius_m": 0.055,
+        "position_m": [
+          -0.95,
+          0.0,
+          0.4
+        ],
+        "velocity_m_s": [
+          0.4,
+          0.0,
+          0.0
+        ]
+      },
+      "witness_id": "nominal-moving-detour",
+      "world": {
+        "center_to_obstacle_surface_distance_m": 0.95,
+        "flight_volume_max_m": [
+          1.8,
+          1.8,
+          1.0
+        ],
+        "flight_volume_min_m": [
+          -1.8,
+          -1.8,
+          0.0
+        ],
+        "goal_m": [
+          1.35,
+          0.0,
+          0.4
+        ],
+        "obstacles": [
+          {
+            "id": "sensed-rock",
+            "max_m": [
+              0.35,
+              0.2
+            ],
+            "min_m": [
+              0.0,
+              -0.2
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "abort_certificate": {
+        "certificate_sha256": "cb0ba5d2c436a7bdc2452c2c26e3b53c0da1963884f72031d995efd6cce8a6ff",
+        "entry_speed_m_s": 0.4,
+        "maximum_vertical_abort_entry_speed_m_s": 0.02,
+        "minimum_center_to_obstacle_surface_m": 0.75,
+        "oracle": "independent-vertical-descent-0.01m-v1",
+        "passed": false,
+        "path": [
+          [
+            -0.75,
+            0.0,
+            0.4
+          ],
+          [
+            -0.75,
+            0.0,
+            0.39
+          ],
+          [
+            -0.75,
+            0.0,
+            0.38
+          ],
+          [
+            -0.75,
+            0.0,
+            0.37
+          ],
+          [
+            -0.75,
+            0.0,
+            0.36
+          ],
+          [
+            -0.75,
+            0.0,
+            0.35
+          ],
+          [
+            -0.75,
+            0.0,
+            0.34
+          ],
+          [
+            -0.75,
+            0.0,
+            0.33
+          ],
+          [
+            -0.75,
+            0.0,
+            0.32
+          ],
+          [
+            -0.75,
+            0.0,
+            0.31
+          ],
+          [
+            -0.75,
+            0.0,
+            0.3
+          ],
+          [
+            -0.75,
+            0.0,
+            0.29
+          ],
+          [
+            -0.75,
+            0.0,
+            0.28
+          ],
+          [
+            -0.75,
+            0.0,
+            0.27
+          ],
+          [
+            -0.75,
+            0.0,
+            0.26
+          ],
+          [
+            -0.75,
+            0.0,
+            0.25
+          ],
+          [
+            -0.75,
+            0.0,
+            0.24
+          ],
+          [
+            -0.75,
+            0.0,
+            0.23
+          ],
+          [
+            -0.75,
+            0.0,
+            0.22
+          ],
+          [
+            -0.75,
+            0.0,
+            0.21
+          ],
+          [
+            -0.75,
+            0.0,
+            0.2
+          ],
+          [
+            -0.75,
+            0.0,
+            0.19
+          ],
+          [
+            -0.75,
+            0.0,
+            0.18
+          ],
+          [
+            -0.75,
+            0.0,
+            0.17
+          ],
+          [
+            -0.75,
+            0.0,
+            0.16
+          ],
+          [
+            -0.75,
+            0.0,
+            0.15
+          ],
+          [
+            -0.75,
+            0.0,
+            0.14
+          ],
+          [
+            -0.75,
+            0.0,
+            0.13
+          ],
+          [
+            -0.75,
+            0.0,
+            0.12
+          ],
+          [
+            -0.75,
+            0.0,
+            0.11
+          ],
+          [
+            -0.75,
+            0.0,
+            0.1
+          ],
+          [
+            -0.75,
+            0.0,
+            0.09
+          ],
+          [
+            -0.75,
+            0.0,
+            0.08
+          ],
+          [
+            -0.75,
+            0.0,
+            0.07
+          ],
+          [
+            -0.75,
+            0.0,
+            0.06
+          ],
+          [
+            -0.75,
+            0.0,
+            0.05
+          ],
+          [
+            -0.75,
+            0.0,
+            0.04
+          ]
+        ],
+        "required_padding_m": 0.255
+      },
+      "braking_certificate": {
+        "certificate_sha256": "cda201a4bbd12703ebbebde89493144af209160e0944969c9a79a8581ab2442f",
+        "minimum_center_to_obstacle_surface_m": 0.3489999999999999,
+        "oracle": "independent-0.01m-swept-centerline-v1",
+        "passed": true,
+        "path": [
+          [
+            -0.75,
+            0.0
+          ],
+          [
+            -0.3489999999999999,
+            0.0
+          ]
+        ],
+        "protected_padding_m": 0.255
+      },
+      "clocks": {
+        "budgets_s": {
+          "acknowledge": 0.0006,
+          "commit_guard": 0.0994,
+          "plan_and_certificate": 0.5,
+          "prediction_horizon": 3.0,
+          "sense_process": 0.12,
+          "total": 0.7400000000000001,
+          "validate": 0.02
+        },
+        "effective_cutover_s": 5.74,
+        "observation": {
+          "authenticated_payload_sha256": "9533e24fddc77a42069394f314bb3cc61ca2b748f0db6316d11f4275a007907e",
+          "current_generation": 1,
+          "current_source_s": 5.2,
+          "generation": 2,
+          "payload": {
+            "region": {
+              "id": "sensed-rock",
+              "max_m": [
+                0.35,
+                0.2
+              ],
+              "min_m": [
+                0.0,
+                -0.2
+              ]
+            },
+            "solid_id": "sensed-rock"
+          },
+          "received_s": 5.12,
+          "source_s": 5.0
+        },
+        "source_clock_epoch": 1,
+        "source_clock_id": "fast-sim-Alpha"
+      },
+      "decision_certificate_sha256": "78737bc26156be904ade61b0085ed84df70d5f15ad562bcbd642e3278e01f632",
+      "hold_certificate": {
+        "certificate_sha256": "d558d5fc6d4613b272b05c9680601bd7c7deee726c397fe747c2d26c55ac2fa1",
+        "clearance_margin_m": 0.495,
+        "maximum_hold_speed_m_s": 0.02,
+        "maximum_hover_s": 60.0,
+        "oracle": "independent-invariant-hold-v1",
+        "passed": false,
+        "prediction_horizon_s": 3.0,
+        "speed_m_s": 0.4
+      },
+      "observation_status": "TRUSTED_FRESH",
+      "protection": {
+        "jerk_limited_stop_distance_m": 0.10500000000000002,
+        "jerk_limited_stop_time_s": 0.525,
+        "margin_m": 0.09399999999999986,
+        "policy_clearance_m": 0.15,
+        "position_uncertainty_m": 0.05,
+        "required_center_surface_distance_m": 0.6560000000000001,
+        "response_distance_m": 0.4010000000000001,
+        "urgency_0_to_1": 0.6240000000000006
+      },
+      "resulting_command": "JERK_LIMITED_DECELERATE_AND_TURN",
+      "search": {
+        "certificate": {
+          "certificate_sha256": "2de255f956ffff27e70b055a6a3458550878e761a0cf5a66680beddd5b0f911b",
+          "minimum_center_to_obstacle_surface_m": 0.3,
+          "oracle": "independent-0.01m-swept-centerline-v1",
+          "passed": true,
+          "path": [
+            [
+              -0.75,
+              0.0
+            ],
+            [
+              -0.7,
+              0.0
+            ],
+            [
+              -0.65,
+              0.0
+            ],
+            [
+              -0.6,
+              -0.05
+            ],
+            [
+              -0.55,
+              -0.1
+            ],
+            [
+              -0.5,
+              -0.15
+            ],
+            [
+              -0.45,
+              -0.2
+            ],
+            [
+              -0.4,
+              -0.25
+            ],
+            [
+              -0.35,
+              -0.3
+            ],
+            [
+              -0.3,
+              -0.35
+            ],
+            [
+              -0.25,
+              -0.4
+            ],
+            [
+              -0.2,
+              -0.45
+            ],
+            [
+              -0.15,
+              -0.5
+            ],
+            [
+              -0.1,
+              -0.5
+            ],
+            [
+              -0.05,
+              -0.5
+            ],
+            [
+              0.0,
+              -0.5
+            ],
+            [
+              0.05,
+              -0.5
+            ],
+            [
+              0.1,
+              -0.5
+            ],
+            [
+              0.15,
+              -0.5
+            ],
+            [
+              0.2,
+              -0.5
+            ],
+            [
+              0.25,
+              -0.5
+            ],
+            [
+              0.3,
+              -0.5
+            ],
+            [
+              0.35,
+              -0.5
+            ],
+            [
+              0.4,
+              -0.5
+            ],
+            [
+              0.45,
+              -0.5
+            ],
+            [
+              0.5,
+              -0.5
+            ],
+            [
+              0.55,
+              -0.5
+            ],
+            [
+              0.6,
+              -0.5
+            ],
+            [
+              0.65,
+              -0.5
+            ],
+            [
+              0.7,
+              -0.5
+            ],
+            [
+              0.75,
+              -0.5
+            ],
+            [
+              0.8,
+              -0.5
+            ],
+            [
+              0.85,
+              -0.5
+            ],
+            [
+              0.9,
+              -0.45
+            ],
+            [
+              0.95,
+              -0.4
+            ],
+            [
+              1.0,
+              -0.35
+            ],
+            [
+              1.05,
+              -0.3
+            ],
+            [
+              1.1,
+              -0.25
+            ],
+            [
+              1.15,
+              -0.2
+            ],
+            [
+              1.2,
+              -0.15
+            ],
+            [
+              1.25,
+              -0.1
+            ],
+            [
+              1.3,
+              -0.05
+            ],
+            [
+              1.35,
+              0.0
+            ]
+          ],
+          "protected_padding_m": 0.255
+        },
+        "disposition": "FOUND_CERTIFIED",
+        "expanded_nodes": 2406,
+        "integrated_turn_rad": 2.356194490191,
+        "maximum_expansions": 8192,
+        "minimum_center_clearance_m": 0.3,
+        "path": [
+          [
+            -0.75,
+            0.0
+          ],
+          [
+            -0.7,
+            0.0
+          ],
+          [
+            -0.65,
+            0.0
+          ],
+          [
+            -0.6,
+            -0.05
+          ],
+          [
+            -0.55,
+            -0.1
+          ],
+          [
+            -0.5,
+            -0.15
+          ],
+          [
+            -0.45,
+            -0.2
+          ],
+          [
+            -0.4,
+            -0.25
+          ],
+          [
+            -0.35,
+            -0.3
+          ],
+          [
+            -0.3,
+            -0.35
+          ],
+          [
+            -0.25,
+            -0.4
+          ],
+          [
+            -0.2,
+            -0.45
+          ],
+          [
+            -0.15,
+            -0.5
+          ],
+          [
+            -0.1,
+            -0.5
+          ],
+          [
+            -0.05,
+            -0.5
+          ],
+          [
+            0.0,
+            -0.5
+          ],
+          [
+            0.05,
+            -0.5
+          ],
+          [
+            0.1,
+            -0.5
+          ],
+          [
+            0.15,
+            -0.5
+          ],
+          [
+            0.2,
+            -0.5
+          ],
+          [
+            0.25,
+            -0.5
+          ],
+          [
+            0.3,
+            -0.5
+          ],
+          [
+            0.35,
+            -0.5
+          ],
+          [
+            0.4,
+            -0.5
+          ],
+          [
+            0.45,
+            -0.5
+          ],
+          [
+            0.5,
+            -0.5
+          ],
+          [
+            0.55,
+            -0.5
+          ],
+          [
+            0.6,
+            -0.5
+          ],
+          [
+            0.65,
+            -0.5
+          ],
+          [
+            0.7,
+            -0.5
+          ],
+          [
+            0.75,
+            -0.5
+          ],
+          [
+            0.8,
+            -0.5
+          ],
+          [
+            0.85,
+            -0.5
+          ],
+          [
+            0.9,
+            -0.45
+          ],
+          [
+            0.95,
+            -0.4
+          ],
+          [
+            1.0,
+            -0.35
+          ],
+          [
+            1.05,
+            -0.3
+          ],
+          [
+            1.1,
+            -0.25
+          ],
+          [
+            1.15,
+            -0.2
+          ],
+          [
+            1.2,
+            -0.15
+          ],
+          [
+            1.25,
+            -0.1
+          ],
+          [
+            1.3,
+            -0.05
+          ],
+          [
+            1.35,
+            0.0
+          ]
+        ],
+        "path_length_m": 2.51421356238,
+        "result_sha256": "a7013d98ca99357e13e0626e3b12f1e383f67b633de313d45f5a49608b8fcf52",
+        "wall_budget_s": 0.5
+      },
+      "vehicle": {
+        "acceleration_m_s2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "maximum_acceleration_m_s2": 1.0,
+        "maximum_jerk_m_s3": 8.0,
+        "nominal_radius_m": 0.055,
+        "position_m": [
+          -0.75,
+          0.0,
+          0.4
+        ],
+        "velocity_m_s": [
+          0.4,
+          0.0,
+          0.0
+        ]
+      },
+      "witness_id": "progressive-turn",
+      "world": {
+        "center_to_obstacle_surface_distance_m": 0.75,
+        "flight_volume_max_m": [
+          1.8,
+          1.8,
+          1.0
+        ],
+        "flight_volume_min_m": [
+          -1.8,
+          -1.8,
+          0.0
+        ],
+        "goal_m": [
+          1.35,
+          0.0,
+          0.4
+        ],
+        "obstacles": [
+          {
+            "id": "sensed-rock",
+            "max_m": [
+              0.35,
+              0.2
+            ],
+            "min_m": [
+              0.0,
+              -0.2
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "abort_certificate": {
+        "certificate_sha256": "3dc702fe4ba67a1c6c5a7451c1ce5d136e0189a07ef50dcc9625938aac00a8a7",
+        "entry_speed_m_s": 0.2,
+        "maximum_vertical_abort_entry_speed_m_s": 0.02,
+        "minimum_center_to_obstacle_surface_m": 0.75,
+        "oracle": "independent-vertical-descent-0.01m-v1",
+        "passed": false,
+        "path": [
+          [
+            -0.75,
+            0.0,
+            0.4
+          ],
+          [
+            -0.75,
+            0.0,
+            0.39
+          ],
+          [
+            -0.75,
+            0.0,
+            0.38
+          ],
+          [
+            -0.75,
+            0.0,
+            0.37
+          ],
+          [
+            -0.75,
+            0.0,
+            0.36
+          ],
+          [
+            -0.75,
+            0.0,
+            0.35
+          ],
+          [
+            -0.75,
+            0.0,
+            0.34
+          ],
+          [
+            -0.75,
+            0.0,
+            0.33
+          ],
+          [
+            -0.75,
+            0.0,
+            0.32
+          ],
+          [
+            -0.75,
+            0.0,
+            0.31
+          ],
+          [
+            -0.75,
+            0.0,
+            0.3
+          ],
+          [
+            -0.75,
+            0.0,
+            0.29
+          ],
+          [
+            -0.75,
+            0.0,
+            0.28
+          ],
+          [
+            -0.75,
+            0.0,
+            0.27
+          ],
+          [
+            -0.75,
+            0.0,
+            0.26
+          ],
+          [
+            -0.75,
+            0.0,
+            0.25
+          ],
+          [
+            -0.75,
+            0.0,
+            0.24
+          ],
+          [
+            -0.75,
+            0.0,
+            0.23
+          ],
+          [
+            -0.75,
+            0.0,
+            0.22
+          ],
+          [
+            -0.75,
+            0.0,
+            0.21
+          ],
+          [
+            -0.75,
+            0.0,
+            0.2
+          ],
+          [
+            -0.75,
+            0.0,
+            0.19
+          ],
+          [
+            -0.75,
+            0.0,
+            0.18
+          ],
+          [
+            -0.75,
+            0.0,
+            0.17
+          ],
+          [
+            -0.75,
+            0.0,
+            0.16
+          ],
+          [
+            -0.75,
+            0.0,
+            0.15
+          ],
+          [
+            -0.75,
+            0.0,
+            0.14
+          ],
+          [
+            -0.75,
+            0.0,
+            0.13
+          ],
+          [
+            -0.75,
+            0.0,
+            0.12
+          ],
+          [
+            -0.75,
+            0.0,
+            0.11
+          ],
+          [
+            -0.75,
+            0.0,
+            0.1
+          ],
+          [
+            -0.75,
+            0.0,
+            0.09
+          ],
+          [
+            -0.75,
+            0.0,
+            0.08
+          ],
+          [
+            -0.75,
+            0.0,
+            0.07
+          ],
+          [
+            -0.75,
+            0.0,
+            0.06
+          ],
+          [
+            -0.75,
+            0.0,
+            0.05
+          ],
+          [
+            -0.75,
+            0.0,
+            0.04
+          ]
+        ],
+        "required_padding_m": 0.255
+      },
+      "braking_certificate": {
+        "certificate_sha256": "9cf2ca8e2e5ad6413e95c370efbde87885d0273155c405e532d86cfceb9387f0",
+        "minimum_center_to_obstacle_surface_m": 0.5695,
+        "oracle": "independent-0.01m-swept-centerline-v1",
+        "passed": true,
+        "path": [
+          [
+            -0.75,
+            0.0
+          ],
+          [
+            -0.5695,
+            0.0
+          ]
+        ],
+        "protected_padding_m": 0.255
+      },
+      "clocks": {
+        "budgets_s": {
+          "acknowledge": 0.0006,
+          "commit_guard": 0.0994,
+          "plan_and_certificate": 0.5,
+          "prediction_horizon": 3.0,
+          "sense_process": 0.12,
+          "total": 0.7400000000000001,
+          "validate": 0.02
+        },
+        "effective_cutover_s": 5.74,
+        "observation": {
+          "authenticated_payload_sha256": "9533e24fddc77a42069394f314bb3cc61ca2b748f0db6316d11f4275a007907e",
+          "current_generation": 1,
+          "current_source_s": 5.2,
+          "generation": 2,
+          "payload": {
+            "region": {
+              "id": "sensed-rock",
+              "max_m": [
+                0.35,
+                0.2
+              ],
+              "min_m": [
+                0.0,
+                -0.2
+              ]
+            },
+            "solid_id": "sensed-rock"
+          },
+          "received_s": 5.12,
+          "source_s": 5.0
+        },
+        "source_clock_epoch": 1,
+        "source_clock_id": "fast-sim-Alpha"
+      },
+      "decision_certificate_sha256": "7c7d28596c72f9295eff1da6e49bcfd583327e873eee0c842000d43f6360a22b",
+      "hold_certificate": {
+        "certificate_sha256": "296498156134afd7d332d965f80d581e0367cdef8393003462065747d4f16bbf",
+        "clearance_margin_m": 0.495,
+        "maximum_hold_speed_m_s": 0.02,
+        "maximum_hover_s": 60.0,
+        "oracle": "independent-invariant-hold-v1",
+        "passed": false,
+        "prediction_horizon_s": 3.0,
+        "speed_m_s": 0.2
+      },
+      "observation_status": "TRUSTED_FRESH",
+      "protection": {
+        "jerk_limited_stop_distance_m": 0.0325,
+        "jerk_limited_stop_time_s": 0.325,
+        "margin_m": 0.3145,
+        "policy_clearance_m": 0.15,
+        "position_uncertainty_m": 0.05,
+        "required_center_surface_distance_m": 0.4355,
+        "response_distance_m": 0.18050000000000002,
+        "urgency_0_to_1": 0.0
+      },
+      "resulting_command": "CONTINUE_WITH_MOVING_REPLAN",
+      "search": {
+        "certificate": {
+          "certificate_sha256": "2de255f956ffff27e70b055a6a3458550878e761a0cf5a66680beddd5b0f911b",
+          "minimum_center_to_obstacle_surface_m": 0.3,
+          "oracle": "independent-0.01m-swept-centerline-v1",
+          "passed": true,
+          "path": [
+            [
+              -0.75,
+              0.0
+            ],
+            [
+              -0.7,
+              0.0
+            ],
+            [
+              -0.65,
+              0.0
+            ],
+            [
+              -0.6,
+              -0.05
+            ],
+            [
+              -0.55,
+              -0.1
+            ],
+            [
+              -0.5,
+              -0.15
+            ],
+            [
+              -0.45,
+              -0.2
+            ],
+            [
+              -0.4,
+              -0.25
+            ],
+            [
+              -0.35,
+              -0.3
+            ],
+            [
+              -0.3,
+              -0.35
+            ],
+            [
+              -0.25,
+              -0.4
+            ],
+            [
+              -0.2,
+              -0.45
+            ],
+            [
+              -0.15,
+              -0.5
+            ],
+            [
+              -0.1,
+              -0.5
+            ],
+            [
+              -0.05,
+              -0.5
+            ],
+            [
+              0.0,
+              -0.5
+            ],
+            [
+              0.05,
+              -0.5
+            ],
+            [
+              0.1,
+              -0.5
+            ],
+            [
+              0.15,
+              -0.5
+            ],
+            [
+              0.2,
+              -0.5
+            ],
+            [
+              0.25,
+              -0.5
+            ],
+            [
+              0.3,
+              -0.5
+            ],
+            [
+              0.35,
+              -0.5
+            ],
+            [
+              0.4,
+              -0.5
+            ],
+            [
+              0.45,
+              -0.5
+            ],
+            [
+              0.5,
+              -0.5
+            ],
+            [
+              0.55,
+              -0.5
+            ],
+            [
+              0.6,
+              -0.5
+            ],
+            [
+              0.65,
+              -0.5
+            ],
+            [
+              0.7,
+              -0.5
+            ],
+            [
+              0.75,
+              -0.5
+            ],
+            [
+              0.8,
+              -0.5
+            ],
+            [
+              0.85,
+              -0.5
+            ],
+            [
+              0.9,
+              -0.45
+            ],
+            [
+              0.95,
+              -0.4
+            ],
+            [
+              1.0,
+              -0.35
+            ],
+            [
+              1.05,
+              -0.3
+            ],
+            [
+              1.1,
+              -0.25
+            ],
+            [
+              1.15,
+              -0.2
+            ],
+            [
+              1.2,
+              -0.15
+            ],
+            [
+              1.25,
+              -0.1
+            ],
+            [
+              1.3,
+              -0.05
+            ],
+            [
+              1.35,
+              0.0
+            ]
+          ],
+          "protected_padding_m": 0.255
+        },
+        "disposition": "FOUND_CERTIFIED",
+        "expanded_nodes": 2406,
+        "integrated_turn_rad": 2.356194490191,
+        "maximum_expansions": 8192,
+        "minimum_center_clearance_m": 0.3,
+        "path": [
+          [
+            -0.75,
+            0.0
+          ],
+          [
+            -0.7,
+            0.0
+          ],
+          [
+            -0.65,
+            0.0
+          ],
+          [
+            -0.6,
+            -0.05
+          ],
+          [
+            -0.55,
+            -0.1
+          ],
+          [
+            -0.5,
+            -0.15
+          ],
+          [
+            -0.45,
+            -0.2
+          ],
+          [
+            -0.4,
+            -0.25
+          ],
+          [
+            -0.35,
+            -0.3
+          ],
+          [
+            -0.3,
+            -0.35
+          ],
+          [
+            -0.25,
+            -0.4
+          ],
+          [
+            -0.2,
+            -0.45
+          ],
+          [
+            -0.15,
+            -0.5
+          ],
+          [
+            -0.1,
+            -0.5
+          ],
+          [
+            -0.05,
+            -0.5
+          ],
+          [
+            0.0,
+            -0.5
+          ],
+          [
+            0.05,
+            -0.5
+          ],
+          [
+            0.1,
+            -0.5
+          ],
+          [
+            0.15,
+            -0.5
+          ],
+          [
+            0.2,
+            -0.5
+          ],
+          [
+            0.25,
+            -0.5
+          ],
+          [
+            0.3,
+            -0.5
+          ],
+          [
+            0.35,
+            -0.5
+          ],
+          [
+            0.4,
+            -0.5
+          ],
+          [
+            0.45,
+            -0.5
+          ],
+          [
+            0.5,
+            -0.5
+          ],
+          [
+            0.55,
+            -0.5
+          ],
+          [
+            0.6,
+            -0.5
+          ],
+          [
+            0.65,
+            -0.5
+          ],
+          [
+            0.7,
+            -0.5
+          ],
+          [
+            0.75,
+            -0.5
+          ],
+          [
+            0.8,
+            -0.5
+          ],
+          [
+            0.85,
+            -0.5
+          ],
+          [
+            0.9,
+            -0.45
+          ],
+          [
+            0.95,
+            -0.4
+          ],
+          [
+            1.0,
+            -0.35
+          ],
+          [
+            1.05,
+            -0.3
+          ],
+          [
+            1.1,
+            -0.25
+          ],
+          [
+            1.15,
+            -0.2
+          ],
+          [
+            1.2,
+            -0.15
+          ],
+          [
+            1.25,
+            -0.1
+          ],
+          [
+            1.3,
+            -0.05
+          ],
+          [
+            1.35,
+            0.0
+          ]
+        ],
+        "path_length_m": 2.51421356238,
+        "result_sha256": "a7013d98ca99357e13e0626e3b12f1e383f67b633de313d45f5a49608b8fcf52",
+        "wall_budget_s": 0.5
+      },
+      "vehicle": {
+        "acceleration_m_s2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "maximum_acceleration_m_s2": 1.0,
+        "maximum_jerk_m_s3": 8.0,
+        "nominal_radius_m": 0.055,
+        "position_m": [
+          -0.75,
+          0.0,
+          0.4
+        ],
+        "velocity_m_s": [
+          0.2,
+          0.0,
+          0.0
+        ]
+      },
+      "witness_id": "lower-speed-same-distance",
+      "world": {
+        "center_to_obstacle_surface_distance_m": 0.75,
+        "flight_volume_max_m": [
+          1.8,
+          1.8,
+          1.0
+        ],
+        "flight_volume_min_m": [
+          -1.8,
+          -1.8,
+          0.0
+        ],
+        "goal_m": [
+          1.35,
+          0.0,
+          0.4
+        ],
+        "obstacles": [
+          {
+            "id": "sensed-rock",
+            "max_m": [
+              0.35,
+              0.2
+            ],
+            "min_m": [
+              0.0,
+              -0.2
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "abort_certificate": {
+        "certificate_sha256": "b8c1b09ff0bd740844e69cc501183bb10a1071e6e5375abf0a04e27a06787bc0",
+        "entry_speed_m_s": 0.4,
+        "maximum_vertical_abort_entry_speed_m_s": 0.02,
+        "minimum_center_to_obstacle_surface_m": 0.5,
+        "oracle": "independent-vertical-descent-0.01m-v1",
+        "passed": false,
+        "path": [
+          [
+            -0.5,
+            0.0,
+            0.4
+          ],
+          [
+            -0.5,
+            0.0,
+            0.39
+          ],
+          [
+            -0.5,
+            0.0,
+            0.38
+          ],
+          [
+            -0.5,
+            0.0,
+            0.37
+          ],
+          [
+            -0.5,
+            0.0,
+            0.36
+          ],
+          [
+            -0.5,
+            0.0,
+            0.35
+          ],
+          [
+            -0.5,
+            0.0,
+            0.34
+          ],
+          [
+            -0.5,
+            0.0,
+            0.33
+          ],
+          [
+            -0.5,
+            0.0,
+            0.32
+          ],
+          [
+            -0.5,
+            0.0,
+            0.31
+          ],
+          [
+            -0.5,
+            0.0,
+            0.3
+          ],
+          [
+            -0.5,
+            0.0,
+            0.29
+          ],
+          [
+            -0.5,
+            0.0,
+            0.28
+          ],
+          [
+            -0.5,
+            0.0,
+            0.27
+          ],
+          [
+            -0.5,
+            0.0,
+            0.26
+          ],
+          [
+            -0.5,
+            0.0,
+            0.25
+          ],
+          [
+            -0.5,
+            0.0,
+            0.24
+          ],
+          [
+            -0.5,
+            0.0,
+            0.23
+          ],
+          [
+            -0.5,
+            0.0,
+            0.22
+          ],
+          [
+            -0.5,
+            0.0,
+            0.21
+          ],
+          [
+            -0.5,
+            0.0,
+            0.2
+          ],
+          [
+            -0.5,
+            0.0,
+            0.19
+          ],
+          [
+            -0.5,
+            0.0,
+            0.18
+          ],
+          [
+            -0.5,
+            0.0,
+            0.17
+          ],
+          [
+            -0.5,
+            0.0,
+            0.16
+          ],
+          [
+            -0.5,
+            0.0,
+            0.15
+          ],
+          [
+            -0.5,
+            0.0,
+            0.14
+          ],
+          [
+            -0.5,
+            0.0,
+            0.13
+          ],
+          [
+            -0.5,
+            0.0,
+            0.12
+          ],
+          [
+            -0.5,
+            0.0,
+            0.11
+          ],
+          [
+            -0.5,
+            0.0,
+            0.1
+          ],
+          [
+            -0.5,
+            0.0,
+            0.09
+          ],
+          [
+            -0.5,
+            0.0,
+            0.08
+          ],
+          [
+            -0.5,
+            0.0,
+            0.07
+          ],
+          [
+            -0.5,
+            0.0,
+            0.06
+          ],
+          [
+            -0.5,
+            0.0,
+            0.05
+          ],
+          [
+            -0.5,
+            0.0,
+            0.04
+          ]
+        ],
+        "required_padding_m": 0.255
+      },
+      "braking_certificate": {
+        "certificate_sha256": "768cf7ccb264b73ca43ba9ae31c59d637e95d4f019eafa8627716ab4b940eb91",
+        "minimum_center_to_obstacle_surface_m": 0.24570731707317067,
+        "oracle": "independent-0.01m-swept-centerline-v1",
+        "passed": false,
+        "path": [
+          [
+            -0.5,
+            0.0
+          ],
+          [
+            -0.09899999999999992,
+            0.0
+          ]
+        ],
+        "protected_padding_m": 0.255
+      },
+      "clocks": {
+        "budgets_s": {
+          "acknowledge": 0.0006,
+          "commit_guard": 0.0994,
+          "plan_and_certificate": 0.5,
+          "prediction_horizon": 3.0,
+          "sense_process": 0.12,
+          "total": 0.7400000000000001,
+          "validate": 0.02
+        },
+        "effective_cutover_s": 5.74,
+        "observation": {
+          "authenticated_payload_sha256": "9533e24fddc77a42069394f314bb3cc61ca2b748f0db6316d11f4275a007907e",
+          "current_generation": 1,
+          "current_source_s": 5.2,
+          "generation": 2,
+          "payload": {
+            "region": {
+              "id": "sensed-rock",
+              "max_m": [
+                0.35,
+                0.2
+              ],
+              "min_m": [
+                0.0,
+                -0.2
+              ]
+            },
+            "solid_id": "sensed-rock"
+          },
+          "received_s": 5.12,
+          "source_s": 5.0
+        },
+        "source_clock_epoch": 1,
+        "source_clock_id": "fast-sim-Alpha"
+      },
+      "decision_certificate_sha256": "ed87e5445de54f725071236ac45b647e40af339259835a3d8a1c5dda19b678c4",
+      "hold_certificate": {
+        "certificate_sha256": "ee0638d01fe1ec49172544041a7c4f55d6f9883375e97e756871872150b9fb9d",
+        "clearance_margin_m": 0.245,
+        "maximum_hold_speed_m_s": 0.02,
+        "maximum_hover_s": 60.0,
+        "oracle": "independent-invariant-hold-v1",
+        "passed": false,
+        "prediction_horizon_s": 3.0,
+        "speed_m_s": 0.4
+      },
+      "observation_status": "TRUSTED_FRESH",
+      "protection": {
+        "jerk_limited_stop_distance_m": 0.10500000000000002,
+        "jerk_limited_stop_time_s": 0.525,
+        "margin_m": -0.15600000000000014,
+        "policy_clearance_m": 0.15,
+        "position_uncertainty_m": 0.05,
+        "required_center_surface_distance_m": 0.6560000000000001,
+        "response_distance_m": 0.4010000000000001,
+        "urgency_0_to_1": 1.0
+      },
+      "resulting_command": "NO_CERTIFIED_RESPONSE_FAIL_CLOSED",
+      "search": {
+        "certificate": {
+          "certificate_sha256": "ad5cf0afcf3f8816addc8e5c96d55e9518548370d4492e127eb19be3d5007267",
+          "minimum_center_to_obstacle_surface_m": 0.3,
+          "oracle": "independent-0.01m-swept-centerline-v1",
+          "passed": true,
+          "path": [
+            [
+              -0.5,
+              0.0
+            ],
+            [
+              -0.45,
+              -0.05
+            ],
+            [
+              -0.4,
+              -0.1
+            ],
+            [
+              -0.35,
+              -0.15
+            ],
+            [
+              -0.3,
+              -0.2
+            ],
+            [
+              -0.3,
+              -0.25
+            ],
+            [
+              -0.3,
+              -0.3
+            ],
+            [
+              -0.3,
+              -0.35
+            ],
+            [
+              -0.25,
+              -0.4
+            ],
+            [
+              -0.2,
+              -0.45
+            ],
+            [
+              -0.15,
+              -0.5
+            ],
+            [
+              -0.1,
+              -0.5
+            ],
+            [
+              -0.05,
+              -0.5
+            ],
+            [
+              0.0,
+              -0.5
+            ],
+            [
+              0.05,
+              -0.5
+            ],
+            [
+              0.1,
+              -0.5
+            ],
+            [
+              0.15,
+              -0.5
+            ],
+            [
+              0.2,
+              -0.5
+            ],
+            [
+              0.25,
+              -0.5
+            ],
+            [
+              0.3,
+              -0.5
+            ],
+            [
+              0.35,
+              -0.5
+            ],
+            [
+              0.4,
+              -0.5
+            ],
+            [
+              0.45,
+              -0.5
+            ],
+            [
+              0.5,
+              -0.5
+            ],
+            [
+              0.55,
+              -0.5
+            ],
+            [
+              0.6,
+              -0.5
+            ],
+            [
+              0.65,
+              -0.5
+            ],
+            [
+              0.7,
+              -0.5
+            ],
+            [
+              0.75,
+              -0.5
+            ],
+            [
+              0.8,
+              -0.5
+            ],
+            [
+              0.85,
+              -0.5
+            ],
+            [
+              0.9,
+              -0.45
+            ],
+            [
+              0.95,
+              -0.4
+            ],
+            [
+              1.0,
+              -0.35
+            ],
+            [
+              1.05,
+              -0.3
+            ],
+            [
+              1.1,
+              -0.25
+            ],
+            [
+              1.15,
+              -0.2
+            ],
+            [
+              1.2,
+              -0.15
+            ],
+            [
+              1.25,
+              -0.1
+            ],
+            [
+              1.3,
+              -0.05
+            ],
+            [
+              1.35,
+              0.0
+            ]
+          ],
+          "protected_padding_m": 0.255
+        },
+        "disposition": "FOUND_CERTIFIED",
+        "expanded_nodes": 1804,
+        "integrated_turn_rad": 3.926990816985,
+        "maximum_expansions": 8192,
+        "minimum_center_clearance_m": 0.3,
+        "path": [
+          [
+            -0.5,
+            0.0
+          ],
+          [
+            -0.45,
+            -0.05
+          ],
+          [
+            -0.4,
+            -0.1
+          ],
+          [
+            -0.35,
+            -0.15
+          ],
+          [
+            -0.3,
+            -0.2
+          ],
+          [
+            -0.3,
+            -0.25
+          ],
+          [
+            -0.3,
+            -0.3
+          ],
+          [
+            -0.3,
+            -0.35
+          ],
+          [
+            -0.25,
+            -0.4
+          ],
+          [
+            -0.2,
+            -0.45
+          ],
+          [
+            -0.15,
+            -0.5
+          ],
+          [
+            -0.1,
+            -0.5
+          ],
+          [
+            -0.05,
+            -0.5
+          ],
+          [
+            0.0,
+            -0.5
+          ],
+          [
+            0.05,
+            -0.5
+          ],
+          [
+            0.1,
+            -0.5
+          ],
+          [
+            0.15,
+            -0.5
+          ],
+          [
+            0.2,
+            -0.5
+          ],
+          [
+            0.25,
+            -0.5
+          ],
+          [
+            0.3,
+            -0.5
+          ],
+          [
+            0.35,
+            -0.5
+          ],
+          [
+            0.4,
+            -0.5
+          ],
+          [
+            0.45,
+            -0.5
+          ],
+          [
+            0.5,
+            -0.5
+          ],
+          [
+            0.55,
+            -0.5
+          ],
+          [
+            0.6,
+            -0.5
+          ],
+          [
+            0.65,
+            -0.5
+          ],
+          [
+            0.7,
+            -0.5
+          ],
+          [
+            0.75,
+            -0.5
+          ],
+          [
+            0.8,
+            -0.5
+          ],
+          [
+            0.85,
+            -0.5
+          ],
+          [
+            0.9,
+            -0.45
+          ],
+          [
+            0.95,
+            -0.4
+          ],
+          [
+            1.0,
+            -0.35
+          ],
+          [
+            1.05,
+            -0.3
+          ],
+          [
+            1.1,
+            -0.25
+          ],
+          [
+            1.15,
+            -0.2
+          ],
+          [
+            1.2,
+            -0.15
+          ],
+          [
+            1.25,
+            -0.1
+          ],
+          [
+            1.3,
+            -0.05
+          ],
+          [
+            1.35,
+            0.0
+          ]
+        ],
+        "path_length_m": 2.352081528023,
+        "result_sha256": "7895798805f0e44248c978513b1174afc2fd0be4bf2578e9d0df9a9429156653",
+        "wall_budget_s": 0.5
+      },
+      "vehicle": {
+        "acceleration_m_s2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "maximum_acceleration_m_s2": 1.0,
+        "maximum_jerk_m_s3": 8.0,
+        "nominal_radius_m": 0.055,
+        "position_m": [
+          -0.5,
+          0.0,
+          0.4
+        ],
+        "velocity_m_s": [
+          0.4,
+          0.0,
+          0.0
+        ]
+      },
+      "witness_id": "insufficient-clearance",
+      "world": {
+        "center_to_obstacle_surface_distance_m": 0.5,
+        "flight_volume_max_m": [
+          1.8,
+          1.8,
+          1.0
+        ],
+        "flight_volume_min_m": [
+          -1.8,
+          -1.8,
+          0.0
+        ],
+        "goal_m": [
+          1.35,
+          0.0,
+          0.4
+        ],
+        "obstacles": [
+          {
+            "id": "sensed-rock",
+            "max_m": [
+              0.35,
+              0.2
+            ],
+            "min_m": [
+              0.0,
+              -0.2
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "abort_certificate": {
+        "certificate_sha256": "f76caea2515a359eb1d07f3cae3a52a6e6a60d94235b86c1ff571d27a7a2a9dc",
+        "entry_speed_m_s": 0.0,
+        "maximum_vertical_abort_entry_speed_m_s": 0.02,
+        "minimum_center_to_obstacle_surface_m": 0.5,
+        "oracle": "independent-vertical-descent-0.01m-v1",
+        "passed": true,
+        "path": [
+          [
+            -0.5,
+            0.0,
+            0.4
+          ],
+          [
+            -0.5,
+            0.0,
+            0.39
+          ],
+          [
+            -0.5,
+            0.0,
+            0.38
+          ],
+          [
+            -0.5,
+            0.0,
+            0.37
+          ],
+          [
+            -0.5,
+            0.0,
+            0.36
+          ],
+          [
+            -0.5,
+            0.0,
+            0.35
+          ],
+          [
+            -0.5,
+            0.0,
+            0.34
+          ],
+          [
+            -0.5,
+            0.0,
+            0.33
+          ],
+          [
+            -0.5,
+            0.0,
+            0.32
+          ],
+          [
+            -0.5,
+            0.0,
+            0.31
+          ],
+          [
+            -0.5,
+            0.0,
+            0.3
+          ],
+          [
+            -0.5,
+            0.0,
+            0.29
+          ],
+          [
+            -0.5,
+            0.0,
+            0.28
+          ],
+          [
+            -0.5,
+            0.0,
+            0.27
+          ],
+          [
+            -0.5,
+            0.0,
+            0.26
+          ],
+          [
+            -0.5,
+            0.0,
+            0.25
+          ],
+          [
+            -0.5,
+            0.0,
+            0.24
+          ],
+          [
+            -0.5,
+            0.0,
+            0.23
+          ],
+          [
+            -0.5,
+            0.0,
+            0.22
+          ],
+          [
+            -0.5,
+            0.0,
+            0.21
+          ],
+          [
+            -0.5,
+            0.0,
+            0.2
+          ],
+          [
+            -0.5,
+            0.0,
+            0.19
+          ],
+          [
+            -0.5,
+            0.0,
+            0.18
+          ],
+          [
+            -0.5,
+            0.0,
+            0.17
+          ],
+          [
+            -0.5,
+            0.0,
+            0.16
+          ],
+          [
+            -0.5,
+            0.0,
+            0.15
+          ],
+          [
+            -0.5,
+            0.0,
+            0.14
+          ],
+          [
+            -0.5,
+            0.0,
+            0.13
+          ],
+          [
+            -0.5,
+            0.0,
+            0.12
+          ],
+          [
+            -0.5,
+            0.0,
+            0.11
+          ],
+          [
+            -0.5,
+            0.0,
+            0.1
+          ],
+          [
+            -0.5,
+            0.0,
+            0.09
+          ],
+          [
+            -0.5,
+            0.0,
+            0.08
+          ],
+          [
+            -0.5,
+            0.0,
+            0.07
+          ],
+          [
+            -0.5,
+            0.0,
+            0.06
+          ],
+          [
+            -0.5,
+            0.0,
+            0.05
+          ],
+          [
+            -0.5,
+            0.0,
+            0.04
+          ]
+        ],
+        "required_padding_m": 0.255
+      },
+      "braking_certificate": {
+        "certificate_sha256": "2c91f9a1f698d797b7202ad18f259596261df1d0d268c3a8f89fbb9ecf3f77c7",
+        "minimum_center_to_obstacle_surface_m": 0.5,
+        "oracle": "independent-0.01m-swept-centerline-v1",
+        "passed": true,
+        "path": [
+          [
+            -0.5,
+            0.0
+          ],
+          [
+            -0.5,
+            0.0
+          ]
+        ],
+        "protected_padding_m": 0.255
+      },
+      "clocks": {
+        "budgets_s": {
+          "acknowledge": 0.0006,
+          "commit_guard": 0.0994,
+          "plan_and_certificate": 0.5,
+          "prediction_horizon": 3.0,
+          "sense_process": 0.12,
+          "total": 0.7400000000000001,
+          "validate": 0.02
+        },
+        "effective_cutover_s": 5.74,
+        "observation": {
+          "authenticated_payload_sha256": "9533e24fddc77a42069394f314bb3cc61ca2b748f0db6316d11f4275a007907e",
+          "current_generation": 1,
+          "current_source_s": 5.2,
+          "generation": 1,
+          "payload": {
+            "region": {
+              "id": "sensed-rock",
+              "max_m": [
+                0.35,
+                0.2
+              ],
+              "min_m": [
+                0.0,
+                -0.2
+              ]
+            },
+            "solid_id": "sensed-rock"
+          },
+          "received_s": 5.12,
+          "source_s": 5.0
+        },
+        "source_clock_epoch": 1,
+        "source_clock_id": "fast-sim-Alpha"
+      },
+      "decision_certificate_sha256": "1beccfa8481a1ddef89b7f8f847d54a8a2011eb347deaa2301e44f50e666d087",
+      "hold_certificate": {
+        "certificate_sha256": "e153876913dac8f8cd6a2ddc81a4b0b3973c3d898bc4a9074f05cfb2be3b7560",
+        "clearance_margin_m": 0.245,
+        "maximum_hold_speed_m_s": 0.02,
+        "maximum_hover_s": 60.0,
+        "oracle": "independent-invariant-hold-v1",
+        "passed": true,
+        "prediction_horizon_s": 3.0,
+        "speed_m_s": 0.0
+      },
+      "observation_status": "STALE_GENERATION",
+      "protection": {
+        "jerk_limited_stop_distance_m": 0.0,
+        "jerk_limited_stop_time_s": 0.0,
+        "margin_m": 0.245,
+        "policy_clearance_m": 0.15,
+        "position_uncertainty_m": 0.05,
+        "required_center_surface_distance_m": 0.255,
+        "response_distance_m": 0.0,
+        "urgency_0_to_1": 0.020000000000000018
+      },
+      "resulting_command": "REJECT_UPDATE_AND_CERTIFIED_HOLD",
+      "search": {
+        "disposition": "BUDGET_EXHAUSTED",
+        "expanded_nodes": 8192,
+        "integrated_turn_rad": null,
+        "maximum_expansions": 8192,
+        "minimum_center_clearance_m": null,
+        "path": [],
+        "path_length_m": null,
+        "result_sha256": "8f9b47440613adc6260c1e3fd68513653b9028d547d984efc942a5305e1b5cbd",
+        "wall_budget_s": 0.5
+      },
+      "vehicle": {
+        "acceleration_m_s2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "maximum_acceleration_m_s2": 1.0,
+        "maximum_jerk_m_s3": 8.0,
+        "nominal_radius_m": 0.055,
+        "position_m": [
+          -0.5,
+          0.0,
+          0.4
+        ],
+        "velocity_m_s": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "witness_id": "stale-generation",
+      "world": {
+        "center_to_obstacle_surface_distance_m": 0.5,
+        "flight_volume_max_m": [
+          1.8,
+          1.8,
+          1.0
+        ],
+        "flight_volume_min_m": [
+          -1.8,
+          -1.8,
+          0.0
+        ],
+        "goal_m": [
+          1.35,
+          0.0,
+          0.4
+        ],
+        "obstacles": [
+          {
+            "id": "blocking-wall",
+            "max_m": [
+              0.1,
+              1.8
+            ],
+            "min_m": [
+              -0.1,
+              -1.8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "abort_certificate": {
+        "certificate_sha256": "f76caea2515a359eb1d07f3cae3a52a6e6a60d94235b86c1ff571d27a7a2a9dc",
+        "entry_speed_m_s": 0.0,
+        "maximum_vertical_abort_entry_speed_m_s": 0.02,
+        "minimum_center_to_obstacle_surface_m": 0.5,
+        "oracle": "independent-vertical-descent-0.01m-v1",
+        "passed": true,
+        "path": [
+          [
+            -0.5,
+            0.0,
+            0.4
+          ],
+          [
+            -0.5,
+            0.0,
+            0.39
+          ],
+          [
+            -0.5,
+            0.0,
+            0.38
+          ],
+          [
+            -0.5,
+            0.0,
+            0.37
+          ],
+          [
+            -0.5,
+            0.0,
+            0.36
+          ],
+          [
+            -0.5,
+            0.0,
+            0.35
+          ],
+          [
+            -0.5,
+            0.0,
+            0.34
+          ],
+          [
+            -0.5,
+            0.0,
+            0.33
+          ],
+          [
+            -0.5,
+            0.0,
+            0.32
+          ],
+          [
+            -0.5,
+            0.0,
+            0.31
+          ],
+          [
+            -0.5,
+            0.0,
+            0.3
+          ],
+          [
+            -0.5,
+            0.0,
+            0.29
+          ],
+          [
+            -0.5,
+            0.0,
+            0.28
+          ],
+          [
+            -0.5,
+            0.0,
+            0.27
+          ],
+          [
+            -0.5,
+            0.0,
+            0.26
+          ],
+          [
+            -0.5,
+            0.0,
+            0.25
+          ],
+          [
+            -0.5,
+            0.0,
+            0.24
+          ],
+          [
+            -0.5,
+            0.0,
+            0.23
+          ],
+          [
+            -0.5,
+            0.0,
+            0.22
+          ],
+          [
+            -0.5,
+            0.0,
+            0.21
+          ],
+          [
+            -0.5,
+            0.0,
+            0.2
+          ],
+          [
+            -0.5,
+            0.0,
+            0.19
+          ],
+          [
+            -0.5,
+            0.0,
+            0.18
+          ],
+          [
+            -0.5,
+            0.0,
+            0.17
+          ],
+          [
+            -0.5,
+            0.0,
+            0.16
+          ],
+          [
+            -0.5,
+            0.0,
+            0.15
+          ],
+          [
+            -0.5,
+            0.0,
+            0.14
+          ],
+          [
+            -0.5,
+            0.0,
+            0.13
+          ],
+          [
+            -0.5,
+            0.0,
+            0.12
+          ],
+          [
+            -0.5,
+            0.0,
+            0.11
+          ],
+          [
+            -0.5,
+            0.0,
+            0.1
+          ],
+          [
+            -0.5,
+            0.0,
+            0.09
+          ],
+          [
+            -0.5,
+            0.0,
+            0.08
+          ],
+          [
+            -0.5,
+            0.0,
+            0.07
+          ],
+          [
+            -0.5,
+            0.0,
+            0.06
+          ],
+          [
+            -0.5,
+            0.0,
+            0.05
+          ],
+          [
+            -0.5,
+            0.0,
+            0.04
+          ]
+        ],
+        "required_padding_m": 0.255
+      },
+      "braking_certificate": {
+        "certificate_sha256": "2c91f9a1f698d797b7202ad18f259596261df1d0d268c3a8f89fbb9ecf3f77c7",
+        "minimum_center_to_obstacle_surface_m": 0.5,
+        "oracle": "independent-0.01m-swept-centerline-v1",
+        "passed": true,
+        "path": [
+          [
+            -0.5,
+            0.0
+          ],
+          [
+            -0.5,
+            0.0
+          ]
+        ],
+        "protected_padding_m": 0.255
+      },
+      "clocks": {
+        "budgets_s": {
+          "acknowledge": 0.0006,
+          "commit_guard": 0.0994,
+          "plan_and_certificate": 0.5,
+          "prediction_horizon": 3.0,
+          "sense_process": 0.12,
+          "total": 0.7400000000000001,
+          "validate": 0.02
+        },
+        "effective_cutover_s": 5.74,
+        "observation": {
+          "authenticated_payload_sha256": "9533e24fddc77a42069394f314bb3cc61ca2b748f0db6316d11f4275a007907e",
+          "current_generation": 1,
+          "current_source_s": 5.26,
+          "generation": 2,
+          "payload": {
+            "region": {
+              "id": "sensed-rock",
+              "max_m": [
+                0.35,
+                0.2
+              ],
+              "min_m": [
+                0.0,
+                -0.2
+              ]
+            },
+            "solid_id": "sensed-rock"
+          },
+          "received_s": 5.12,
+          "source_s": 5.0
+        },
+        "source_clock_epoch": 1,
+        "source_clock_id": "fast-sim-Alpha"
+      },
+      "decision_certificate_sha256": "eac7ae93c522130d5e0b00dfb950dba4f7445d82846588c906d0e4a3364bae8e",
+      "hold_certificate": {
+        "certificate_sha256": "e153876913dac8f8cd6a2ddc81a4b0b3973c3d898bc4a9074f05cfb2be3b7560",
+        "clearance_margin_m": 0.245,
+        "maximum_hold_speed_m_s": 0.02,
+        "maximum_hover_s": 60.0,
+        "oracle": "independent-invariant-hold-v1",
+        "passed": true,
+        "prediction_horizon_s": 3.0,
+        "speed_m_s": 0.0
+      },
+      "observation_status": "LATE_SOURCE",
+      "protection": {
+        "jerk_limited_stop_distance_m": 0.0,
+        "jerk_limited_stop_time_s": 0.0,
+        "margin_m": 0.245,
+        "policy_clearance_m": 0.15,
+        "position_uncertainty_m": 0.05,
+        "required_center_surface_distance_m": 0.255,
+        "response_distance_m": 0.0,
+        "urgency_0_to_1": 0.020000000000000018
+      },
+      "resulting_command": "REJECT_UPDATE_AND_CERTIFIED_HOLD",
+      "search": {
+        "disposition": "BUDGET_EXHAUSTED",
+        "expanded_nodes": 8192,
+        "integrated_turn_rad": null,
+        "maximum_expansions": 8192,
+        "minimum_center_clearance_m": null,
+        "path": [],
+        "path_length_m": null,
+        "result_sha256": "8f9b47440613adc6260c1e3fd68513653b9028d547d984efc942a5305e1b5cbd",
+        "wall_budget_s": 0.5
+      },
+      "vehicle": {
+        "acceleration_m_s2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "maximum_acceleration_m_s2": 1.0,
+        "maximum_jerk_m_s3": 8.0,
+        "nominal_radius_m": 0.055,
+        "position_m": [
+          -0.5,
+          0.0,
+          0.4
+        ],
+        "velocity_m_s": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "witness_id": "late-source",
+      "world": {
+        "center_to_obstacle_surface_distance_m": 0.5,
+        "flight_volume_max_m": [
+          1.8,
+          1.8,
+          1.0
+        ],
+        "flight_volume_min_m": [
+          -1.8,
+          -1.8,
+          0.0
+        ],
+        "goal_m": [
+          1.35,
+          0.0,
+          0.4
+        ],
+        "obstacles": [
+          {
+            "id": "blocking-wall",
+            "max_m": [
+              0.1,
+              1.8
+            ],
+            "min_m": [
+              -0.1,
+              -1.8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "abort_certificate": {
+        "certificate_sha256": "f76caea2515a359eb1d07f3cae3a52a6e6a60d94235b86c1ff571d27a7a2a9dc",
+        "entry_speed_m_s": 0.0,
+        "maximum_vertical_abort_entry_speed_m_s": 0.02,
+        "minimum_center_to_obstacle_surface_m": 0.5,
+        "oracle": "independent-vertical-descent-0.01m-v1",
+        "passed": true,
+        "path": [
+          [
+            -0.5,
+            0.0,
+            0.4
+          ],
+          [
+            -0.5,
+            0.0,
+            0.39
+          ],
+          [
+            -0.5,
+            0.0,
+            0.38
+          ],
+          [
+            -0.5,
+            0.0,
+            0.37
+          ],
+          [
+            -0.5,
+            0.0,
+            0.36
+          ],
+          [
+            -0.5,
+            0.0,
+            0.35
+          ],
+          [
+            -0.5,
+            0.0,
+            0.34
+          ],
+          [
+            -0.5,
+            0.0,
+            0.33
+          ],
+          [
+            -0.5,
+            0.0,
+            0.32
+          ],
+          [
+            -0.5,
+            0.0,
+            0.31
+          ],
+          [
+            -0.5,
+            0.0,
+            0.3
+          ],
+          [
+            -0.5,
+            0.0,
+            0.29
+          ],
+          [
+            -0.5,
+            0.0,
+            0.28
+          ],
+          [
+            -0.5,
+            0.0,
+            0.27
+          ],
+          [
+            -0.5,
+            0.0,
+            0.26
+          ],
+          [
+            -0.5,
+            0.0,
+            0.25
+          ],
+          [
+            -0.5,
+            0.0,
+            0.24
+          ],
+          [
+            -0.5,
+            0.0,
+            0.23
+          ],
+          [
+            -0.5,
+            0.0,
+            0.22
+          ],
+          [
+            -0.5,
+            0.0,
+            0.21
+          ],
+          [
+            -0.5,
+            0.0,
+            0.2
+          ],
+          [
+            -0.5,
+            0.0,
+            0.19
+          ],
+          [
+            -0.5,
+            0.0,
+            0.18
+          ],
+          [
+            -0.5,
+            0.0,
+            0.17
+          ],
+          [
+            -0.5,
+            0.0,
+            0.16
+          ],
+          [
+            -0.5,
+            0.0,
+            0.15
+          ],
+          [
+            -0.5,
+            0.0,
+            0.14
+          ],
+          [
+            -0.5,
+            0.0,
+            0.13
+          ],
+          [
+            -0.5,
+            0.0,
+            0.12
+          ],
+          [
+            -0.5,
+            0.0,
+            0.11
+          ],
+          [
+            -0.5,
+            0.0,
+            0.1
+          ],
+          [
+            -0.5,
+            0.0,
+            0.09
+          ],
+          [
+            -0.5,
+            0.0,
+            0.08
+          ],
+          [
+            -0.5,
+            0.0,
+            0.07
+          ],
+          [
+            -0.5,
+            0.0,
+            0.06
+          ],
+          [
+            -0.5,
+            0.0,
+            0.05
+          ],
+          [
+            -0.5,
+            0.0,
+            0.04
+          ]
+        ],
+        "required_padding_m": 0.255
+      },
+      "braking_certificate": {
+        "certificate_sha256": "2c91f9a1f698d797b7202ad18f259596261df1d0d268c3a8f89fbb9ecf3f77c7",
+        "minimum_center_to_obstacle_surface_m": 0.5,
+        "oracle": "independent-0.01m-swept-centerline-v1",
+        "passed": true,
+        "path": [
+          [
+            -0.5,
+            0.0
+          ],
+          [
+            -0.5,
+            0.0
+          ]
+        ],
+        "protected_padding_m": 0.255
+      },
+      "clocks": {
+        "budgets_s": {
+          "acknowledge": 0.0006,
+          "commit_guard": 0.0994,
+          "plan_and_certificate": 0.5,
+          "prediction_horizon": 3.0,
+          "sense_process": 0.12,
+          "total": 0.7400000000000001,
+          "validate": 0.02
+        },
+        "effective_cutover_s": 5.74,
+        "observation": {
+          "authenticated_payload_sha256": "9533e24fddc77a42069394f314bb3cc61ca2b748f0db6316d11f4275a007907e",
+          "current_generation": 1,
+          "current_source_s": 5.2,
+          "generation": 2,
+          "payload": {
+            "region": {
+              "id": "sensed-rock",
+              "max_m": [
+                0.35,
+                0.2
+              ],
+              "min_m": [
+                0.0,
+                -0.2
+              ]
+            },
+            "solid_id": "sensed-rock"
+          },
+          "received_s": 5.121,
+          "source_s": 5.0
+        },
+        "source_clock_epoch": 1,
+        "source_clock_id": "fast-sim-Alpha"
+      },
+      "decision_certificate_sha256": "33cdba6019a031e0b7ab1600af42c203d91b8f5f5d37fb420d62dcbe5728894c",
+      "hold_certificate": {
+        "certificate_sha256": "e153876913dac8f8cd6a2ddc81a4b0b3973c3d898bc4a9074f05cfb2be3b7560",
+        "clearance_margin_m": 0.245,
+        "maximum_hold_speed_m_s": 0.02,
+        "maximum_hover_s": 60.0,
+        "oracle": "independent-invariant-hold-v1",
+        "passed": true,
+        "prediction_horizon_s": 3.0,
+        "speed_m_s": 0.0
+      },
+      "observation_status": "LATE_RECEIVE",
+      "protection": {
+        "jerk_limited_stop_distance_m": 0.0,
+        "jerk_limited_stop_time_s": 0.0,
+        "margin_m": 0.245,
+        "policy_clearance_m": 0.15,
+        "position_uncertainty_m": 0.05,
+        "required_center_surface_distance_m": 0.255,
+        "response_distance_m": 0.0,
+        "urgency_0_to_1": 0.020000000000000018
+      },
+      "resulting_command": "REJECT_UPDATE_AND_CERTIFIED_HOLD",
+      "search": {
+        "disposition": "BUDGET_EXHAUSTED",
+        "expanded_nodes": 8192,
+        "integrated_turn_rad": null,
+        "maximum_expansions": 8192,
+        "minimum_center_clearance_m": null,
+        "path": [],
+        "path_length_m": null,
+        "result_sha256": "8f9b47440613adc6260c1e3fd68513653b9028d547d984efc942a5305e1b5cbd",
+        "wall_budget_s": 0.5
+      },
+      "vehicle": {
+        "acceleration_m_s2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "maximum_acceleration_m_s2": 1.0,
+        "maximum_jerk_m_s3": 8.0,
+        "nominal_radius_m": 0.055,
+        "position_m": [
+          -0.5,
+          0.0,
+          0.4
+        ],
+        "velocity_m_s": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "witness_id": "late-receive",
+      "world": {
+        "center_to_obstacle_surface_distance_m": 0.5,
+        "flight_volume_max_m": [
+          1.8,
+          1.8,
+          1.0
+        ],
+        "flight_volume_min_m": [
+          -1.8,
+          -1.8,
+          0.0
+        ],
+        "goal_m": [
+          1.35,
+          0.0,
+          0.4
+        ],
+        "obstacles": [
+          {
+            "id": "blocking-wall",
+            "max_m": [
+              0.1,
+              1.8
+            ],
+            "min_m": [
+              -0.1,
+              -1.8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "abort_certificate": {
+        "certificate_sha256": "f76caea2515a359eb1d07f3cae3a52a6e6a60d94235b86c1ff571d27a7a2a9dc",
+        "entry_speed_m_s": 0.0,
+        "maximum_vertical_abort_entry_speed_m_s": 0.02,
+        "minimum_center_to_obstacle_surface_m": 0.5,
+        "oracle": "independent-vertical-descent-0.01m-v1",
+        "passed": true,
+        "path": [
+          [
+            -0.5,
+            0.0,
+            0.4
+          ],
+          [
+            -0.5,
+            0.0,
+            0.39
+          ],
+          [
+            -0.5,
+            0.0,
+            0.38
+          ],
+          [
+            -0.5,
+            0.0,
+            0.37
+          ],
+          [
+            -0.5,
+            0.0,
+            0.36
+          ],
+          [
+            -0.5,
+            0.0,
+            0.35
+          ],
+          [
+            -0.5,
+            0.0,
+            0.34
+          ],
+          [
+            -0.5,
+            0.0,
+            0.33
+          ],
+          [
+            -0.5,
+            0.0,
+            0.32
+          ],
+          [
+            -0.5,
+            0.0,
+            0.31
+          ],
+          [
+            -0.5,
+            0.0,
+            0.3
+          ],
+          [
+            -0.5,
+            0.0,
+            0.29
+          ],
+          [
+            -0.5,
+            0.0,
+            0.28
+          ],
+          [
+            -0.5,
+            0.0,
+            0.27
+          ],
+          [
+            -0.5,
+            0.0,
+            0.26
+          ],
+          [
+            -0.5,
+            0.0,
+            0.25
+          ],
+          [
+            -0.5,
+            0.0,
+            0.24
+          ],
+          [
+            -0.5,
+            0.0,
+            0.23
+          ],
+          [
+            -0.5,
+            0.0,
+            0.22
+          ],
+          [
+            -0.5,
+            0.0,
+            0.21
+          ],
+          [
+            -0.5,
+            0.0,
+            0.2
+          ],
+          [
+            -0.5,
+            0.0,
+            0.19
+          ],
+          [
+            -0.5,
+            0.0,
+            0.18
+          ],
+          [
+            -0.5,
+            0.0,
+            0.17
+          ],
+          [
+            -0.5,
+            0.0,
+            0.16
+          ],
+          [
+            -0.5,
+            0.0,
+            0.15
+          ],
+          [
+            -0.5,
+            0.0,
+            0.14
+          ],
+          [
+            -0.5,
+            0.0,
+            0.13
+          ],
+          [
+            -0.5,
+            0.0,
+            0.12
+          ],
+          [
+            -0.5,
+            0.0,
+            0.11
+          ],
+          [
+            -0.5,
+            0.0,
+            0.1
+          ],
+          [
+            -0.5,
+            0.0,
+            0.09
+          ],
+          [
+            -0.5,
+            0.0,
+            0.08
+          ],
+          [
+            -0.5,
+            0.0,
+            0.07
+          ],
+          [
+            -0.5,
+            0.0,
+            0.06
+          ],
+          [
+            -0.5,
+            0.0,
+            0.05
+          ],
+          [
+            -0.5,
+            0.0,
+            0.04
+          ]
+        ],
+        "required_padding_m": 0.255
+      },
+      "braking_certificate": {
+        "certificate_sha256": "2c91f9a1f698d797b7202ad18f259596261df1d0d268c3a8f89fbb9ecf3f77c7",
+        "minimum_center_to_obstacle_surface_m": 0.5,
+        "oracle": "independent-0.01m-swept-centerline-v1",
+        "passed": true,
+        "path": [
+          [
+            -0.5,
+            0.0
+          ],
+          [
+            -0.5,
+            0.0
+          ]
+        ],
+        "protected_padding_m": 0.255
+      },
+      "clocks": {
+        "budgets_s": {
+          "acknowledge": 0.0006,
+          "commit_guard": 0.0994,
+          "plan_and_certificate": 0.5,
+          "prediction_horizon": 3.0,
+          "sense_process": 0.12,
+          "total": 0.7400000000000001,
+          "validate": 0.02
+        },
+        "effective_cutover_s": 5.74,
+        "observation": {
+          "authenticated_payload_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "current_generation": 1,
+          "current_source_s": 5.2,
+          "generation": 2,
+          "payload": {
+            "region": {
+              "id": "sensed-rock",
+              "max_m": [
+                0.35,
+                0.2
+              ],
+              "min_m": [
+                0.0,
+                -0.2
+              ]
+            },
+            "solid_id": "sensed-rock"
+          },
+          "received_s": 5.12,
+          "source_s": 5.0
+        },
+        "source_clock_epoch": 1,
+        "source_clock_id": "fast-sim-Alpha"
+      },
+      "decision_certificate_sha256": "70424df40cfda0690a4a69e28d8eedf5aac8336b58935d22baac1ca636c85f02",
+      "hold_certificate": {
+        "certificate_sha256": "e153876913dac8f8cd6a2ddc81a4b0b3973c3d898bc4a9074f05cfb2be3b7560",
+        "clearance_margin_m": 0.245,
+        "maximum_hold_speed_m_s": 0.02,
+        "maximum_hover_s": 60.0,
+        "oracle": "independent-invariant-hold-v1",
+        "passed": true,
+        "prediction_horizon_s": 3.0,
+        "speed_m_s": 0.0
+      },
+      "observation_status": "TAMPERED",
+      "protection": {
+        "jerk_limited_stop_distance_m": 0.0,
+        "jerk_limited_stop_time_s": 0.0,
+        "margin_m": 0.245,
+        "policy_clearance_m": 0.15,
+        "position_uncertainty_m": 0.05,
+        "required_center_surface_distance_m": 0.255,
+        "response_distance_m": 0.0,
+        "urgency_0_to_1": 0.020000000000000018
+      },
+      "resulting_command": "REJECT_UPDATE_AND_CERTIFIED_HOLD",
+      "search": {
+        "disposition": "BUDGET_EXHAUSTED",
+        "expanded_nodes": 8192,
+        "integrated_turn_rad": null,
+        "maximum_expansions": 8192,
+        "minimum_center_clearance_m": null,
+        "path": [],
+        "path_length_m": null,
+        "result_sha256": "8f9b47440613adc6260c1e3fd68513653b9028d547d984efc942a5305e1b5cbd",
+        "wall_budget_s": 0.5
+      },
+      "vehicle": {
+        "acceleration_m_s2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "maximum_acceleration_m_s2": 1.0,
+        "maximum_jerk_m_s3": 8.0,
+        "nominal_radius_m": 0.055,
+        "position_m": [
+          -0.5,
+          0.0,
+          0.4
+        ],
+        "velocity_m_s": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "witness_id": "tampered-observation",
+      "world": {
+        "center_to_obstacle_surface_distance_m": 0.5,
+        "flight_volume_max_m": [
+          1.8,
+          1.8,
+          1.0
+        ],
+        "flight_volume_min_m": [
+          -1.8,
+          -1.8,
+          0.0
+        ],
+        "goal_m": [
+          1.35,
+          0.0,
+          0.4
+        ],
+        "obstacles": [
+          {
+            "id": "blocking-wall",
+            "max_m": [
+              0.1,
+              1.8
+            ],
+            "min_m": [
+              -0.1,
+              -1.8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "abort_certificate": {
+        "certificate_sha256": "f76caea2515a359eb1d07f3cae3a52a6e6a60d94235b86c1ff571d27a7a2a9dc",
+        "entry_speed_m_s": 0.0,
+        "maximum_vertical_abort_entry_speed_m_s": 0.02,
+        "minimum_center_to_obstacle_surface_m": 0.5,
+        "oracle": "independent-vertical-descent-0.01m-v1",
+        "passed": true,
+        "path": [
+          [
+            -0.5,
+            0.0,
+            0.4
+          ],
+          [
+            -0.5,
+            0.0,
+            0.39
+          ],
+          [
+            -0.5,
+            0.0,
+            0.38
+          ],
+          [
+            -0.5,
+            0.0,
+            0.37
+          ],
+          [
+            -0.5,
+            0.0,
+            0.36
+          ],
+          [
+            -0.5,
+            0.0,
+            0.35
+          ],
+          [
+            -0.5,
+            0.0,
+            0.34
+          ],
+          [
+            -0.5,
+            0.0,
+            0.33
+          ],
+          [
+            -0.5,
+            0.0,
+            0.32
+          ],
+          [
+            -0.5,
+            0.0,
+            0.31
+          ],
+          [
+            -0.5,
+            0.0,
+            0.3
+          ],
+          [
+            -0.5,
+            0.0,
+            0.29
+          ],
+          [
+            -0.5,
+            0.0,
+            0.28
+          ],
+          [
+            -0.5,
+            0.0,
+            0.27
+          ],
+          [
+            -0.5,
+            0.0,
+            0.26
+          ],
+          [
+            -0.5,
+            0.0,
+            0.25
+          ],
+          [
+            -0.5,
+            0.0,
+            0.24
+          ],
+          [
+            -0.5,
+            0.0,
+            0.23
+          ],
+          [
+            -0.5,
+            0.0,
+            0.22
+          ],
+          [
+            -0.5,
+            0.0,
+            0.21
+          ],
+          [
+            -0.5,
+            0.0,
+            0.2
+          ],
+          [
+            -0.5,
+            0.0,
+            0.19
+          ],
+          [
+            -0.5,
+            0.0,
+            0.18
+          ],
+          [
+            -0.5,
+            0.0,
+            0.17
+          ],
+          [
+            -0.5,
+            0.0,
+            0.16
+          ],
+          [
+            -0.5,
+            0.0,
+            0.15
+          ],
+          [
+            -0.5,
+            0.0,
+            0.14
+          ],
+          [
+            -0.5,
+            0.0,
+            0.13
+          ],
+          [
+            -0.5,
+            0.0,
+            0.12
+          ],
+          [
+            -0.5,
+            0.0,
+            0.11
+          ],
+          [
+            -0.5,
+            0.0,
+            0.1
+          ],
+          [
+            -0.5,
+            0.0,
+            0.09
+          ],
+          [
+            -0.5,
+            0.0,
+            0.08
+          ],
+          [
+            -0.5,
+            0.0,
+            0.07
+          ],
+          [
+            -0.5,
+            0.0,
+            0.06
+          ],
+          [
+            -0.5,
+            0.0,
+            0.05
+          ],
+          [
+            -0.5,
+            0.0,
+            0.04
+          ]
+        ],
+        "required_padding_m": 0.255
+      },
+      "braking_certificate": {
+        "certificate_sha256": "2c91f9a1f698d797b7202ad18f259596261df1d0d268c3a8f89fbb9ecf3f77c7",
+        "minimum_center_to_obstacle_surface_m": 0.5,
+        "oracle": "independent-0.01m-swept-centerline-v1",
+        "passed": true,
+        "path": [
+          [
+            -0.5,
+            0.0
+          ],
+          [
+            -0.5,
+            0.0
+          ]
+        ],
+        "protected_padding_m": 0.255
+      },
+      "clocks": {
+        "budgets_s": {
+          "acknowledge": 0.0006,
+          "commit_guard": 0.0994,
+          "plan_and_certificate": 0.5,
+          "prediction_horizon": 3.0,
+          "sense_process": 0.12,
+          "total": 0.7400000000000001,
+          "validate": 0.02
+        },
+        "effective_cutover_s": 5.74,
+        "observation": {
+          "authenticated_payload_sha256": "9533e24fddc77a42069394f314bb3cc61ca2b748f0db6316d11f4275a007907e",
+          "current_generation": 1,
+          "current_source_s": 5.2,
+          "generation": 2,
+          "payload": {
+            "region": {
+              "id": "sensed-rock",
+              "max_m": [
+                0.35,
+                0.2
+              ],
+              "min_m": [
+                0.0,
+                -0.2
+              ]
+            },
+            "solid_id": "sensed-rock"
+          },
+          "received_s": 5.12,
+          "source_s": 5.0
+        },
+        "source_clock_epoch": 1,
+        "source_clock_id": "fast-sim-Alpha"
+      },
+      "decision_certificate_sha256": "ff8834bd2abe53e32e312885dd89f9f2828e8c73d736c8f949f7f4e6c32b0744",
+      "hold_certificate": {
+        "certificate_sha256": "e153876913dac8f8cd6a2ddc81a4b0b3973c3d898bc4a9074f05cfb2be3b7560",
+        "clearance_margin_m": 0.245,
+        "maximum_hold_speed_m_s": 0.02,
+        "maximum_hover_s": 60.0,
+        "oracle": "independent-invariant-hold-v1",
+        "passed": true,
+        "prediction_horizon_s": 3.0,
+        "speed_m_s": 0.0
+      },
+      "observation_status": "TRUSTED_FRESH",
+      "protection": {
+        "jerk_limited_stop_distance_m": 0.0,
+        "jerk_limited_stop_time_s": 0.0,
+        "margin_m": 0.245,
+        "policy_clearance_m": 0.15,
+        "position_uncertainty_m": 0.05,
+        "required_center_surface_distance_m": 0.255,
+        "response_distance_m": 0.0,
+        "urgency_0_to_1": 0.020000000000000018
+      },
+      "resulting_command": "CERTIFIED_HOLD",
+      "search": {
+        "disposition": "BUDGET_EXHAUSTED",
+        "expanded_nodes": 8192,
+        "integrated_turn_rad": null,
+        "maximum_expansions": 8192,
+        "minimum_center_clearance_m": null,
+        "path": [],
+        "path_length_m": null,
+        "result_sha256": "8f9b47440613adc6260c1e3fd68513653b9028d547d984efc942a5305e1b5cbd",
+        "wall_budget_s": 0.5
+      },
+      "vehicle": {
+        "acceleration_m_s2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "maximum_acceleration_m_s2": 1.0,
+        "maximum_jerk_m_s3": 8.0,
+        "nominal_radius_m": 0.055,
+        "position_m": [
+          -0.5,
+          0.0,
+          0.4
+        ],
+        "velocity_m_s": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "witness_id": "certified-hold",
+      "world": {
+        "center_to_obstacle_surface_distance_m": 0.5,
+        "flight_volume_max_m": [
+          1.8,
+          1.8,
+          1.0
+        ],
+        "flight_volume_min_m": [
+          -1.8,
+          -1.8,
+          0.0
+        ],
+        "goal_m": [
+          1.35,
+          0.0,
+          0.4
+        ],
+        "obstacles": [
+          {
+            "id": "blocking-wall",
+            "max_m": [
+              0.1,
+              1.8
+            ],
+            "min_m": [
+              -0.1,
+              -1.8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "abort_certificate": {
+        "certificate_sha256": "f76caea2515a359eb1d07f3cae3a52a6e6a60d94235b86c1ff571d27a7a2a9dc",
+        "entry_speed_m_s": 0.0,
+        "maximum_vertical_abort_entry_speed_m_s": 0.02,
+        "minimum_center_to_obstacle_surface_m": 0.5,
+        "oracle": "independent-vertical-descent-0.01m-v1",
+        "passed": true,
+        "path": [
+          [
+            -0.5,
+            0.0,
+            0.4
+          ],
+          [
+            -0.5,
+            0.0,
+            0.39
+          ],
+          [
+            -0.5,
+            0.0,
+            0.38
+          ],
+          [
+            -0.5,
+            0.0,
+            0.37
+          ],
+          [
+            -0.5,
+            0.0,
+            0.36
+          ],
+          [
+            -0.5,
+            0.0,
+            0.35
+          ],
+          [
+            -0.5,
+            0.0,
+            0.34
+          ],
+          [
+            -0.5,
+            0.0,
+            0.33
+          ],
+          [
+            -0.5,
+            0.0,
+            0.32
+          ],
+          [
+            -0.5,
+            0.0,
+            0.31
+          ],
+          [
+            -0.5,
+            0.0,
+            0.3
+          ],
+          [
+            -0.5,
+            0.0,
+            0.29
+          ],
+          [
+            -0.5,
+            0.0,
+            0.28
+          ],
+          [
+            -0.5,
+            0.0,
+            0.27
+          ],
+          [
+            -0.5,
+            0.0,
+            0.26
+          ],
+          [
+            -0.5,
+            0.0,
+            0.25
+          ],
+          [
+            -0.5,
+            0.0,
+            0.24
+          ],
+          [
+            -0.5,
+            0.0,
+            0.23
+          ],
+          [
+            -0.5,
+            0.0,
+            0.22
+          ],
+          [
+            -0.5,
+            0.0,
+            0.21
+          ],
+          [
+            -0.5,
+            0.0,
+            0.2
+          ],
+          [
+            -0.5,
+            0.0,
+            0.19
+          ],
+          [
+            -0.5,
+            0.0,
+            0.18
+          ],
+          [
+            -0.5,
+            0.0,
+            0.17
+          ],
+          [
+            -0.5,
+            0.0,
+            0.16
+          ],
+          [
+            -0.5,
+            0.0,
+            0.15
+          ],
+          [
+            -0.5,
+            0.0,
+            0.14
+          ],
+          [
+            -0.5,
+            0.0,
+            0.13
+          ],
+          [
+            -0.5,
+            0.0,
+            0.12
+          ],
+          [
+            -0.5,
+            0.0,
+            0.11
+          ],
+          [
+            -0.5,
+            0.0,
+            0.1
+          ],
+          [
+            -0.5,
+            0.0,
+            0.09
+          ],
+          [
+            -0.5,
+            0.0,
+            0.08
+          ],
+          [
+            -0.5,
+            0.0,
+            0.07
+          ],
+          [
+            -0.5,
+            0.0,
+            0.06
+          ],
+          [
+            -0.5,
+            0.0,
+            0.05
+          ],
+          [
+            -0.5,
+            0.0,
+            0.04
+          ]
+        ],
+        "required_padding_m": 0.255
+      },
+      "braking_certificate": {
+        "certificate_sha256": "2c91f9a1f698d797b7202ad18f259596261df1d0d268c3a8f89fbb9ecf3f77c7",
+        "minimum_center_to_obstacle_surface_m": 0.5,
+        "oracle": "independent-0.01m-swept-centerline-v1",
+        "passed": true,
+        "path": [
+          [
+            -0.5,
+            0.0
+          ],
+          [
+            -0.5,
+            0.0
+          ]
+        ],
+        "protected_padding_m": 0.255
+      },
+      "clocks": {
+        "budgets_s": {
+          "acknowledge": 0.0006,
+          "commit_guard": 0.0994,
+          "plan_and_certificate": 0.5,
+          "prediction_horizon": 3.0,
+          "sense_process": 0.12,
+          "total": 0.7400000000000001,
+          "validate": 0.02
+        },
+        "effective_cutover_s": 5.74,
+        "observation": {
+          "authenticated_payload_sha256": "9533e24fddc77a42069394f314bb3cc61ca2b748f0db6316d11f4275a007907e",
+          "current_generation": 1,
+          "current_source_s": 5.2,
+          "generation": 2,
+          "payload": {
+            "region": {
+              "id": "sensed-rock",
+              "max_m": [
+                0.35,
+                0.2
+              ],
+              "min_m": [
+                0.0,
+                -0.2
+              ]
+            },
+            "solid_id": "sensed-rock"
+          },
+          "received_s": 5.12,
+          "source_s": 5.0
+        },
+        "source_clock_epoch": 1,
+        "source_clock_id": "fast-sim-Alpha"
+      },
+      "decision_certificate_sha256": "213a708f152f25aa565b4e3c92daddb96419417760e7b4d5915601c28206a088",
+      "hold_certificate": {
+        "certificate_sha256": "9d357f635febcafd87c6f20130261f2fbc8014951bad4b576b7c6b3c8fa29790",
+        "clearance_margin_m": 0.245,
+        "maximum_hold_speed_m_s": 0.02,
+        "maximum_hover_s": 0.0,
+        "oracle": "independent-invariant-hold-v1",
+        "passed": false,
+        "prediction_horizon_s": 3.0,
+        "speed_m_s": 0.0
+      },
+      "observation_status": "TRUSTED_FRESH",
+      "protection": {
+        "jerk_limited_stop_distance_m": 0.0,
+        "jerk_limited_stop_time_s": 0.0,
+        "margin_m": 0.245,
+        "policy_clearance_m": 0.15,
+        "position_uncertainty_m": 0.05,
+        "required_center_surface_distance_m": 0.255,
+        "response_distance_m": 0.0,
+        "urgency_0_to_1": 0.020000000000000018
+      },
+      "resulting_command": "CERTIFIED_ABORT_AND_LAND",
+      "search": {
+        "disposition": "BUDGET_EXHAUSTED",
+        "expanded_nodes": 8192,
+        "integrated_turn_rad": null,
+        "maximum_expansions": 8192,
+        "minimum_center_clearance_m": null,
+        "path": [],
+        "path_length_m": null,
+        "result_sha256": "8f9b47440613adc6260c1e3fd68513653b9028d547d984efc942a5305e1b5cbd",
+        "wall_budget_s": 0.5
+      },
+      "vehicle": {
+        "acceleration_m_s2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "maximum_acceleration_m_s2": 1.0,
+        "maximum_jerk_m_s3": 8.0,
+        "nominal_radius_m": 0.055,
+        "position_m": [
+          -0.5,
+          0.0,
+          0.4
+        ],
+        "velocity_m_s": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "witness_id": "certified-abort-land",
+      "world": {
+        "center_to_obstacle_surface_distance_m": 0.5,
+        "flight_volume_max_m": [
+          1.8,
+          1.8,
+          1.0
+        ],
+        "flight_volume_min_m": [
+          -1.8,
+          -1.8,
+          0.0
+        ],
+        "goal_m": [
+          1.35,
+          0.0,
+          0.4
+        ],
+        "obstacles": [
+          {
+            "id": "blocking-wall",
+            "max_m": [
+              0.1,
+              1.8
+            ],
+            "min_m": [
+              -0.1,
+              -1.8
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "abort_certificate": {
+        "certificate_sha256": "fb0fc798978b152e15ce9d0224ad00bf2068d4a314d7da4fd6c81a080093f5ed",
+        "entry_speed_m_s": 0.0,
+        "maximum_vertical_abort_entry_speed_m_s": 0.02,
+        "minimum_center_to_obstacle_surface_m": 0.2,
+        "oracle": "independent-vertical-descent-0.01m-v1",
+        "passed": false,
+        "path": [
+          [
+            -0.2,
+            0.0,
+            0.4
+          ],
+          [
+            -0.2,
+            0.0,
+            0.39
+          ],
+          [
+            -0.2,
+            0.0,
+            0.38
+          ],
+          [
+            -0.2,
+            0.0,
+            0.37
+          ],
+          [
+            -0.2,
+            0.0,
+            0.36
+          ],
+          [
+            -0.2,
+            0.0,
+            0.35
+          ],
+          [
+            -0.2,
+            0.0,
+            0.34
+          ],
+          [
+            -0.2,
+            0.0,
+            0.33
+          ],
+          [
+            -0.2,
+            0.0,
+            0.32
+          ],
+          [
+            -0.2,
+            0.0,
+            0.31
+          ],
+          [
+            -0.2,
+            0.0,
+            0.3
+          ],
+          [
+            -0.2,
+            0.0,
+            0.29
+          ],
+          [
+            -0.2,
+            0.0,
+            0.28
+          ],
+          [
+            -0.2,
+            0.0,
+            0.27
+          ],
+          [
+            -0.2,
+            0.0,
+            0.26
+          ],
+          [
+            -0.2,
+            0.0,
+            0.25
+          ],
+          [
+            -0.2,
+            0.0,
+            0.24
+          ],
+          [
+            -0.2,
+            0.0,
+            0.23
+          ],
+          [
+            -0.2,
+            0.0,
+            0.22
+          ],
+          [
+            -0.2,
+            0.0,
+            0.21
+          ],
+          [
+            -0.2,
+            0.0,
+            0.2
+          ],
+          [
+            -0.2,
+            0.0,
+            0.19
+          ],
+          [
+            -0.2,
+            0.0,
+            0.18
+          ],
+          [
+            -0.2,
+            0.0,
+            0.17
+          ],
+          [
+            -0.2,
+            0.0,
+            0.16
+          ],
+          [
+            -0.2,
+            0.0,
+            0.15
+          ],
+          [
+            -0.2,
+            0.0,
+            0.14
+          ],
+          [
+            -0.2,
+            0.0,
+            0.13
+          ],
+          [
+            -0.2,
+            0.0,
+            0.12
+          ],
+          [
+            -0.2,
+            0.0,
+            0.11
+          ],
+          [
+            -0.2,
+            0.0,
+            0.1
+          ],
+          [
+            -0.2,
+            0.0,
+            0.09
+          ],
+          [
+            -0.2,
+            0.0,
+            0.08
+          ],
+          [
+            -0.2,
+            0.0,
+            0.07
+          ],
+          [
+            -0.2,
+            0.0,
+            0.06
+          ],
+          [
+            -0.2,
+            0.0,
+            0.05
+          ],
+          [
+            -0.2,
+            0.0,
+            0.04
+          ]
+        ],
+        "required_padding_m": 0.255
+      },
+      "braking_certificate": {
+        "certificate_sha256": "b9045c9fa507c7c3b162fbbb1bd3be2ea172163e940f460029f0be94f24b2147",
+        "minimum_center_to_obstacle_surface_m": 0.2,
+        "oracle": "independent-0.01m-swept-centerline-v1",
+        "passed": false,
+        "path": [
+          [
+            -0.2,
+            0.0
+          ],
+          [
+            -0.2,
+            0.0
+          ]
+        ],
+        "protected_padding_m": 0.255
+      },
+      "clocks": {
+        "budgets_s": {
+          "acknowledge": 0.0006,
+          "commit_guard": 0.0994,
+          "plan_and_certificate": 0.5,
+          "prediction_horizon": 3.0,
+          "sense_process": 0.12,
+          "total": 0.7400000000000001,
+          "validate": 0.02
+        },
+        "effective_cutover_s": 5.74,
+        "observation": {
+          "authenticated_payload_sha256": "9533e24fddc77a42069394f314bb3cc61ca2b748f0db6316d11f4275a007907e",
+          "current_generation": 1,
+          "current_source_s": 5.2,
+          "generation": 2,
+          "payload": {
+            "region": {
+              "id": "sensed-rock",
+              "max_m": [
+                0.35,
+                0.2
+              ],
+              "min_m": [
+                0.0,
+                -0.2
+              ]
+            },
+            "solid_id": "sensed-rock"
+          },
+          "received_s": 5.12,
+          "source_s": 5.0
+        },
+        "source_clock_epoch": 1,
+        "source_clock_id": "fast-sim-Alpha"
+      },
+      "decision_certificate_sha256": "2ee771155f27cfcf87d9a52bf6f9edac2fe473d2c7b3dbd4ecd0bf3e827ce0f7",
+      "hold_certificate": {
+        "certificate_sha256": "876d667427fbb45aaa2c9ed1decf2e1ade48153f5dfd92d5bbd3382ecaa08921",
+        "clearance_margin_m": -0.05499999999999999,
+        "maximum_hold_speed_m_s": 0.02,
+        "maximum_hover_s": 60.0,
+        "oracle": "independent-invariant-hold-v1",
+        "passed": false,
+        "prediction_horizon_s": 3.0,
+        "speed_m_s": 0.0
+      },
+      "observation_status": "TRUSTED_FRESH",
+      "protection": {
+        "jerk_limited_stop_distance_m": 0.0,
+        "jerk_limited_stop_time_s": 0.0,
+        "margin_m": -0.05499999999999999,
+        "policy_clearance_m": 0.15,
+        "position_uncertainty_m": 0.05,
+        "required_center_surface_distance_m": 0.255,
+        "response_distance_m": 0.0,
+        "urgency_0_to_1": 1.0
+      },
+      "resulting_command": "NO_CERTIFIED_RESPONSE_FAIL_CLOSED",
+      "search": {
+        "disposition": "NO_SOLUTION",
+        "expanded_nodes": 1,
+        "integrated_turn_rad": null,
+        "maximum_expansions": 8192,
+        "minimum_center_clearance_m": null,
+        "path": [],
+        "path_length_m": null,
+        "result_sha256": "5151ca3511a4b08fb4d752bbcc30413f1472795e7a506445e7e176c8bde9688c",
+        "wall_budget_s": 0.5
+      },
+      "vehicle": {
+        "acceleration_m_s2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "maximum_acceleration_m_s2": 1.0,
+        "maximum_jerk_m_s3": 8.0,
+        "nominal_radius_m": 0.055,
+        "position_m": [
+          -0.2,
+          0.0,
+          0.4
+        ],
+        "velocity_m_s": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "witness_id": "no-certified-response",
+      "world": {
+        "center_to_obstacle_surface_distance_m": 0.2,
+        "flight_volume_max_m": [
+          1.8,
+          1.8,
+          1.0
+        ],
+        "flight_volume_min_m": [
+          -1.8,
+          -1.8,
+          0.0
+        ],
+        "goal_m": [
+          1.35,
+          0.0,
+          0.4
+        ],
+        "obstacles": [
+          {
+            "id": "blocking-wall",
+            "max_m": [
+              0.1,
+              1.8
+            ],
+            "min_m": [
+              -0.1,
+              -1.8
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "schema_version": 1,
+  "search_contract": {
+    "frozen_timing_samples_s": {
+      "no_solution": [
+        0.13022362499941664,
+        0.13043441599984362,
+        0.1305727079998178,
+        0.12966625000080967,
+        0.12972999999874446
+      ],
+      "obstructed": [
+        0.22960458399938943,
+        0.22534387499945296,
+        0.22835112500069954,
+        0.22378625000055763,
+        0.2245147920002637
+      ]
+    },
+    "maximum_expansions": 8192,
+    "timeout_check": "time.monotonic before every expansion and after independent certification",
+    "timeout_disposition": "BUDGET_EXHAUSTED / NO COMMAND",
+    "wall_budget_s": 0.5
+  },
+  "search_witnesses": {
+    "delayed_certificate": {
+      "disposition": "BUDGET_EXHAUSTED",
+      "expanded_nodes": 52,
+      "integrated_turn_rad": null,
+      "maximum_expansions": 8192,
+      "minimum_center_clearance_m": null,
+      "path": [],
+      "path_length_m": null,
+      "result_sha256": "912fbe692aac74fbb39f3f3e0b34ff52b32c37c77c34fe93bd5f61ab0024a9e4",
+      "wall_budget_s": 0.5
+    },
+    "forced_timeout": {
+      "disposition": "BUDGET_EXHAUSTED",
+      "expanded_nodes": 0,
+      "integrated_turn_rad": null,
+      "maximum_expansions": 8192,
+      "minimum_center_clearance_m": null,
+      "path": [],
+      "path_length_m": null,
+      "result_sha256": "7d9a0752e914c61574e5b1cd26cd97f9d508e457cd20e205d7fd1cebac6e2651",
+      "wall_budget_s": 0.0
+    },
+    "no_solution": {
+      "disposition": "NO_SOLUTION",
+      "expanded_nodes": 2530,
+      "integrated_turn_rad": null,
+      "maximum_expansions": 8192,
+      "minimum_center_clearance_m": null,
+      "path": [],
+      "path_length_m": null,
+      "result_sha256": "2a7cf8b3d7dc49405a6429fe88d22b59f5361982c80dae6e29a225d34b49cd70",
+      "wall_budget_s": 0.5
+    },
+    "obstructed": {
+      "certificate": {
+        "certificate_sha256": "d9c0b50f6f8453a1f6b49168405057d924df90a882aae15a64279d7db1e5aceb",
+        "minimum_center_to_obstacle_surface_m": 0.3,
+        "oracle": "independent-0.01m-swept-centerline-v1",
+        "passed": true,
+        "path": [
+          [
+            -1.3,
+            0.0
+          ],
+          [
+            -1.25,
+            0.0
+          ],
+          [
+            -1.2,
+            0.0
+          ],
+          [
+            -1.15,
+            0.0
+          ],
+          [
+            -1.1,
+            0.0
+          ],
+          [
+            -1.05,
+            0.0
+          ],
+          [
+            -1.0,
+            0.0
+          ],
+          [
+            -0.95,
+            0.0
+          ],
+          [
+            -0.9,
+            0.0
+          ],
+          [
+            -0.85,
+            0.0
+          ],
+          [
+            -0.8,
+            -0.05
+          ],
+          [
+            -0.75,
+            -0.1
+          ],
+          [
+            -0.7,
+            -0.15
+          ],
+          [
+            -0.65,
+            -0.2
+          ],
+          [
+            -0.6,
+            -0.25
+          ],
+          [
+            -0.55,
+            -0.3
+          ],
+          [
+            -0.5,
+            -0.35
+          ],
+          [
+            -0.45,
+            -0.4
+          ],
+          [
+            -0.4,
+            -0.45
+          ],
+          [
+            -0.35,
+            -0.5
+          ],
+          [
+            -0.3,
+            -0.5
+          ],
+          [
+            -0.25,
+            -0.5
+          ],
+          [
+            -0.2,
+            -0.5
+          ],
+          [
+            -0.15,
+            -0.5
+          ],
+          [
+            -0.1,
+            -0.5
+          ],
+          [
+            -0.05,
+            -0.5
+          ],
+          [
+            0.0,
+            -0.5
+          ],
+          [
+            0.05,
+            -0.5
+          ],
+          [
+            0.1,
+            -0.5
+          ],
+          [
+            0.15,
+            -0.5
+          ],
+          [
+            0.2,
+            -0.5
+          ],
+          [
+            0.25,
+            -0.5
+          ],
+          [
+            0.3,
+            -0.5
+          ],
+          [
+            0.35,
+            -0.5
+          ],
+          [
+            0.4,
+            -0.5
+          ],
+          [
+            0.45,
+            -0.5
+          ],
+          [
+            0.5,
+            -0.5
+          ],
+          [
+            0.55,
+            -0.5
+          ],
+          [
+            0.6,
+            -0.5
+          ],
+          [
+            0.65,
+            -0.5
+          ],
+          [
+            0.7,
+            -0.5
+          ],
+          [
+            0.75,
+            -0.5
+          ],
+          [
+            0.8,
+            -0.5
+          ],
+          [
+            0.85,
+            -0.45
+          ],
+          [
+            0.9,
+            -0.4
+          ],
+          [
+            0.95,
+            -0.35
+          ],
+          [
+            1.0,
+            -0.3
+          ],
+          [
+            1.05,
+            -0.25
+          ],
+          [
+            1.1,
+            -0.2
+          ],
+          [
+            1.15,
+            -0.15
+          ],
+          [
+            1.2,
+            -0.1
+          ],
+          [
+            1.25,
+            -0.05
+          ],
+          [
+            1.3,
+            0.0
+          ]
+        ],
+        "protected_padding_m": 0.255
+      },
+      "disposition": "FOUND_CERTIFIED",
+      "expanded_nodes": 4060,
+      "integrated_turn_rad": 2.356194490191,
+      "maximum_expansions": 8192,
+      "minimum_center_clearance_m": 0.3,
+      "path": [
+        [
+          -1.3,
+          0.0
+        ],
+        [
+          -1.25,
+          0.0
+        ],
+        [
+          -1.2,
+          0.0
+        ],
+        [
+          -1.15,
+          0.0
+        ],
+        [
+          -1.1,
+          0.0
+        ],
+        [
+          -1.05,
+          0.0
+        ],
+        [
+          -1.0,
+          0.0
+        ],
+        [
+          -0.95,
+          0.0
+        ],
+        [
+          -0.9,
+          0.0
+        ],
+        [
+          -0.85,
+          0.0
+        ],
+        [
+          -0.8,
+          -0.05
+        ],
+        [
+          -0.75,
+          -0.1
+        ],
+        [
+          -0.7,
+          -0.15
+        ],
+        [
+          -0.65,
+          -0.2
+        ],
+        [
+          -0.6,
+          -0.25
+        ],
+        [
+          -0.55,
+          -0.3
+        ],
+        [
+          -0.5,
+          -0.35
+        ],
+        [
+          -0.45,
+          -0.4
+        ],
+        [
+          -0.4,
+          -0.45
+        ],
+        [
+          -0.35,
+          -0.5
+        ],
+        [
+          -0.3,
+          -0.5
+        ],
+        [
+          -0.25,
+          -0.5
+        ],
+        [
+          -0.2,
+          -0.5
+        ],
+        [
+          -0.15,
+          -0.5
+        ],
+        [
+          -0.1,
+          -0.5
+        ],
+        [
+          -0.05,
+          -0.5
+        ],
+        [
+          0.0,
+          -0.5
+        ],
+        [
+          0.05,
+          -0.5
+        ],
+        [
+          0.1,
+          -0.5
+        ],
+        [
+          0.15,
+          -0.5
+        ],
+        [
+          0.2,
+          -0.5
+        ],
+        [
+          0.25,
+          -0.5
+        ],
+        [
+          0.3,
+          -0.5
+        ],
+        [
+          0.35,
+          -0.5
+        ],
+        [
+          0.4,
+          -0.5
+        ],
+        [
+          0.45,
+          -0.5
+        ],
+        [
+          0.5,
+          -0.5
+        ],
+        [
+          0.55,
+          -0.5
+        ],
+        [
+          0.6,
+          -0.5
+        ],
+        [
+          0.65,
+          -0.5
+        ],
+        [
+          0.7,
+          -0.5
+        ],
+        [
+          0.75,
+          -0.5
+        ],
+        [
+          0.8,
+          -0.5
+        ],
+        [
+          0.85,
+          -0.45
+        ],
+        [
+          0.9,
+          -0.4
+        ],
+        [
+          0.95,
+          -0.35
+        ],
+        [
+          1.0,
+          -0.3
+        ],
+        [
+          1.05,
+          -0.25
+        ],
+        [
+          1.1,
+          -0.2
+        ],
+        [
+          1.15,
+          -0.15
+        ],
+        [
+          1.2,
+          -0.1
+        ],
+        [
+          1.25,
+          -0.05
+        ],
+        [
+          1.3,
+          0.0
+        ]
+      ],
+      "path_length_m": 3.01421356238,
+      "result_sha256": "34d3acff000b509be6b0b3fb14d04a850c16d4dda6d5db2594f19c15e994eee1",
+      "wall_budget_s": 0.5
+    }
+  },
+  "tracking_repeat_policy": {
+    "aggregation_rule": "all expected repeats pass individually; no mean or median substitute",
+    "applicability": "required for every accelerated and realtime MotionQualityContract repeat; there is no N/A branch",
+    "cases": {
+      "aggregate_cheat": {
+        "arithmetic_mean_m": 0.05,
+        "outcome": {
+          "evaluated_repeat_ids": [
+            "accelerated-1",
+            "accelerated-2",
+            "accelerated-3",
+            "realtime-1"
+          ],
+          "failures": [
+            "realtime-1:ABOVE_THRESHOLD"
+          ],
+          "passed": false
+        },
+        "repeats": [
+          {
+            "applicable": true,
+            "repeat_id": "accelerated-1",
+            "tracking_rms_m": 0.049
+          },
+          {
+            "applicable": true,
+            "repeat_id": "accelerated-2",
+            "tracking_rms_m": 0.049
+          },
+          {
+            "applicable": true,
+            "repeat_id": "accelerated-3",
+            "tracking_rms_m": 0.049
+          },
+          {
+            "applicable": true,
+            "repeat_id": "realtime-1",
+            "tracking_rms_m": 0.053
+          }
+        ]
+      },
+      "invalid_not_applicable": {
+        "outcome": {
+          "evaluated_repeat_ids": [
+            "accelerated-1",
+            "accelerated-2",
+            "accelerated-3",
+            "realtime-1"
+          ],
+          "failures": [
+            "accelerated-2:INVALID_NOT_APPLICABLE"
+          ],
+          "passed": false
+        },
+        "repeats": [
+          {
+            "applicable": true,
+            "repeat_id": "accelerated-1",
+            "tracking_rms_m": 0.047
+          },
+          {
+            "applicable": false,
+            "repeat_id": "accelerated-2",
+            "tracking_rms_m": null
+          },
+          {
+            "applicable": true,
+            "repeat_id": "accelerated-3",
+            "tracking_rms_m": 0.049
+          },
+          {
+            "applicable": true,
+            "repeat_id": "realtime-1",
+            "tracking_rms_m": 0.049
+          }
+        ]
+      },
+      "missing": {
+        "outcome": {
+          "evaluated_repeat_ids": [
+            "accelerated-1",
+            "accelerated-2",
+            "accelerated-3",
+            "realtime-1"
+          ],
+          "failures": [
+            "accelerated-2:MISSING"
+          ],
+          "passed": false
+        },
+        "repeats": [
+          {
+            "applicable": true,
+            "repeat_id": "accelerated-1",
+            "tracking_rms_m": 0.047
+          },
+          {
+            "applicable": true,
+            "repeat_id": "accelerated-3",
+            "tracking_rms_m": 0.049
+          },
+          {
+            "applicable": true,
+            "repeat_id": "realtime-1",
+            "tracking_rms_m": 0.049
+          }
+        ]
+      },
+      "passing": {
+        "outcome": {
+          "evaluated_repeat_ids": [
+            "accelerated-1",
+            "accelerated-2",
+            "accelerated-3",
+            "realtime-1"
+          ],
+          "failures": [],
+          "passed": true
+        },
+        "repeats": [
+          {
+            "applicable": true,
+            "repeat_id": "accelerated-1",
+            "tracking_rms_m": 0.047
+          },
+          {
+            "applicable": true,
+            "repeat_id": "accelerated-2",
+            "tracking_rms_m": 0.048
+          },
+          {
+            "applicable": true,
+            "repeat_id": "accelerated-3",
+            "tracking_rms_m": 0.049
+          },
+          {
+            "applicable": true,
+            "repeat_id": "realtime-1",
+            "tracking_rms_m": 0.049
+          }
+        ]
+      },
+      "single_failure": {
+        "outcome": {
+          "evaluated_repeat_ids": [
+            "accelerated-1",
+            "accelerated-2",
+            "accelerated-3",
+            "realtime-1"
+          ],
+          "failures": [
+            "accelerated-3:ABOVE_THRESHOLD"
+          ],
+          "passed": false
+        },
+        "repeats": [
+          {
+            "applicable": true,
+            "repeat_id": "accelerated-1",
+            "tracking_rms_m": 0.047
+          },
+          {
+            "applicable": true,
+            "repeat_id": "accelerated-2",
+            "tracking_rms_m": 0.048
+          },
+          {
+            "applicable": true,
+            "repeat_id": "accelerated-3",
+            "tracking_rms_m": 0.051
+          },
+          {
+            "applicable": true,
+            "repeat_id": "realtime-1",
+            "tracking_rms_m": 0.049
+          }
+        ]
+      }
+    },
+    "expected_repeat_ids": [
+      "accelerated-1",
+      "accelerated-2",
+      "accelerated-3",
+      "realtime-1"
+    ],
+    "metric": "tracking_rms_m",
+    "threshold_m": 0.05
+  },
+  "tracking_rms_guard": {
+    "category": "tracking",
+    "comparator": "<=",
+    "isolated_fail_value": 0.051,
+    "metric": "tracking_rms_m",
+    "pass_value": 0.049,
+    "threshold": 0.05
+  }
+}

@@ -40,6 +40,9 @@ import { campaignMissionPreview } from "../lib/campaign-preview";
 import { createEmptyDashboard } from "../lib/empty";
 import type {
   CampaignCaseView,
+  CampaignCoordinationPreparationRequest,
+  CampaignMotionPreparationRequest,
+  CampaignReviewCursorView,
   CampaignRunMode,
   CampaignRunSummary,
   DashboardModel,
@@ -48,19 +51,24 @@ import type {
   MissionOption,
   MissionPreview,
   MissionRunView,
+  MotorActuationStatusView,
   OperatingMode,
   ParameterView,
+  PhysicalTwinLiveFrameView,
+  PhysicalTwinStatusView,
   PreflightReportView,
   ReplayView,
-  RunFileMissionView,
   RunHistoryView,
   Vec3,
   VehicleView,
 } from "../lib/models";
 import { missionPlan, missionPreviewPaths } from "../lib/spatial";
+import { twinLiveFrameFromStatus, updateTwinShadow, type TwinShadowState } from "../lib/twin-shadow";
 import { RoomScene, type HomeBaseView, type SceneSnapshotCapture, type TwinSceneOverlay } from "./RoomScene";
-import { FlightReadout, RunFilesControl, telemetrySample, type TelemetrySample } from "./TelemetryDock";
+import { FlightReadout, telemetrySample, type TelemetrySample } from "./TelemetryDock";
 import { CampaignLab, humanizeCampaignValue } from "./CampaignLab";
+import { TwinBasicFlightLab } from "./TwinBasicFlightLab";
+import { TwinObservationReadout } from "./TwinObservationReadout";
 
 type ServiceState = "ATTACHING" | "ONLINE" | "OFFLINE";
 type SafetyAction = "abort" | "emergency" | null;
@@ -71,7 +79,14 @@ type MaintenanceVehicle = Pick<
 >;
 
 const LOCAL_API = { endpoint: "/control-api", clientId: "control-center-ui" };
+export const CONTROL_CENTER_WORKSPACE_PREFERENCES_KEY = "crazyswarm.control-center-workspace.v1";
+export const CAMPAIGN_PREVIEW_DEBOUNCE_MS = 200;
 const LIVE_UPDATE_PERIOD_MS = 100;
+export const PHYSICAL_TWIN_STATUS_PERIOD_MS = 1_000;
+export const MOTOR_ACTUATION_STATUS_PERIOD_MS = 500;
+// [SIM-01] One-off operational exception: capture is retained in code but hidden
+// while run evidence volume and mission-finalization liveness are being requalified.
+const CAMPAIGN_SNAPSHOT_CAPTURE_ENABLED = false;
 export const OBSERVED_TRACE_HISTORY_LIMIT = 3_600;
 const BATTERY_LEVEL_PRESETS = [5, 10, 20, 50, 75, 100] as const;
 export const TOAST_DURATION_MS = 4_500;
@@ -79,6 +94,106 @@ export const TOAST_FAILURE_DURATION_MS = 7_000;
 
 export function appendObservedTracePoint(points: Vec3[], point: Vec3): Vec3[] {
   return [...points, point].slice(-OBSERVED_TRACE_HISTORY_LIMIT);
+}
+
+export function physicalTwinConnectionPresentation(
+  status: PhysicalTwinStatusView | undefined,
+): {
+  detail?: string;
+  label: string;
+  tone: "current" | "stale" | "error" | "offline";
+} {
+  const failureDetail = status?.lastFailureKind === "TARGET_OFFLINE"
+    ? "Waiting for drone"
+    : status?.lastFailureKind === "USB_UNAVAILABLE"
+      ? "Crazyradio unavailable"
+      : status?.lastFailureKind === "RF_ACK_LOSS"
+        ? "Radio acknowledgements lost"
+        : status?.lastFailureKind === "OUTBOUND_QUEUE_SATURATED"
+          ? "Radio queue congested"
+          : status?.lastFailureKind === "TELEMETRY_STALE"
+            ? "Telemetry stale"
+            : status?.lastFailureKind === "PROTOCOL_SETUP_FAILED"
+              ? "Radio setup failed"
+              : undefined;
+  if (status?.state === "PAIRED") {
+    if (status.observed?.freshness === "CURRENT") {
+      return { detail: "Connected", label: "PAIRED", tone: "current" };
+    }
+    return {
+      detail: status.observed?.freshness === "MISSING" ? "Telemetry missing" : "Telemetry stale",
+      label: "STALE",
+      tone: "stale",
+    };
+  }
+  if (status?.state === "CONNECTING") {
+    if (status.autoConnectEnabled && status.lastErrorCode) {
+      return { detail: failureDetail ?? "Waiting for radio", label: "RECONNECTING", tone: "offline" };
+    }
+    return { detail: "Connecting", label: "CONNECTING", tone: "offline" };
+  }
+  if (status?.state === "PENDING_CONFIRMATION") {
+    return { detail: "Pairing observer", label: "PAIRING", tone: "offline" };
+  }
+  if (status?.state === "SUSPENDED") {
+    return {
+      detail: status.suspensionReason ?? "Physical operation owns the radio",
+      label: "SUSPENDED",
+      tone: "stale",
+    };
+  }
+  if (status?.state === "DISCONNECTED" && status.autoConnectEnabled) {
+    return { detail: "Waiting for radio", label: "RECONNECTING", tone: "offline" };
+  }
+  if (status?.state === "ERROR" || status?.state === "CONFIGURATION_INVALID") {
+    const label = status.autoConnectEnabled ? "RETRYING" : "ERROR";
+    return failureDetail
+      ? { detail: failureDetail, label, tone: "error" }
+      : { label, tone: "error" };
+  }
+  return { detail: "Connection needed", label: "OFFLINE", tone: "offline" };
+}
+
+export type TelemetryHistory = Record<string, {
+  key?: string;
+  sourceClockEpoch?: number;
+  points: TelemetrySample[];
+}>;
+
+export function appendTelemetryHistory(
+  current: TelemetryHistory,
+  vehicles: VehicleView[],
+): TelemetryHistory {
+  let changed = false;
+  const next = { ...current };
+  for (const vehicle of vehicles) {
+    const sample = telemetrySample(vehicle);
+    if (!sample) continue;
+    const existing = current[vehicle.id];
+    const sourceClockEpoch = vehicle.telemetry?.provenance.sourceClockEpoch ?? 0;
+    // A completed run clears observationRunId after landing. Retain its final live
+    // buffer until the source clock changes or a subsequent run supplies a new ID.
+    const key = vehicle.observationRunId
+      ?? (existing?.key && existing.sourceClockEpoch === sourceClockEpoch
+        ? existing.key
+        : `${vehicle.id}:${sourceClockEpoch}`);
+    if (existing?.key !== key) {
+      next[vehicle.id] = { key, sourceClockEpoch, points: [sample] };
+      changed = true;
+      continue;
+    }
+    const previous = existing.points.at(-1);
+    if (previous?.t === sample.t) continue;
+    next[vehicle.id] = {
+      key,
+      sourceClockEpoch,
+      points: [...existing.points, sample]
+        .filter((point) => sample.t - point.t <= 65)
+        .slice(-600),
+    };
+    changed = true;
+  }
+  return changed ? next : current;
 }
 
 export function campaignDockModePresentation(mode: CampaignRunMode): {
@@ -261,7 +376,20 @@ export function ControlCenter() {
   const [campaignExecutionMode, setCampaignExecutionMode] = useState<CampaignRunMode>("OPERATOR_OBSERVED_REALTIME");
   const [campaignSubmissionId, setCampaignSubmissionId] = useState<string>();
   const [campaignPlanningSubmissionId, setCampaignPlanningSubmissionId] = useState<string>();
+  const [campaignMotionPreparation, setCampaignMotionPreparation] = useState<CampaignMotionPreparationRequest>();
+  const [campaignCoordinationPreparation, setCampaignCoordinationPreparation] = useState<CampaignCoordinationPreparationRequest>();
+  const [campaignReviewCursor, setCampaignReviewCursor] = useState<CampaignReviewCursorView>();
   const [executionMode, setExecutionMode] = useState<ExecutionMode>("SIMULATION");
+  const [workspacePreferencesReady, setWorkspacePreferencesReady] = useState(false);
+  const [physicalTwin, setPhysicalTwin] = useState<PhysicalTwinStatusView>();
+  const [motorActuation, setMotorActuation] = useState<MotorActuationStatusView>();
+  const [physicalTwinUri, setPhysicalTwinUri] = useState("");
+  const [physicalTwinLabel, setPhysicalTwinLabel] = useState("My Crazyflie");
+  const [physicalTwinUriConfirmed, setPhysicalTwinUriConfirmed] = useState(false);
+  const [physicalTwinBusy, setPhysicalTwinBusy] = useState(false);
+  const [physicalTwinEditing, setPhysicalTwinEditing] = useState(false);
+  const [twinOperationActive, setTwinOperationActive] = useState(false);
+  const [twinFlightActive, setTwinFlightActive] = useState(false);
   const [uploadFile, setUploadFile] = useState<File>();
   const [uploadName, setUploadName] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -272,7 +400,7 @@ export function ControlCenter() {
   const [targetVehicleIds, setTargetVehicleIds] = useState<string[]>([]);
   const targetSelectionInitializedRef = useRef(false);
   const [historyByVehicle, setHistoryByVehicle] = useState<Record<string, { runId?: string; points: Vec3[] }>>({});
-  const [telemetryHistoryByVehicle, setTelemetryHistoryByVehicle] = useState<Record<string, { key?: string; points: TelemetrySample[] }>>({});
+  const [telemetryHistoryByVehicle, setTelemetryHistoryByVehicle] = useState<TelemetryHistory>({});
   const [missionOpen, setMissionOpen] = useState(false);
   const [telemetryOpen, setTelemetryOpen] = useState(false);
   const [notice, setNotice] = useState<string>();
@@ -287,11 +415,6 @@ export function ControlCenter() {
   const [parameterDiffCount, setParameterDiffCount] = useState<number>();
   const [runHistory, setRunHistory] = useState<RunHistoryView[]>([]);
   const [runHistoryLoading, setRunHistoryLoading] = useState(false);
-  const [runFileMissions, setRunFileMissions] = useState<RunFileMissionView[]>([]);
-  const [runFilesLoaded, setRunFilesLoaded] = useState(false);
-  const [runFilesLoading, setRunFilesLoading] = useState(false);
-  const [runFilesError, setRunFilesError] = useState<string>();
-  const [deletingRunFileMissionId, setDeletingRunFileMissionId] = useState<string>();
   const [replay, setReplay] = useState<ReplayView>();
   const [batteryMenuOpen, setBatteryMenuOpen] = useState(false);
   const [customBatteryPercent, setCustomBatteryPercent] = useState("50");
@@ -300,6 +423,7 @@ export function ControlCenter() {
   const [campaignPreview, setCampaignPreview] = useState<MissionPreview>();
   const [planOverview, setPlanOverview] = useState<MissionPreview>();
   const [twinSceneOverlay, setTwinSceneOverlay] = useState<TwinSceneOverlay>();
+  const [twinShadow, setTwinShadow] = useState<TwinShadowState>();
   const [missionStart, setMissionStart] = useState<{ missionId: string; runId?: string; homeBases: HomeBaseView[] }>();
   const [previewingMissionId, setPreviewingMissionId] = useState<string>();
   const previewRequestRef = useRef(0);
@@ -307,12 +431,72 @@ export function ControlCenter() {
   const autoPreviewMissionIdRef = useRef<string | undefined>(undefined);
   const activeCampaignCaseIdRef = useRef<string | undefined>(undefined);
   const batteryControlRef = useRef<HTMLDivElement>(null);
+  const twinFlightActiveRef = useRef(false);
 
   const api = useMemo(() => new ControlApi(LOCAL_API), []);
+
+  /* Local storage restores presentation context only; backend state remains authoritative. */
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(CONTROL_CENTER_WORKSPACE_PREFERENCES_KEY);
+      if (stored) {
+        const preferences = JSON.parse(stored) as Record<string, unknown>;
+        if (preferences.executionMode === "SIMULATION" || preferences.executionMode === "TWIN") {
+          setExecutionMode(preferences.executionMode);
+        }
+        if (typeof preferences.missionOpen === "boolean") setMissionOpen(preferences.missionOpen);
+        if (typeof preferences.telemetryOpen === "boolean") setTelemetryOpen(preferences.telemetryOpen);
+      }
+    } catch {
+      window.localStorage.removeItem(CONTROL_CENTER_WORKSPACE_PREFERENCES_KEY);
+    } finally {
+      setWorkspacePreferencesReady(true);
+    }
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (!workspacePreferencesReady) return;
+    window.localStorage.setItem(CONTROL_CENTER_WORKSPACE_PREFERENCES_KEY, JSON.stringify({
+      executionMode,
+      missionOpen,
+      telemetryOpen,
+    }));
+  }, [executionMode, missionOpen, telemetryOpen, workspacePreferencesReady]);
+
+  const acceptPhysicalTwinStatus = useCallback((status: PhysicalTwinStatusView) => {
+    setPhysicalTwin(status);
+    if (twinFlightActiveRef.current) {
+      // RECONNECTING can legitimately omit an observed sample. updateTwinShadow
+      // preserves the last flight anchor until a fresh sample arrives; clearing it
+      // here would re-anchor an airborne vehicle at scene Z=0 after reconnect.
+      setTwinShadow((current) => updateTwinShadow(current, twinLiveFrameFromStatus(status)));
+    } else {
+      setTwinShadow(undefined);
+    }
+    if (["CONNECTING", "PENDING_CONFIRMATION", "PAIRED"].includes(status.state)) {
+      setPhysicalTwinEditing(false);
+    }
+  }, []);
   const loadTwinTimeline = useCallback(
     (sessionId: string) => api.twinTimeline(sessionId),
     [api],
   );
+  const subscribePhysicalTwin = useCallback(
+    (onFrame: Parameters<ControlApi["streamPhysicalTwin"]>[0], signal: AbortSignal) =>
+      api.streamPhysicalTwin(onFrame, signal),
+    [api],
+  );
+  const acceptTwinLiveFrame = useCallback((frame: PhysicalTwinLiveFrameView) => {
+    if (!twinFlightActiveRef.current) return;
+    setTwinShadow((current) => updateTwinShadow(current, frame));
+  }, []);
+  const acceptTwinFlightActive = useCallback((active: boolean) => {
+    twinFlightActiveRef.current = active;
+    setTwinFlightActive(active);
+    setTwinShadow(undefined);
+  }, []);
   const handleActiveCampaignCaseChange = useCallback((campaignCase: CampaignCaseView | undefined) => {
     const activeCaseChanged = activeCampaignCaseIdRef.current !== campaignCase?.case_id;
     activeCampaignCaseIdRef.current = campaignCase?.case_id;
@@ -333,7 +517,6 @@ export function ControlCenter() {
     setPlanOverview(undefined);
     setObservedVehicleId(undefined);
     setTargetVehicleIds([]);
-    setExecutionMode("SIMULATION");
   }, []);
   const handleCampaignRunChange = useCallback((run: CampaignRunSummary | undefined) => {
     setCampaignRun(run);
@@ -348,6 +531,12 @@ export function ControlCenter() {
   const handleCampaignPlanningSubmissionChange = useCallback((planningSubmissionId: string | undefined) => {
     setCampaignPlanningSubmissionId(planningSubmissionId);
     setCampaignPreview(undefined);
+  }, []);
+  const handleCampaignMotionPreparationChange = useCallback((motionPreparation: CampaignMotionPreparationRequest | undefined) => {
+    setCampaignMotionPreparation(motionPreparation);
+  }, []);
+  const handleCampaignCoordinationPreparationChange = useCallback((coordinationPreparation: CampaignCoordinationPreparationRequest | undefined) => {
+    setCampaignCoordinationPreparation(coordinationPreparation);
   }, []);
   const captureCampaignScene = useCallback(async (capture: SceneSnapshotCapture) => {
     if (!campaignRun || campaignRun.status !== "RUNNING") {
@@ -377,6 +566,7 @@ export function ControlCenter() {
   const selectedMission = model.missions.find((mission) => mission.id === effectiveMissionId);
   const campaignRunId = campaignRun?.run_id;
   const campaignRunActive = campaignRun?.status === "QUEUED" || campaignRun?.status === "RUNNING";
+  const simulationOperationActive = Boolean(executionActive || runningRunId || campaignRunActive);
   const campaignModePresentation = campaignDockModePresentation(campaignExecutionMode);
   // Keep the admitted campaign geometry available after launch. The live vehicle
   // positions replace the preview vehicle, but the route remains the operator's
@@ -399,20 +589,28 @@ export function ControlCenter() {
     const requestId = campaignPreviewRequestRef.current + 1;
     campaignPreviewRequestRef.current = requestId;
     let cancelled = false;
-    void api.previewActiveCampaign(campaignSubmissionId, campaignPlanningSubmissionId).then((payload) => {
-      if (cancelled || campaignPreviewRequestRef.current !== requestId) return;
-      const preview = campaignMissionPreview(campaignDockCase, payload);
-      if (!preview) throw new Error("Campaign preview has no selected route");
-      setCampaignPreview(preview);
-    }).catch((error: unknown) => {
-      if (!cancelled && campaignPreviewRequestRef.current === requestId) {
-        setNotice(error instanceof Error ? error.message : "Campaign preview unavailable");
-      }
-    });
+    const timer = window.setTimeout(() => {
+      void api.previewActiveCampaign(
+        campaignSubmissionId,
+        campaignPlanningSubmissionId,
+        campaignMotionPreparation,
+        campaignCoordinationPreparation,
+      ).then((payload) => {
+        if (cancelled || campaignPreviewRequestRef.current !== requestId) return;
+        const preview = campaignMissionPreview(campaignDockCase, payload);
+        if (!preview) throw new Error("Campaign preview has no selected route");
+        setCampaignPreview(preview);
+      }).catch((error: unknown) => {
+        if (!cancelled && campaignPreviewRequestRef.current === requestId) {
+          setNotice(error instanceof Error ? error.message : "Campaign preview unavailable");
+        }
+      });
+    }, CAMPAIGN_PREVIEW_DEBOUNCE_MS);
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
-  }, [api, campaignDockCase, campaignPlanningSubmissionId, campaignRunActive, campaignSubmissionId, runningRunId]);
+  }, [api, campaignCoordinationPreparation, campaignDockCase, campaignMotionPreparation, campaignPlanningSubmissionId, campaignRunActive, campaignSubmissionId, runningRunId]);
 
   const previewControlVehicles = missionPreviewControlVehicles(activeMissionPreview, model.vehicles);
   const controlScopeVehicles: MaintenanceVehicle[] = campaignDockCase
@@ -433,18 +631,6 @@ export function ControlCenter() {
   );
   const allCommandTargetsAreFastSim = commandTargetVehicles.length > 0
     && simulationTargetVehicles.length === commandTargetVehicles.length;
-  const singleTargetVehicle = effectiveTargetVehicleIds.length === 1
-    ? model.vehicles.find((vehicle) => vehicle.id === effectiveTargetVehicleIds[0])
-    : undefined;
-  const singleTargetName = effectiveTargetVehicleIds.length === 1
-    ? singleTargetVehicle?.name
-      ?? activeMissionPreview?.vehicles.find(
-        (vehicle) => vehicle.vehicleId === effectiveTargetVehicleIds[0],
-      )?.displayName
-    : undefined;
-  const sceneVehicleCount = activeMissionPreview?.vehicles.length
-    ?? campaignDockCase?.drone_count
-    ?? model.vehicles.length;
   const selectedPlanOverview = planOverview?.missionId === effectiveMissionId
     ? planOverview
     : undefined;
@@ -498,14 +684,18 @@ export function ControlCenter() {
     observationModel,
     effectiveTargetVehicleIds,
   );
-  const rendererModel = replay
+  const rendererModel = executionMode === "TWIN"
+    ? {
+        ...targetSelectionModel,
+        mode: "SHADOW" as const,
+        vehicles: twinFlightActive && twinShadow ? [twinShadow.vehicle] : [],
+        selectedVehicleId: twinFlightActive ? twinShadow?.vehicle.id : undefined,
+      }
+    : replay
     ? { ...targetSelectionModel, mode: "REPLAY" as const }
     : campaignDockCase && !activeMissionPreview && !campaignRunActive && !runningRunId
       ? { ...targetSelectionModel, vehicles: [] }
       : targetSelectionModel;
-  const twinAvailable = model.vehicles.some((vehicle) => vehicle.authorityClass === "PHYSICAL")
-    && model.vehicles.some((vehicle) => vehicle.authorityClass === "SIMULATION");
-  const selectedVehicleException = singleTargetVehicle ? vehicleException(singleTargetVehicle) : undefined;
   const simulationQuickActionsDisabled = !allCommandTargetsAreFastSim
     || Boolean(runningRunId || campaignRunActive)
     || Boolean(busyAction);
@@ -559,32 +749,7 @@ export function ControlCenter() {
         return next.length === current.length ? current : next;
       });
     }
-    setTelemetryHistoryByVehicle((current) => {
-      let changed = false;
-      const next = { ...current };
-      for (const vehicle of dashboard.vehicles) {
-        const sample = telemetrySample(vehicle);
-        if (!sample) continue;
-        const key = vehicle.observationRunId
-          ?? `${vehicle.id}:${vehicle.telemetry?.provenance.sourceClockEpoch ?? 0}`;
-        const existing = current[vehicle.id];
-        if (existing?.key !== key) {
-          next[vehicle.id] = { key, points: [sample] };
-          changed = true;
-          continue;
-        }
-        const previous = existing.points.at(-1);
-        if (previous?.t === sample.t) continue;
-        next[vehicle.id] = {
-          key,
-          points: [...existing.points, sample]
-            .filter((point) => sample.t - point.t <= 65)
-            .slice(-600),
-        };
-        changed = true;
-      }
-      return changed ? next : current;
-    });
+    setTelemetryHistoryByVehicle((current) => appendTelemetryHistory(current, dashboard.vehicles));
     setHistoryByVehicle((current) => {
       let changed = false;
       const next = { ...current };
@@ -609,8 +774,24 @@ export function ControlCenter() {
 
   const attachLocalService = useCallback(async () => {
     setServiceState("ATTACHING");
-    const dashboard = await api.loadDashboard();
+    const [dashboard, twinStatus, actuationStatus] = await Promise.all([
+      api.loadDashboard(),
+      api.physicalTwinStatus().catch((): PhysicalTwinStatusView => ({
+        state: "ERROR",
+        configured: false,
+        commandReadiness: "NOT_ASSESSED",
+        commandReadinessIssues: [],
+        testOnly: false,
+        sampleCount: 0,
+        pairedCycleCount: 0,
+        lastErrorCode: "STATUS_UNAVAILABLE",
+        lastErrorMessage: "Physical twin status is unavailable",
+      })),
+      api.motorActuationStatus().catch(() => undefined),
+    ]);
     applyDashboard(dashboard);
+    acceptPhysicalTwinStatus(twinStatus);
+    setMotorActuation(actuationStatus);
     const activeDeployment = latestMissionDeployment(
       dashboard.fleetSessions.filter(
         (session) => ["SCHEDULED", "PREPARING", "READY", "RUNNING"].includes(session.runStatus),
@@ -623,7 +804,7 @@ export function ControlCenter() {
         : undefined,
     );
     setServiceState("ONLINE");
-  }, [api, applyDashboard]);
+  }, [acceptPhysicalTwinStatus, api, applyDashboard]);
 
   useEffect(() => {
     let cancelled = false;
@@ -645,6 +826,63 @@ export function ControlCenter() {
       if (timer !== undefined) window.clearTimeout(timer);
     };
   }, [attachLocalService]);
+
+  useEffect(() => {
+    if (!physicalTwin?.configured) return;
+    let cancelled = false;
+    let timer: number | undefined;
+    const poll = async () => {
+      const startedAtMs = performance.now();
+      try {
+        const status = await api.physicalTwinStatus();
+        if (cancelled) return;
+        acceptPhysicalTwinStatus(status);
+      } catch {
+        if (cancelled) return;
+      }
+      const elapsedMs = performance.now() - startedAtMs;
+      timer = window.setTimeout(
+        poll,
+        Math.max(0, PHYSICAL_TWIN_STATUS_PERIOD_MS - elapsedMs),
+      );
+    };
+    timer = window.setTimeout(poll, PHYSICAL_TWIN_STATUS_PERIOD_MS);
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [acceptPhysicalTwinStatus, api, physicalTwin?.configured]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timer: number | undefined;
+    const poll = async () => {
+      const startedAtMs = performance.now();
+      try {
+        const status = await api.motorActuationStatus();
+        if (!cancelled) setMotorActuation(status);
+      } catch {
+        if (!cancelled) {
+          setMotorActuation((current) => current?.stopRequired ? current : {
+            state: "POSSIBLY_ACTIVE",
+            stopRequired: true,
+            detail: "Motor output cannot be confirmed while the control API is unavailable",
+          });
+        }
+      }
+      if (cancelled) return;
+      const elapsedMs = performance.now() - startedAtMs;
+      timer = window.setTimeout(
+        poll,
+        Math.max(0, MOTOR_ACTUATION_STATUS_PERIOD_MS - elapsedMs),
+      );
+    };
+    timer = window.setTimeout(poll, MOTOR_ACTUATION_STATUS_PERIOD_MS);
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [api]);
 
   useEffect(() => {
     if (!campaignRunActive || !campaignRunId) return;
@@ -783,12 +1021,6 @@ export function ControlCenter() {
         if (!["SCHEDULED", "PREPARING", "READY", "RUNNING"].includes(execution.runStatus)) {
           setActiveExecutionId(undefined);
           setActiveRunId(undefined);
-          setRunFilesLoaded(false);
-          void api.runFiles().then((missions) => {
-            setRunFileMissions(missions);
-            setRunFilesLoaded(true);
-            setRunFilesError(undefined);
-          }).catch(() => undefined);
           setNotice(missionCompletionNotice(
             execution.runStatus,
             execution.resultMessage,
@@ -866,6 +1098,10 @@ export function ControlCenter() {
   };
 
   const startMission = async () => {
+    if (executionMode === "TWIN") {
+      setNotice("WP-80 Digital Twin is observation-only; mission Play is locked");
+      return;
+    }
     let preview = activeMissionPreview;
     if (executionMode === "SIMULATION" && selectedMission && !preview) {
       setStarting(true);
@@ -908,12 +1144,18 @@ export function ControlCenter() {
 
   const startCampaignFromDock = async () => {
     if (!campaignDockCase || campaignRunActive) return;
+    if (executionMode === "TWIN") {
+      setNotice("WP-80 Digital Twin is observation-only; campaign Play is locked");
+      return;
+    }
     setStarting(true);
     try {
       const run = await api.runActiveCampaign(
         campaignExecutionMode,
         campaignSubmissionId,
         campaignPlanningSubmissionId,
+        campaignMotionPreparation,
+        campaignCoordinationPreparation,
       );
       setCampaignRun(run);
       setMissionOpen(false);
@@ -1003,7 +1245,6 @@ export function ControlCenter() {
     setCampaignPreview(undefined);
     setCampaignRun(undefined);
     setCampaignDockCase(activeCampaignCase);
-    setExecutionMode("SIMULATION");
     setNotice(`Selected ${humanizeCampaignValue(activeCampaignCase.case_id)}`);
   };
 
@@ -1165,6 +1406,130 @@ export function ControlCenter() {
     void setSimulationBattery(value);
   };
 
+  const selectDigitalTwin = async () => {
+    if (simulationOperationActive) {
+      setNotice("Finish or abort the active Simulation run before opening Digital twin.");
+      return;
+    }
+    setPhysicalTwinBusy(true);
+    try {
+      acceptPhysicalTwinStatus(await api.physicalTwinStatus());
+      setExecutionMode("TWIN");
+      setAdvancedOpen(false);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Digital twin status unavailable");
+    } finally {
+      setPhysicalTwinBusy(false);
+    }
+  };
+
+  const retryPhysicalTwinConnection = async () => {
+    setPhysicalTwinBusy(true);
+    try {
+      const status = await api.connectPhysicalTwin();
+      acceptPhysicalTwinStatus(status);
+      if (status.state === "ERROR" || status.state === "CONFIGURATION_INVALID") {
+        setNotice(status.lastErrorMessage ?? "Observer connection retry failed");
+      } else if (status.state === "PAIRED") {
+        setNotice("Observer connected");
+      } else {
+        setNotice("Observer connection retry started");
+      }
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Digital twin connection failed");
+    } finally {
+      setPhysicalTwinBusy(false);
+    }
+  };
+
+  const stopAllMotorOutput = async () => {
+    setMotorActuation((current) => ({
+      state: "STOPPING",
+      stopRequired: true,
+      sessionId: current?.sessionId,
+      motorSelection: current?.motorSelection,
+      commandedOutputPercent: current?.commandedOutputPercent,
+      measuredPwmPercent: current?.measuredPwmPercent,
+      measuredOutputActive: current?.measuredOutputActive,
+      detail: "Stopping direct motor output",
+    }));
+    try {
+      const status = await api.stopAllMotorOutput();
+      setMotorActuation(status);
+      if (status.state === "IDLE") {
+        setNotice(status.rebootRequired
+          ? "Motor output is off · power cycle the Crazyflie before another physical action"
+          : "Motor output is off");
+      } else {
+        setNotice(status.detail ?? "Motor stop could not be confirmed");
+      }
+      return status;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Motor stop request failed";
+      setMotorActuation((current) => ({
+        ...current,
+        state: "STOP_FAILED",
+        stopRequired: true,
+        detail: message,
+      }));
+      setNotice(message);
+      return undefined;
+    } finally {
+      try {
+        acceptPhysicalTwinStatus(await api.physicalTwinStatus());
+      } catch {
+        // Actuation truth remains explicitly unknown until the status poll recovers.
+      }
+    }
+  };
+
+  const selectSimulation = () => {
+    if (executionMode !== "TWIN") return;
+    if (twinOperationActive) {
+      setNotice("Stop the active physical mission before opening Simulation.");
+      return;
+    }
+    setExecutionMode("SIMULATION");
+  };
+
+  const configurePhysicalTwin = async () => {
+    if (!physicalTwinUriConfirmed) {
+      setNotice("Confirm that the full radio URI exactly matches the drone first");
+      return;
+    }
+    setPhysicalTwinBusy(true);
+    try {
+      const configured = await api.configurePhysicalTwin(physicalTwinUri.trim(), physicalTwinLabel.trim());
+      acceptPhysicalTwinStatus(configured);
+      setPhysicalTwinEditing(false);
+      const status = await api.connectPhysicalTwin();
+      acceptPhysicalTwinStatus(status);
+      if (status.state === "PAIRED") setNotice("Observer connected");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Digital twin setup failed");
+    } finally {
+      setPhysicalTwinBusy(false);
+    }
+  };
+
+  const disconnectPhysicalTwin = async () => {
+    setPhysicalTwinBusy(true);
+    try {
+      acceptPhysicalTwinStatus(await api.disconnectPhysicalTwin());
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Digital twin disconnect failed");
+    } finally {
+      setPhysicalTwinBusy(false);
+    }
+  };
+
+  const editPhysicalTwinBinding = () => {
+    setPhysicalTwinUri("");
+    setPhysicalTwinLabel(physicalTwin?.vehicleLabel ?? "My Crazyflie");
+    setPhysicalTwinUriConfirmed(false);
+    setPhysicalTwinEditing(true);
+  };
+
   const connectVehicle = async () => {
     if (!selectedVehicle) return;
     await runOperatorAction("Vehicle connected", async () => {
@@ -1289,37 +1654,14 @@ export function ControlCenter() {
     }
   };
 
-  const loadRunFiles = async () => {
-    if (runFilesLoading) return;
-    setRunFilesLoading(true);
-    setRunFilesError(undefined);
-    try {
-      setRunFileMissions(await api.runFiles());
-      setRunFilesLoaded(true);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Run files unavailable";
-      setRunFilesError(message);
-      setNotice(message);
-    } finally {
-      setRunFilesLoading(false);
-    }
-  };
-
   const deleteRunFileMission = async (missionExecutionId: string) => {
-    setDeletingRunFileMissionId(missionExecutionId);
     try {
       await api.deleteRunFileMission(missionExecutionId);
-      setRunFileMissions((missions) => missions.filter(
-        (item) => item.missionExecutionId !== missionExecutionId,
-      ));
       setRunHistory((history) => history.filter((run) => run.missionExecutionId !== missionExecutionId));
       setNotice("Run files and archive folder deleted");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to delete run files";
-      setRunFilesError(message);
       setNotice(message);
-    } finally {
-      setDeletingRunFileMissionId(undefined);
     }
   };
 
@@ -1354,33 +1696,20 @@ export function ControlCenter() {
   };
 
   return (
-    <main className={`control-center ${telemetryOpen && selectedVehicle?.telemetry ? "flight-expanded" : ""}`}>
+    <main className={`control-center ${telemetryOpen && (executionMode === "TWIN" || selectedVehicle?.telemetry) ? "flight-expanded" : ""}`}>
       <a className="skip-link" href="#room-scene">Skip to simulation</a>
       <div className="identity-capsule" aria-label="Aerium Control">
         <div className="brand">
           <span className="brand-mark"><Hexagon size={20} strokeWidth={1.8} /></span>
           <strong>AERIUM</strong>
         </div>
-        {model.mode ? <ModeBadge mode={model.mode} label={model.mode === "SIM" ? "SIM" : model.mode} /> : null}
+        {executionMode === "TWIN"
+          ? <ModeBadge mode="SHADOW" label="SHADOW" />
+          : model.mode ? <ModeBadge mode={model.mode} label={model.mode === "SIM" ? "SIM" : model.mode} /> : null}
       </div>
 
       <div className="vehicle-controls">
-        {sceneVehicleCount ? (
-          <div className="vehicle-capsule" aria-label="Command targets">
-            <span className={`vehicle-state-dot ${singleTargetVehicle ? vehicleTone(singleTargetVehicle) : ""}`} />
-            <strong>{effectiveTargetVehicleIds.length === 0
-              ? "All drones"
-              : effectiveTargetVehicleIds.length === 1
-                ? singleTargetName ?? "1 drone selected"
-                : `${effectiveTargetVehicleIds.length} drones selected`}</strong>
-            {effectiveTargetVehicleIds.length === 0 ? (
-              <small className="target-scope">{sceneVehicleCount} in scene</small>
-            ) : effectiveTargetVehicleIds.length > 1 ? (
-              <small className="target-scope">Selection</small>
-            ) : selectedVehicleException ? <small>{selectedVehicleException}</small> : null}
-          </div>
-        ) : serviceState === "OFFLINE" ? <span className="service-exception">Offline</span> : null}
-        {model.apiConnected ? (
+        {model.apiConnected && executionMode === "SIMULATION" ? (
           <button className="engineering-fab" type="button" aria-label="Engineering" aria-expanded={advancedOpen} onClick={() => setAdvancedOpen((open) => !open)}>
             <Settings size={17} />
           </button>
@@ -1391,22 +1720,28 @@ export function ControlCenter() {
         <section className="workspace" id="mission-workspace" tabIndex={-1}>
           <RoomScene
             model={rendererModel}
-            plannedPath={plannedPath}
-            homeBases={homeBases}
-            missionPreview={campaignScenePreview(activeMissionPreview, campaignRun)}
-            historicalPath={historicalPath}
-            selectedVehicleIds={effectiveTargetVehicleIds}
+            plannedPath={executionMode === "TWIN" ? {} : plannedPath}
+            homeBases={executionMode === "TWIN" ? [] : homeBases}
+            missionPreview={executionMode === "TWIN" ? undefined : campaignScenePreview(activeMissionPreview, campaignRun)}
+            historicalPath={executionMode === "TWIN"
+              ? twinFlightActive ? twinShadow?.path ?? [] : []
+              : historicalPath}
+            selectedVehicleIds={executionMode === "TWIN"
+              ? twinFlightActive && twinShadow ? [twinShadow.vehicle.id] : []
+              : effectiveTargetVehicleIds}
             onVehicleSelectionChange={changeVehicleTargetSelection}
             onDisplayTiming={campaignRunActive ? (event) => {
               void api.recordBrowserTiming(event).catch(() => undefined);
             } : undefined}
-            onSceneCapture={campaignRun?.status === "RUNNING" ? captureCampaignScene : undefined}
-            onSceneCaptureError={setNotice}
-            twinOverlay={twinSceneOverlay}
+            onSceneCapture={CAMPAIGN_SNAPSHOT_CAPTURE_ENABLED
+              && campaignRun?.status === "RUNNING" ? captureCampaignScene : undefined}
+            onSceneCaptureError={CAMPAIGN_SNAPSHOT_CAPTURE_ENABLED ? setNotice : undefined}
+            twinOverlay={executionMode === "TWIN" ? undefined : twinSceneOverlay}
+            reviewMarker={executionMode === "TWIN" ? undefined : campaignReviewCursor}
           />
         </section>
 
-        {referencePlanOverview || (!campaignDockCase && fleet?.missionDerived && fleet.vehicles.length > 0) ? (
+        {executionMode === "SIMULATION" && (referencePlanOverview || (!campaignDockCase && fleet?.missionDerived && fleet.vehicles.length > 0)) ? (
           <DeploymentSummary
             key={referencePlanOverview?.missionId ?? fleet?.id}
             fleet={!campaignDockCase && fleet?.missionDerived ? fleet : undefined}
@@ -1415,6 +1750,67 @@ export function ControlCenter() {
             selectedVehicleIds={effectiveTargetVehicleIds}
             onSelect={changeVehicleTargetSelection}
           />
+        ) : null}
+
+        {executionMode === "TWIN" ? (
+          <TwinConnectionSummary
+            key={physicalTwin?.state ?? "unconfigured"}
+            status={physicalTwin}
+            action={physicalTwin?.state === "PAIRED" ? {
+              label: "Pause observer",
+              onClick: () => void disconnectPhysicalTwin(),
+            } : physicalTwin?.state === "SUSPENDED" || physicalTwin?.autoConnectEnabled
+              ? undefined
+              : physicalTwin?.configured ? {
+                label: physicalTwin?.state === "CONNECTING" ? "Connecting…" : "Resume observer",
+                onClick: () => void retryPhysicalTwinConnection(),
+              } : undefined}
+            actionDisabled={physicalTwinBusy || physicalTwin?.state === "CONNECTING"}
+          >
+            {physicalTwin?.state === "PAIRED" ? (
+              <div className="physical-twin-link" aria-label="Observer link">
+                <span>
+                  <Radio size={15} />
+                  <span><strong>Observation link</strong><small>{physicalTwin.redactedUri ?? "Link details unavailable"}</small></span>
+                </span>
+              </div>
+            ) : (
+              <section className="physical-twin-setup" aria-label="Physical digital twin setup">
+                {physicalTwinEditing || physicalTwin?.state === "UNCONFIGURED" || physicalTwin?.state === "CONFIGURATION_INVALID" || !physicalTwin ? (
+                  <>
+                    <div className="physical-twin-heading">
+                      <Radio size={15} />
+                      <span><strong>Observation link</strong><small>No motor or flight commands</small></span>
+                    </div>
+                    <label>
+                      Drone label
+                      <input value={physicalTwinLabel} onChange={(event) => setPhysicalTwinLabel(event.target.value)} placeholder="My Crazyflie" />
+                    </label>
+                    <label>
+                      Exact Crazyradio URI
+                      <input value={physicalTwinUri} onChange={(event) => setPhysicalTwinUri(event.target.value)} placeholder="radio://0/80/2M/E7E7E7E701" spellCheck={false} />
+                    </label>
+                    <label className="physical-twin-confirm">
+                      <input type="checkbox" checked={physicalTwinUriConfirmed} onChange={(event) => setPhysicalTwinUriConfirmed(event.target.checked)} />
+                      <span>I checked the complete URI against this drone.</span>
+                    </label>
+                    <button type="button" disabled={physicalTwinBusy || !physicalTwinUri.trim() || !physicalTwinLabel.trim() || !physicalTwinUriConfirmed} onClick={() => void configurePhysicalTwin()}>Save and connect</button>
+                    {!physicalTwinEditing && physicalTwin?.lastErrorMessage ? <small className="physical-twin-error">{physicalTwin.lastErrorMessage}</small> : null}
+                  </>
+                ) : physicalTwin.state === "SUSPENDED" ? (
+                  <>
+                    <div className="physical-twin-heading"><Radio size={15} /><span><strong>Observer temporarily suspended</strong><small>{physicalTwin.redactedUri}</small></span></div>
+                    <p>{physicalTwin.suspensionReason ?? "A physical operation has exclusive use of the radio."} Observation resumes automatically afterward.</p>
+                  </>
+                ) : (
+                  <div className="physical-twin-actions">
+                    <button type="button" disabled={physicalTwinBusy || physicalTwin.state === "CONNECTING"} onClick={() => void retryPhysicalTwinConnection()}>{physicalTwin.state === "DISCONNECTED" && !physicalTwin.autoConnectEnabled ? "Resume observer" : "Retry now"}</button>
+                    <button className="button-secondary" type="button" disabled={physicalTwinBusy || physicalTwin.state === "CONNECTING"} onClick={editPhysicalTwinBinding}>Edit connection</button>
+                  </div>
+                )}
+              </section>
+            )}
+          </TwinConnectionSummary>
         ) : null}
 
         <aside className={missionOpen ? "mission-panel" : "mission-panel is-closed"} aria-label="Mission setup" aria-hidden={!missionOpen}>
@@ -1427,10 +1823,24 @@ export function ControlCenter() {
             ) : (
               <>
                 <div className="execution-switch" role="group" aria-label="Execution mode">
-                  <button type="button" className={executionMode === "SIMULATION" ? "is-selected" : ""} onClick={() => setExecutionMode("SIMULATION")}>Simulation</button>
-                  <button type="button" className={executionMode === "TWIN" ? "is-selected" : ""} disabled={!twinAvailable} title={!twinAvailable ? "Real vehicle adapter required" : undefined} onClick={() => setExecutionMode("TWIN")}>Digital twin</button>
+                  <button
+                    type="button"
+                    className={executionMode === "SIMULATION" ? "is-selected" : ""}
+                    disabled={physicalTwinBusy || twinOperationActive}
+                    title={twinOperationActive ? "Stop the active physical mission before opening Simulation." : undefined}
+                    onClick={selectSimulation}
+                  >Simulation</button>
+                  <button
+                    type="button"
+                    className={`${executionMode === "TWIN" ? "is-selected" : ""} ${physicalTwin?.state === "PAIRED" ? "has-observer" : ""}`.trim()}
+                    disabled={physicalTwinBusy || simulationOperationActive}
+                    aria-description={physicalTwin?.state === "PAIRED" ? "Observer connected" : undefined}
+                    title={simulationOperationActive ? "Finish or abort the active Simulation run before opening Digital twin." : undefined}
+                    onClick={() => void selectDigitalTwin()}
+                  >{physicalTwinBusy ? "Loading…" : "Digital twin"}</button>
                 </div>
 
+                {executionMode === "SIMULATION" ? <>
                 <CampaignLab
                   api={api}
                   onNotice={setNotice}
@@ -1439,6 +1849,9 @@ export function ControlCenter() {
                   onExecutionModeChange={handleCampaignExecutionModeChange}
                   onSubmissionChange={handleCampaignSubmissionChange}
                   onPlanningSubmissionChange={handleCampaignPlanningSubmissionChange}
+                  onMotionPreparationChange={handleCampaignMotionPreparationChange}
+                  onCoordinationPreparationChange={handleCampaignCoordinationPreparationChange}
+                  onReviewCursorChange={setCampaignReviewCursor}
                 />
                 {activeCampaignCase ? (
                   <div className="campaign-active-mission">
@@ -1500,12 +1913,26 @@ export function ControlCenter() {
                   ))}
                   {!model.missions.length ? <span className="mission-empty">NO MISSIONS YET</span> : null}
                 </div>
+                </> : <TwinBasicFlightLab
+                  api={api}
+                  actuationStatus={motorActuation}
+                  missionOpen={missionOpen}
+                  onNotice={setNotice}
+                  onMissionClose={() => setMissionOpen(false)}
+                  onMissionToggle={toggleMission}
+                  onOperationActiveChange={setTwinOperationActive}
+                  onPhysicalFlightActiveChange={acceptTwinFlightActive}
+                  onStopAllMotorOutput={stopAllMotorOutput}
+                  onSelectSimulation={selectSimulation}
+                  onPhysicalStatusChange={acceptPhysicalTwinStatus}
+                  physicalStatus={physicalTwin}
+                />}
 
               </>
             )}
         </aside>
 
-        <section className="mission-dock" aria-label="Mission controls">
+        {executionMode === "SIMULATION" ? <section className="mission-dock" aria-label="Mission controls">
           <button className="mission-dock-summary" type="button" aria-expanded={missionOpen} onClick={toggleMission}>
             <Command size={17} />
             <span>
@@ -1522,33 +1949,22 @@ export function ControlCenter() {
             <button
               className={`dock-run-button ${campaignDockCase ? campaignModePresentation.buttonClassName : ""}`}
               type="button"
-              aria-label={campaignDockCase ? `Run active campaign ${campaignModePresentation.actionLabel}` : executionMode === "TWIN" ? "Run digital twin" : "Run simulation"}
+              aria-label={campaignDockCase ? `Run active campaign ${campaignModePresentation.actionLabel}` : "Run simulation"}
               disabled={
                 (!campaignDockCase && !selectedMission)
                 || starting
                 || Boolean(runningRunId)
                 || Boolean(campaignRunActive)
                 || (!campaignDockCase && activeMissionPreview?.plan.status === "BLOCKED")
-                || (!campaignDockCase && executionMode === "TWIN" && !twinAvailable)
               }
               onClick={() => void (campaignDockCase ? startCampaignFromDock() : startMission())}
             >
               {starting ? <LoaderCircle className="spin" size={16} /> : <Play size={15} fill="currentColor" />}
             </button>
           )}
-        </section>
+        </section> : null}
 
-        <RunFilesControl
-          missions={runFileMissions}
-          loaded={runFilesLoaded}
-          loading={runFilesLoading}
-          error={runFilesError}
-          onLoad={() => void loadRunFiles()}
-          onDelete={(mission) => void deleteRunFileMission(mission.missionExecutionId)}
-          deletingMissionId={deletingRunFileMissionId}
-        />
-
-        {allCommandTargetsAreFastSim ? (
+        {executionMode === "SIMULATION" && allCommandTargetsAreFastSim ? (
           <div className="flight-quick-actions" aria-label="Simulation quick actions">
             <div className="mission-quick-pill home-quick-pill">
               <button
@@ -1629,7 +2045,7 @@ export function ControlCenter() {
           </div>
         ) : null}
 
-        <FlightReadout
+        {executionMode === "SIMULATION" ? <FlightReadout
           model={model}
           vehicle={selectedVehicle}
           twin={model.twins.find((item) => item.observedVehicleId === selectedVehicle?.id)}
@@ -1642,10 +2058,20 @@ export function ControlCenter() {
           }}
           onLoadTwinTimeline={loadTwinTimeline}
           onTwinSceneOverlay={setTwinSceneOverlay}
-        />
+        /> : <TwinObservationReadout
+          status={physicalTwin}
+          subscribe={subscribePhysicalTwin}
+          onLiveFrame={acceptTwinLiveFrame}
+          position={twinFlightActive ? twinShadow?.vehicle.telemetry?.estimate : undefined}
+          expanded={telemetryOpen}
+          onToggle={() => {
+            const next = !telemetryOpen;
+            setTelemetryOpen(next);
+          }}
+        />}
       </div>
 
-      <EngineeringDrawer
+      {executionMode === "SIMULATION" ? <EngineeringDrawer
         open={advancedOpen}
         model={model}
         vehicle={selectedVehicle}
@@ -1680,7 +2106,7 @@ export function ControlCenter() {
         onOpenReplay={openReplay}
         onStepReplay={stepReplay}
         onCloseReplay={() => setReplay(undefined)}
-      />
+      /> : null}
       {lowBatteryConfirmation ? (
         <LowBatterySimulationDialog
           batteryPercent={lowBatteryConfirmation.batteryPercent}
@@ -1821,6 +2247,59 @@ function PlanFindingGroup({
   );
 }
 
+function TwinConnectionSummary({
+  status,
+  action,
+  actionDisabled = false,
+  children,
+}: {
+  status: PhysicalTwinStatusView | undefined;
+  action?: { label: string; onClick: () => void };
+  actionDisabled?: boolean;
+  children: ReactNode;
+}) {
+  const paired = status?.state === "PAIRED";
+  const [detailsOpen, setDetailsOpen] = useState(!paired);
+  const vehicleLabel = status?.vehicleLabel ?? (status?.testOnly ? "Test fixture" : "Measured drone");
+  const presentation = physicalTwinConnectionPresentation(status);
+
+  return (
+    <section className="fleet-panel twin-connection-summary" aria-label="Digital twin connection">
+      <header className="deployment-heading twin-connection-heading">
+        <button
+          className="twin-connection-disclosure"
+          type="button"
+          aria-expanded={detailsOpen}
+          aria-label={detailsOpen ? "Collapse digital twin connection details" : "Expand digital twin connection details"}
+          onClick={() => setDetailsOpen((open) => !open)}
+        >
+          <span><strong>Drone connection</strong></span>
+          <ChevronDown className={detailsOpen ? "is-open" : ""} size={15} />
+        </button>
+        {action ? (
+          <button
+            className="twin-connection-action"
+            type="button"
+            disabled={actionDisabled}
+            onClick={action.onClick}
+          >
+            {action.label}
+          </button>
+        ) : null}
+      </header>
+      <div className={`deployment-member twin-connection-member is-${presentation.tone}`}>
+        <span className={`vehicle-state-dot ${presentation.tone === "current" ? "is-normal" : presentation.tone === "stale" ? "is-warning" : "is-offline"}`} />
+        <span className="deployment-member-copy">
+          <strong>{vehicleLabel}</strong>
+          {presentation.detail ? <small>{presentation.detail}</small> : null}
+        </span>
+        <b>{presentation.label}</b>
+      </div>
+      {detailsOpen ? <div className="twin-connection-detail">{children}</div> : null}
+    </section>
+  );
+}
+
 export function DeploymentSummary({
   fleet,
   preview,
@@ -1854,7 +2333,6 @@ export function DeploymentSummary({
         existingVehicle: true,
         fleetMember,
       }));
-  const status = fleet?.runStatus ?? preview?.plan.status ?? "PLANNED";
   return (
     <section className="fleet-panel deployment-summary" aria-label="Mission deployment status">
       <header className="deployment-heading">
@@ -1866,9 +2344,6 @@ export function DeploymentSummary({
         >
           <span>
             <strong>Mission deployment</strong>
-          </span>
-          <span className={`deployment-run-state state-${status.toLowerCase()}`}>
-            {sentenceCase(status)}
           </span>
           <ChevronDown className={detailsOpen ? "is-open" : ""} size={15} />
         </button>
@@ -2376,24 +2851,4 @@ export function LowBatterySimulationDialog({
 
 function sentenceCase(value: string) {
   return value.replaceAll("_", " ").replaceAll("-", " ").replace(/^./, (letter) => letter.toUpperCase());
-}
-
-function vehicleException(vehicle: VehicleView) {
-  if (vehicle.state === "DISCONNECTED") return "Offline";
-  if (vehicle.state === "EMERGENCY") return "Emergency";
-  if (vehicle.state === "FAULT") return "Fault";
-  if (vehicle.telemetry?.provenance.freshness === "invalid") return "Invalid data";
-  if (vehicle.telemetry?.provenance.freshness === "stale") {
-    const age = vehicle.telemetry.provenance.ageMs;
-    return age === undefined ? "Stale" : `Stale ${(age / 1_000).toFixed(1)}s`;
-  }
-  if (vehicle.observationStatus === "COMPLETED_SNAPSHOT") return "Snapshot";
-  return undefined;
-}
-
-function vehicleTone(vehicle: VehicleView) {
-  if (vehicle.state === "DISCONNECTED") return "is-offline";
-  if (vehicle.state === "EMERGENCY" || vehicle.state === "FAULT" || vehicle.telemetry?.provenance.freshness === "invalid") return "is-critical";
-  if (vehicle.telemetry?.provenance.freshness === "stale" || vehicle.observationStatus === "COMPLETED_SNAPSHOT") return "is-warning";
-  return "is-normal";
 }

@@ -12,10 +12,17 @@ import type {
   CampaignTelemetryChartSample,
   CampaignTelemetryChartView,
 } from "../lib/campaign-telemetry";
+import {
+  exactCampaignTelemetrySample,
+  nearestCampaignTelemetrySample,
+} from "../lib/campaign-telemetry";
 import type {
   CampaignCaseView,
   CampaignCatalogView,
+  CampaignCoordinationPreparationRequest,
   CampaignLifecycle,
+  CampaignMotionPreparationRequest,
+  CampaignReviewCursorView,
   CampaignPlanningSubmissionView,
   CampaignRunMode,
   CampaignRunSummary,
@@ -33,6 +40,39 @@ type SnapshotAssessmentDisposition = NonNullable<CampaignSnapshotView["assessmen
 type CampaignTelemetryLoadState =
   | { status: "ready"; value: CampaignTelemetryChartView }
   | { status: "error"; message: string };
+
+type ResolvedMotionControlView = {
+  label: "Speed" | "Accuracy" | "Smoothness";
+  unit: "m/s" | "m" | "%";
+  requested_value: number;
+  resolved_value: number;
+  binding_safety_cap?: string | null;
+};
+
+const DEFAULT_MOTION_PREPARATION: CampaignMotionPreparationRequest = { balance: 50 };
+const BASELINE_SUBMISSION_ID = "planner_retained_baseline";
+const BASELINE_PLANNING_SUBMISSION_ID = "case_planning_authority";
+const DEFAULT_2D_RESOLUTION_BY_FAMILY: Readonly<Record<string, string>> = {
+  bottleneck: "bottleneck.earliest_safe_release",
+  head_on_conflict: "head_on.synchronized_lateral",
+  merge: "merge.parallel_lanes",
+  perpendicular_crossing: "crossing.earliest_equal_release",
+};
+
+function preferredPlanningSubmission(
+  campaignCase: CampaignCaseView | undefined,
+  requestedId: string | undefined,
+): CampaignPlanningSubmissionView | undefined {
+  const submissions = campaignCase?.planning_submissions ?? [];
+  const preferredId = requestedId
+    ?? (campaignCase?.drone_count === 2
+      ? DEFAULT_2D_RESOLUTION_BY_FAMILY[campaignCase.family]
+      : undefined);
+  return submissions.find((item) => (
+    item.planning_submission_id === preferredId && item.status === "EXECUTABLE"
+  )) ?? submissions.find((item) => item.status === "EXECUTABLE")
+    ?? submissions.find((item) => item.planning_submission_id === BASELINE_PLANNING_SUBMISSION_ID);
+}
 
 type CampaignRunEntry = {
   run: CampaignWorkspaceView["runs"][number];
@@ -65,6 +105,10 @@ export const MISSION_CLUSTERS: ReadonlyArray<{
     label: "Basic flight & routes",
   },
   {
+    id: "DYNAMIC_REPLANNING",
+    label: "Dynamic replanning",
+  },
+  {
     id: "GEOMETRIC_CONFLICT_RESOLUTION",
     label: "Conflict resolution",
   },
@@ -88,7 +132,18 @@ type CampaignDropdownOption = {
   meta?: string;
   badge?: string;
   badgeClassName?: string;
+  badgePresentation?: "label" | "dot";
   disabled?: boolean;
+};
+
+type CampaignPreparationGroup = {
+  label: string;
+  variants: Array<{
+    label: string;
+    case_id: string;
+    status: "EXECUTABLE" | "PLANNED_NOT_EXECUTABLE";
+    disabled_reason?: string | null;
+  }>;
 };
 
 export function humanizeCampaignValue(value: string): string {
@@ -127,16 +182,20 @@ export function campaignWorkspaceHeaderSummary({
 
 export function CampaignDropdown({
   label,
+  level,
   value,
   options,
   onChange,
   searchable = false,
+  disabled = false,
 }: {
   label: string;
+  level?: number;
   value: string;
   options: CampaignDropdownOption[];
   onChange: (value: string) => void;
   searchable?: boolean;
+  disabled?: boolean;
 }) {
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -146,6 +205,11 @@ export function CampaignDropdown({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const selected = options.find((option) => option.value === value) ?? options[0];
+  const statusLayoutClass = options.some((option) => (
+    option.badge && option.badgePresentation === "dot"
+  ))
+    ? "has-dot-status"
+    : options.some((option) => option.badge) ? "has-status" : "";
   const visibleOptions = useMemo(() => {
     const needle = query.trim().toLowerCase();
     if (!needle) return options;
@@ -224,7 +288,10 @@ export function CampaignDropdown({
 
   return (
     <div className="campaign-dropdown" ref={rootRef}>
-      <span className="campaign-dropdown-label">{label}</span>
+      <span className="campaign-dropdown-label">
+        {level ? <b aria-hidden="true">{level}</b> : null}
+        {label}
+      </span>
       <button
         ref={triggerRef}
         type="button"
@@ -232,7 +299,7 @@ export function CampaignDropdown({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={`${id}-listbox`}
-        disabled={!selected}
+        disabled={!selected || disabled}
         onClick={() => open ? close() : openMenu()}
         onKeyDown={openWithKeyboard}
       >
@@ -241,7 +308,14 @@ export function CampaignDropdown({
           {selected?.meta ? <small>{selected.meta}</small> : null}
         </span>
         {selected?.badge ? (
-          <em className={selected.badgeClassName}>{selected.badge}</em>
+          <em
+            className={`${selected.badgeClassName ?? ""} ${selected.badgePresentation === "dot" ? "is-dot" : ""}`}
+            title={selected.badgePresentation === "dot" ? selected.badge : undefined}
+          >
+            {selected.badgePresentation === "dot"
+              ? <span className="sr-only">{selected.badge}</span>
+              : selected.badge}
+          </em>
         ) : null}
         <ChevronDown className={open ? "is-open" : ""} size={14} />
       </button>
@@ -266,7 +340,7 @@ export function CampaignDropdown({
           <div
             ref={listRef}
             id={`${id}-listbox`}
-            className={`campaign-dropdown-list ${options.some((option) => option.badge) ? "has-status" : ""}`}
+            className={`campaign-dropdown-list ${statusLayoutClass}`}
             role="listbox"
             aria-label={label}
             tabIndex={-1}
@@ -284,7 +358,18 @@ export function CampaignDropdown({
                 onMouseEnter={() => setHighlighted(index)}
                 onClick={() => select(option)}
               >
-                {option.badge ? <em className={option.badgeClassName}>{option.badge}</em> : null}
+                {option.badge ? (
+                  <em
+                    className={`${option.badgeClassName ?? ""} ${option.badgePresentation === "dot" ? "is-dot" : ""}`}
+                    title={option.badgePresentation === "dot" ? option.badge : undefined}
+                  >
+                    {option.badgePresentation === "dot"
+                      ? <span className="sr-only">{option.badge}</span>
+                      : option.badge}
+                  </em>
+                ) : statusLayoutClass === "has-dot-status" ? (
+                  <i className="campaign-dropdown-dot-placeholder" aria-hidden="true" />
+                ) : null}
                 <span>
                   <strong>{option.label}</strong>
                   {option.meta ? <small>{option.meta}</small> : null}
@@ -299,6 +384,169 @@ export function CampaignDropdown({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function MotionPreparationControls({
+  value,
+  accuracyLimits,
+  resolvedControls,
+  level = 4,
+  onChange,
+}: {
+  value: CampaignMotionPreparationRequest;
+  accuracyLimits?: CampaignCaseView["motion_preparation_limits"];
+  resolvedControls?: ResolvedMotionControlView[];
+  level?: number;
+  onChange: (value: CampaignMotionPreparationRequest) => void;
+}) {
+  const [focused, setFocused] = useState<ResolvedMotionControlView["label"]>("Speed");
+  const resolved = resolvedControls?.find((item) => item.label === focused);
+  const accuracyMinM = accuracyLimits?.accuracy_min_m ?? 0.01;
+  const accuracyMaxM = accuracyLimits?.accuracy_max_m ?? 100;
+  const requestedAccuracyM = value.accuracy_m ?? 0.05;
+  const boundedAccuracyM = Math.min(accuracyMaxM, Math.max(accuracyMinM, requestedAccuracyM));
+  const accuracyPrecision = accuracyMaxM < 0.01 ? 3 : 2;
+  const tuneValues = {
+    Speed: value.speed_m_s ?? 0.28,
+    Accuracy: boundedAccuracyM,
+    Smoothness: value.smoothness ?? 50,
+  };
+  const update = (patch: Partial<CampaignMotionPreparationRequest>) => {
+    onChange({ ...value, ...patch });
+  };
+  return (
+    <section className="campaign-motion-preparation" aria-label="Motion preparation">
+      <span className="campaign-dropdown-label campaign-motion-preparation-label">
+        <b aria-hidden="true">{level}</b>
+        Motion
+      </span>
+      <label className="campaign-balance-control">
+        <span><strong>Balance</strong><output>{value.balance}</output></span>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          value={value.balance}
+          aria-label="Balance"
+          onChange={(event) => update({ balance: Number(event.target.value) })}
+        />
+        <small><span>Accuracy</span><span>Flow</span></small>
+      </label>
+      <div className="campaign-tune-controls">
+        <label>
+          <span>Speed <output>{tuneValues.Speed.toFixed(2)} m/s</output></span>
+          <input
+            type="range"
+            min="0.05"
+            max="0.5"
+            step="0.01"
+            value={tuneValues.Speed}
+            aria-label="Speed"
+            onFocus={() => setFocused("Speed")}
+            onChange={(event) => update({ speed_m_s: Number(event.target.value) })}
+          />
+        </label>
+        <label>
+          <span>Accuracy <output>{tuneValues.Accuracy.toFixed(accuracyPrecision)} m</output></span>
+          <input
+            type="range"
+            min={accuracyMinM}
+            max={accuracyMaxM}
+            step={accuracyMaxM < 0.01 ? Math.max(accuracyMaxM / 10, 0.0001) : 0.01}
+            value={tuneValues.Accuracy}
+            aria-label="Accuracy"
+            aria-valuetext={`${tuneValues.Accuracy.toFixed(accuracyPrecision)} metres; mission maximum ${accuracyMaxM.toFixed(accuracyPrecision)} metres`}
+            onFocus={() => setFocused("Accuracy")}
+            onChange={(event) => update({ accuracy_m: Number(event.target.value) })}
+          />
+        </label>
+        <label>
+          <span>Smoothness <output>{tuneValues.Smoothness}%</output></span>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            value={tuneValues.Smoothness}
+            aria-label="Smoothness"
+            onFocus={() => setFocused("Smoothness")}
+            onChange={(event) => update({ smoothness: Number(event.target.value) })}
+          />
+        </label>
+        <p className="campaign-motion-resolution" aria-live="polite">
+          {resolved
+            ? `${focused}: requested ${resolved.requested_value.toFixed(2)} ${resolved.unit}, resolved ${resolved.resolved_value.toFixed(2)} ${resolved.unit}${resolved.binding_safety_cap ? ` · capped by ${resolved.binding_safety_cap}` : ""}${focused === "Accuracy" && accuracyLimits ? ` · ${accuracyLimits.accuracy_binding} ${accuracyMaxM.toFixed(accuracyPrecision)} m maximum` : ""}`
+            : focused === "Accuracy" && accuracyLimits
+              ? `Accuracy: ${accuracyLimits.accuracy_binding} ${accuracyMaxM.toFixed(accuracyPrecision)} m maximum.`
+              : `${focused}: resolved by mission safety checks after selection.`}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function LaunchGapControl({
+  value,
+  maximumS,
+  suggestedGapS,
+  onChange,
+}: {
+  value?: CampaignCoordinationPreparationRequest;
+  maximumS: number;
+  suggestedGapS?: number;
+  onChange: (value: CampaignCoordinationPreparationRequest | undefined) => void;
+}) {
+  const enabled = value !== undefined;
+  const gapS = value?.launch_gap_s
+    ?? Math.min(maximumS, Math.max(0, suggestedGapS ?? Math.min(1, maximumS)));
+  return (
+    <section className="campaign-motion-preparation" aria-label="Launch timing">
+      <span className="campaign-dropdown-label campaign-motion-preparation-label">
+        <b aria-hidden="true">5</b>
+        Launch timing
+      </span>
+      <label className="campaign-balance-control">
+        <span><strong>Manual start gap</strong><output>{enabled ? `${gapS.toFixed(1)} s` : "Auto"}</output></span>
+        <input
+          type="checkbox"
+          checked={enabled}
+          aria-label="Tune launch gap"
+          onChange={(event) => onChange(
+            event.target.checked ? { launch_gap_s: gapS } : undefined,
+          )}
+        />
+      </label>
+      {enabled ? (
+        <div className="campaign-tune-controls">
+          <label>
+            <span>Start gap <output>{gapS.toFixed(1)} s</output></span>
+            <input
+              type="range"
+              min="0"
+              max={maximumS}
+              step="0.1"
+              value={gapS}
+              aria-label="Start gap"
+              onChange={(event) => onChange({ launch_gap_s: Number(event.target.value) })}
+            />
+          </label>
+          <p className="campaign-motion-resolution">
+            The selected timing resolution tests this exact gap in both launch orders. Unsafe gaps are blocked by the separation verifier.
+          </p>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function supportsLaunchGap(submission: CampaignPlanningSubmissionView | undefined): boolean {
+  return Boolean(
+    submission
+    && submission.maneuver_dimensions.includes("TIMING")
+    && !submission.coordination.synchronized_route_start_required
+    && submission.coordination.maximum_release_delay_s > 0,
   );
 }
 
@@ -391,9 +639,13 @@ type TelemetryChartLine = {
 function CampaignTelemetryPlots({
   state,
   runNumber,
+  cursor,
+  onCursorChange,
 }: {
   state: CampaignTelemetryLoadState | undefined;
   runNumber: number;
+  cursor?: CampaignReviewCursorView;
+  onCursorChange: (cursor: CampaignReviewCursorView) => void;
 }) {
   const [expandedChart, setExpandedChart] = useState<string>();
   if (!state) {
@@ -444,12 +696,50 @@ function CampaignTelemetryPlots({
         : [sample.angularVelocityRadS[axis]],
     ),
   ));
+  const cursorSample = cursor
+    ? exactCampaignTelemetrySample(
+      value.vehicles.find((vehicle) => vehicle.vehicleId === cursor.vehicleId)?.cursorSamples
+        ?? value.vehicles.find((vehicle) => vehicle.vehicleId === cursor.vehicleId)?.samples
+        ?? [],
+      cursor,
+    )
+    : undefined;
+  const vectorText = (vector?: { x?: number; y?: number; z?: number }, unit = "") => (
+    vector && vector.x !== undefined && vector.y !== undefined && vector.z !== undefined
+      ? `${vector.x.toFixed(3)}, ${vector.y.toFixed(3)}, ${vector.z.toFixed(3)}${unit ? ` ${unit}` : ""}`
+      : "Unavailable"
+  );
+  const motorText = (sample: CampaignTelemetryChartSample | undefined) => (
+    TELEMETRY_MOTOR_IDS.map((motorId) => {
+      const applied = sample?.appliedMotorPercent[motorId];
+      const commanded = sample?.commandedMotorPercent[motorId];
+      return `${motorId.toUpperCase()} ${applied === undefined ? "Unavailable" : `${applied.toFixed(1)}% applied`}${commanded === undefined ? "" : ` / ${commanded.toFixed(1)}% command`}`;
+    }).join(" · ")
+  );
   return (
     <section className="campaign-telemetry-plots" aria-label={`Flight graphs for run ${runNumber}`}>
       <header>
         <div><span>Flight graphs</span><small>CSV-derived compact view</small></div>
         <strong>{value.vehicles.length} {value.vehicles.length === 1 ? "drone" : "drones"} · {value.durationS.toFixed(1)} s</strong>
       </header>
+      {cursor ? (
+        <div className="campaign-review-cursor-readout" aria-live="polite">
+          <strong>Source #{cursor.sourceSequence} · {cursor.sourceTimestampS.toFixed(3)} s</strong>
+          <dl>
+            <div><dt>Vehicle</dt><dd>{cursor.vehicleId}</dd></div>
+            <div><dt>Position</dt><dd>{vectorText(cursorSample?.positionM, "m")} (recorded estimate)</dd></div>
+            <div><dt>Truth</dt><dd>{vectorText(cursorSample?.groundTruthPositionM, "m")}</dd></div>
+            <div><dt>Plan / reference</dt><dd>Unavailable in telemetry CSV</dd></div>
+            <div><dt>Velocity</dt><dd>Observed {vectorText(cursorSample?.velocityMS, "m/s")} · commanded Unavailable</dd></div>
+            <div><dt>IMU acceleration</dt><dd>{vectorText(cursorSample?.accelerationMS2, "m/s²")}</dd></div>
+            <div><dt>IMU angular</dt><dd>{vectorText(cursorSample?.angularVelocityRadS, "rad/s")}</dd></div>
+            <div><dt>Motors</dt><dd>{motorText(cursorSample)}</dd></div>
+            <div><dt>Perception / replan</dt><dd>Unavailable in telemetry CSV</dd></div>
+            <div><dt>Safety</dt><dd>{cursorSample?.state ?? "Unavailable"}{cursorSample?.faults.length ? ` · ${cursorSample.faults.join(", ")}` : " · no recorded faults"}</dd></div>
+            <div><dt>Receive time</dt><dd>{cursor.receivedTimestampS?.toFixed(3) ?? "Unavailable"} s (not used for cursor selection)</dd></div>
+          </dl>
+        </div>
+      ) : <p className="campaign-review-cursor-hint">Select any graph point to inspect the exact recorded source row.</p>}
       <div className="campaign-telemetry-vehicles">
         {value.vehicles.map((vehicle) => (
           <article key={vehicle.vehicleId}>
@@ -467,6 +757,22 @@ function CampaignTelemetryPlots({
               durationS={value.durationS}
               domain={speedDomain}
               samples={vehicle.samples}
+              cursorSamples={vehicle.cursorSamples ?? vehicle.samples}
+              cursor={cursor}
+              onCursorChange={(sample) => {
+                if (sample.sourceTimestampS === undefined || sample.sourceSequence === undefined) return;
+                onCursorChange({
+                  vehicleId: vehicle.vehicleId,
+                  sourceTimestampS: sample.sourceTimestampS,
+                  receivedTimestampS: sample.receivedTimestampS,
+                  sourceSequence: sample.sourceSequence,
+                  sourceClockId: sample.sourceClockId,
+                  sourceClockEpoch: sample.sourceClockEpoch,
+                  correlationId: sample.correlationId,
+                  positionM: sample.positionM,
+                  groundTruthPositionM: sample.groundTruthPositionM,
+                });
+              }}
               lines={[{
                 id: "speed",
                 label: "Speed",
@@ -484,6 +790,12 @@ function CampaignTelemetryPlots({
               durationS={value.durationS}
               domain={altitudeDomain}
               samples={vehicle.samples}
+              cursorSamples={vehicle.cursorSamples ?? vehicle.samples}
+              cursor={cursor}
+              onCursorChange={(sample) => {
+                if (sample.sourceTimestampS === undefined || sample.sourceSequence === undefined) return;
+                onCursorChange({ vehicleId: vehicle.vehicleId, sourceTimestampS: sample.sourceTimestampS, receivedTimestampS: sample.receivedTimestampS, sourceSequence: sample.sourceSequence, sourceClockId: sample.sourceClockId, sourceClockEpoch: sample.sourceClockEpoch, correlationId: sample.correlationId, positionM: sample.positionM, groundTruthPositionM: sample.groundTruthPositionM });
+              }}
               lines={[{
                 id: "altitude",
                 label: "World Z",
@@ -501,6 +813,12 @@ function CampaignTelemetryPlots({
               durationS={value.durationS}
               domain={[0, 100]}
               samples={vehicle.samples}
+              cursorSamples={vehicle.cursorSamples ?? vehicle.samples}
+              cursor={cursor}
+              onCursorChange={(sample) => {
+                if (sample.sourceTimestampS === undefined || sample.sourceSequence === undefined) return;
+                onCursorChange({ vehicleId: vehicle.vehicleId, sourceTimestampS: sample.sourceTimestampS, receivedTimestampS: sample.receivedTimestampS, sourceSequence: sample.sourceSequence, sourceClockId: sample.sourceClockId, sourceClockEpoch: sample.sourceClockEpoch, correlationId: sample.correlationId, positionM: sample.positionM, groundTruthPositionM: sample.groundTruthPositionM });
+              }}
               lines={TELEMETRY_MOTOR_IDS.map((motorId) => ({
                 id: motorId,
                 label: motorId.toUpperCase(),
@@ -518,6 +836,12 @@ function CampaignTelemetryPlots({
               durationS={value.durationS}
               domain={attitudeDomain}
               samples={vehicle.samples}
+              cursorSamples={vehicle.cursorSamples ?? vehicle.samples}
+              cursor={cursor}
+              onCursorChange={(sample) => {
+                if (sample.sourceTimestampS === undefined || sample.sourceSequence === undefined) return;
+                onCursorChange({ vehicleId: vehicle.vehicleId, sourceTimestampS: sample.sourceTimestampS, receivedTimestampS: sample.receivedTimestampS, sourceSequence: sample.sourceSequence, sourceClockId: sample.sourceClockId, sourceClockEpoch: sample.sourceClockEpoch, correlationId: sample.correlationId, positionM: sample.positionM, groundTruthPositionM: sample.groundTruthPositionM });
+              }}
               lines={TELEMETRY_AXES.map((axis) => ({
                 id: `attitude-${axis}`,
                 label: axis === "x" ? "Roll" : axis === "y" ? "Pitch" : "Yaw",
@@ -535,6 +859,12 @@ function CampaignTelemetryPlots({
               durationS={value.durationS}
               domain={accelerationDomain}
               samples={vehicle.samples}
+              cursorSamples={vehicle.cursorSamples ?? vehicle.samples}
+              cursor={cursor}
+              onCursorChange={(sample) => {
+                if (sample.sourceTimestampS === undefined || sample.sourceSequence === undefined) return;
+                onCursorChange({ vehicleId: vehicle.vehicleId, sourceTimestampS: sample.sourceTimestampS, receivedTimestampS: sample.receivedTimestampS, sourceSequence: sample.sourceSequence, sourceClockId: sample.sourceClockId, sourceClockEpoch: sample.sourceClockEpoch, correlationId: sample.correlationId, positionM: sample.positionM, groundTruthPositionM: sample.groundTruthPositionM });
+              }}
               lines={TELEMETRY_AXES.map((axis) => ({
                 id: `acceleration-${axis}`,
                 label: axis.toUpperCase(),
@@ -552,6 +882,12 @@ function CampaignTelemetryPlots({
               durationS={value.durationS}
               domain={angularVelocityDomain}
               samples={vehicle.samples}
+              cursorSamples={vehicle.cursorSamples ?? vehicle.samples}
+              cursor={cursor}
+              onCursorChange={(sample) => {
+                if (sample.sourceTimestampS === undefined || sample.sourceSequence === undefined) return;
+                onCursorChange({ vehicleId: vehicle.vehicleId, sourceTimestampS: sample.sourceTimestampS, receivedTimestampS: sample.receivedTimestampS, sourceSequence: sample.sourceSequence, sourceClockId: sample.sourceClockId, sourceClockEpoch: sample.sourceClockEpoch, correlationId: sample.correlationId, positionM: sample.positionM, groundTruthPositionM: sample.groundTruthPositionM });
+              }}
               lines={TELEMETRY_AXES.map((axis) => ({
                 id: `angular-velocity-${axis}`,
                 label: axis.toUpperCase(),
@@ -576,6 +912,9 @@ function CampaignTelemetryMetricChart({
   durationS,
   domain,
   samples,
+  cursorSamples,
+  cursor,
+  onCursorChange,
   lines,
 }: {
   chartId: string;
@@ -587,6 +926,9 @@ function CampaignTelemetryMetricChart({
   durationS: number;
   domain: [number, number];
   samples: CampaignTelemetryChartSample[];
+  cursorSamples: CampaignTelemetryChartSample[];
+  cursor?: CampaignReviewCursorView;
+  onCursorChange: (sample: CampaignTelemetryChartSample) => void;
   lines: TelemetryChartLine[];
 }) {
   const values = lines.flatMap((line) => samples.flatMap((sample) => {
@@ -598,20 +940,64 @@ function CampaignTelemetryMetricChart({
   const range = observedMinimum === undefined || observedMaximum === undefined
     ? "No data"
     : `${observedMinimum.toFixed(2)}–${observedMaximum.toFixed(2)} ${unit}`;
+  const selectedSample = cursor
+    ? exactCampaignTelemetrySample(cursorSamples, cursor)
+    : undefined;
+  const selectAtTime = (timeS: number) => {
+    const firstSourceTimestampS = cursorSamples.find(
+      (sample) => sample.sourceTimestampS !== undefined,
+    )?.sourceTimestampS;
+    if (firstSourceTimestampS === undefined) return;
+    const sample = nearestCampaignTelemetrySample(
+      cursorSamples,
+      firstSourceTimestampS + Math.max(0, Math.min(durationS, timeS)),
+    );
+    if (sample) onCursorChange(sample);
+  };
+  const handleCursorKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const selectable = cursorSamples.filter((sample) => (
+      sample.sourceTimestampS !== undefined && sample.sourceSequence !== undefined
+    ));
+    if (!selectable.length) return;
+    const currentIndex = selectedSample
+      ? selectable.findIndex((sample) => (
+        sample.sourceSequence === selectedSample.sourceSequence
+        && sample.correlationId === selectedSample.correlationId
+      ))
+      : -1;
+    const nextIndex = event.key === "Home"
+      ? 0
+      : event.key === "End"
+        ? selectable.length - 1
+        : event.key === "ArrowLeft"
+          ? Math.max(0, currentIndex < 0 ? 0 : currentIndex - 1)
+          : Math.min(selectable.length - 1, currentIndex < 0 ? 0 : currentIndex + 1);
+    onCursorChange(selectable[nextIndex]!);
+  };
   return (
     <figure className={`campaign-telemetry-chart${expanded ? " is-expanded" : ""}`}>
-      <button
-        type="button"
-        aria-expanded={expanded}
-        aria-controls={`campaign-chart-${chartId}`}
-        aria-label={`${expanded ? "Collapse" : "Expand"} ${title} graph`}
-        onClick={onToggle}
-      >
-        <div className="campaign-chart-caption">
+      <div className="campaign-chart-caption">
           <span><strong>{title}</strong><small>{source}</small></span>
-          <span className="campaign-chart-range"><em>{range}</em>{expanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}</span>
-        </div>
-        <div id={`campaign-chart-${chartId}`}>
+          <span className="campaign-chart-range"><em>{range}</em><button type="button" aria-expanded={expanded} aria-controls={`campaign-chart-${chartId}`} aria-label={`${expanded ? "Collapse" : "Expand"} ${title} graph`} onClick={onToggle}>{expanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}</button></span>
+      </div>
+        <div
+          id={`campaign-chart-${chartId}`}
+          className="campaign-chart-cursor-target"
+          role="slider"
+          tabIndex={0}
+          aria-label={`${title} source sample cursor`}
+          aria-valuemin={0}
+          aria-valuemax={Math.max(0, cursorSamples.length - 1)}
+          aria-valuenow={Math.max(0, selectedSample ? cursorSamples.indexOf(selectedSample) : 0)}
+          aria-valuetext={selectedSample?.sourceSequence === undefined ? "No source sample selected" : `Source sequence ${selectedSample.sourceSequence}`}
+          onKeyDown={handleCursorKeyDown}
+          onPointerDown={(event) => {
+            const bounds = event.currentTarget.getBoundingClientRect();
+            selectAtTime((event.clientX - bounds.left) / Math.max(bounds.width, 1) * durationS);
+          }}
+        >
           {values.length ? (
             <>
           <svg viewBox="0 0 240 62" preserveAspectRatio="none" role="img" aria-label={`${title} over ${durationS.toFixed(1)} seconds; ${range}`}>
@@ -632,6 +1018,16 @@ function CampaignTelemetryMetricChart({
                 vectorEffect="non-scaling-stroke"
               />
             )))}
+            {selectedSample ? (
+              <line
+                className="campaign-source-cursor"
+                x1={Math.max(0, Math.min(240, selectedSample.timeS / Math.max(durationS, 1e-9) * 240))}
+                x2={Math.max(0, Math.min(240, selectedSample.timeS / Math.max(durationS, 1e-9) * 240))}
+                y1="5"
+                y2="55"
+                vectorEffect="non-scaling-stroke"
+              />
+            ) : null}
           </svg>
           <div className="campaign-telemetry-time"><span>0 s</span><span>{durationS.toFixed(1)} s</span></div>
           {lines.length > 1 ? (
@@ -642,7 +1038,6 @@ function CampaignTelemetryMetricChart({
             </>
           ) : <p>No recorded {title.toLowerCase()} values</p>}
         </div>
-      </button>
     </figure>
   );
 }
@@ -708,6 +1103,9 @@ export function CampaignLab({
   onExecutionModeChange,
   onSubmissionChange,
   onPlanningSubmissionChange,
+  onMotionPreparationChange,
+  onCoordinationPreparationChange,
+  onReviewCursorChange,
 }: {
   api: ControlApi;
   onNotice: (message: string) => void;
@@ -716,6 +1114,11 @@ export function CampaignLab({
   onExecutionModeChange?: (mode: CampaignRunMode) => void;
   onSubmissionChange?: (submissionId: string | undefined) => void;
   onPlanningSubmissionChange?: (planningSubmissionId: string | undefined) => void;
+  onMotionPreparationChange?: (request: CampaignMotionPreparationRequest | undefined) => void;
+  onCoordinationPreparationChange?: (
+    request: CampaignCoordinationPreparationRequest | undefined,
+  ) => void;
+  onReviewCursorChange?: (cursor: CampaignReviewCursorView | undefined) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [workspaceTab, setWorkspaceTab] = useState<CampaignWorkspaceTab>("catalog");
@@ -727,9 +1130,11 @@ export function CampaignLab({
   const [selectedId, setSelectedId] = useState("");
   const [submissionByCase, setSubmissionByCase] = useState<Record<string, string>>({});
   const [planningSubmissionByCase, setPlanningSubmissionByCase] = useState<Record<string, string>>({});
+  const [motionPreparationByCase, setMotionPreparationByCase] = useState<Record<string, CampaignMotionPreparationRequest>>({});
+  const [coordinationPreparationByCase, setCoordinationPreparationByCase] = useState<Record<string, CampaignCoordinationPreparationRequest>>({});
   const [environment, setEnvironment] = useState<EnvironmentFilter>("SIMULATION");
   const [fleetSize, setFleetSize] = useState<FleetSizeFilter>("1");
-  const [cluster, setCluster] = useState<ClusterFilter>("all");
+  const [cluster, setCluster] = useState<ClusterFilter>("BASIC_FLIGHT_AND_ROUTE_FOLLOWING");
   const [runMode, setRunMode] = useState<CampaignRunMode>("OPERATOR_OBSERVED_REALTIME");
   const [busy, setBusy] = useState<string>();
   const [preview, setPreview] = useState<Record<string, unknown>>();
@@ -744,6 +1149,10 @@ export function CampaignLab({
   const [selectedSnapshotId, setSelectedSnapshotId] = useState("");
   const [copiedCaseId, setCopiedCaseId] = useState<string>();
   const [telemetryChartsByExecution, setTelemetryChartsByExecution] = useState<Record<string, CampaignTelemetryLoadState>>({});
+  const [reviewCursorSelection, setReviewCursorSelection] = useState<{
+    runId: string;
+    cursor: CampaignReviewCursorView;
+  }>();
   const launcherRef = useRef<HTMLButtonElement>(null);
   const workspaceRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -770,10 +1179,7 @@ export function CampaignLab({
         if (FLEET_SIZES.includes(preferences.fleetSize as FleetSizeFilter)) {
           setFleetSize(preferences.fleetSize as FleetSizeFilter);
         }
-        if (
-          preferences.cluster === "all"
-          || MISSION_CLUSTERS.some((item) => item.id === preferences.cluster)
-        ) {
+        if (MISSION_CLUSTERS.some((item) => item.id === preferences.cluster)) {
           setCluster(preferences.cluster as ClusterFilter);
         }
         if (
@@ -877,7 +1283,8 @@ export function CampaignLab({
         setCatalog(nextCatalog);
         setWorkspace(nextWorkspace);
         setSelectedId(initialCase?.case_id ?? "");
-        if (initialCase && !preferredId) {
+        if (initialCase) {
+          setCluster(initialCase.cluster);
           setEnvironment(initialCase.environment);
           setFleetSize(String(initialCase.drone_count) as FleetSizeFilter);
         }
@@ -894,24 +1301,94 @@ export function CampaignLab({
     };
   }, [api, catalog, loadAttempt, onNotice, preferencesReady]);
 
+  const usesTwoDroneCurriculum = environment === "SIMULATION" && fleetSize === "2";
   const cases = useMemo(
-    () => filterCampaignCases(catalog?.cases ?? [], environment, cluster, fleetSize),
-    [catalog, environment, cluster, fleetSize],
+    () => filterCampaignCases(
+      catalog?.cases ?? [],
+      environment,
+      usesTwoDroneCurriculum ? "all" : cluster,
+      fleetSize,
+    ),
+    [catalog, environment, cluster, fleetSize, usesTwoDroneCurriculum],
   );
   const selected = catalog?.cases.find((item) => item.case_id === selectedId);
   const active = catalog?.cases.find((item) => item.case_id === workspace?.active_case_id);
+  const majorMissionGroups: CampaignPreparationGroup[] = (() => {
+    if (
+      environment === "SIMULATION"
+      && fleetSize === "1"
+      && cluster === "BASIC_FLIGHT_AND_ROUTE_FOLLOWING"
+      && catalog?.major_missions?.groups?.length
+    ) {
+      const catalogCaseIds = new Set(catalog.cases.map((item) => item.case_id));
+      return catalog.major_missions.groups.map((group) => ({
+        ...group,
+        // Presentation-only future placeholders are not missions and must not
+        // appear as unavailable choices beside discovered catalog cases.
+        variants: group.variants.filter((variant) => catalogCaseIds.has(variant.case_id)),
+      }));
+    }
+    if (usesTwoDroneCurriculum && catalog?.two_drone_missions?.groups?.length) {
+      return catalog.two_drone_missions.groups;
+    }
+    const grouped = new Map<string, CampaignPreparationGroup>();
+    for (const item of cases) {
+      const label = humanizeCampaignValue(item.family);
+      const group = grouped.get(label) ?? { label, variants: [] };
+      group.variants.push({
+        label: humanizeCampaignValue(item.variation_name),
+        case_id: item.case_id,
+        status: "EXECUTABLE",
+      });
+      grouped.set(label, group);
+    }
+    return [...grouped.values()];
+  })();
+  const selectedMajorGroup = majorMissionGroups.find((group) => (
+    group.variants.some((variant) => variant.case_id === selected?.case_id)
+  ));
+  const usesMajorMissionPreparation = environment === "SIMULATION"
+    && Boolean(selectedMajorGroup);
+  const selectedMotionPreparation = selected
+    ? motionPreparationByCase[selected.case_id] ?? DEFAULT_MOTION_PREPARATION
+    : DEFAULT_MOTION_PREPARATION;
+  const activeMotionPreparation = active?.environment === "SIMULATION"
+    ? motionPreparationByCase[active.case_id] ?? DEFAULT_MOTION_PREPARATION
+    : undefined;
   const selectedSubmission = (selected?.submissions ?? []).find(
     (item) => item.submission_id === submissionByCase[selected?.case_id ?? ""],
-  ) ?? (selected?.submissions ?? []).find((item) => item.status === "EXECUTABLE");
+  ) ?? (selected?.submissions ?? []).find((item) => item.run_eligible)
+    ?? (selected?.submissions ?? []).find((item) => item.submission_id === BASELINE_SUBMISSION_ID);
   const activeSubmission = (active?.submissions ?? []).find(
     (item) => item.submission_id === submissionByCase[active?.case_id ?? ""],
-  ) ?? (active?.submissions ?? []).find((item) => item.status === "EXECUTABLE");
-  const selectedPlanningSubmission = (selected?.planning_submissions ?? []).find(
-    (item) => item.planning_submission_id === planningSubmissionByCase[selected?.case_id ?? ""],
-  ) ?? (selected?.planning_submissions ?? []).find((item) => item.status === "EXECUTABLE");
-  const activePlanningSubmission = (active?.planning_submissions ?? []).find(
-    (item) => item.planning_submission_id === planningSubmissionByCase[active?.case_id ?? ""],
-  ) ?? (active?.planning_submissions ?? []).find((item) => item.status === "EXECUTABLE");
+  ) ?? (active?.submissions ?? []).find((item) => item.run_eligible)
+    ?? (active?.submissions ?? []).find((item) => item.submission_id === BASELINE_SUBMISSION_ID);
+  const selectedPlanningSubmission = preferredPlanningSubmission(
+    selected,
+    planningSubmissionByCase[selected?.case_id ?? ""],
+  );
+  const activePlanningSubmission = preferredPlanningSubmission(
+    active,
+    planningSubmissionByCase[active?.case_id ?? ""],
+  );
+  const selectedSupportsLaunchGap = selected?.drone_count === 2
+    && supportsLaunchGap(selectedPlanningSubmission);
+  const activeSupportsLaunchGap = active?.drone_count === 2
+    && supportsLaunchGap(activePlanningSubmission);
+  const selectedCoordinationPreparation = selectedSupportsLaunchGap && selected
+    ? coordinationPreparationByCase[selected.case_id]
+    : undefined;
+  const activeCoordinationPreparation = activeSupportsLaunchGap && active
+    ? coordinationPreparationByCase[active.case_id]
+    : undefined;
+  const activeSubmissionId = activeMotionPreparation ? undefined : activeSubmission?.submission_id;
+  const activeUsesTwoDroneCurriculum = active?.environment === "SIMULATION"
+    && active.drone_count === 2;
+  const activePlanningSubmissionId = activeUsesTwoDroneCurriculum
+    ? activePlanningSubmission?.planning_submission_id
+    : activeMotionPreparation
+      ? undefined
+      : activePlanningSubmission?.planning_submission_id;
   const latestActiveCampaignRun = workspace?.runs.toReversed().find((run) => (
     run.locked_inputs.case_id === workspace.active_case_id
     && run.locked_inputs.case_sha256 === active?.case_sha256
@@ -940,23 +1417,20 @@ export function CampaignLab({
     ({ run }) => run.run_id === selectedReviewRunId,
   ) ?? campaignRunEntries[0];
   const selectedMissionExecutionId = selectedRunEntry?.run.mission_execution_id;
+  const reviewCursor = reviewCursorSelection
+    && reviewCursorSelection.runId === selectedRunEntry?.run.run_id
+    ? reviewCursorSelection.cursor
+    : undefined;
+
+  useEffect(() => {
+    onReviewCursorChange?.(reviewCursor);
+  }, [onReviewCursorChange, reviewCursor]);
   const selectedTelemetryCharts = selectedMissionExecutionId
     ? telemetryChartsByExecution[selectedMissionExecutionId]
     : undefined;
   const selectedRunSnapshots = (workspace?.snapshots ?? []).filter(
     (snapshot) => snapshot.run_id === selectedRunEntry?.run.run_id,
   );
-  const selectedCaseRunIds = new Set((workspace?.runs ?? [])
-    .filter((run) => (
-      !run.superseded_at_utc
-      && run.locked_inputs.case_id === selected?.case_id
-    ))
-    .map((run) => run.run_id));
-  const unassessedSnapshotCount = (workspace?.snapshots ?? []).filter((snapshot) => (
-    selectedCaseRunIds.has(snapshot.run_id)
-    && snapshot.image_available
-    && (!snapshot.neutral_assessment || !snapshot.assessment_disposition || !snapshot.assessed_at_utc)
-  )).length;
   const selectedSnapshot = selectedRunSnapshots.find(
     (snapshot) => snapshot.snapshot_id === selectedSnapshotId,
   );
@@ -973,12 +1447,60 @@ export function CampaignLab({
   }, [active, catalog, latestActiveCampaignRun, onActiveCaseChange, onCampaignRunChange, workspace]);
 
   useEffect(() => {
-    onSubmissionChange?.(activeSubmission?.submission_id);
-  }, [activeSubmission?.submission_id, onSubmissionChange]);
+    onSubmissionChange?.(activeSubmissionId);
+  }, [activeSubmissionId, onSubmissionChange]);
 
   useEffect(() => {
-    onPlanningSubmissionChange?.(activePlanningSubmission?.planning_submission_id);
-  }, [activePlanningSubmission?.planning_submission_id, onPlanningSubmissionChange]);
+    onPlanningSubmissionChange?.(activePlanningSubmissionId);
+  }, [activePlanningSubmissionId, onPlanningSubmissionChange]);
+
+  useEffect(() => {
+    onMotionPreparationChange?.(activeMotionPreparation);
+  }, [activeMotionPreparation, onMotionPreparationChange]);
+
+  useEffect(() => {
+    onCoordinationPreparationChange?.(activeCoordinationPreparation);
+  }, [activeCoordinationPreparation, onCoordinationPreparationChange]);
+
+  useEffect(() => {
+    if (
+      !open
+      || !active
+      || !activeMotionPreparation
+      || activeCampaignRun
+      || typeof api.previewActiveCampaign !== "function"
+    ) return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void api.previewActiveCampaign(
+        undefined,
+        activePlanningSubmissionId,
+        activeMotionPreparation,
+        activeCoordinationPreparation,
+      )
+        .then((value) => {
+          if (!cancelled) setPreview(value);
+        })
+        .catch((error: unknown) => {
+          if (!cancelled) {
+            onNotice(error instanceof Error ? error.message : "Motion preparation unavailable");
+          }
+        });
+    }, 120);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [
+    active,
+    activeCampaignRun,
+    activeMotionPreparation,
+    activeCoordinationPreparation,
+    activePlanningSubmissionId,
+    api,
+    onNotice,
+    open,
+  ]);
 
   useEffect(() => {
     if (!selectedMissionExecutionId || telemetryChartsByExecution[selectedMissionExecutionId]) return;
@@ -1038,19 +1560,20 @@ export function CampaignLab({
   const availableFleetSizes = useMemo(() => new Set(
     (catalog?.cases ?? [])
       .filter((item) => item.environment === environment)
-      .filter((item) => cluster === "all" || item.cluster === cluster)
       .map((item) => String(item.drone_count) as FleetSizeFilter),
-  ), [catalog, cluster, environment]);
-  const clusterOptions = useMemo<CampaignDropdownOption[]>(() => [
-    {
-      value: "all",
-      label: "All mission clusters",
-    },
-    ...MISSION_CLUSTERS.map((item) => ({
+  ), [catalog, environment]);
+  const clusterOptions = useMemo<CampaignDropdownOption[]>(() => (
+    MISSION_CLUSTERS.filter((item) => (
+      (catalog?.cases ?? []).some((campaignCase) => (
+        campaignCase.environment === environment
+        && campaignCase.drone_count === Number(fleetSize)
+        && campaignCase.cluster === item.id
+      ))
+    )).map((item) => ({
       value: item.id,
       label: item.label,
-    })),
-  ], []);
+    }))
+  ), [catalog?.cases, environment, fleetSize]);
   const caseOptions = useMemo<CampaignDropdownOption[]>(() => cases.map((item) => ({
     value: item.case_id,
     label: humanizeCampaignValue(item.family),
@@ -1062,9 +1585,9 @@ export function CampaignLab({
     campaignCase?.submissions?.map((item) => ({
       value: item.submission_id,
       label: item.display_name,
-      meta: humanizeCampaignValue(item.kind),
-      badge: item.run_eligible ? "Eligible" : item.status === "EXECUTABLE" ? "Prerequisite" : "Future",
-      badgeClassName: item.run_eligible ? "state-ready" : "state-blocked",
+      meta: item.run_eligible
+        ? humanizeCampaignValue(item.kind)
+        : item.status === "EXECUTABLE" ? "Prerequisite required" : "Unavailable",
       disabled: !item.run_eligible,
     })) ?? []
   );
@@ -1072,10 +1595,17 @@ export function CampaignLab({
     campaignCase?.planning_submissions?.map((item) => ({
       value: item.planning_submission_id,
       label: item.display_name,
-      meta: item.maneuver_dimensions.map(humanizeCampaignValue).join(" · "),
-      badge: item.status === "EXECUTABLE" ? "Eligible" : "Future",
-      badgeClassName: item.status === "EXECUTABLE" ? "state-ready" : "state-blocked",
-      disabled: item.status !== "EXECUTABLE",
+      meta: item.status === "EXECUTABLE"
+        || (
+          campaignCase.environment === "SIMULATION"
+          && item.planning_submission_id === BASELINE_PLANNING_SUBMISSION_ID
+        )
+        ? item.maneuver_dimensions.map(humanizeCampaignValue).join(" · ")
+        : "Unavailable",
+      disabled: item.status !== "EXECUTABLE" && !(
+        campaignCase.environment === "SIMULATION"
+        && item.planning_submission_id === BASELINE_PLANNING_SUBMISSION_ID
+      ),
     })) ?? []
   );
   const selectSubmission = (caseId: string, submissionId: string) => {
@@ -1089,6 +1619,70 @@ export function CampaignLab({
     }));
     setPreview(undefined);
   };
+  const selectMotionPreparation = (
+    caseId: string,
+    request: CampaignMotionPreparationRequest,
+  ) => {
+    setMotionPreparationByCase((current) => ({ ...current, [caseId]: request }));
+    setPreview(undefined);
+  };
+  const selectCoordinationPreparation = (
+    caseId: string,
+    request: CampaignCoordinationPreparationRequest | undefined,
+  ) => {
+    setCoordinationPreparationByCase((current) => {
+      if (request) return { ...current, [caseId]: request };
+      const remaining = { ...current };
+      delete remaining[caseId];
+      return remaining;
+    });
+    setPreview(undefined);
+  };
+  const majorMissionOptions = majorMissionGroups.map((group) => ({
+    value: group.label,
+    label: group.label,
+  }));
+  const majorVariantOptions = selectedMajorGroup?.variants.map((variant) => {
+    const campaignCase = catalog?.cases.find((item) => item.case_id === variant.case_id);
+    return {
+      value: variant.case_id,
+      label: variant.label,
+      meta: variant.disabled_reason ?? undefined,
+      badge: campaignCase ? lifecycleLabel(campaignCase.lifecycle) : undefined,
+      badgeClassName: campaignCase
+        ? `state-${campaignCase.lifecycle.toLowerCase()}`
+        : undefined,
+      badgePresentation: "dot" as const,
+      disabled: !campaignCase,
+    };
+  }) ?? [];
+  const resolvedMotionControls = (() => {
+    const packageValue = preview?.resolved_package;
+    if (!packageValue || typeof packageValue !== "object") return undefined;
+    const preparation = (packageValue as Record<string, unknown>).motion_preparation;
+    if (!preparation || typeof preparation !== "object") return undefined;
+    const controls = (preparation as Record<string, unknown>).controls;
+    return Array.isArray(controls) ? controls as ResolvedMotionControlView[] : undefined;
+  })();
+  const suggestedLaunchGapS = (() => {
+    if (selectedCoordinationPreparation) return undefined;
+    const plan = preview?.plan;
+    if (!plan || typeof plan !== "object") return undefined;
+    const planRecord = plan as Record<string, unknown>;
+    const candidates = planRecord.retained_candidates;
+    const selectedIndex = planRecord.selected_candidate_index;
+    if (!Array.isArray(candidates) || typeof selectedIndex !== "number") return undefined;
+    const candidate = candidates[selectedIndex];
+    if (!candidate || typeof candidate !== "object") return undefined;
+    const routes = (candidate as Record<string, unknown>).routes;
+    if (!Array.isArray(routes)) return undefined;
+    const starts = routes.flatMap((route) => {
+      if (!route || typeof route !== "object") return [];
+      const start = (route as Record<string, unknown>).route_start_s;
+      return typeof start === "number" ? [start] : [];
+    });
+    return starts.length >= 2 ? Math.max(...starts) - Math.min(...starts) : undefined;
+  })();
   const reviewCaseOptions = useMemo<CampaignDropdownOption[]>(() => {
     const runCounts = new Map<string, number>();
     for (const run of workspace?.runs ?? []) {
@@ -1119,39 +1713,62 @@ export function CampaignLab({
     nextCluster: ClusterFilter,
     nextFleetSize: FleetSizeFilter,
     useAvailableFleetFallback = false,
+    selectMission = false,
   ) => {
     let resolvedFleetSize = nextFleetSize;
-    let matching = filterCampaignCases(
-      catalog?.cases ?? [],
+    let resolvedCluster: ClusterFilter = (
+      nextEnvironment === "SIMULATION" && resolvedFleetSize === "2"
+        ? "all"
+        : nextCluster
+    );
+    const catalogCases = catalog?.cases ?? [];
+    const matchingCases = () => filterCampaignCases(
+      catalogCases,
       nextEnvironment,
-      nextCluster,
+      resolvedCluster,
       resolvedFleetSize,
     );
+    let matching = matchingCases();
     if (useAvailableFleetFallback && !matching.length) {
       const firstAvailable = FLEET_SIZES.find((candidate) => (
         filterCampaignCases(
-          catalog?.cases ?? [],
+          catalogCases,
           nextEnvironment,
-          nextCluster,
+          resolvedCluster,
           candidate,
         ).length > 0
       ));
       if (firstAvailable) {
         resolvedFleetSize = firstAvailable;
-        matching = filterCampaignCases(
-          catalog?.cases ?? [],
+        matching = matchingCases();
+      }
+    }
+    if (!matching.length) {
+      const firstAvailableCluster = MISSION_CLUSTERS.find((candidate) => (
+        filterCampaignCases(
+          catalogCases,
           nextEnvironment,
-          nextCluster,
+          candidate.id,
           resolvedFleetSize,
-        );
+        ).length > 0
+      ));
+      if (firstAvailableCluster) {
+        resolvedCluster = firstAvailableCluster.id;
+        matching = matchingCases();
       }
     }
     setEnvironment(nextEnvironment);
-    setCluster(nextCluster);
+    setCluster(resolvedCluster);
     setFleetSize(resolvedFleetSize);
-    if (!matching.some((item) => item.case_id === selectedId)) {
-      setSelectedId(matching[0]?.case_id ?? "");
+    const nextSelectedId = matching.some((item) => item.case_id === selectedId)
+      ? selectedId
+      : matching[0]?.case_id ?? "";
+    if (nextSelectedId !== selectedId) {
+      setSelectedId(nextSelectedId);
       setPreview(undefined);
+    }
+    if (selectMission && nextSelectedId) {
+      selectMissionCase(nextSelectedId, "operator selected mission from catalog hierarchy");
     }
   };
 
@@ -1175,6 +1792,25 @@ export function CampaignLab({
     } finally {
       setBusy(undefined);
     }
+  };
+
+  const selectMissionCase = (caseId: string, reason: string) => {
+    const campaignCase = catalog?.cases.find((item) => item.case_id === caseId);
+    setSelectedId(caseId);
+    setPreview(undefined);
+    if (!campaignCase || campaignCase.case_id === active?.case_id) return;
+    if (activeCampaignRun) {
+      onNotice("Stop the active campaign run before selecting another mission");
+      return;
+    }
+    if (campaignCase.environment === "REAL") {
+      onNotice("Real campaign missions are not authorized");
+      return;
+    }
+    void act(
+      "Mission selected",
+      () => api.setActiveCampaignCase(caseId, reason),
+    );
   };
 
   const reconcileLifecycle = (caseId: string, lifecycle: CampaignLifecycle) => {
@@ -1208,23 +1844,29 @@ export function CampaignLab({
           () => api.setCampaignCaseLifecycle(selected.case_id, "DEFINED_NOT_RUN", "operator set mission to inactive"),
           () => reconcileLifecycle(selected.case_id, "DEFINED_NOT_RUN"),
         )}
-      >Inactive</button>
+      >Not started</button>
       <button
         className="campaign-action-active"
         type="button"
-        disabled={!selected || selected.case_id === active?.case_id || selected.environment === "REAL" || selected.implementation_status !== "EXECUTABLE" || Boolean(activeCampaignRun) || Boolean(busy)}
-        title={activeCampaignRun
-          ? "Stop the active campaign run before selecting another mission"
-          : "Checks the mission and selects it in one step"}
-        onClick={() => selected && void act("Mission selected and checks passed", () => api.setActiveCampaignCase(selected.case_id, "operator selected mission for development"))}
-      >Use mission</button>
+        aria-pressed={selected?.lifecycle === "ACTIVE_DEVELOPMENT"}
+        disabled={!selected || selected.lifecycle === "ACTIVE_DEVELOPMENT" || Boolean(busy)}
+        onClick={() => selected && void act(
+          "Mission marked in progress",
+          () => api.setCampaignCaseLifecycle(selected.case_id, "ACTIVE_DEVELOPMENT", "operator marked mission as in progress"),
+          () => reconcileLifecycle(selected.case_id, "ACTIVE_DEVELOPMENT"),
+        )}
+      >In progress</button>
       <button
         className="campaign-action-review"
         type="button"
-        disabled={!selected || selected.lifecycle === "BASELINED" || !workspace?.reviews.some((review) => review.case_id === selected.case_id) || unassessedSnapshotCount > 0 || Boolean(busy)}
-        title={unassessedSnapshotCount ? `${unassessedSnapshotCount} retained snapshot${unassessedSnapshotCount === 1 ? " requires" : "s require"} a neutral assessment` : undefined}
-        onClick={() => selected && void act("Mission case moved to review", () => api.moveCampaignCaseToReview(selected.case_id, "operator moved case to review"))}
-      >Review</button>
+        aria-pressed={selected?.lifecycle === "BASELINED"}
+        disabled={!selected || selected.lifecycle === "BASELINED" || Boolean(busy)}
+        onClick={() => selected && void act(
+          "Mission marked in review",
+          () => api.setCampaignCaseLifecycle(selected.case_id, "BASELINED", "operator marked mission as in review"),
+          () => reconcileLifecycle(selected.case_id, "BASELINED"),
+        )}
+      >In review</button>
       <button
         className="campaign-action-complete"
         type="button"
@@ -1266,7 +1908,7 @@ export function CampaignLab({
                 key={value}
                 type="button"
                 className={environment === value ? "is-selected" : ""}
-                onClick={() => chooseFilters(value, cluster, fleetSize, true)}
+                onClick={() => chooseFilters(value, cluster, fleetSize, true, true)}
               >
                 {value === "SIMULATION" ? "Simulation" : "Real"}
               </button>
@@ -1315,53 +1957,119 @@ export function CampaignLab({
                       type="button"
                       className={fleetSize === value ? "is-selected" : ""}
                       disabled={!availableFleetSizes.has(value)}
-                      onClick={() => chooseFilters(environment, cluster, value)}
+                      onClick={() => chooseFilters(environment, cluster, value, false, true)}
                     >
                       {value}D
                     </button>
                   ))}
                 </div>
-                <CampaignDropdown
-                  label="Mission cluster"
-                  value={cluster}
-                  options={clusterOptions}
-                  onChange={(nextCluster) => chooseFilters(
-                    environment,
-                    nextCluster as ClusterFilter,
-                    fleetSize,
-                    true,
-                  )}
-                />
-                <CampaignDropdown
-                  label="Mission case"
-                  value={selectedId}
-                  options={caseOptions}
-                  searchable
-                  onChange={(nextCaseId) => {
-                    setSelectedId(nextCaseId);
-                    setPreview(undefined);
-                  }}
-                />
-                {selected && (selected.submissions?.length ?? 0) > 1 ? (
-                  <div className="campaign-submission-picker">
-                    <CampaignDropdown
-                      label="Execution submission"
-                      value={selectedSubmission?.submission_id ?? ""}
-                      options={submissionOptions(selected)}
-                      onChange={(submissionId) => selectSubmission(selected.case_id, submissionId)}
-                    />
-                  </div>
+                {!usesTwoDroneCurriculum ? (
+                  <CampaignDropdown
+                    label="Mission cluster"
+                    level={1}
+                    value={cluster}
+                    options={clusterOptions}
+                    onChange={(nextCluster) => chooseFilters(
+                      environment,
+                      nextCluster as ClusterFilter,
+                      fleetSize,
+                      true,
+                      true,
+                    )}
+                  />
                 ) : null}
-                {selected && (selected.planning_submissions?.length ?? 0) > 1 ? (
-                  <div className="campaign-submission-picker">
+                {usesMajorMissionPreparation ? (
+                  <>
                     <CampaignDropdown
-                      label="Planning contract"
-                      value={selectedPlanningSubmission?.planning_submission_id ?? ""}
-                      options={planningSubmissionOptions(selected)}
-                      onChange={(planningSubmissionId) => selectPlanningSubmission(selected.case_id, planningSubmissionId)}
+                      label="Major mission"
+                      level={2}
+                      value={selectedMajorGroup?.label ?? ""}
+                      options={majorMissionOptions}
+                      onChange={(groupLabel) => {
+                        const nextGroup = majorMissionGroups.find((group) => group.label === groupLabel);
+                        const nextVariant = nextGroup?.variants[0];
+                        if (nextVariant) {
+                          selectMissionCase(nextVariant.case_id, "operator selected major mission");
+                        }
+                      }}
                     />
-                  </div>
-                ) : null}
+                    <CampaignDropdown
+                      label="Variant"
+                      level={3}
+                      value={selectedId}
+                      options={majorVariantOptions}
+                      onChange={(nextCaseId) => selectMissionCase(
+                        nextCaseId,
+                        "operator selected mission variant",
+                      )}
+                    />
+                    {usesTwoDroneCurriculum && selected && (selected.planning_submissions?.length ?? 0) > 1 ? (
+                      <CampaignDropdown
+                        label="Resolution"
+                        level={4}
+                        value={selectedPlanningSubmission?.planning_submission_id ?? ""}
+                        options={planningSubmissionOptions(selected)}
+                        onChange={(planningSubmissionId) => selectPlanningSubmission(
+                          selected.case_id,
+                          planningSubmissionId,
+                        )}
+                      />
+                    ) : null}
+                    {selected && selectedSupportsLaunchGap ? (
+                      <LaunchGapControl
+                        value={selectedCoordinationPreparation}
+                        maximumS={selectedPlanningSubmission!.coordination.maximum_release_delay_s}
+                        suggestedGapS={suggestedLaunchGapS}
+                        onChange={(request) => selectCoordinationPreparation(selected.case_id, request)}
+                      />
+                    ) : null}
+                    {selected ? (
+                      <MotionPreparationControls
+                        value={selectedMotionPreparation}
+                        accuracyLimits={selected.motion_preparation_limits}
+                        resolvedControls={selected.case_id === active?.case_id ? resolvedMotionControls : undefined}
+                        level={usesTwoDroneCurriculum
+                          ? (selectedSupportsLaunchGap ? 6 : 5)
+                          : 4}
+                        onChange={(request) => selectMotionPreparation(selected.case_id, request)}
+                      />
+                    ) : null}
+                  </>
+                ) : (
+                  <>
+                    <CampaignDropdown
+                      label="Mission case"
+                      level={2}
+                      value={selectedId}
+                      options={caseOptions}
+                      searchable
+                      onChange={(nextCaseId) => selectMissionCase(
+                        nextCaseId,
+                        "operator selected mission case",
+                      )}
+                    />
+                    {selected && (selected.submissions?.length ?? 0) > 1 ? (
+                      <div className="campaign-submission-picker">
+                        <CampaignDropdown
+                          label="Execution submission"
+                          value={selectedSubmission?.submission_id ?? ""}
+                          options={submissionOptions(selected)}
+                          onChange={(submissionId) => selectSubmission(selected.case_id, submissionId)}
+                        />
+                      </div>
+                    ) : null}
+                    {selected && (selected.planning_submissions?.length ?? 0) > 1 ? (
+                      <div className="campaign-submission-picker">
+                        <CampaignDropdown
+                          label="Planning contract"
+                          value={selectedPlanningSubmission?.planning_submission_id ?? ""}
+                          options={planningSubmissionOptions(selected)}
+                          onChange={(planningSubmissionId) => selectPlanningSubmission(selected.case_id, planningSubmissionId)}
+                        />
+                      </div>
+                    ) : null}
+                  </>
+                )}
               </div>
               <div className="campaign-case-detail">
                 {selected ? (
@@ -1372,23 +2080,13 @@ export function CampaignLab({
                       </div>
                       <span className={`campaign-status state-${selected.lifecycle.toLowerCase()}`}>{lifecycleLabel(selected.lifecycle)}</span>
                     </header>
-                    <button
-                      className={copiedCaseId === selected.case_id ? "campaign-case-id is-copied" : "campaign-case-id"}
-                      type="button"
-                      aria-label={`Copy mission case ID ${selected.case_id}`}
-                      title={`Copy mission case ID: ${selected.case_id}`}
-                      onClick={() => void copyCaseId(selected.case_id)}
-                    >
-                      <code>{selected.case_id}</code>
-                      <span>{copiedCaseId === selected.case_id ? <Check size={12} /> : <Copy size={12} />}{copiedCaseId === selected.case_id ? "Copied" : "Copy"}</span>
-                    </button>
                     <CaseSummary campaignCase={selected} />
                     {selected.submission_registry?.baseline_only ? (
                       <p className="campaign-inline-note">
                         Baseline only: {selected.submission_registry.baseline_only_rationale}
                       </p>
                     ) : null}
-                    {(selected.submissions?.length ?? 0) > 1 && selectedSubmission ? (
+                    {!usesMajorMissionPreparation && (selected.submissions?.length ?? 0) > 1 && selectedSubmission ? (
                       <section
                         className="campaign-submission-detail"
                         aria-label={`Selected execution submission: ${selectedSubmission.display_name}`}
@@ -1400,7 +2098,7 @@ export function CampaignLab({
                         <SubmissionSummary submission={selectedSubmission} />
                       </section>
                     ) : null}
-                    {(selected.planning_submissions?.length ?? 0) > 1 && selectedPlanningSubmission ? (
+                    {!usesMajorMissionPreparation && (selected.planning_submissions?.length ?? 0) > 1 && selectedPlanningSubmission ? (
                       <section
                         className="campaign-submission-detail"
                         aria-label={`Selected planning contract: ${selectedPlanningSubmission.display_name}`}
@@ -1412,6 +2110,33 @@ export function CampaignLab({
                         <PlanningSubmissionSummary submission={selectedPlanningSubmission} />
                       </section>
                     ) : null}
+                    {usesMajorMissionPreparation ? (
+                      <details className="campaign-technical-disclosure">
+                        <summary>Technical</summary>
+                        <button
+                          className={copiedCaseId === selected.case_id ? "campaign-case-id is-copied" : "campaign-case-id"}
+                          type="button"
+                          aria-label={`Copy mission case ID ${selected.case_id}`}
+                          title={`Copy mission case ID: ${selected.case_id}`}
+                          onClick={() => void copyCaseId(selected.case_id)}
+                        >
+                          <code>{selected.case_id}</code>
+                          <span>{copiedCaseId === selected.case_id ? <Check size={12} /> : <Copy size={12} />}{copiedCaseId === selected.case_id ? "Copied" : "Copy"}</span>
+                        </button>
+                        <p>Resolved package and immutable case evidence remain available after mission selection.</p>
+                      </details>
+                    ) : (
+                      <button
+                        className={copiedCaseId === selected.case_id ? "campaign-case-id is-copied" : "campaign-case-id"}
+                        type="button"
+                        aria-label={`Copy mission case ID ${selected.case_id}`}
+                        title={`Copy mission case ID: ${selected.case_id}`}
+                        onClick={() => void copyCaseId(selected.case_id)}
+                      >
+                        <code>{selected.case_id}</code>
+                        <span>{copiedCaseId === selected.case_id ? <Check size={12} /> : <Copy size={12} />}{copiedCaseId === selected.case_id ? "Copied" : "Copy"}</span>
+                      </button>
+                    )}
                   </>
                 ) : <div className="campaign-workspace-empty"><CircleAlert size={16} />Select a mission case</div>}
               </div>
@@ -1427,7 +2152,15 @@ export function CampaignLab({
                 </header>
               ) : <div className="campaign-workspace-empty"><CircleAlert size={16} />Choose and activate a mission from the Catalog tab</div>}
               {activeCampaignRun ? <div className="campaign-running"><LoaderCircle className="spin" size={14} />{humanizeCampaignValue(activeCampaignRun.status)} run</div> : null}
-              {active && (active.submissions?.length ?? 0) > 1 ? (
+              {active && activeMotionPreparation ? (
+                <MotionPreparationControls
+                  value={activeMotionPreparation}
+                  accuracyLimits={active.motion_preparation_limits}
+                  resolvedControls={resolvedMotionControls}
+                  onChange={(request) => selectMotionPreparation(active.case_id, request)}
+                />
+              ) : null}
+              {active && !activeMotionPreparation && (active.submissions?.length ?? 0) > 1 ? (
                 <div className="campaign-submission-panel">
                   <CampaignDropdown
                     label="Execution submission"
@@ -1438,7 +2171,7 @@ export function CampaignLab({
                   {activeSubmission ? <SubmissionSummary submission={activeSubmission} /> : null}
                 </div>
               ) : null}
-              {active && (active.planning_submissions?.length ?? 0) > 1 ? (
+              {active && !activeMotionPreparation && (active.planning_submissions?.length ?? 0) > 1 ? (
                 <div className="campaign-submission-panel">
                   <CampaignDropdown
                     label="Planning contract"
@@ -1453,13 +2186,22 @@ export function CampaignLab({
                 <a
                   className="campaign-qualification-download"
                   href={api.campaignResolvedPackageUrl(
-                    activeSubmission?.submission_id,
-                    activePlanningSubmission?.planning_submission_id,
+                    activeMotionPreparation ? undefined : activeSubmission?.submission_id,
+                    activePlanningSubmissionId,
+                    activeMotionPreparation,
+                    activeCoordinationPreparation,
                   )}
                   download
                 >
                   <Download size={14} /> Download resolved package
                 </a>
+              ) : null}
+              {active && activeMotionPreparation ? (
+                <details className="campaign-technical-disclosure">
+                  <summary>Technical</summary>
+                  <p>Case <code>{active.case_id}</code></p>
+                  <p>The download retains exact planning/profile IDs, hashes, requested controls, resolved values, and binding caps.</p>
+                </details>
               ) : null}
               <button className="campaign-advanced-toggle" type="button" aria-expanded={advanced} onClick={() => setAdvanced((value) => !value)}>Advanced inputs <ChevronDown className={advanced ? "is-open" : ""} size={13} /></button>
               {advanced ? (
@@ -1594,6 +2336,13 @@ export function CampaignLab({
                         <CampaignTelemetryPlots
                           state={selectedTelemetryCharts}
                           runNumber={selectedRunEntry.number}
+                          cursor={reviewCursor}
+                          onCursorChange={(nextCursor) => {
+                            setReviewCursorSelection({
+                              runId: selectedRunEntry.run.run_id,
+                              cursor: nextCursor,
+                            });
+                          }}
                         />
                       ) : (
                         <section className="campaign-telemetry-plots is-empty" aria-label={`Flight graphs for run ${selectedRunEntry.number}`}>

@@ -279,3 +279,24 @@ def test_acknowledgement_completion_and_rejection_semantics_fail_closed() -> Non
             status=AcknowledgementStatus.REJECTED,
             received_at_monotonic_s=1.0,
         )
+    with pytest.raises(ValidationError, match="complete clock identity"):
+        CommandAcknowledgement(
+            vehicle_id="sim01",
+            command_id="cmd-4",
+            status=AcknowledgementStatus.COMPLETED,
+            received_at_monotonic_s=1.0,
+            completed_at_monotonic_s=2.0,
+            received_at_source_s=1.25,
+        )
+    acknowledged = CommandAcknowledgement(
+        vehicle_id="sim01",
+        command_id="cmd-5",
+        status=AcknowledgementStatus.COMPLETED,
+        received_at_monotonic_s=1.0,
+        completed_at_monotonic_s=2.0,
+        received_at_source_s=1.25,
+        completed_at_source_s=2.25,
+        source_clock_id="fast-sim-sim01",
+        source_clock_epoch=3,
+    )
+    assert acknowledged.received_at_source_s == 1.25

@@ -64,10 +64,13 @@ def test_dashboard_is_one_url_and_keeps_internal_credentials_hidden(
         "mode": "SIM",
         "runtime": "development",
         "supervised": True,
+        "physical_hardware": "disabled",
+        "checkout": "local",
     }
     assert len(processes) == 2
     assert processes[0].environment["CRAZYSWARM_LOCAL_TOKEN"] == "server-only-token"
     assert processes[0].command[-1] == "--reload"
+    assert processes[0].environment["CRAZYSWARM_PHYSICAL_HARDWARE_ENABLED"] == "0"
     assert processes[1].environment["CRAZYSWARM_API_URL"] == "http://127.0.0.1:8011"
     assert processes[1].environment["CRAZYSWARM_DEV_WATCH"] == "1"
     assert processes[1].working_directory.name == "ui"
@@ -78,6 +81,11 @@ def test_dashboard_is_one_url_and_keeps_internal_credentials_hidden(
 def test_dashboard_rejects_invalid_port() -> None:
     with pytest.raises(SystemExit):
         main(["dashboard", "--ui-port", "0"])
+
+
+def test_hardware_dashboard_rejects_auto_reload() -> None:
+    with pytest.raises(RuntimeError, match="stable production dashboard"):
+        main(["dashboard", "--hardware-owner", "test-operator"])
 
 
 class FakeProcess:

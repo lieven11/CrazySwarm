@@ -34,6 +34,113 @@ def _takeoff(_: str) -> tuple[RoleRoute, ...]:
     return (((0.0, 0.0, 0.04), ((0.0, 0.0, 0.35),), (0.0, 0.0, 0.04), ("CAPTURE_AND_HOLD",)),)
 
 
+def _hover_endurance(_: str) -> tuple[RoleRoute, ...]:
+    return (((0.0, 0.0, 0.04), ((0.0, 0.0, 0.30),), (0.0, 0.0, 0.04), ("CAPTURE_AND_HOLD",)),)
+
+
+def _axis_nudge_return(variation: str) -> tuple[RoleRoute, ...]:
+    offset = {
+        "forward_x_10cm": (0.10, 0.0),
+        "left_y_10cm": (0.0, 0.10),
+        "right_y_10cm": (0.0, -0.10),
+    }.get(variation)
+    if offset is None:
+        raise KeyError(f"unknown axis-nudge variation: {variation}")
+    return (
+        (
+            (0.0, 0.0, 0.04),
+            ((offset[0], offset[1], 0.30), (0.0, 0.0, 0.30)),
+            (0.0, 0.0, 0.04),
+            ("REVERSAL", "CAPTURE"),
+        ),
+    )
+
+
+def _short_offset_landing(variation: str) -> tuple[RoleRoute, ...]:
+    destination = {
+        "forward_20cm": (0.20, 0.0),
+        "forward_10cm": (0.10, 0.0),
+        "diagonal_20cm": (0.141421, 0.141421),
+    }.get(variation)
+    if destination is None:
+        raise KeyError(f"unknown short-offset landing variation: {variation}")
+    x, y = destination
+    return (((0.0, 0.0, 0.04), ((x, y, 0.30),), (x, y, 0.04), ("CAPTURE",)),)
+
+
+def _checkpoint_path(variation: str) -> tuple[RoleRoute, ...]:
+    goals = {
+        "l_shape": ((0.20, 0.0, 0.30), (0.20, 0.20, 0.30)),
+        "u_shape": (
+            (0.20, 0.0, 0.30),
+            (0.20, 0.20, 0.30),
+            (0.0, 0.20, 0.30),
+        ),
+        "square": (
+            (0.20, 0.0, 0.30),
+            (0.20, 0.20, 0.30),
+            (0.0, 0.20, 0.30),
+            (0.0, 0.0, 0.30),
+        ),
+    }.get(variation)
+    if goals is None:
+        raise KeyError(f"unknown checkpoint-path variation: {variation}")
+    final = goals[-1]
+    return (
+        (
+            (-0.10, -0.10, 0.04),
+            goals,
+            (final[0], final[1], 0.04),
+            ("CAPTURE_AND_HOLD",) * len(goals),
+        ),
+    )
+
+
+def _spatial_step_path(variation: str) -> tuple[RoleRoute, ...]:
+    if variation == "stair_step":
+        goals = (
+            (0.10, 0.0, 0.25),
+            (0.20, 0.0, 0.40),
+            (0.30, 0.0, 0.55),
+            (0.40, 0.0, 0.30),
+        )
+        landing = (0.40, 0.0, 0.04)
+    elif variation == "vertical_rectangle":
+        goals = (
+            (0.0, 0.0, 0.25),
+            (0.25, 0.0, 0.25),
+            (0.25, 0.0, 0.55),
+            (0.0, 0.0, 0.55),
+            (0.0, 0.0, 0.25),
+        )
+        landing = (0.0, 0.0, 0.04)
+    else:
+        raise KeyError(f"unknown spatial-step variation: {variation}")
+    return (((0.0, 0.0, 0.04), goals, landing, ("FLY_THROUGH",) * len(goals)),)
+
+
+def _polygon_loop(variation: str) -> tuple[RoleRoute, ...]:
+    if variation == "triangle":
+        loop = (
+            (-0.25, -0.15, 0.35),
+            (0.25, -0.15, 0.35),
+            (0.0, 0.28, 0.35),
+            (-0.25, -0.15, 0.35),
+        )
+    elif variation == "square":
+        loop = (
+            (-0.25, -0.25, 0.35),
+            (0.25, -0.25, 0.35),
+            (0.25, 0.25, 0.35),
+            (-0.25, 0.25, 0.35),
+            (-0.25, -0.25, 0.35),
+        )
+    else:
+        raise KeyError(f"unknown polygon-loop variation: {variation}")
+    start = (loop[0][0], loop[0][1], 0.04)
+    return ((start, loop, start, ("FLY_THROUGH",) * len(loop)),)
+
+
 def _relocation(_: str) -> tuple[RoleRoute, ...]:
     return (((-1.20, -0.80, 0.04), ((1.00, 0.70, 0.35),), (1.00, 0.70, 0.04), ("CAPTURE",)),)
 
@@ -495,6 +602,12 @@ _DYNAMIC_BASE = {
 
 _BUILDERS = {
     (1, "takeoff_hover_land"): _takeoff,
+    (1, "hover_endurance"): _hover_endurance,
+    (1, "axis_nudge_return"): _axis_nudge_return,
+    (1, "short_offset_landing"): _short_offset_landing,
+    (1, "checkpoint_path"): _checkpoint_path,
+    (1, "spatial_step_path"): _spatial_step_path,
+    (1, "polygon_loop"): _polygon_loop,
     (1, "point_to_point_relocation"): _relocation,
     (1, "move_return"): _move_return,
     (1, "altitude_transition"): _altitude,

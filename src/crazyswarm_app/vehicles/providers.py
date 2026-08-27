@@ -14,7 +14,7 @@ from crazyswarm_app.fleet.artifacts import (
 )
 from crazyswarm_app.simulation.faults import FaultInjector
 from crazyswarm_app.simulation.vehicle import SimulatedVehicle
-from crazyswarm_app.simulation.world import IndoorWorld, ScenarioConfig
+from crazyswarm_app.simulation.world import DynamicWorldTimeline, IndoorWorld, ScenarioConfig
 from crazyswarm_app.vehicles.base import Vehicle
 from crazyswarm_app.vehicles.mock_isaac import MockIsaacSimVehicle
 
@@ -40,6 +40,7 @@ class SoftwareBackendVehicleProvider:
     """Session provider for Fast Sim and mock Isaac using one logical deployment."""
 
     scenario: ScenarioConfig
+    dynamic_world_timeline: DynamicWorldTimeline | None = None
 
     def provision(
         self,
@@ -58,7 +59,10 @@ class SoftwareBackendVehicleProvider:
                 ErrorCode.MODE_NOT_AUTHORIZED,
                 f"{binding.backend.value} requires an explicitly approved external provider",
             )
-        world = IndoorWorld(self.scenario.world)
+        world = IndoorWorld(
+            self.scenario.world,
+            dynamic_timeline=self.dynamic_world_timeline,
+        )
         environment_sha = hashlib.sha256(
             json.dumps(
                 {
@@ -77,6 +81,8 @@ class SoftwareBackendVehicleProvider:
         for member in deployment.fleet:
             current = existing.get(member.vehicle_id)
             if current is not None and current.backend_profile.role is expected_role:
+                if isinstance(current, SimulatedVehicle):
+                    current.world.dynamic_timeline = self.dynamic_world_timeline
                 selected.append(current)
                 continue
             if current is not None:

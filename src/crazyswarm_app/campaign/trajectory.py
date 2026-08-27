@@ -15,6 +15,7 @@ from crazyswarm_app.campaign.models import (
 from crazyswarm_app.campaign.planner import CandidateEvaluation, CandidateRoute, RouteStop
 from crazyswarm_app.campaign.submissions import (
     BASELINE_SUBMISSION_ID,
+    CapabilityFeasibilityDisposition,
     CapabilityResolution,
     ExecutionProfileKind,
     ExecutionProfileSubmission,
@@ -48,6 +49,7 @@ class TrajectoryDynamicsAudit(ContractModel):
     maximum_vertical_speed_m_s: float = Field(ge=0.0)
     maximum_acceleration_m_s2: float = Field(ge=0.0)
     maximum_jerk_m_s3: float = Field(ge=0.0)
+    minimum_undeclared_internal_speed_m_s: float = Field(default=0.0, ge=0.0)
     generated_unintended_stop_count: int = Field(ge=0)
     passed: bool
     failures: tuple[str, ...]
@@ -124,6 +126,7 @@ class SmoothTrajectorySet(ContractModel):
     trajectories: tuple[TimeParameterizedTrajectory, ...]
     audits: tuple[TrajectoryDynamicsAudit, ...]
     profile_audits: tuple[ExecutionProfileAudit, ...] = ()
+    execution_profile_fallback: Literal["PLANNER_CANDIDATE_NATIVE_TIMING"] | None = None
     set_sha256: SHA256
 
     @model_validator(mode="after")
@@ -154,6 +157,8 @@ class SmoothTrajectorySet(ContractModel):
         if self.motion_quality_contract is None:
             payload.pop("motion_quality_contract", None)
             payload.pop("motion_quality_contract_sha256", None)
+        if self.execution_profile_fallback is None:
+            payload.pop("execution_profile_fallback", None)
         return payload
 
 
@@ -194,6 +199,11 @@ def generate_smooth_trajectories(
     if capability_resolution is not None and capability_resolution != expected_resolution:
         raise ValueError("trajectory capability resolution does not match case/profile")
     selected_resolution = capability_resolution or expected_resolution
+    planner_native_timing = _uses_planner_native_timing(
+        case,
+        selected_submission,
+        selected_resolution,
+    )
     trajectories: list[TimeParameterizedTrajectory] = []
     audits: list[TrajectoryDynamicsAudit] = []
     profile_audits: list[ExecutionProfileAudit] = []
@@ -214,7 +224,10 @@ def generate_smooth_trajectories(
             )
         trajectories.append(trajectory)
         audits.append(audit)
-        if selected_submission.submission_id != BASELINE_SUBMISSION_ID:
+        if (
+            selected_submission.submission_id != BASELINE_SUBMISSION_ID
+            and not planner_native_timing
+        ):
             profile_audits.append(
                 _audit_execution_profile(case, route, trajectory, selected_submission, audit)
             )
@@ -235,6 +248,8 @@ def generate_smooth_trajectories(
                 "profile_audits": tuple(profile_audits),
             }
         )
+    if planner_native_timing:
+        payload["execution_profile_fallback"] = "PLANNER_CANDIDATE_NATIVE_TIMING"
     if planning_submission is not None:
         payload.update(
             {
@@ -256,6 +271,8 @@ def _audit_execution_profile(
         raise ValueError("profiled route has no authored segment time law")
     parameters = submission.parameters
     audit_route = route
+    windows_override: tuple[tuple[float, float], ...] | None = None
+    audit_segment_durations = route.segment_durations_s
     if submission.kind is ExecutionProfileKind.DURATION_SCALE:
         assert parameters.duration_scale is not None
         return ExecutionProfileAudit(
@@ -285,51 +302,26 @@ def _audit_execution_profile(
         )
     elif submission.kind is ExecutionProfileKind.CORNER_TRANSITION:
         assert parameters.target_path_speed_m_s is not None
-        normalized_positions = normalized_route_polyline(
-            case,
-            route.role_id,
-            route.points_m,
-        ).normalized_points_m
-        authored_times = tuple(
-            next(
-                point.time_from_start_s
-                for point in trajectory.points
-                if _distance(point.position_m, position) <= 1e-9
-            )
-            for position in normalized_positions
-        )
-        audit_route = route.model_copy(
-            update={
-                "points_m": normalized_positions,
-                "segment_durations_s": tuple(
-                    after - before for before, after in pairwise(authored_times)
-                ),
-            }
-        )
-        requested = (parameters.target_path_speed_m_s,) * (len(normalized_positions) - 1)
-    elif submission.kind is ExecutionProfileKind.DURATION_SCALE:
-        requested = tuple(
-            _distance(before, after) / duration
-            for before, after, duration in zip(
-                route.points_m[:-1],
-                route.points_m[1:],
-                route.segment_durations_s,
-                strict=True,
-            )
-        )
+        windows_override = _corner_cut_steady_windows(trajectory)
+        audit_segment_durations = tuple(after - before for before, after in windows_override)
+        requested = (parameters.target_path_speed_m_s,) * len(windows_override)
     else:
         raise ValueError(f"profile {submission.kind.value} has no trajectory conformance audit")
-    windows = _profile_steady_windows(
-        audit_route,
-        trajectory,
-        requested,
-        submission.kind,
-        (
-            parameters.lookahead_time_s
-            if submission.kind is ExecutionProfileKind.CORNER_TRANSITION
-            and parameters.lookahead_time_s is not None
-            else parameters.entry_exit_ramp_s
-        ),
+    windows = (
+        windows_override
+        if windows_override is not None
+        else _profile_steady_windows(
+            audit_route,
+            trajectory,
+            requested,
+            submission.kind,
+            (
+                parameters.lookahead_time_s
+                if submission.kind is ExecutionProfileKind.CORNER_TRANSITION
+                and parameters.lookahead_time_s is not None
+                else parameters.entry_exit_ramp_s
+            ),
+        )
     )
     achieved_values: list[float] = []
     errors: list[float] = []
@@ -340,7 +332,7 @@ def _audit_execution_profile(
             achieved_values.append(0.0)
             missing_required_window = missing_required_window or (
                 requested_value > 0.0
-                and audit_route.segment_durations_s[index] > 2.0 * parameters.entry_exit_ramp_s
+                and audit_segment_durations[index] > 2.0 * parameters.entry_exit_ramp_s
             )
             continue
         start_s, end_s = window
@@ -417,6 +409,31 @@ def _audit_execution_profile(
     )
 
 
+def _corner_cut_steady_windows(
+    trajectory: TimeParameterizedTrajectory,
+) -> tuple[tuple[float, float], ...]:
+    """Return the straight constant-speed interiors of a corner-cut trajectory."""
+
+    windows = []
+    for start, end in pairwise(trajectory.points):
+        start_speed = _norm(start.velocity_m_s)
+        end_speed = _norm(end.velocity_m_s)
+        displacement = _subtract(end.position_m, start.position_m)
+        if start_speed <= 1e-9 or end_speed <= 1e-9 or _norm(displacement) <= 1e-9:
+            continue
+        start_direction = _unit(start.velocity_m_s)
+        end_direction = _unit(end.velocity_m_s)
+        path_direction = _unit(displacement)
+        if (
+            _dot(start_direction, end_direction) >= 1.0 - 1e-9
+            and _dot(start_direction, path_direction) >= 1.0 - 1e-9
+            and _norm(start.acceleration_m_s2) <= 1e-9
+            and _norm(end.acceleration_m_s2) <= 1e-9
+        ):
+            windows.append((start.time_from_start_s, end.time_from_start_s))
+    return tuple(windows)
+
+
 def _profile_steady_windows(
     route: CandidateRoute,
     trajectory: TimeParameterizedTrajectory,
@@ -440,6 +457,7 @@ def _profile_steady_windows(
             ExecutionProfileKind.CONSTANT_PATH_SPEED,
             ExecutionProfileKind.RAMPED_SEGMENT_SPEED,
             ExecutionProfileKind.BOUNDED_VERTICAL_RATE,
+            ExecutionProfileKind.CORNER_TRANSITION,
         }:
             segment = _subtract(after, before)
             length = _norm(segment)
@@ -530,6 +548,28 @@ def audit_trajectory(
     maximum_vertical_speed = max(vertical_speeds, default=0.0)
     maximum_acceleration = max(acceleration, default=0.0)
     maximum_jerk = max(jerks, default=0.0)
+    declared_sequences = (
+        trajectory.declared_stop_sequences
+        if isinstance(trajectory, TimeParameterizedTrajectory)
+        else ()
+    )
+    declared_times = tuple(
+        trajectory.points[sequence - 1].time_from_start_s for sequence in declared_sequences
+    )
+    terminal_capture_start_s = trajectory.points[-2].time_from_start_s
+    minimum_undeclared_internal_speed = min(
+        (
+            speed
+            for (timestamp_s, _sample), speed in zip(samples, speeds, strict=True)
+            if timestamp_s < terminal_capture_start_s
+            and not any(
+                abs(timestamp_s - declared_time_s)
+                <= case.hard_constraints.dynamics.unintended_stop_persistence_s
+                for declared_time_s in declared_times
+            )
+        ),
+        default=0.0,
+    )
     if maximum_horizontal_speed > limits.maximum_horizontal_speed_m_s + 1e-6:
         failures.append("MAXIMUM_HORIZONTAL_SPEED")
     if maximum_vertical_speed > limits.maximum_vertical_speed_m_s + 1e-6:
@@ -554,6 +594,7 @@ def audit_trajectory(
         maximum_vertical_speed_m_s=maximum_vertical_speed,
         maximum_acceleration_m_s2=maximum_acceleration,
         maximum_jerk_m_s3=maximum_jerk,
+        minimum_undeclared_internal_speed_m_s=minimum_undeclared_internal_speed,
         generated_unintended_stop_count=stops,
         passed=not failures,
         failures=tuple(failures),
@@ -610,6 +651,31 @@ def terminal_landing_gate(
     return not failures, tuple(failures)
 
 
+def _uses_planner_native_timing(
+    case: CampaignCase,
+    submission: ExecutionProfileSubmission,
+    capability_resolution: CapabilityResolution | None,
+) -> bool:
+    return bool(
+        (
+            case.family == "online_obstacle_replan"
+            and "source_time_changed_world" in case.named_variations
+        )
+        or (
+            submission.kind is ExecutionProfileKind.CORNER_TRANSITION
+            and capability_resolution is not None
+            and (
+                case.drone_count > 1
+                or (
+                    capability_resolution.feasibility is not None
+                    and capability_resolution.feasibility.disposition
+                    is CapabilityFeasibilityDisposition.PROVEN_INFEASIBLE
+                )
+            )
+        )
+    )
+
+
 def _trajectory_for_route(
     case: CampaignCase,
     route: CandidateRoute,
@@ -618,16 +684,27 @@ def _trajectory_for_route(
     capability_resolution: CapabilityResolution | None,
     planning_submission: PlanningSubmission | None,
 ) -> TimeParameterizedTrajectory:
+    corner_transition_active = (
+        submission.kind is ExecutionProfileKind.CORNER_TRANSITION
+        and not _uses_planner_native_timing(case, submission, capability_resolution)
+    )
+    planner_native_timing = _uses_planner_native_timing(
+        case,
+        submission,
+        capability_resolution,
+    )
     path_speed_targets_m_s: tuple[float, ...] = ()
     allocation_positions = route.points_m
-    if submission.kind is ExecutionProfileKind.CONSTANT_PATH_SPEED:
+    if not planner_native_timing and submission.kind is ExecutionProfileKind.CONSTANT_PATH_SPEED:
         assert submission.parameters.target_path_speed_m_s is not None
         path_speed_targets_m_s = (submission.parameters.target_path_speed_m_s,) * (
             len(route.points_m) - 1
         )
-    elif submission.kind is ExecutionProfileKind.RAMPED_SEGMENT_SPEED:
+    elif not planner_native_timing and submission.kind is ExecutionProfileKind.RAMPED_SEGMENT_SPEED:
         path_speed_targets_m_s = submission.parameters.segment_target_speeds_m_s
-    elif submission.kind is ExecutionProfileKind.BOUNDED_VERTICAL_RATE:
+    elif (
+        not planner_native_timing and submission.kind is ExecutionProfileKind.BOUNDED_VERTICAL_RATE
+    ):
         assert submission.parameters.target_vertical_rate_m_s is not None
         path_speed_targets_m_s = tuple(
             (
@@ -641,45 +718,48 @@ def _trajectory_for_route(
             )
             for before, after in pairwise(route.points_m)
         )
-    elif submission.kind is ExecutionProfileKind.CORNER_TRANSITION:
+    elif corner_transition_active:
         if capability_resolution is None:
             raise ValueError("corner-transition trajectory requires a capability resolution")
-        assert submission.parameters.target_path_speed_m_s is not None
+        certified_speed = (
+            submission.parameters.certified_path_speed_m_s
+            or capability_resolution.certified_entry_speed_m_s
+        )
+        if certified_speed is None:
+            raise ValueError("corner-transition trajectory lacks a certified path speed")
         allocation_positions = normalized_route_polyline(
             case,
             route.role_id,
             route.points_m,
         ).normalized_points_m
-        path_speed_targets_m_s = (submission.parameters.target_path_speed_m_s,) * (
-            len(allocation_positions) - 1
-        )
+        path_speed_targets_m_s = (certified_speed,) * (len(allocation_positions) - 1)
     points = allocate_trajectory_points(
         case,
         allocation_positions,
         speed_factor=route.speed_factor,
         declared_stops=route.declared_stops,
-        segment_durations_s=(
-            ()
-            if submission.kind is ExecutionProfileKind.CORNER_TRANSITION
-            else route.segment_durations_s
-        ),
+        segment_durations_s=(() if corner_transition_active else route.segment_durations_s),
         path_speed_targets_m_s=path_speed_targets_m_s,
         entry_exit_ramp_s=(
             submission.parameters.lookahead_time_s
-            if submission.kind is ExecutionProfileKind.CORNER_TRANSITION
-            and submission.parameters.lookahead_time_s is not None
+            if corner_transition_active and submission.parameters.lookahead_time_s is not None
             else submission.parameters.entry_exit_ramp_s
         ),
         transition_distance_m=(
             capability_resolution.derived_lookahead_distance_m
-            if capability_resolution is not None
-            and submission.kind is ExecutionProfileKind.CORNER_TRANSITION
+            if capability_resolution is not None and corner_transition_active
             else None
         ),
         turn_blend_radius_m=(
             capability_resolution.derived_turn_blend_radius_m
+            if capability_resolution is not None and corner_transition_active
+            else None
+        ),
+        corner_cut_tolerance_m=(
+            capability_resolution.path_deviation_cap_m
             if capability_resolution is not None
-            and submission.kind is ExecutionProfileKind.CORNER_TRANSITION
+            and corner_transition_active
+            and case.drone_count == 1
             else None
         ),
     )
@@ -935,10 +1015,31 @@ def allocate_trajectory_points(
     entry_exit_ramp_s: float = 1.25,
     transition_distance_m: float | None = None,
     turn_blend_radius_m: float | None = None,
+    corner_cut_tolerance_m: float | None = None,
 ) -> tuple[TrajectoryPoint, ...]:
     """Return the exact deterministic WP-30 time allocation used by planning and execution."""
 
     limits = case.hard_constraints.dynamics
+    if (
+        corner_cut_tolerance_m is not None
+        and path_speed_targets_m_s
+        and not declared_stops
+        and len(positions) > 2
+    ):
+        authored_positions = positions
+        positions = _continuous_tube_deformed_route(
+            case,
+            authored_positions,
+            corner_cut_tolerance_m,
+        )
+        if len(positions) == 2 and len(authored_positions) > 2:
+            # The topology may collapse only after the continuously deformed route
+            # has reached the exact safe start-to-goal line.  At that boundary the
+            # pre-collapse curve is already geometrically identical to the line, so
+            # removing redundant collinear knots cannot create an accuracy jump.
+            path_speed_targets_m_s = (min(path_speed_targets_m_s),)
+            if segment_durations_s:
+                segment_durations_s = (sum(segment_durations_s),)
     return _allocate_trajectory_points_cached(
         positions,
         speed_factor,
@@ -953,7 +1054,12 @@ def allocate_trajectory_points(
         entry_exit_ramp_s,
         transition_distance_m,
         turn_blend_radius_m,
-        case.drone_count == 1,
+        corner_cut_tolerance_m,
+        # Two-drone conflict routes reuse the qualified one-drone fly-through
+        # tangent rule. The existing three-role bottleneck search still carries a
+        # separate compatibility path until its protected-corridor generator is
+        # replaced; do not make that unrelated catalog row commandless here.
+        case.drone_count <= 2,
     )
 
 
@@ -972,6 +1078,7 @@ def _allocate_trajectory_points_cached(
     entry_exit_ramp_s: float,
     transition_distance_m: float | None,
     turn_blend_radius_m: float | None,
+    corner_cut_tolerance_m: float | None,
     whole_route_continuous: bool,
 ) -> tuple[TrajectoryPoint, ...]:
     """Cache immutable allocations shared by timing variants in one bounded search."""
@@ -1024,6 +1131,7 @@ def _allocate_trajectory_points_cached(
                     entry_exit_ramp_s,
                     transition_distance_m=transition_distance_m,
                     turn_blend_radius_m=turn_blend_radius_m,
+                    corner_cut_tolerance_m=corner_cut_tolerance_m,
                 ),
                 scale,
             )
@@ -1103,8 +1211,19 @@ def _profiled_path_speed_points(
     *,
     transition_distance_m: float | None = None,
     turn_blend_radius_m: float | None = None,
+    corner_cut_tolerance_m: float | None = None,
 ) -> tuple[TrajectoryPoint, ...]:
     """Build flat-speed interiors with explicit C2 entry, knot, and exit transitions."""
+
+    if corner_cut_tolerance_m is not None:
+        return _corner_cut_path_speed_points(
+            positions,
+            target_speeds_m_s,
+            transition_s,
+            transition_distance_m=transition_distance_m,
+            turn_blend_radius_m=turn_blend_radius_m,
+            corner_cut_tolerance_m=corner_cut_tolerance_m,
+        )
 
     lengths = tuple(_distance(before, after) for before, after in pairwise(positions))
     if any(length <= 1e-9 for length in lengths):
@@ -1160,14 +1279,19 @@ def _profiled_path_speed_points(
         incoming_s = transition_distance / speed
         outgoing_s = next_distance / next_speed
         transition_duration_s = incoming_s + outgoing_s
-        knot_velocity = _scale_vector(
+        # The weighted tangent chooses the turn direction; its magnitude must not
+        # accidentally become cos(turn/2) times the admitted speed.  That old vector
+        # average caused a visible scalar-speed dip at every benign corner.  The
+        # surrounding Hermite interval and dense dynamics audit provide the physical
+        # acceleration/jerk transition.
+        knot_direction = _unit(
             _add_scaled(
                 _scale_vector(direction, transition_distance),
                 next_direction,
                 next_distance,
-            ),
-            1.0 / transition_duration_s,
+            )
         )
+        knot_velocity = _scale_vector(knot_direction, min(speed, next_speed))
         knot_acceleration = _scale_vector(
             _subtract(
                 _scale_vector(next_direction, next_speed),
@@ -1205,6 +1329,249 @@ def _profiled_path_speed_points(
         )
         for index, (timestamp, position, velocity, acceleration) in enumerate(authored)
     )
+
+
+def _corner_cut_path_speed_points(
+    positions: tuple[Vector3, ...],
+    target_speeds_m_s: tuple[float, ...],
+    transition_s: float,
+    *,
+    transition_distance_m: float | None,
+    turn_blend_radius_m: float | None,
+    corner_cut_tolerance_m: float,
+) -> tuple[TrajectoryPoint, ...]:
+    """Build one C2 fly-through path that may bypass knots inside its accuracy tube."""
+
+    if corner_cut_tolerance_m <= 0.0:
+        raise ValueError("corner-cut tolerance must be positive")
+    if (transition_distance_m is None) != (turn_blend_radius_m is None):
+        raise ValueError("resolved corner transition requires both distance and radius")
+
+    route = positions
+    speeds = target_speeds_m_s
+    lengths = tuple(_distance(before, after) for before, after in pairwise(route))
+    if any(length <= 1e-9 for length in lengths):
+        raise ValueError("corner-cut routes cannot contain zero-length segments")
+    directions = tuple(_unit(_subtract(after, before)) for before, after in pairwise(route))
+    transition_distances = tuple(
+        min(
+            transition_distance_m
+            if transition_distance_m is not None
+            else speed * transition_s / 2.0,
+            length * (0.49 if transition_distance_m is not None else 0.375),
+            2.0 * turn_blend_radius_m if turn_blend_radius_m is not None else float("inf"),
+        )
+        for speed, length in zip(speeds, lengths, strict=True)
+    )
+    authored: list[tuple[float, Vector3, Vector3, Vector3]] = []
+    timestamp_s = 0.0
+
+    def append(position: Vector3, velocity: Vector3) -> None:
+        nonlocal timestamp_s
+        if authored and _distance(authored[-1][1], position) <= 1e-12:
+            # A near reversal can make the two trimmed endpoints coincide. Retain a
+            # positive-time velocity transition at the shared position.
+            timestamp_s += 0.01
+        authored.append((timestamp_s, position, velocity, Vector3()))
+
+    append(route[0], Vector3())
+    first_speed = speeds[0]
+    first_direction = directions[0]
+    first_distance = transition_distances[0]
+    timestamp_s += 2.0 * first_distance / first_speed
+    append(
+        _add_scaled(route[0], first_direction, first_distance),
+        _scale_vector(first_direction, first_speed),
+    )
+
+    for index, (_before, corner) in enumerate(pairwise(route)):
+        speed = speeds[index]
+        direction = directions[index]
+        transition_distance = transition_distances[index]
+        incoming_trim = (
+            transition_distance
+            if index == len(lengths) - 1
+            else min(transition_distance, corner_cut_tolerance_m)
+        )
+        approach = _add_scaled(corner, direction, -incoming_trim)
+        timestamp_s += _distance(authored[-1][1], approach) / speed
+        append(approach, _scale_vector(direction, speed))
+        if index == len(lengths) - 1:
+            timestamp_s += 2.0 * transition_distance / speed
+            append(corner, Vector3())
+            continue
+
+        next_speed = speeds[index + 1]
+        next_direction = directions[index + 1]
+        outgoing_trim = min(transition_distances[index + 1], corner_cut_tolerance_m)
+        timestamp_s += incoming_trim / speed + outgoing_trim / next_speed
+        append(
+            _add_scaled(corner, next_direction, outgoing_trim),
+            _scale_vector(next_direction, next_speed),
+        )
+
+    return tuple(
+        TrajectoryPoint(
+            sequence=index + 1,
+            time_from_start_s=timestamp,
+            position_m=position,
+            velocity_m_s=velocity,
+            acceleration_m_s2=acceleration,
+        )
+        for index, (timestamp, position, velocity, acceleration) in enumerate(authored)
+    )
+
+
+def _continuous_tube_deformed_route(
+    case: CampaignCase,
+    positions: tuple[Vector3, ...],
+    tolerance_m: float,
+) -> tuple[Vector3, ...]:
+    """Continuously relax one fly-through route toward its safe direct line.
+
+    Every interior knot follows a deterministic homotopy from its authored
+    position to its orthogonal projection on the start-to-goal segment.  The
+    requested tolerance therefore changes the geometry continuously instead of
+    deleting a waypoint as soon as a local threshold happens to pass.  A dense,
+    bidirectional tube check and the normal free-space guard bound the admitted
+    homotopy.  Redundant knots are removed only once the exact direct line is
+    itself admissible.
+    """
+
+    if tolerance_m <= 0.0 or len(positions) <= 2:
+        return positions
+    start = positions[0]
+    end = positions[-1]
+    delta = _subtract(end, start)
+    length_squared = delta.x * delta.x + delta.y * delta.y + delta.z * delta.z
+    if length_squared <= 1e-18:
+        return positions
+
+    projections: list[Vector3] = []
+    projection_fractions: list[float] = []
+    for point in positions:
+        relative = _subtract(point, start)
+        fraction = max(
+            0.0,
+            min(
+                1.0,
+                (relative.x * delta.x + relative.y * delta.y + relative.z * delta.z)
+                / length_squared,
+            ),
+        )
+        projection_fractions.append(fraction)
+        projections.append(_add_scaled(start, delta, fraction))
+
+    # A global line is not a valid continuous homotopy for a route that doubles
+    # back along its start-to-goal axis.  Preserve that route for the dedicated
+    # whole-route optimizer rather than introducing a geometric reversal here.
+    if any(after + 1e-12 < before for before, after in pairwise(projection_fractions)):
+        return positions
+
+    direct = (start, end)
+    direct_tolerance_m = _bidirectional_polyline_distance(positions, direct)
+    if direct_tolerance_m <= tolerance_m + 1e-12 and _shortcut_preserves_free_space(
+        case, start, end
+    ):
+        return direct
+    if direct_tolerance_m <= 1e-12:
+        return direct
+
+    requested_factor = min(1.0, tolerance_m / direct_tolerance_m)
+
+    def candidate(factor: float) -> tuple[Vector3, ...]:
+        return tuple(
+            Vector3(
+                x=point.x + (projection.x - point.x) * factor,
+                y=point.y + (projection.y - point.y) * factor,
+                z=point.z + (projection.z - point.z) * factor,
+            )
+            for point, projection in zip(positions, projections, strict=True)
+        )
+
+    def admissible(route: tuple[Vector3, ...]) -> bool:
+        return (
+            _bidirectional_polyline_distance(positions, route) <= tolerance_m + 1e-12
+            and all(
+                _shortcut_preserves_free_space(case, before, after)
+                for before, after in pairwise(route)
+            )
+            and all(_distance(before, after) > 1e-9 for before, after in pairwise(route))
+        )
+
+    requested = candidate(requested_factor)
+    if admissible(requested):
+        return requested
+
+    # Free-space and bidirectional tube admission are checked on the exact
+    # candidate rather than assumed from knot positions.  Find the greatest safe
+    # prefix of the continuous deformation deterministically.
+    lower = 0.0
+    upper = requested_factor
+    accepted = positions
+    for _ in range(32):
+        middle = (lower + upper) / 2.0
+        trial = candidate(middle)
+        if admissible(trial):
+            lower = middle
+            accepted = trial
+        else:
+            upper = middle
+    return accepted
+
+
+def _bidirectional_polyline_distance(
+    first: tuple[Vector3, ...],
+    second: tuple[Vector3, ...],
+) -> float:
+    """Return a deterministic dense symmetric normal-distance bound."""
+
+    def directed(source: tuple[Vector3, ...], target: tuple[Vector3, ...]) -> float:
+        maximum = 0.0
+        for before, after in pairwise(source):
+            for sample_index in range(65):
+                point = _add_scaled(before, _subtract(after, before), sample_index / 64.0)
+                maximum = max(maximum, _distance_to_polyline(point, target))
+        return maximum
+
+    return max(directed(first, second), directed(second, first))
+
+
+def _shortcut_preserves_free_space(
+    case: CampaignCase,
+    start: Vector3,
+    end: Vector3,
+) -> bool:
+    volume = case.hard_constraints.flight_volume
+    environment = case.semantics.environment_constraints if case.semantics else None
+    protected_radius = 0.055 + case.hard_constraints.position_uncertainty_m + 0.05
+    for sample_index in range(65):
+        point = _add_scaled(start, _subtract(end, start), sample_index / 64.0)
+        if (
+            min(
+                point.x - volume.minimum_m.x,
+                volume.maximum_m.x - point.x,
+                point.y - volume.minimum_m.y,
+                volume.maximum_m.y - point.y,
+                point.z - volume.minimum_m.z,
+                volume.maximum_m.z - point.z,
+            )
+            < protected_radius - 1e-12
+        ):
+            return False
+        if environment is None:
+            continue
+        for solid in environment.keep_out_regions:
+            dx = max(solid.minimum_m.x - point.x, 0.0, point.x - solid.maximum_m.x)
+            dy = max(solid.minimum_m.y - point.y, 0.0, point.y - solid.maximum_m.y)
+            dz = max(solid.minimum_m.z - point.z, 0.0, point.z - solid.maximum_m.z)
+            if math.sqrt(dx * dx + dy * dy + dz * dz) < protected_radius - 1e-12:
+                return False
+        if environment.required_corridors and not any(
+            corridor.contains(point) for corridor in environment.required_corridors
+        ):
+            return False
+    return True
 
 
 def _scale_trajectory_points(
@@ -1411,6 +1778,10 @@ def _unit(value: Vector3) -> Vector3:
     if length <= 1e-12:
         return Vector3()
     return Vector3(x=value.x / length, y=value.y / length, z=value.z / length)
+
+
+def _dot(first: Vector3, second: Vector3) -> float:
+    return first.x * second.x + first.y * second.y + first.z * second.z
 
 
 def _norm(value: Vector3) -> float:

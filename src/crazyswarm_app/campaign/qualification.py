@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import math
 from enum import StrEnum
-from typing import Literal
+from typing import Any, Literal, cast
 
 from pydantic import Field
 
@@ -46,6 +47,129 @@ from crazyswarm_app.campaign.trajectory import generate_smooth_trajectories
 from crazyswarm_app.domain.models import ContractModel, Identifier, Vector3
 from crazyswarm_app.domain.simulation import SHA256, canonical_sha256
 from crazyswarm_app.domain.trajectory import sample_trajectory
+
+TRACKING_RMS_THRESHOLD_M = 0.05
+TRACKING_RMS_REPEAT_IDENTITIES: tuple[tuple[str, str, str, int], ...] = (
+    *(
+        ("WP-64", case_id, "AUTOMATED_ACCELERATED", ordinal)
+        for case_id in (
+            "1d.curved_route.canonical_nominal",
+            "1d.planar_shape_loop.figure_eight",
+            "1d.altitude_transition.canonical_nominal",
+        )
+        for ordinal in (1, 2, 3)
+    ),
+    *(
+        ("WP-64", case_id, "OPERATOR_OBSERVED_REALTIME", 1)
+        for case_id in (
+            "1d.curved_route.canonical_nominal",
+            "1d.planar_shape_loop.figure_eight",
+            "1d.altitude_transition.canonical_nominal",
+        )
+    ),
+    *(
+        (
+            "WP-66",
+            "1d.online_obstacle_replan.dynamic_nominal",
+            "OPERATOR_OBSERVED_REALTIME",
+            ordinal,
+        )
+        for ordinal in (1, 2, 3)
+    ),
+)
+
+
+class TrackingRmsRepeatQualification(ContractModel):
+    schema_version: Literal[1] = 1
+    threshold_m: float = Field(default=TRACKING_RMS_THRESHOLD_M, ge=0.05, le=0.05)
+    passed: bool
+    failures: tuple[str, ...]
+    expected_count: Literal[15] = 15
+    observed_record_count: int = Field(ge=0)
+    unique_expected_observed_count: int = Field(ge=0, le=15)
+
+
+def qualify_tracking_rms_repeats(records: Any) -> TrackingRmsRepeatQualification:
+    """Evaluate the exact 15-repeat universe without formatting untrusted identities."""
+
+    expected = set(TRACKING_RMS_REPEAT_IDENTITIES)
+    failures: list[str] = []
+    if type(records) is not list:
+        return TrackingRmsRepeatQualification(
+            passed=False,
+            failures=("records:INVALID_CONTAINER",),
+            observed_record_count=0,
+            unique_expected_observed_count=0,
+        )
+    seen: set[tuple[str, str, str, int]] = set()
+    for index, record in enumerate(records):
+        if type(record) is not dict:
+            failures.append(f"record-{index}:INVALID_RECORD")
+            continue
+        if frozenset(record) != {"identity", "applicable", "tracking_rms_m"}:
+            failures.append(f"record-{index}:INVALID_RECORD_FIELDS")
+        key = _bounded_tracking_rms_identity(record.get("identity"))
+        if key is None:
+            failures.append(f"record-{index}:INVALID_IDENTITY")
+            continue
+        label = _tracking_rms_label(key)
+        if key in seen:
+            failures.append(f"{label}:DUPLICATE")
+        else:
+            seen.add(key)
+        if key not in expected:
+            failures.append(f"{label}:UNEXPECTED")
+        if record.get("applicable") is not True:
+            failures.append(f"{label}:INVALID_NOT_APPLICABLE")
+        value = record.get("tracking_rms_m")
+        if type(value) not in (int, float):
+            failures.append(f"{label}:MISSING_OR_NON_NUMERIC")
+        else:
+            numeric_value = cast(int | float, value)
+            if type(numeric_value) is float and not math.isfinite(numeric_value):
+                failures.append(f"{label}:NON_FINITE")
+            elif numeric_value < 0:
+                failures.append(f"{label}:NEGATIVE")
+            elif numeric_value > TRACKING_RMS_THRESHOLD_M:
+                failures.append(f"{label}:ABOVE_THRESHOLD")
+    for key in sorted(expected - seen):
+        failures.append(f"{_tracking_rms_label(key)}:MISSING")
+    return TrackingRmsRepeatQualification(
+        passed=not failures,
+        failures=tuple(sorted(failures)),
+        observed_record_count=len(records),
+        unique_expected_observed_count=len(expected & seen),
+    )
+
+
+def _bounded_tracking_rms_identity(value: Any) -> tuple[str, str, str, int] | None:
+    if type(value) is not dict or frozenset(value) != {
+        "packet_id",
+        "case_id",
+        "mode",
+        "ordinal",
+    }:
+        return None
+    packet_id = value["packet_id"]
+    case_id = value["case_id"]
+    mode = value["mode"]
+    ordinal = value["ordinal"]
+    if (
+        type(packet_id) is not str
+        or not 1 <= len(packet_id) <= 5
+        or type(case_id) is not str
+        or not 1 <= len(case_id) <= 96
+        or type(mode) is not str
+        or not 1 <= len(mode) <= 32
+        or type(ordinal) is not int
+        or not 1 <= ordinal <= 3
+    ):
+        return None
+    return packet_id, case_id, mode, ordinal
+
+
+def _tracking_rms_label(key: tuple[str, str, str, int]) -> str:
+    return f"{key[0]}|{key[1]}|{key[2]}|{key[3]}"
 
 
 class CaseMutation(StrEnum):

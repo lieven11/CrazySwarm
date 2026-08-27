@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -43,7 +44,7 @@ def _sample(
     sample_id: str = "sample-1",
     sequence: int = 1,
     time_s: float = 1.0,
-):
+) -> TwinStreamSample:
     raw = {"position_m": [0.1, 0.0, 0.4], "sequence": sequence}
     return TwinStreamSample.create(
         sample_id=sample_id,
@@ -71,11 +72,21 @@ def test_twin_samples_survive_restart_and_duplicate_is_idempotent(tmp_path: Path
         TwinIngestionBatch(session_id=session.session_id, samples=(sample,))
     )
     assert first.accepted_count == 1
+    journal_records = [
+        json.loads(line)
+        for line in (tmp_path / "twin" / "twin-journal-v1.jsonl").read_text().splitlines()
+    ]
+    assert journal_records[-1]["kind"] == "SAMPLE_BATCH_ZLIB_V1"
+    assert journal_records[-1]["payload"]["codec"] == "zlib-json-v1"
 
     restarted = TwinCoordinator(tmp_path / "twin")
     assert restarted.session(session.session_id).session_id == session.session_id
+    assert restarted._store is not None
+    assert restarted._store._samples[session.session_id] == []
+    assert restarted._store._deferred_sample_records[session.session_id]
     timeline = restarted.timeline(session.session_id)
     assert timeline.samples == (sample,)
+    assert restarted._store._deferred_sample_records[session.session_id] == []
     duplicate = restarted.ingest(
         TwinIngestionBatch(session_id=session.session_id, samples=(sample,))
     )
@@ -100,6 +111,48 @@ def test_out_of_order_and_conflicting_duplicate_fail_atomically(tmp_path: Path) 
     with pytest.raises(ValueError, match="different content"):
         coordinator.ingest(TwinIngestionBatch(session_id=session.session_id, samples=(changed,)))
     assert len(coordinator.timeline(session.session_id).samples) == 1
+
+
+def test_repeated_ingestion_uses_bounded_indexes_not_the_full_timeline(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    coordinator = TwinCoordinator(tmp_path / "twin")
+    session = coordinator.create_session(_config())
+    coordinator.ingest(
+        TwinIngestionBatch(session_id=session.session_id, samples=(_sample(session.session_id),))
+    )
+    assert coordinator._store is not None
+
+    def reject_timeline_scan(_: str) -> tuple[TwinStreamSample, ...]:
+        raise AssertionError("live ingestion must not materialize the full timeline")
+
+    monkeypatch.setattr(coordinator._store, "samples", reject_timeline_scan)
+    second = _sample(
+        session.session_id,
+        sample_id="sample-2",
+        sequence=2,
+        time_s=1.1,
+    )
+
+    receipt = coordinator.ingest(
+        TwinIngestionBatch(session_id=session.session_id, samples=(second,))
+    )
+
+    assert receipt.accepted_count == 1
+
+
+def test_failed_session_is_terminal_and_disconnect_cannot_relabel_it_complete(
+    tmp_path: Path,
+) -> None:
+    coordinator = TwinCoordinator(tmp_path / "twin")
+    session = coordinator.create_session(_config())
+
+    failed = coordinator.complete(session.session_id, failed=True)
+    repeated = coordinator.complete(session.session_id, failed=False)
+
+    assert failed.status.value == "FAILED"
+    assert repeated.status.value == "FAILED"
 
 
 def test_per_session_retention_overflow_rejects_without_dropping_prefix(

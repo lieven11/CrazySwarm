@@ -88,6 +88,7 @@ class VehicleCapability(StrEnum):
     RELATIVE_POSITIONING = "relative_positioning"
     GLOBAL_POSITIONING = "global_positioning"
     HIGH_LEVEL_COMMANDS = "high_level_commands"
+    BODY_RATE_THRUST = "body_rate_thrust"
     RANGE_SENSING = "range_sensing"
     PARAMETER_ACCESS = "parameter_access"
     EMERGENCY_STOP = "emergency_stop"

@@ -1,0 +1,982 @@
+{
+  "base_commit": "40cd9947f87eb9bf2719d72e7c72ea867eab9977",
+  "batch_id": "WP-76-through-WP-79",
+  "boundaries": [
+    {
+      "classification": "IMPLEMENTATION_OWNED",
+      "path": "docs/project/requirements/EVIDENCE_AND_REVIEW.md",
+      "preimage_sha256": "3c800960dda12c49727b9a87a88c6c4882d22a4a4d5c08d58f9903cd6d32a593"
+    },
+    {
+      "classification": "IMPLEMENTATION_OWNED",
+      "path": "docs/reference/LANDING_GOAL_REGION_V1.md",
+      "preimage_sha256": "4c5990707a0a46b065feb20dec016b0cfc2d97b234275ea30551a3a1de90a811"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "missions/campaigns/sim/cases/dynamic-replanning/1d-cases-v1.yaml",
+      "preimage_sha256": "4f460bbeee2761857830f6ed1beefd87e2a2152cee783a003bced564f2d41b57"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "missions/campaigns/sim/cases/failure-recovery-and-replanning/1d-cases-v1.yaml",
+      "preimage_sha256": "e9e99f6f00ace10d19cf18afca0a3160434ed806d5cf66ce854c979f0627e3ad"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "missions/campaigns/sim/cases/failure-recovery-and-replanning/2d-cases-v1.yaml",
+      "preimage_sha256": "6d0464c7eefd5d7beba27da2432f9bfab8dc808ae1350f77c6a912d659bc3cac"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "missions/campaigns/sim/cases/failure-recovery-and-replanning/3d-cases-v1.yaml",
+      "preimage_sha256": "3a1cf2e3db5bbeaf683d38c528a2c0664f21f71022cb84ae5609a41ace2b1579"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "missions/campaigns/sim/curriculum/1d-major-missions-v1.yaml",
+      "preimage_sha256": "b46c50ba8b842c41b362363172899ec76a1d448e58113f024d6c08342d230259"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "missions/library/one_drone/abort_and_land_goal_fallback/mission.py",
+      "preimage_sha256": "872eec2ca8b99f470ad411e70861d25942416822c21c4b31b940d2d77a1512b8"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "missions/library/one_drone/blocked_replan/mission.py",
+      "preimage_sha256": "962ace48336c4c8b37c1e1db13fe8f6a9d84c730729e1944a641c492764bc8df"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "missions/library/one_drone/duplicate_stale_goal_update/mission.py",
+      "preimage_sha256": "0de771779dc4cee65b2fe8ea6523ff347d3fd69fed5a5303fb064fbb6bf7e0c8"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "missions/library/one_drone/failure_recovery/mission.py",
+      "preimage_sha256": "f798558abfa984f5f4740553ce921cd9912ea6e0634aeb4974db719042a1aa36"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "missions/library/one_drone/mid_route_goal_replacement/mission.py",
+      "preimage_sha256": "a7ff9470e495643d3842ea6a2d09bd078848091ebb2bdb695db046135df87439"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "missions/library/one_drone/moving_target/mission.py",
+      "preimage_sha256": "a4631b4f01fbbca9938cf085bc669992d46889df0a77535ed5300983b41edc47"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "missions/library/one_drone/online_obstacle_replan/mission.py",
+      "preimage_sha256": "a02ee1491bc62f161eea214f1bc6f9a3c6ddf09c9287a3ea7bb3058c090269e3"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "missions/library/one_drone/operator_approval_goal_replacement/mission.py",
+      "preimage_sha256": "d43669e81d77521ff8bd519d4db1ff2a9bd82c7ae699ad294b48288e90b59cae"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "missions/library/one_drone/planning_budget_expiry/mission.py",
+      "preimage_sha256": "dd7ccf83b3c9c74cbf6a76b29205a2b99c07d048809491800d3cefd827447136"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "scripts/audit_wp52_56_r8_design.py",
+      "preimage_sha256": "d22249523e4fc77036bbfbcd4e6b31a06f670a65d478cb0b7cf9487f6af45adc"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "scripts/audit_wp57_61_design.py",
+      "preimage_sha256": "f2b1df6c4017dd3856ddfaf7f35e5b88baa87da8d2bfdc8bd1689417bd98efa8"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "scripts/audit_wp57_61_r2_design.py",
+      "preimage_sha256": "961d157e05a3293dbd9feef371167af070188c19e2a5eccf65a0499b47f8ec87"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "scripts/audit_wp62_66_design.py",
+      "preimage_sha256": "6fe8e3646008be372bbe0b661915d0039a4c8bd18a1165bb6bbf8185dd931dfd"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "scripts/audit_wp62_66_r3_design.py",
+      "preimage_sha256": "71fb40f59ab0c519a2179c18b7cd25d6f1211c5fe49016b15ad486adc1acc52a"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "scripts/audit_wp67_70_r2_design.py",
+      "preimage_sha256": "895866b2a450485f7368b3f819c7f02e16091780b60f0d5ab6cf1f5797316e58"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "scripts/audit_wp76_79_design.py",
+      "preimage_sha256": "75d11524954cfbc783454888b068bbbb774e0bbcb71f93fe4266f05b00d22cb6"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "scripts/campaign_case_specs.py",
+      "preimage_sha256": "c3fdacf0d41ddaf1593b10c27b718b2b5e0346285d13b89b9fa9e010b72010c4"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "scripts/generate_campaign_catalog.py",
+      "preimage_sha256": "4b3a866e239422ba14fd57183668d0ee47cf9a18d5380ff635e2643408c8fba5"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "scripts/generate_submission_registry.py",
+      "preimage_sha256": "e46ea834b7e1eff640b3489b82d891253a2adde3c186d7dcb054c84d44a4804b"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "scripts/qualify_altitude_profiles.py",
+      "preimage_sha256": "391b34854455672b1a75f9d009fbf1cc8e46c7ef4a41c4888d4378d72d0c76f0"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "scripts/qualify_campaign_runtime.py",
+      "preimage_sha256": "7895fc2a942a534cf1b6d28649438a38f1a87382023cde90369e7c9aa2eccf64"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "scripts/qualify_submission_runtime.py",
+      "preimage_sha256": "b6749e62b3ff462d91cb7398eabce5f6d56b66b24f85e10884cde3eedeb3cf27"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "scripts/qualify_wp62_66_runtime.py",
+      "preimage_sha256": "d8f3edd3cff62979e5305b177c650c77b412506b994224907aa506f8e8c1a322"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "scripts/summarize_run.py",
+      "preimage_sha256": "d9e84f9f78e6ecbbb87d8436c7ccc608905ed719cf636da4ab6ecbd3d98b9a9d"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/api/app.py",
+      "preimage_sha256": "1998d722376848ce0e8d7399e1e8c1d7dbd95b90aa7d57598bb32c0a852c8d36"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/api/runtime.py",
+      "preimage_sha256": "64dcf8b92acc1b9757238dbd4be990c98e82c917d5ac8e1999b932eb9d0703f5"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "src/crazyswarm_app/campaign/analyzer.py",
+      "preimage_sha256": "2a7a70bbd7fb88765a5096de5b702137ff4d9caf7905f4f15e92e3eb052a0884"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "src/crazyswarm_app/campaign/api_models.py",
+      "preimage_sha256": "a1d5e1a804737cc7e083f033f209d09e9082d87b8816952c3435f2c77ef10ccc"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "src/crazyswarm_app/campaign/catalog.py",
+      "preimage_sha256": "64aaa10fd065b39657ebae28e76e01512528637dc1eaca3970b93b3ed76634be"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/campaign/execution.py",
+      "preimage_sha256": "d6d7b335dbe97633badab7245a5cd21862c0eb5c52e9f981f4a1192afb997f16"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/campaign/execution_head.py",
+      "preimage_sha256": "ba87347101f1b8153bfdb16e3f36ec592f78456e63a94ab9adbc99781f2133a4"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "src/crazyswarm_app/campaign/models.py",
+      "preimage_sha256": "b8164e332e48184e6b92dd19d4b7200e7915d5180f64109ea38ce2942b1a5827"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/campaign/planner.py",
+      "preimage_sha256": "e302190b5d974d98aa6d62bebeb782d2ef900d9284a97fe479e273dac53eef39"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/campaign/qualification.py",
+      "preimage_sha256": "18190b7f62ceb0079e339fd9829f0030a2627ffea970e42862a046ebdf24cb67"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/campaign/replanning.py",
+      "preimage_sha256": "5f4227270538482cd3b6c491d71135e828d0dcdcf5fac6411f72f8519c2c804f"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/campaign/runtime_executor.py",
+      "preimage_sha256": "3835eba7f9732e2103a8c92fa2a69088ac27115cf29275e6c7997198aaaa2669"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/campaign/scenario.py",
+      "preimage_sha256": "c7e3ddeee88b235551ba2c31c639ef73da0edddfc46eb94cd5a83c24d96ef221"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/campaign/semantic_audit.py",
+      "preimage_sha256": "78420241b129477f8e623acab8ee2e79040604266835dc01d92a17ca2c658158"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "src/crazyswarm_app/campaign/service.py",
+      "preimage_sha256": "794a13c31d51fa095120efe80a198424d343dc78d27f0ac91977795d5f52d32e"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/campaign/trajectory.py",
+      "preimage_sha256": "ea425ad2f477e4e980cdd51ac67616c8fb44528fb50a8ad6163279fc5f8323c0"
+    },
+    {
+      "classification": "IMPLEMENTATION_OWNED",
+      "path": "src/crazyswarm_app/domain/commands.py",
+      "preimage_sha256": "6aba9415f010bad81db33c2dd67c67117e2281292f459d7eb870fe24991d0373"
+    },
+    {
+      "classification": "IMPLEMENTATION_OWNED",
+      "path": "src/crazyswarm_app/domain/goals.py",
+      "preimage_sha256": "e06479bb50efa16ee1985b8ab199e075fc7ecf6cff27b299d583383738ad3422"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/domain/trajectory.py",
+      "preimage_sha256": "5d48ba0f3bc01d4280887a340408bb99c05bd3156de24823ff543e75a21354ef"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/fleet/coordinator.py",
+      "preimage_sha256": "d241ab3a18210720c5138fe302d8922120e39c4d4dc8e619c5f57dec8eb849cd"
+    },
+    {
+      "classification": "IMPLEMENTATION_OWNED",
+      "path": "src/crazyswarm_app/missions/base.py",
+      "preimage_sha256": "ecf7c301e631085b3d3032352fa2ecd207bfd0e9aaa70b4af6b77877bd02c327"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/missions/models.py",
+      "preimage_sha256": "e7655602a5ce72761a36b1aef49145a338f032fd292f9aa26ee574d55a0ebf27"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/missions/planning.py",
+      "preimage_sha256": "0fbb21cd1fed76868220f4618f6c6476fefbdbee06fd789e819bed38a6b53685"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/missions/runner.py",
+      "preimage_sha256": "0363679e48b5327cf8314123e7e7c035a348c460e99bf934ee09711153f536df"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/missions/script.py",
+      "preimage_sha256": "fc27a997120858048b617f45afe24042170315ae11ac911869438ca256470b59"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/observability/__init__.py",
+      "preimage_sha256": "b7c8562d1ddc8acf27206dc846cadf33d1ce5ddfdcf9c1613dceeae7cff02fc9"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/observability/bridge.py",
+      "preimage_sha256": "b676bbc35a2a6598eb80f55dbd6c266767803bb71e067c8efa9e0310cc884977"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/observability/evaluation.py",
+      "preimage_sha256": "f94e6ad3da7a1024e316615c1ce565f19a67223f1fe3517e480dd397513b7f46"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/observability/events.py",
+      "preimage_sha256": "d94c135959f160bca7c25e3158c2fe705386831cc1f36888e1604a4b1a5c3cba"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/observability/recorder.py",
+      "preimage_sha256": "2daa135fffd7326a1510c437e6263a68297ef45db987658a23edd92cb66c1369"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/observability/storage.py",
+      "preimage_sha256": "aa3e3abc76751e4f840145500c50dc419867a0120de53dfe3c9d0223a50dc689"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/safety/supervisor.py",
+      "preimage_sha256": "35355186a1bed44fe812abab09d1163a4e09b35fc2fbb7cdb5ebbc35163a9cae"
+    },
+    {
+      "classification": "IMPLEMENTATION_OWNED",
+      "path": "src/crazyswarm_app/simulation/vehicle.py",
+      "preimage_sha256": "4c979b67bca972a06ec9bd1540c8f5205c34015440fb753eda8a118115e00f10"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/twin/curriculum.py",
+      "preimage_sha256": "b14fcce7ec8b364fb5595a1939143e481e07f2b315cd69a10e1963293ac4d2d8"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "src/crazyswarm_app/vehicles/crazyflie.py",
+      "preimage_sha256": "e7ea1b9080c00c7ac4622fd440ecff373f62f8b8afed3750a639a299545ee5f0"
+    },
+    {
+      "classification": "IMPLEMENTATION_OWNED",
+      "path": "tests/api/test_campaign.py",
+      "preimage_sha256": "b5d271e026fc3efa7ba544e35c17af76cf9bbd2355016bde8b6bbfaedaf973e5"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "tests/campaign/test_campaign_execution.py",
+      "preimage_sha256": "310b1a099045a0ad5386dfecf988b5de9c83cda5e170486c40dde0992085a281"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "tests/campaign/test_campaign_service.py",
+      "preimage_sha256": "e0a5c45cb00d9cf70cfd53511e63f0d0ba7147e4fe129aca9f416250389c3ef3"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "tests/campaign/test_changed_world_safety_monitor.py",
+      "preimage_sha256": "89d570e1dd8484a90ef9e8387dbfebdcb727070c4c2b691fea58d3a95aa53e7f"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "tests/campaign/test_dynamic_perception_replanning.py",
+      "preimage_sha256": "d3a8fa0a9b6b4254e97938459ced5072b6e6cf5fc0ca98567fa4933e857d4f12"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "tests/campaign/test_goal_corridor.py",
+      "preimage_sha256": "887150e3b835bb57467dd4e4619045e0941c92257f5e36cab8176434772a6445"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "tests/campaign/test_major_mission_curriculum.py",
+      "preimage_sha256": "ce839ebc8e342f62d427b1708e1bdb450d4ac2b35012ba7bb563404c1e682333"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "tests/campaign/test_motion_quality_contract.py",
+      "preimage_sha256": "1e06468a1d62105d73c2b6c66aa8963c422c88b0d6ca27ecf22df5115b78f8bc"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "tests/campaign/test_one_drone_execution_head.py",
+      "preimage_sha256": "efa5c889c2036f4d1e2e41ae1b2009fb6ac9caceb19f13043432b82d179189b8"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "tests/campaign/test_reality_mission_e2e.py",
+      "preimage_sha256": "e58e5265eca90c9192d6b40e363b788851d31ff1b0e5e44d0ef7e8fd9fd2fc8b"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "tests/campaign/test_submissions.py",
+      "preimage_sha256": "1f9657bb1d3b2fad9393d327a5af7c3cd2857dfb11171715bb16c01d6dd071a9"
+    },
+    {
+      "classification": "IMPLEMENTATION_OWNED",
+      "path": "tests/missions/test_trajectory_execution.py",
+      "preimage_sha256": "565cbe6192e65d22a50ce184ab834dd66e0e9bc6936fb3af0eed74dbae26baf5"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "ui/app/components/CampaignLab.tsx",
+      "preimage_sha256": "0f7320aaaec70e2c6a85aef5778af9147bad5b5abb0cb382fe57979f0f63924b"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "ui/app/lib/models.ts",
+      "preimage_sha256": "103b0a99a5b80a0d35575174a44c46bee8e77e364e4abd4488a94730720cfa8e"
+    },
+    {
+      "classification": "PLANNED_LATER",
+      "path": "ui/tests/campaign-lab.test.tsx",
+      "preimage_sha256": "a355ec0b5879ea16268d9f5056dd1aa968fab49dd4b31e4e83c6d0dd730b787f"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "ui/tests/campaign-run-history-old.test.ts",
+      "preimage_sha256": "30bd7a0ab476866ea70086e5198df424e8aae4e31a65aeddd357aa45a2812352"
+    },
+    {
+      "classification": "RELIED_UPON_UNCHANGED",
+      "path": "ui/tests/components.test.tsx",
+      "preimage_sha256": "73d1e95652c6d4fd5935d7d94a189d09989cd4435da4162111780e75eb697999"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "region_native_landing_handoff_accelerated",
+      "clock_evidence": "ACCELERATED",
+      "counterexample": "rename the goal, capture exactly on the inclusive boundary, exceed the boundary by 1e-6 m, and exceed maximum capture speed by 1e-6 m/s",
+      "environment": "FAST_SIM",
+      "execution_boundary": "PRODUCTION_ENTRY",
+      "independent_oracle": "reconstruct capture-to-command XY displacement from retained mission intent/evidence and independently inspect landing-phase telemetry",
+      "observation": "capture attempt, commanded descent target, alignment duration, source-clock telemetry, contact, and terminal region error",
+      "packet_id": "WP-76",
+      "trigger": "POST /campaign/runs -> CampaignService.run_active -> FastSimCampaignExecutor -> FleetCoordinator -> MissionRunner -> ScriptMission -> MissionContext.capture_and_land -> SafetySupervisor.land -> LandCommand -> SimulatedVehicle._land -> MissionResult -> MissionResultPayload -> EvidenceRecorder -> EvidenceStore -> mission evaluation -> campaign analyzer/review"
+    },
+    {
+      "claim_id": "region_native_landing_handoff_realtime",
+      "clock_evidence": "OBSERVED_REALTIME",
+      "counterexample": "rename the goal and reorder the selected catalog variant",
+      "environment": "FAST_SIM",
+      "execution_boundary": "PRODUCTION_ENTRY",
+      "independent_oracle": "reconstruct capture-to-command XY from the retained bundle and inspect source-time landing telemetry without using simulator control metadata",
+      "observation": "source/receive clocks, capture attempt, descent target, alignment duration, contact/disarm order, retained bundle, and review identity",
+      "packet_id": "WP-76",
+      "trigger": "POST /campaign/runs in OPERATOR_OBSERVED_REALTIME mode through the same API, service, executor, mission, supervisor, simulator, recorder, store, evaluation, analyzer, and review path"
+    },
+    {
+      "claim_id": "orthogonal_run_verdicts",
+      "clock_evidence": "ACCELERATED",
+      "counterexample": "a completed mission with terminal flutter and an incomplete bundle must remain completed, quality-failed, and evidence-incomplete respectively",
+      "environment": "FAST_SIM",
+      "execution_boundary": "PRODUCTION_ENTRY",
+      "independent_oracle": "recompute terminal and quality gates from exact CSV and immutable contracts",
+      "observation": "execution disposition, evaluator completeness, every motion-quality component, and exact failure reasons",
+      "packet_id": "WP-77",
+      "trigger": "retained bundle -> campaign analyzer -> API -> Campaign Lab review"
+    },
+    {
+      "claim_id": "truthful_replanning_catalog",
+      "clock_evidence": "NOT_APPLICABLE",
+      "counterexample": "rename/reorder entries and remove the event; names must not preserve dynamic or recovery qualification",
+      "environment": "NO_RUNTIME",
+      "execution_boundary": "PRODUCTION_ENTRY",
+      "independent_oracle": "semantic fingerprint plus retained runtime event/cutover/fallback evidence",
+      "observation": "immutable case identity, execution status, behavior-driving event, runtime path, and predecessor relationship",
+      "packet_id": "WP-78",
+      "trigger": "versioned curriculum grouping -> catalog service -> Campaign Lab"
+    },
+    {
+      "claim_id": "fresh_1d_generation_qualification_accelerated",
+      "clock_evidence": "ACCELERATED",
+      "counterexample": "including one superseded run, a different locked input, or an unmatched identity must fail the matrix",
+      "environment": "FAST_SIM",
+      "execution_boundary": "PRODUCTION_ENTRY",
+      "independent_oracle": "standalone manifest reconciliation and exact-CSV terminal reconstruction",
+      "observation": "new run IDs, revision boundary, exact inputs, repeated terminal metrics, and Old/current eligibility",
+      "packet_id": "WP-79",
+      "trigger": "explicit bounded qualifier -> ordinary campaign runtime -> retained bundle"
+    },
+    {
+      "claim_id": "fresh_1d_generation_qualification_realtime",
+      "clock_evidence": "OBSERVED_REALTIME",
+      "counterexample": "substitute an accelerated run or one superseded run",
+      "environment": "FAST_SIM",
+      "execution_boundary": "PRODUCTION_ENTRY",
+      "independent_oracle": "standalone manifest reconciliation and exact-CSV source-time reconstruction",
+      "observation": "exact fixed row identity, source/receive clocks, terminal handoff, and Old/current eligibility",
+      "packet_id": "WP-79",
+      "trigger": "fixed realtime row in the bounded qualifier -> POST /campaign/runs -> ordinary retained campaign runtime and review bundle"
+    }
+  ],
+  "discovered_boundary_paths": [
+    "missions/campaigns/sim/cases/dynamic-replanning/1d-cases-v1.yaml",
+    "missions/campaigns/sim/cases/failure-recovery-and-replanning/1d-cases-v1.yaml",
+    "missions/campaigns/sim/cases/failure-recovery-and-replanning/2d-cases-v1.yaml",
+    "missions/campaigns/sim/cases/failure-recovery-and-replanning/3d-cases-v1.yaml",
+    "missions/campaigns/sim/curriculum/1d-major-missions-v1.yaml",
+    "missions/library/one_drone/abort_and_land_goal_fallback/mission.py",
+    "missions/library/one_drone/blocked_replan/mission.py",
+    "missions/library/one_drone/duplicate_stale_goal_update/mission.py",
+    "missions/library/one_drone/failure_recovery/mission.py",
+    "missions/library/one_drone/mid_route_goal_replacement/mission.py",
+    "missions/library/one_drone/moving_target/mission.py",
+    "missions/library/one_drone/online_obstacle_replan/mission.py",
+    "missions/library/one_drone/operator_approval_goal_replacement/mission.py",
+    "missions/library/one_drone/planning_budget_expiry/mission.py",
+    "scripts/audit_wp52_56_r8_design.py",
+    "scripts/audit_wp57_61_design.py",
+    "scripts/audit_wp57_61_r2_design.py",
+    "scripts/audit_wp62_66_design.py",
+    "scripts/audit_wp62_66_r3_design.py",
+    "scripts/audit_wp67_70_r2_design.py",
+    "scripts/audit_wp76_79_design.py",
+    "scripts/campaign_case_specs.py",
+    "scripts/generate_campaign_catalog.py",
+    "scripts/generate_submission_registry.py",
+    "scripts/qualify_altitude_profiles.py",
+    "scripts/qualify_campaign_runtime.py",
+    "scripts/qualify_submission_runtime.py",
+    "scripts/qualify_wp62_66_runtime.py",
+    "scripts/summarize_run.py",
+    "src/crazyswarm_app/api/app.py",
+    "src/crazyswarm_app/api/runtime.py",
+    "src/crazyswarm_app/campaign/analyzer.py",
+    "src/crazyswarm_app/campaign/catalog.py",
+    "src/crazyswarm_app/campaign/execution.py",
+    "src/crazyswarm_app/campaign/execution_head.py",
+    "src/crazyswarm_app/campaign/models.py",
+    "src/crazyswarm_app/campaign/planner.py",
+    "src/crazyswarm_app/campaign/qualification.py",
+    "src/crazyswarm_app/campaign/replanning.py",
+    "src/crazyswarm_app/campaign/runtime_executor.py",
+    "src/crazyswarm_app/campaign/scenario.py",
+    "src/crazyswarm_app/campaign/semantic_audit.py",
+    "src/crazyswarm_app/campaign/service.py",
+    "src/crazyswarm_app/campaign/trajectory.py",
+    "src/crazyswarm_app/domain/commands.py",
+    "src/crazyswarm_app/domain/goals.py",
+    "src/crazyswarm_app/domain/trajectory.py",
+    "src/crazyswarm_app/missions/base.py",
+    "src/crazyswarm_app/missions/planning.py",
+    "src/crazyswarm_app/missions/script.py",
+    "src/crazyswarm_app/observability/__init__.py",
+    "src/crazyswarm_app/observability/bridge.py",
+    "src/crazyswarm_app/observability/evaluation.py",
+    "src/crazyswarm_app/observability/events.py",
+    "src/crazyswarm_app/observability/recorder.py",
+    "src/crazyswarm_app/observability/storage.py",
+    "src/crazyswarm_app/safety/supervisor.py",
+    "src/crazyswarm_app/simulation/vehicle.py",
+    "src/crazyswarm_app/twin/curriculum.py",
+    "src/crazyswarm_app/vehicles/crazyflie.py",
+    "tests/campaign/test_campaign_execution.py",
+    "tests/campaign/test_campaign_service.py",
+    "tests/campaign/test_changed_world_safety_monitor.py",
+    "tests/campaign/test_dynamic_perception_replanning.py",
+    "tests/campaign/test_goal_corridor.py",
+    "tests/campaign/test_major_mission_curriculum.py",
+    "tests/campaign/test_one_drone_execution_head.py",
+    "tests/campaign/test_reality_mission_e2e.py",
+    "tests/campaign/test_submissions.py",
+    "ui/app/components/CampaignLab.tsx",
+    "ui/app/lib/models.ts",
+    "ui/tests/campaign-lab.test.tsx",
+    "ui/tests/campaign-run-history-old.test.ts",
+    "ui/tests/components.test.tsx"
+  ],
+  "intended_new_paths": [
+    "scripts/qualify_wp76_79.py",
+    "missions/campaigns/sim/qualification/wp76-79-runtime-qualification-v1.json"
+  ],
+  "iteration_scope": {
+    "design_only": [
+      "WP-77",
+      "WP-78",
+      "WP-79"
+    ],
+    "implement_now": [
+      "WP-76"
+    ]
+  },
+  "legacy_lifecycle_inventory": [
+    {
+      "disposition": "HISTORICAL_PROJECTION",
+      "family": "abort_and_land_goal_fallback",
+      "path": "missions/library/one_drone/abort_and_land_goal_fallback/mission.py"
+    },
+    {
+      "disposition": "HISTORICAL_PROJECTION",
+      "family": "blocked_replan",
+      "path": "missions/library/one_drone/blocked_replan/mission.py"
+    },
+    {
+      "disposition": "HISTORICAL_PROJECTION",
+      "family": "duplicate_stale_goal_update",
+      "path": "missions/library/one_drone/duplicate_stale_goal_update/mission.py"
+    },
+    {
+      "disposition": "HISTORICAL_PROJECTION",
+      "family": "failure_recovery",
+      "path": "missions/library/one_drone/failure_recovery/mission.py"
+    },
+    {
+      "disposition": "HISTORICAL_PROJECTION",
+      "family": "mid_route_goal_replacement",
+      "path": "missions/library/one_drone/mid_route_goal_replacement/mission.py"
+    },
+    {
+      "disposition": "HISTORICAL_PROJECTION",
+      "family": "online_obstacle_replan",
+      "path": "missions/library/one_drone/online_obstacle_replan/mission.py"
+    },
+    {
+      "disposition": "HISTORICAL_PROJECTION",
+      "family": "operator_approval_goal_replacement",
+      "path": "missions/library/one_drone/operator_approval_goal_replacement/mission.py"
+    },
+    {
+      "disposition": "HISTORICAL_PROJECTION",
+      "family": "planning_budget_expiry",
+      "path": "missions/library/one_drone/planning_budget_expiry/mission.py"
+    }
+  ],
+  "numeric_witness_results": [
+    {
+      "commanded_capture_to_descent_xy_m": 0.0,
+      "descent_authorized": true,
+      "descent_target_x_m": 1.3,
+      "id": "accepted_offset_capture"
+    },
+    {
+      "commanded_capture_to_descent_xy_m": 0.0,
+      "descent_authorized": true,
+      "descent_target_x_m": 1.45,
+      "id": "inclusive_region_edge"
+    },
+    {
+      "commanded_capture_to_descent_xy_m": null,
+      "descent_authorized": false,
+      "descent_target_x_m": null,
+      "id": "outside_region_rejected_without_correction"
+    },
+    {
+      "commanded_capture_to_descent_xy_m": null,
+      "descent_authorized": false,
+      "descent_target_x_m": null,
+      "id": "overspeed_capture_rejected"
+    }
+  ],
+  "numeric_witnesses": [
+    {
+      "capture_x_m": 1.3,
+      "center_x_m": 1.35,
+      "descent_authorized": true,
+      "expected_descent_target_x_m": 1.3,
+      "horizontal_tolerance_m": 0.1,
+      "id": "accepted_offset_capture",
+      "maximum_capture_speed_m_s": 0.1,
+      "maximum_commanded_capture_to_descent_xy_m": 1e-09,
+      "observed_speed_m_s": 0.1
+    },
+    {
+      "capture_x_m": 1.45,
+      "center_x_m": 1.35,
+      "descent_authorized": true,
+      "horizontal_tolerance_m": 0.1,
+      "id": "inclusive_region_edge",
+      "maximum_capture_speed_m_s": 0.1,
+      "observed_speed_m_s": 0.1
+    },
+    {
+      "capture_x_m": 1.450001,
+      "center_x_m": 1.35,
+      "descent_authorized": false,
+      "horizontal_tolerance_m": 0.1,
+      "id": "outside_region_rejected_without_correction",
+      "maximum_capture_speed_m_s": 0.1,
+      "observed_speed_m_s": 0.1
+    },
+    {
+      "capture_x_m": 1.3,
+      "center_x_m": 1.35,
+      "descent_authorized": false,
+      "horizontal_tolerance_m": 0.1,
+      "id": "overspeed_capture_rejected",
+      "maximum_capture_speed_m_s": 0.1,
+      "observed_speed_m_s": 0.100001
+    }
+  ],
+  "originating_requests": [
+    "Analyze all 1D runs; investigate the shaky end that appears to snap into the goal; mark all analyzed 1D runs Old; and correct the misleadingly easy recovery/replanning missions, old Python files, and catalog grouping.",
+    "ok then what do you recommend to fix this?",
+    "ok then now structure work packets for this and do one iteration on the implementation"
+  ],
+  "packets": [
+    {
+      "dependencies": [],
+      "minimum_value": "A fresh pose already inside the admitted landing region descends from that accepted XY without a center-seeking alignment phase.",
+      "packet_id": "WP-76",
+      "title": "Region-native terminal capture and landing handoff"
+    },
+    {
+      "dependencies": [
+        "WP-76"
+      ],
+      "minimum_value": "Mission completion, evidence completeness, and motion quality are reported independently and never collapsed into one success label.",
+      "packet_id": "WP-77",
+      "title": "Outcome, evidence-completeness, and motion-quality truth"
+    },
+    {
+      "dependencies": [
+        "WP-77"
+      ],
+      "minimum_value": "Legacy demonstrations remain immutable history while successor entries are grouped and named only for behavior they actually execute.",
+      "packet_id": "WP-78",
+      "title": "Recovery and dynamic-replanning catalog truth"
+    },
+    {
+      "dependencies": [
+        "WP-76",
+        "WP-77",
+        "WP-78"
+      ],
+      "minimum_value": "A small fresh matrix proves the new implementation generation without using any Old run as baseline, prerequisite, or comparison evidence.",
+      "packet_id": "WP-79",
+      "title": "Post-boundary 1D qualification and operator handoff"
+    }
+  ],
+  "production_transit_paths": [
+    "src/crazyswarm_app/api/app.py",
+    "src/crazyswarm_app/api/runtime.py",
+    "src/crazyswarm_app/campaign/analyzer.py",
+    "src/crazyswarm_app/campaign/runtime_executor.py",
+    "src/crazyswarm_app/campaign/service.py",
+    "src/crazyswarm_app/domain/commands.py",
+    "src/crazyswarm_app/domain/goals.py",
+    "src/crazyswarm_app/fleet/coordinator.py",
+    "src/crazyswarm_app/missions/base.py",
+    "src/crazyswarm_app/missions/models.py",
+    "src/crazyswarm_app/missions/runner.py",
+    "src/crazyswarm_app/missions/script.py",
+    "src/crazyswarm_app/observability/bridge.py",
+    "src/crazyswarm_app/observability/evaluation.py",
+    "src/crazyswarm_app/observability/events.py",
+    "src/crazyswarm_app/observability/recorder.py",
+    "src/crazyswarm_app/observability/storage.py",
+    "src/crazyswarm_app/safety/supervisor.py",
+    "src/crazyswarm_app/simulation/vehicle.py"
+  ],
+  "qualification_guards": {
+    "accelerated_flight_repeat_set": {
+      "exact_equal_fields": [
+        "case_sha256",
+        "execution_profile_submission_sha256",
+        "planning_submission_sha256",
+        "resolved_planning_package_sha256"
+      ],
+      "maximum_tracking_rms_difference_m": 0.02,
+      "maximum_truth_path_length_difference_m": 0.1,
+      "row_ids": [
+        "flight-a1",
+        "flight-a2",
+        "flight-a3"
+      ]
+    },
+    "aggregate": {
+      "post_result_row_selection_allowed": false,
+      "required_pass_count": 8,
+      "required_row_count": 8
+    },
+    "per_row": {
+      "alignment_duration_s": 0.0,
+      "all_required_behavior_oracles_passed": true,
+      "contact_must_precede_disarm": true,
+      "evidence_complete": true,
+      "execution_status": "SUCCEEDED",
+      "maximum_capture_to_descent_xy_m": 1e-09,
+      "minimum_terminal_region_margin_m": 0.0,
+      "old_run_eligible": false,
+      "terminal_contact": "SIMULATED_GROUND_CONTACT"
+    }
+  },
+  "qualification_matrix": [
+    {
+      "case_id": "1d.takeoff_hover_land.canonical_nominal",
+      "clock_evidence": "ACCELERATED",
+      "execution_profile_submission_id": "planner_retained_baseline",
+      "planning_submission_id": "case_planning_authority",
+      "repeat_index": 1,
+      "row_id": "flight-a1"
+    },
+    {
+      "case_id": "1d.takeoff_hover_land.canonical_nominal",
+      "clock_evidence": "ACCELERATED",
+      "execution_profile_submission_id": "planner_retained_baseline",
+      "planning_submission_id": "case_planning_authority",
+      "repeat_index": 2,
+      "row_id": "flight-a2"
+    },
+    {
+      "case_id": "1d.takeoff_hover_land.canonical_nominal",
+      "clock_evidence": "ACCELERATED",
+      "execution_profile_submission_id": "planner_retained_baseline",
+      "planning_submission_id": "case_planning_authority",
+      "repeat_index": 3,
+      "row_id": "flight-a3"
+    },
+    {
+      "case_id": "1d.point_to_point_relocation.canonical_nominal",
+      "clock_evidence": "ACCELERATED",
+      "execution_profile_submission_id": "planner_retained_baseline",
+      "planning_submission_id": "case_planning_authority",
+      "repeat_index": 1,
+      "row_id": "target-a1"
+    },
+    {
+      "case_id": "1d.continuous_waypoint_sequence.canonical_nominal",
+      "clock_evidence": "ACCELERATED",
+      "execution_profile_submission_id": "planner_retained_baseline",
+      "planning_submission_id": "case_planning_authority",
+      "repeat_index": 1,
+      "row_id": "level-path-a1"
+    },
+    {
+      "case_id": "1d.altitude_transition.canonical_nominal",
+      "clock_evidence": "ACCELERATED",
+      "execution_profile_submission_id": "planner_retained_baseline",
+      "planning_submission_id": "case_planning_authority",
+      "repeat_index": 1,
+      "row_id": "3d-path-a1"
+    },
+    {
+      "case_id": "1d.planar_shape_loop.circle",
+      "clock_evidence": "ACCELERATED",
+      "execution_profile_submission_id": "planner_retained_baseline",
+      "planning_submission_id": "case_planning_authority",
+      "repeat_index": 1,
+      "row_id": "shape-a1"
+    },
+    {
+      "case_id": "1d.takeoff_hover_land.canonical_nominal",
+      "clock_evidence": "OBSERVED_REALTIME",
+      "execution_profile_submission_id": "planner_retained_baseline",
+      "planning_submission_id": "case_planning_authority",
+      "repeat_index": 1,
+      "row_id": "flight-r1"
+    }
+  ],
+  "requirements": [
+    "REQ-EVI-003",
+    "REQ-EVI-004",
+    "REQ-EVI-005",
+    "REQ-EVI-007",
+    "REQ-EVI-011",
+    "REQ-EVI-013",
+    "REQ-MIS-001",
+    "REQ-MIS-003",
+    "REQ-MIS-009",
+    "REQ-MIS-010",
+    "REQ-MOT-010",
+    "REQ-MOT-011",
+    "REQ-RPL-006",
+    "REQ-RPL-009",
+    "REQ-WFL-014",
+    "REQ-WFL-017",
+    "REQ-WFL-018",
+    "REQ-WFL-020",
+    "REQ-WFL-023",
+    "REQ-WFL-028",
+    "REQ-WFL-029",
+    "REQ-WFL-034",
+    "REQ-WFL-036",
+    "REQ-WFL-039",
+    "REQ-WFL-042",
+    "REQ-WFL-046",
+    "REQ-WFL-047",
+    "REQ-WFL-052",
+    "REQ-WFL-053"
+  ],
+  "safety_witness_results": [
+    {
+      "id": "invalid_observation",
+      "result": false
+    },
+    {
+      "id": "stale_observation",
+      "result": false
+    },
+    {
+      "id": "wrong_landing_z",
+      "result": false
+    },
+    {
+      "id": "unsafe_correction_outside_flight_volume",
+      "result": false
+    },
+    {
+      "id": "contact_before_disarm",
+      "result": true
+    },
+    {
+      "id": "disarm_before_contact",
+      "result": false
+    },
+    {
+      "id": "declared_point_diversion",
+      "result": true
+    },
+    {
+      "id": "off_point_diversion",
+      "result": false
+    }
+  ],
+  "safety_witnesses": [
+    {
+      "descent_authorized": false,
+      "freshness_limit_s": 0.25,
+      "id": "invalid_observation",
+      "observation_valid": false,
+      "source_age_s": 0.0
+    },
+    {
+      "descent_authorized": false,
+      "freshness_limit_s": 0.25,
+      "id": "stale_observation",
+      "observation_valid": true,
+      "source_age_s": 0.250001
+    },
+    {
+      "command_valid": false,
+      "command_z_m": 1e-06,
+      "goal_z_m": 0.0,
+      "id": "wrong_landing_z"
+    },
+    {
+      "correction_admitted": false,
+      "correction_target_x_m": 1.800001,
+      "flight_max_x_m": 1.8,
+      "id": "unsafe_correction_outside_flight_volume"
+    },
+    {
+      "contact_source_s": 8.0,
+      "disarm_source_s": 8.1,
+      "id": "contact_before_disarm",
+      "order_valid": true
+    },
+    {
+      "contact_source_s": 8.0,
+      "disarm_source_s": 7.999999,
+      "id": "disarm_before_contact",
+      "order_valid": false
+    },
+    {
+      "command_valid": true,
+      "command_x_m": 0.25,
+      "diversion_x_m": 0.25,
+      "id": "declared_point_diversion"
+    },
+    {
+      "command_valid": false,
+      "command_x_m": 0.249999,
+      "diversion_x_m": 0.25,
+      "id": "off_point_diversion"
+    }
+  ],
+  "schema_version": 1,
+  "transit_tokens": [
+    "LandingGoalRegion",
+    "LandCommand",
+    "capture_and_land",
+    "GoalCaptureRecord",
+    "all_required_behavior_oracles_passed",
+    "DYNAMIC_REPLANNING",
+    "FAILURE_RECOVERY_AND_REPLANNING",
+    "1d-major-missions-v1",
+    "superseded_at_utc",
+    "MissionResultPayload",
+    "EvidenceStore",
+    "FastSimCampaignExecutor",
+    "online_obstacle_replan",
+    "failure_recovery",
+    "blocked_replan",
+    "planning_budget_expiry"
+  ]
+}

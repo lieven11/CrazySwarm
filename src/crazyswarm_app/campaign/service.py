@@ -3,10 +3,12 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import multiprocessing
 import os
 import shutil
 import tempfile
 from collections.abc import Callable, Mapping, Sequence
+from concurrent.futures import ProcessPoolExecutor
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
@@ -40,8 +42,11 @@ from crazyswarm_app.campaign.planner import (
 from crazyswarm_app.campaign.scheduling import GroundFirstSchedule, build_ground_first_schedule
 from crazyswarm_app.campaign.submissions import (
     BASELINE_SUBMISSION_ID,
+    CoordinationPreparationRequest,
     ExecutionCapabilityRequest,
+    ExecutionProfileKind,
     ExecutionProfileSubmission,
+    MotionPreparationRequest,
     PlanningCapabilityRequest,
     ResolvedPlanningPackage,
     bind_execution_capability,
@@ -197,6 +202,14 @@ class CampaignExecutionRequest(ContractModel):
         selected_roles = tuple(item.role_id for item in selected.routes)
         schedule_roles = tuple(item.role_id for item in self.schedule.roles)
         trajectory_roles = tuple(item.role_id for item in self.trajectories.trajectories)
+        profile_fallback = self.trajectories.execution_profile_fallback
+        fallback_is_bound = (
+            profile_fallback == "PLANNER_CANDIDATE_NATIVE_TIMING"
+            and profile.kind is ExecutionProfileKind.CORNER_TRANSITION
+            and selected.parameters.get("execution_profile_fallback")
+            == "planner_candidate_native_timing"
+            and not self.trajectories.profile_audits
+        )
         if (
             len(selected_roles) != len(expected_roles)
             or len(schedule_roles) != len(expected_roles)
@@ -209,11 +222,13 @@ class CampaignExecutionRequest(ContractModel):
             != {trajectory.sha256 for trajectory in self.trajectories.trajectories}
             or (
                 profile.submission_id != BASELINE_SUBMISSION_ID
+                and not fallback_is_bound
                 and (
                     {audit.role_id for audit in self.trajectories.profile_audits} != expected_roles
                     or any(not audit.passed for audit in self.trajectories.profile_audits)
                 )
             )
+            or (profile_fallback is not None and not fallback_is_bound)
         ):
             raise ValueError("execution request route-role or trajectory audit is incomplete")
         return self
@@ -232,9 +247,11 @@ class CampaignRunRecord(ContractModel):
     started_at_utc: datetime | None = None
     finished_at_utc: datetime | None = None
     mission_execution_id: Identifier | None = None
-    plan_sha256: SHA256
-    schedule_sha256: SHA256
-    trajectory_set_sha256: SHA256
+    # Planning identities are absent only during the durable QUEUED preparation
+    # boundary. They are attached atomically before execution becomes RUNNING.
+    plan_sha256: SHA256 | None = None
+    schedule_sha256: SHA256 | None = None
+    trajectory_set_sha256: SHA256 | None = None
     artifact_set_sha256: SHA256 | None = None
     analysis_sha256: SHA256 | None = None
     failure_reason: str | None = None
@@ -434,6 +451,114 @@ class CampaignWorkspaceState(ContractModel):
     idempotency: dict[str, Identifier] = Field(default_factory=dict)
 
 
+_planning_process_pool: ProcessPoolExecutor | None = None
+
+
+def _campaign_planning_process_pool() -> ProcessPoolExecutor:
+    """Return the single CPU-isolation worker shared by preview and launch planning."""
+
+    global _planning_process_pool
+    if _planning_process_pool is None:
+        _planning_process_pool = ProcessPoolExecutor(
+            max_workers=1,
+            mp_context=multiprocessing.get_context("spawn"),
+        )
+    return _planning_process_pool
+
+
+def _execution_artifacts_in_worker(
+    case: CampaignCase,
+    package: ResolvedPlanningPackage,
+) -> tuple[BoundedPlanningResult, GroundFirstSchedule, SmoothTrajectorySet]:
+    """Build the CPU-heavy immutable planning artifacts in an isolated process."""
+
+    submission = package.execution_profile
+    plan = BoundedJointPlanner().plan(
+        case,
+        submission,
+        planning_submission=package.planning_submission,
+        capability_resolution=package.capability_resolution,
+        first_certified_within_budget=True,
+        requested_release_delay_s=(
+            package.coordination_preparation.launch_gap_s
+            if package.coordination_preparation is not None
+            else None
+        ),
+    )
+    if plan.status is not PlanningStatus.READY or plan.selected is None:
+        raise ValueError(plan.blocking_reason or "active case planning is blocked")
+    vertical_cycle_scale = (
+        submission.parameters.duration_scale
+        if submission.submission_id
+        in {"vertical_cycle.precision_first", "vertical_cycle.minimum_duration"}
+        and submission.parameters.duration_scale is not None
+        else 1.0
+    )
+    schedule = build_ground_first_schedule(
+        case,
+        plan.selected,
+        takeoff_duration_s=DEFAULT_TAKEOFF_DURATION_S * vertical_cycle_scale,
+        landing_duration_s=DEFAULT_LANDING_DURATION_S * vertical_cycle_scale,
+        planning_submission_id=package.planning_submission.planning_submission_id,
+        planning_submission_sha256=(package.planning_submission.planning_submission_sha256),
+    )
+    trajectories = generate_smooth_trajectories(
+        case,
+        plan.selected,
+        submission=submission,
+        planning_submission=package.planning_submission,
+        capability_resolution=package.capability_resolution,
+    )
+    return plan, schedule, trajectories
+
+
+def _preview_artifacts_in_worker(
+    case: CampaignCase,
+    submission_id: str | None,
+    planning_submission_id: str | None,
+    comparison_context_id: str | None,
+    planning_capability_request: PlanningCapabilityRequest | None,
+    execution_capability_request: ExecutionCapabilityRequest | None,
+    motion_preparation_request: MotionPreparationRequest | None,
+    coordination_preparation_request: CoordinationPreparationRequest | None,
+) -> tuple[
+    ResolvedPlanningPackage,
+    BoundedPlanningResult,
+    GroundFirstSchedule,
+    SmoothTrajectorySet,
+]:
+    """Resolve slider inputs and build their preview wholly inside the CPU worker."""
+
+    package = resolve_planning_package(
+        case,
+        planning_submission_id,
+        submission_id,
+        comparison_context_id=comparison_context_id,
+        planning_capability_request=planning_capability_request,
+        execution_capability_request=execution_capability_request,
+        motion_preparation_request=motion_preparation_request,
+        coordination_preparation_request=coordination_preparation_request,
+    )
+    plan, schedule, trajectories = _execution_artifacts_in_worker(case, package)
+    return package, plan, schedule, trajectories
+
+
+def _analyze_execution_in_worker(
+    case: CampaignCase,
+    manifest: Mapping[str, Any],
+    bundle: Mapping[str, Any],
+    csv_bytes: bytes,
+) -> MissionAnalysis:
+    """Run terminal evidence analysis without contending with API liveness."""
+
+    return analyze_execution(
+        case=case,
+        manifest=manifest,
+        bundle=bundle,
+        csv_bytes=csv_bytes,
+    )
+
+
 class CampaignService:
     """Persistent headless campaign loop. Discovery and selection never call an executor."""
 
@@ -572,53 +697,13 @@ class CampaignService:
             raise ValueError("stop the active campaign run before selecting another mission")
         if case.environment.value == "REAL":
             raise PermissionError("Real campaign cases remain NOT_AUTHORIZED")
-        if case.implementation_status.value != "EXECUTABLE":
-            raise ValueError(f"case implementation is {case.implementation_status.value}")
-        plan = self.static_validate(case_id, actor_id=actor_id)
-        if plan.status is not PlanningStatus.READY:
-            raise ValueError(plan.blocking_reason or "case planning is blocked")
-        if case.implementation_milestone is not None:
-            incomplete = [
-                prerequisite
-                for prerequisite in case.prerequisites
-                if prerequisite not in self._state.lifecycle
-                or self._state.lifecycle[prerequisite].state
-                not in {LifecycleState.BASELINED, LifecycleState.PROMOTED}
-            ]
-            if incomplete:
-                raise ValueError(
-                    "dynamic activation requires passing static baselines: "
-                    + ", ".join(sorted(incomplete))
-                )
-        lifecycle = dict(self._state.lifecycle)
-        for other_case_id, other_record in tuple(lifecycle.items()):
-            if other_case_id != case_id and other_record.state is LifecycleState.ACTIVE_DEVELOPMENT:
-                lifecycle[other_case_id] = other_record.transition(
-                    LifecycleState.READY,
-                    actor_id=actor_id,
-                    reason="operator selected a different active development case",
-                )
-        record = lifecycle[case_id]
-        if record.state not in {
-            LifecycleState.ACTIVE_DEVELOPMENT,
-            LifecycleState.BASELINED,
-            LifecycleState.PROMOTED,
-        }:
-            if record.state not in {
-                LifecycleState.DEFINED_NOT_RUN,
-                LifecycleState.READY,
-                LifecycleState.BLOCKED,
-            }:
-                raise ValueError(f"case cannot become active from {record.state}")
-            record = record.transition(
-                LifecycleState.ACTIVE_DEVELOPMENT,
-                actor_id=actor_id,
-                reason=reason,
-            )
-            lifecycle[case_id] = record
+        # Catalog selection is operator intent, not an execution qualification gate.
+        # Planning and every hard safety check still run before command authority is
+        # granted, but they must not make a discovered simulation mission impossible
+        # to select in the first place.
         lock = LockedDevelopmentInputs.from_case(case)
         self._state = self._state.model_copy(
-            update={"active_case_id": case_id, "locked_inputs": lock, "lifecycle": lifecycle}
+            update={"active_case_id": case_id, "locked_inputs": lock}
         )
         self._persist()
         return lock
@@ -717,10 +802,6 @@ class CampaignService:
         current = self._state.lifecycle[case_id]
         if current.state is state:
             return current
-        if state is LifecycleState.ACTIVE_DEVELOPMENT:
-            self.set_active(case_id, actor_id=actor_id, reason=reason)
-            return self._state.lifecycle[case_id]
-
         current_run_ids = {
             run.run_id
             for run in self._state.runs
@@ -799,7 +880,7 @@ class CampaignService:
     @property
     def active_case(self) -> CampaignCase:
         if self._state.active_case_id is None:
-            raise ValueError("no ACTIVE_DEVELOPMENT case is selected")
+            raise ValueError("no campaign case is selected")
         case = self.catalog.get(self._state.active_case_id)
         lock = self._state.locked_inputs
         if lock is None or lock.case_sha256 != case.case_sha256:
@@ -814,48 +895,89 @@ class CampaignService:
         comparison_context_id: str | None = None,
         planning_capability_request: PlanningCapabilityRequest | None = None,
         execution_capability_request: ExecutionCapabilityRequest | None = None,
+        motion_preparation_request: MotionPreparationRequest | None = None,
+        coordination_preparation_request: CoordinationPreparationRequest | None = None,
     ) -> tuple[BoundedPlanningResult, GroundFirstSchedule, SmoothTrajectorySet]:
         case = self.active_case
-        package = resolve_planning_package(
+        _, plan, schedule, trajectories = _preview_artifacts_in_worker(
             case,
-            planning_submission_id,
             submission_id,
-            comparison_context_id=comparison_context_id,
-            planning_capability_request=planning_capability_request,
-            execution_capability_request=execution_capability_request,
-        )
-        submission = package.execution_profile
-        plan = self._planner.plan(
-            case,
-            submission,
-            planning_submission=package.planning_submission,
-            capability_resolution=package.capability_resolution,
-        )
-        if plan.status is not PlanningStatus.READY or plan.selected is None:
-            raise ValueError(plan.blocking_reason or "active case planning is blocked")
-        vertical_cycle_scale = (
-            submission.parameters.duration_scale
-            if submission.submission_id
-            in {"vertical_cycle.precision_first", "vertical_cycle.minimum_duration"}
-            and submission.parameters.duration_scale is not None
-            else 1.0
-        )
-        schedule = build_ground_first_schedule(
-            case,
-            plan.selected,
-            takeoff_duration_s=DEFAULT_TAKEOFF_DURATION_S * vertical_cycle_scale,
-            landing_duration_s=DEFAULT_LANDING_DURATION_S * vertical_cycle_scale,
-            planning_submission_id=package.planning_submission.planning_submission_id,
-            planning_submission_sha256=(package.planning_submission.planning_submission_sha256),
-        )
-        trajectories = generate_smooth_trajectories(
-            case,
-            plan.selected,
-            submission=submission,
-            planning_submission=package.planning_submission,
-            capability_resolution=package.capability_resolution,
+            planning_submission_id,
+            comparison_context_id,
+            planning_capability_request,
+            execution_capability_request,
+            motion_preparation_request,
+            coordination_preparation_request,
         )
         return plan, schedule, trajectories
+
+    async def preview_active_off_loop(
+        self,
+        submission_id: str | None = None,
+        planning_submission_id: str | None = None,
+        *,
+        comparison_context_id: str | None = None,
+        planning_capability_request: PlanningCapabilityRequest | None = None,
+        execution_capability_request: ExecutionCapabilityRequest | None = None,
+        motion_preparation_request: MotionPreparationRequest | None = None,
+        coordination_preparation_request: CoordinationPreparationRequest | None = None,
+    ) -> tuple[
+        ResolvedPlanningPackage,
+        BoundedPlanningResult,
+        GroundFirstSchedule,
+        SmoothTrajectorySet,
+    ]:
+        case = self.active_case
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            _campaign_planning_process_pool(),
+            _preview_artifacts_in_worker,
+            case,
+            submission_id,
+            planning_submission_id,
+            comparison_context_id,
+            planning_capability_request,
+            execution_capability_request,
+            motion_preparation_request,
+            coordination_preparation_request,
+        )
+
+    def _execution_artifacts_for_package(
+        self,
+        case: CampaignCase,
+        package: ResolvedPlanningPackage,
+    ) -> tuple[BoundedPlanningResult, GroundFirstSchedule, SmoothTrajectorySet]:
+        """Resolve the CPU-bound plan, schedule, and trajectories for one package."""
+
+        return _execution_artifacts_in_worker(case, package)
+
+    async def _execution_artifacts_for_package_off_loop(
+        self,
+        case: CampaignCase,
+        package: ResolvedPlanningPackage,
+    ) -> tuple[BoundedPlanningResult, GroundFirstSchedule, SmoothTrajectorySet]:
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            _campaign_planning_process_pool(),
+            _execution_artifacts_in_worker,
+            case,
+            package,
+        )
+
+    async def _analyze_execution_off_loop(
+        self,
+        case: CampaignCase,
+        artifacts: RunArtifactSet,
+    ) -> MissionAnalysis:
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            _campaign_planning_process_pool(),
+            _analyze_execution_in_worker,
+            case,
+            artifacts.manifest,
+            artifacts.bundle,
+            artifacts.csv_content,
+        )
 
     def resolved_active_package(
         self,
@@ -865,6 +987,8 @@ class CampaignService:
         comparison_context_id: str | None = None,
         planning_capability_request: PlanningCapabilityRequest | None = None,
         execution_capability_request: ExecutionCapabilityRequest | None = None,
+        motion_preparation_request: MotionPreparationRequest | None = None,
+        coordination_preparation_request: CoordinationPreparationRequest | None = None,
     ) -> ResolvedPlanningPackage:
         return resolve_planning_package(
             self.active_case,
@@ -873,6 +997,8 @@ class CampaignService:
             comparison_context_id=comparison_context_id,
             planning_capability_request=planning_capability_request,
             execution_capability_request=execution_capability_request,
+            motion_preparation_request=motion_preparation_request,
+            coordination_preparation_request=coordination_preparation_request,
         )
 
     def missing_submission_prerequisites(
@@ -952,6 +1078,8 @@ class CampaignService:
         comparison_context_id: str | None = None,
         planning_capability_request: PlanningCapabilityRequest | None = None,
         execution_capability_request: ExecutionCapabilityRequest | None = None,
+        motion_preparation_request: MotionPreparationRequest | None = None,
+        coordination_preparation_request: CoordinationPreparationRequest | None = None,
         transient_retry: Callable[[Exception], bool] | None = None,
     ) -> ReviewItem:
         existing = self._state.idempotency.get(idempotency_key)
@@ -972,6 +1100,8 @@ class CampaignService:
             comparison_context_id=comparison_context_id,
             planning_capability_request=planning_capability_request,
             execution_capability_request=execution_capability_request,
+            motion_preparation_request=motion_preparation_request,
+            coordination_preparation_request=coordination_preparation_request,
         )
         submission = package.execution_profile
         missing_prerequisites = self.missing_submission_prerequisites(case, submission)
@@ -980,13 +1110,6 @@ class CampaignService:
                 f"submission {submission.submission_id} requires successful evidence for: "
                 + ", ".join(missing_prerequisites)
             )
-        plan, schedule, trajectories = self.preview_active(
-            submission_id,
-            planning_submission_id,
-            comparison_context_id=comparison_context_id,
-            planning_capability_request=planning_capability_request,
-            execution_capability_request=execution_capability_request,
-        )
         lock = LockedDevelopmentInputs.from_case(
             case,
             submission_id=submission.submission_id,
@@ -1003,9 +1126,6 @@ class CampaignService:
             status=CampaignRunStatus.QUEUED,
             locked_inputs=lock,
             requested_at_utc=requested,
-            plan_sha256=plan.plan_sha256,
-            schedule_sha256=schedule.schedule_sha256,
-            trajectory_set_sha256=trajectories.set_sha256,
         )
         self._state = self._state.model_copy(
             update={
@@ -1015,6 +1135,26 @@ class CampaignService:
         )
         self._persist()
         try:
+            # Planning can take several seconds for bounded route/smoothness cases.
+            # The QUEUED identity above is already durable, so keep that CPU work off
+            # the API loop while health, state polling, and telemetry remain live.
+            plan, schedule, trajectories = await self._execution_artifacts_for_package_off_loop(
+                case,
+                package,
+            )
+            current = next(item for item in self._state.runs if item.run_id == run_id)
+            if current.status is not CampaignRunStatus.QUEUED or run_id in self._cancelled:
+                raise asyncio.CancelledError(
+                    "campaign run cancelled during planning; no authority granted"
+                )
+            record = record.model_copy(
+                update={
+                    "plan_sha256": plan.plan_sha256,
+                    "schedule_sha256": schedule.schedule_sha256,
+                    "trajectory_set_sha256": trajectories.set_sha256,
+                }
+            )
+            self._update_run(record)
             await self._acquire_execution_slot(run_id)
         except asyncio.CancelledError:
             current = next(item for item in self._state.runs if item.run_id == run_id)
@@ -1025,6 +1165,19 @@ class CampaignService:
                             "status": CampaignRunStatus.CANCELLED_BEFORE_LAUNCH,
                             "finished_at_utc": datetime.now(UTC),
                             "failure_reason": "campaign launch task was cancelled before execution",
+                        }
+                    )
+                )
+            raise
+        except Exception as error:
+            current = next(item for item in self._state.runs if item.run_id == run_id)
+            if current.status is CampaignRunStatus.QUEUED:
+                self._update_run(
+                    current.model_copy(
+                        update={
+                            "status": CampaignRunStatus.FAILED,
+                            "finished_at_utc": datetime.now(UTC),
+                            "failure_reason": str(error),
                         }
                     )
                 )
@@ -1077,12 +1230,20 @@ class CampaignService:
                     raise
             if hashlib.sha256(artifacts.csv_content).hexdigest() != artifacts.csv_bytes_sha256:
                 raise ValueError("executor CSV bytes do not match the declared hash")
-            review = self._intake(
+            analysis = await self._analyze_execution_off_loop(case, artifacts)
+            await self._persist_intake_artifacts_off_loop(
+                artifacts,
+                analysis,
+            )
+            review = await asyncio.to_thread(
+                self._intake,
                 case,
                 record,
                 artifacts,
                 plan,
                 execution_profile=package.execution_profile,
+                analysis_override=analysis,
+                artifacts_already_persisted=True,
             )
             return review
         except asyncio.CancelledError:
@@ -1554,12 +1715,9 @@ class CampaignService:
                 evidence_sha256=review.artifact_set_sha256,
                 review_sha256=updated.review_sha256,
             )
-            state_update: dict[str, Any] = {
-                "lifecycle": {**self._state.lifecycle, review.case_id: reviewed}
-            }
-            if self._state.active_case_id == review.case_id:
-                state_update.update({"active_case_id": None, "locked_inputs": None})
-            self._state = self._state.model_copy(update=state_update)
+            self._state = self._state.model_copy(
+                update={"lifecycle": {**self._state.lifecycle, review.case_id: reviewed}}
+            )
             self._persist()
             self.purge_case_snapshot_images(review.case_id)
         return updated
@@ -1757,8 +1915,10 @@ class CampaignService:
         execution_profile: ExecutionProfileSubmission | None = None,
         original_bytes: tuple[bytes, bytes, bytes] | None = None,
         artifact_hash_override: str | None = None,
+        analysis_override: MissionAnalysis | None = None,
+        artifacts_already_persisted: bool = False,
     ) -> ReviewItem:
-        analysis = analyze_execution(
+        analysis = analysis_override or analyze_execution(
             case=case,
             manifest=artifacts.manifest,
             bundle=artifacts.bundle,
@@ -1772,6 +1932,98 @@ class CampaignService:
                 artifacts.csv_bytes_sha256,
             ]
         )
+        if not artifacts_already_persisted:
+            self._persist_intake_artifacts(
+                artifacts,
+                analysis,
+                original_bytes=original_bytes,
+            )
+        status = _run_status(artifacts.status)
+        oracle_failure = (
+            status is CampaignRunStatus.SUCCEEDED
+            and not analysis.all_required_behavior_oracles_passed
+        )
+        if oracle_failure:
+            status = CampaignRunStatus.FAILED
+        finished = run.model_copy(
+            update={
+                "status": status,
+                "finished_at_utc": datetime.now(UTC),
+                "mission_execution_id": artifacts.mission_execution_id,
+                "artifact_set_sha256": artifact_hash,
+                "analysis_sha256": analysis.analysis_sha256,
+                "failure_reason": (
+                    "one or more required behavior oracles failed"
+                    if oracle_failure
+                    else run.failure_reason
+                ),
+            }
+        )
+        review_payload: dict[str, Any] = {
+            "review_id": f"review-{canonical_sha256([run.run_id, artifact_hash])[:20]}",
+            "run_id": run.run_id,
+            "case_id": case.case_id,
+            "case_sha256": case.case_sha256,
+            "status": status,
+            "plan_sha256": plan.plan_sha256,
+            "artifact_set_sha256": artifact_hash,
+            "analysis": analysis,
+            "baseline_comparison": self._baseline_comparison(
+                case,
+                run,
+                analysis,
+                artifacts.evaluation,
+                execution_profile=execution_profile,
+            ),
+            "cross_case_profile_comparison": self._cross_case_profile_comparison(
+                case,
+                run,
+                analysis,
+                artifacts.evaluation,
+            ),
+            "mode_comparison": self._mode_comparison(case, run, analysis),
+            "operator_questions": case.operator_observation_questions,
+        }
+        review = ReviewItem(**review_payload, review_sha256=canonical_sha256(review_payload))
+        lifecycle = self._state.lifecycle[case.case_id].model_copy(
+            update={"run_ids": (*self._state.lifecycle[case.case_id].run_ids, run.run_id)}
+        )
+        # Publish the terminal run, review, and lifecycle link as one in-memory
+        # transition and one durable workspace write. Pollers cannot observe a
+        # terminal run whose review has not been attached yet.
+        self._state = self._state.model_copy(
+            update={
+                "runs": tuple(
+                    finished if item.run_id == finished.run_id else item
+                    for item in self._state.runs
+                ),
+                "reviews": (*self._state.reviews, review),
+                "lifecycle": {**self._state.lifecycle, case.case_id: lifecycle},
+            }
+        )
+        self._persist()
+        return review
+
+    async def _persist_intake_artifacts_off_loop(
+        self,
+        artifacts: RunArtifactSet,
+        analysis: MissionAnalysis,
+    ) -> None:
+        """Keep terminal evidence serialization and fsyncs off the API event loop."""
+
+        await asyncio.to_thread(
+            self._persist_intake_artifacts,
+            artifacts,
+            analysis,
+        )
+
+    def _persist_intake_artifacts(
+        self,
+        artifacts: RunArtifactSet,
+        analysis: MissionAnalysis,
+        *,
+        original_bytes: tuple[bytes, bytes, bytes] | None = None,
+    ) -> None:
         directory = self.state_directory / "evidence" / artifacts.mission_execution_id
         directory.mkdir(parents=True, exist_ok=True)
         if original_bytes is None:
@@ -1803,61 +2055,6 @@ class CampaignService:
             _write_bytes_atomic(directory / filename, content)
         _write_bytes_atomic(directory / "telemetry.csv", artifacts.csv_content)
         _write_json_atomic(directory / "analysis.json", analysis.model_dump(mode="json"))
-        status = _run_status(artifacts.status)
-        oracle_failure = (
-            status is CampaignRunStatus.SUCCEEDED
-            and not analysis.all_required_behavior_oracles_passed
-        )
-        if oracle_failure:
-            status = CampaignRunStatus.FAILED
-        finished = run.model_copy(
-            update={
-                "status": status,
-                "finished_at_utc": datetime.now(UTC),
-                "mission_execution_id": artifacts.mission_execution_id,
-                "artifact_set_sha256": artifact_hash,
-                "analysis_sha256": analysis.analysis_sha256,
-                "failure_reason": (
-                    "one or more required behavior oracles failed"
-                    if oracle_failure
-                    else run.failure_reason
-                ),
-            }
-        )
-        self._update_run(finished)
-        review_payload: dict[str, Any] = {
-            "review_id": f"review-{canonical_sha256([run.run_id, artifact_hash])[:20]}",
-            "run_id": run.run_id,
-            "case_id": case.case_id,
-            "case_sha256": case.case_sha256,
-            "status": status,
-            "plan_sha256": plan.plan_sha256,
-            "artifact_set_sha256": artifact_hash,
-            "analysis": analysis,
-            "baseline_comparison": self._baseline_comparison(
-                case,
-                run,
-                analysis,
-                artifacts.evaluation,
-                execution_profile=execution_profile,
-            ),
-            "cross_case_profile_comparison": self._cross_case_profile_comparison(
-                case,
-                run,
-                analysis,
-                artifacts.evaluation,
-            ),
-            "mode_comparison": self._mode_comparison(case, run, analysis),
-            "operator_questions": case.operator_observation_questions,
-        }
-        review = ReviewItem(**review_payload, review_sha256=canonical_sha256(review_payload))
-        self._state = self._state.model_copy(update={"reviews": (*self._state.reviews, review)})
-        lifecycle = self._state.lifecycle[case.case_id].model_copy(
-            update={"run_ids": (*self._state.lifecycle[case.case_id].run_ids, run.run_id)}
-        )
-        self._replace_lifecycle(lifecycle)
-        self._persist()
-        return review
 
     def _mode_comparison(
         self,
@@ -2127,30 +2324,6 @@ class CampaignService:
                 ):
                     reset_active_authority = True
 
-            if state.active_case_id is not None:
-                active_record = reconciled.get(state.active_case_id)
-                if (
-                    active_record is None
-                    or active_record.state is not LifecycleState.ACTIVE_DEVELOPMENT
-                ):
-                    reset_active_authority = True
-
-            authoritative_case_id = None if reset_active_authority else state.active_case_id
-            for case_id, record in tuple(reconciled.items()):
-                if (
-                    record.state is LifecycleState.ACTIVE_DEVELOPMENT
-                    and case_id != authoritative_case_id
-                ):
-                    reconciled[case_id] = record.transition(
-                        LifecycleState.READY,
-                        actor_id="campaign-state-reconciler",
-                        reason=(
-                            "another case is the active development case"
-                            if authoritative_case_id is not None
-                            else "orphaned active development state was cleared"
-                        ),
-                    )
-
             update: dict[str, Any] = {
                 "lifecycle": reconciled,
                 "historical_lifecycle": tuple(historical[key] for key in sorted(historical)),
@@ -2281,6 +2454,11 @@ class CampaignService:
 
 
 def _assert_mode_eligible(case: CampaignCase, mode: CampaignRunMode) -> None:
+    # Every discovered simulation case may be launched from the catalog.  The
+    # immutable planner, backend, and Safety Kernel checks remain authoritative and
+    # can still reject the run before provisioning or command authority.
+    if case.environment.value == "SIMULATION":
+        return
     eligible = case.execution_eligibility
     if eligible is ExecutionEligibility.STATIC_VALIDATE_ONLY:
         raise PermissionError("case is eligible only for static validation")

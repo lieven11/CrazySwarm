@@ -1,0 +1,1064 @@
+{
+  "accepted_design": {
+    "design_audit_sha256": "71f0f96f57d35cb0ad72beded06a49b7aba0fa4161f82a1b72d9cac9947c12cb",
+    "initial_sha256": "34eb1e8364f26ecff21ec38eb7c6a945350119241fd74ae0dbd73f49b6c5b903",
+    "r1_sha256": "d27618ace58b7a125221688c45465e75d780187a7cc83d87ec55fa05fe2fb1c9"
+  },
+  "authority_claim": "OBSERVATION_ONLY_ZERO_COMMAND",
+  "base_commit": "40cd9947f87eb9bf2719d72e7c72ea867eab9977",
+  "dirty_tree_identity": "exact frozen closure pre/post hashes plus explicit packet-owned paths; not an undifferentiated git diff",
+  "evidence": [
+    {
+      "check": "packet_python_and_boundary_suite",
+      "result": "PASS",
+      "summary": "58 passed; packet-specific final subset 10 passed"
+    },
+    {
+      "check": "ui_unit_suite",
+      "result": "PASS",
+      "summary": "140 passed"
+    },
+    {
+      "check": "ui_production_build",
+      "result": "PASS"
+    },
+    {
+      "check": "typescript_typecheck",
+      "result": "PASS"
+    },
+    {
+      "check": "packet_eslint_ruff_mypy",
+      "result": "PASS"
+    },
+    {
+      "check": "openapi_regeneration",
+      "result": "PASS"
+    },
+    {
+      "check": "live_visual_browser",
+      "result": "NOT_RUN",
+      "summary": "dashboard served HTTP 200; in-app browser could not reach local host"
+    },
+    {
+      "check": "hardware",
+      "result": "NOT_RUN",
+      "summary": "no scan, connection, permit, motor command, or flight"
+    },
+    {
+      "check": "broader_api_suite",
+      "result": "OUT_OF_SCOPE_FAILURE",
+      "summary": "concurrent campaign catalog expected 55 cases but production reports 54"
+    }
+  ],
+  "frozen_design_closure": {
+    "config/qualification/reality-physical-plan-v1.json": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "4574faa4c1140ae27c412cfd8dfb9f1f74c40cd32f032b9b15a5be3645582db3",
+      "preimage_sha256": "4574faa4c1140ae27c412cfd8dfb9f1f74c40cd32f032b9b15a5be3645582db3"
+    },
+    "design.md": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "WP80_IMPLEMENTATION",
+      "postimage_sha256": "99b95cd62ba6db0794cb763f75a6ed6fb6c9f858ec4b71ea946edc84d2620499",
+      "preimage_sha256": "e6b17a1fd6e4b9a070fc593014047b854bc40d892cb3d454bb451f2b1700a400"
+    },
+    "docs/project/DESIGN.md": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "WP80_IMPLEMENTATION",
+      "postimage_sha256": "cc7d64cedab94c5cf663c20d66cf6ac6a4d60aadef235483495e2e8af960b145",
+      "preimage_sha256": "230ff0ca3ff628f6ef7ad88b0ee6945a3079a615f34ccf55fe46d0541d20a383"
+    },
+    "docs/project/requirements/FIDELITY_AND_TRANSFER.md": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "903232a4c188e4416f2f14660b17a4f9985c712a1f5e6a2f013387d14703c446",
+      "preimage_sha256": "903232a4c188e4416f2f14660b17a4f9985c712a1f5e6a2f013387d14703c446"
+    },
+    "docs/project/requirements/UI_AND_CATALOG.md": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "bc2070789c3b639097c5223882895102d4feae691cfa5d1a48b1c5bdff4efded",
+      "preimage_sha256": "bc2070789c3b639097c5223882895102d4feae691cfa5d1a48b1c5bdff4efded"
+    },
+    "docs/project/requirements/workflow/COST_SCOPE_AND_HANDOFF.md": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "11cef91dbbeaea508c741a9f8a8727d940c9656772c9c2d1f9ed93c1e85ac7ce",
+      "preimage_sha256": "11cef91dbbeaea508c741a9f8a8727d940c9656772c9c2d1f9ed93c1e85ac7ce"
+    },
+    "docs/project/requirements/workflow/WORK_PACKET_GATES.md": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "5c68299a457b3aff6a29224da69f4fc80d9f87d904c2af33e1939fb74c4ca172",
+      "preimage_sha256": "5c68299a457b3aff6a29224da69f4fc80d9f87d904c2af33e1939fb74c4ca172"
+    },
+    "docs/system/README.md": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "WP80_IMPLEMENTATION",
+      "postimage_sha256": "276279bde4736cfe11d14b2a41938402510b4ae7a87a3bef796917d434499ba4",
+      "preimage_sha256": "c8ba2f8620cacd022c58971e395a7629408932df92c301c5c2f4f37ccc145442"
+    },
+    "scripts/export_openapi.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "821e27fd8a36e7e893ee4a6a5fa0fed4304d462dec1cdc6758961c6cd4c2bafa",
+      "preimage_sha256": "821e27fd8a36e7e893ee4a6a5fa0fed4304d462dec1cdc6758961c6cd4c2bafa"
+    },
+    "src/crazyswarm_app/__init__.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "e450c007b3667482bbacb354abc0016588b8d0e71818f629f016a22b48fa6a66",
+      "preimage_sha256": "e450c007b3667482bbacb354abc0016588b8d0e71818f629f016a22b48fa6a66"
+    },
+    "src/crazyswarm_app/api/app.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "WP80_IMPLEMENTATION",
+      "postimage_sha256": "ff8173e244d6d4b130a1fe21ec60b8da9d2431729e28532877b7f4add4ede4aa",
+      "preimage_sha256": "1998d722376848ce0e8d7399e1e8c1d7dbd95b90aa7d57598bb32c0a852c8d36"
+    },
+    "src/crazyswarm_app/api/models.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "ae78fa0502d73b28625e01df41364b9517237838b574ec28daf714eda151026e",
+      "preimage_sha256": "ae78fa0502d73b28625e01df41364b9517237838b574ec28daf714eda151026e"
+    },
+    "src/crazyswarm_app/api/runtime.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "64dcf8b92acc1b9757238dbd4be990c98e82c917d5ac8e1999b932eb9d0703f5",
+      "preimage_sha256": "64dcf8b92acc1b9757238dbd4be990c98e82c917d5ac8e1999b932eb9d0703f5"
+    },
+    "src/crazyswarm_app/api/security.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "adc1443db1b30d3b13d11c62c89fe2f855f707fd5d7bb05c0235fb734ae56e11",
+      "preimage_sha256": "adc1443db1b30d3b13d11c62c89fe2f855f707fd5d7bb05c0235fb734ae56e11"
+    },
+    "src/crazyswarm_app/campaign/analyzer.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "2a7a70bbd7fb88765a5096de5b702137ff4d9caf7905f4f15e92e3eb052a0884",
+      "preimage_sha256": "2a7a70bbd7fb88765a5096de5b702137ff4d9caf7905f4f15e92e3eb052a0884"
+    },
+    "src/crazyswarm_app/campaign/api_models.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "a1d5e1a804737cc7e083f033f209d09e9082d87b8816952c3435f2c77ef10ccc",
+      "preimage_sha256": "a1d5e1a804737cc7e083f033f209d09e9082d87b8816952c3435f2c77ef10ccc"
+    },
+    "src/crazyswarm_app/campaign/catalog.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "64aaa10fd065b39657ebae28e76e01512528637dc1eaca3970b93b3ed76634be",
+      "preimage_sha256": "64aaa10fd065b39657ebae28e76e01512528637dc1eaca3970b93b3ed76634be"
+    },
+    "src/crazyswarm_app/campaign/corridor.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "4cda334f3d25cb381cf1fb812bce8de2d23e255916e0d7dbdc2e3cee12e9fd23",
+      "preimage_sha256": "4cda334f3d25cb381cf1fb812bce8de2d23e255916e0d7dbdc2e3cee12e9fd23"
+    },
+    "src/crazyswarm_app/campaign/execution.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "d6d7b335dbe97633badab7245a5cd21862c0eb5c52e9f981f4a1192afb997f16",
+      "preimage_sha256": "d6d7b335dbe97633badab7245a5cd21862c0eb5c52e9f981f4a1192afb997f16"
+    },
+    "src/crazyswarm_app/campaign/execution_head.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "ba87347101f1b8153bfdb16e3f36ec592f78456e63a94ab9adbc99781f2133a4",
+      "preimage_sha256": "ba87347101f1b8153bfdb16e3f36ec592f78456e63a94ab9adbc99781f2133a4"
+    },
+    "src/crazyswarm_app/campaign/geometry.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "f011ece2306fb5a2505818eb7dac8771a21bb72a6dffc62a8f3bcb9c30d21802",
+      "preimage_sha256": "f011ece2306fb5a2505818eb7dac8771a21bb72a6dffc62a8f3bcb9c30d21802"
+    },
+    "src/crazyswarm_app/campaign/models.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "b8164e332e48184e6b92dd19d4b7200e7915d5180f64109ea38ce2942b1a5827",
+      "preimage_sha256": "b8164e332e48184e6b92dd19d4b7200e7915d5180f64109ea38ce2942b1a5827"
+    },
+    "src/crazyswarm_app/campaign/perception.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "e8b39b2f753c5550b41b52c4eb1ae58e48ab8449d563a08498443978431fb565",
+      "preimage_sha256": "e8b39b2f753c5550b41b52c4eb1ae58e48ab8449d563a08498443978431fb565"
+    },
+    "src/crazyswarm_app/campaign/physical_truth.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "e34b9c75527a7e3a3c55a1a4fb673d2a49e012816362929b7799062003eba4c9",
+      "preimage_sha256": "e34b9c75527a7e3a3c55a1a4fb673d2a49e012816362929b7799062003eba4c9"
+    },
+    "src/crazyswarm_app/campaign/planner.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "CONCURRENT_OUT_OF_SCOPE_DRIFT",
+      "postimage_sha256": "b6ab6b8bf05f3ad706e6d35959384db9e8f78174b382464e4f8d8ca0b08d8f0d",
+      "preimage_sha256": "e302190b5d974d98aa6d62bebeb782d2ef900d9284a97fe479e273dac53eef39"
+    },
+    "src/crazyswarm_app/campaign/replanning.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "5f4227270538482cd3b6c491d71135e828d0dcdcf5fac6411f72f8519c2c804f",
+      "preimage_sha256": "5f4227270538482cd3b6c491d71135e828d0dcdcf5fac6411f72f8519c2c804f"
+    },
+    "src/crazyswarm_app/campaign/runtime_executor.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "3835eba7f9732e2103a8c92fa2a69088ac27115cf29275e6c7997198aaaa2669",
+      "preimage_sha256": "3835eba7f9732e2103a8c92fa2a69088ac27115cf29275e6c7997198aaaa2669"
+    },
+    "src/crazyswarm_app/campaign/scenario.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "c7e3ddeee88b235551ba2c31c639ef73da0edddfc46eb94cd5a83c24d96ef221",
+      "preimage_sha256": "c7e3ddeee88b235551ba2c31c639ef73da0edddfc46eb94cd5a83c24d96ef221"
+    },
+    "src/crazyswarm_app/campaign/scheduling.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "521aa0fe9d019c8ccbabf0f2204e463458bf1754f7a76da851ea60a66d1c97a8",
+      "preimage_sha256": "521aa0fe9d019c8ccbabf0f2204e463458bf1754f7a76da851ea60a66d1c97a8"
+    },
+    "src/crazyswarm_app/campaign/semantic_audit.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "78420241b129477f8e623acab8ee2e79040604266835dc01d92a17ca2c658158",
+      "preimage_sha256": "78420241b129477f8e623acab8ee2e79040604266835dc01d92a17ca2c658158"
+    },
+    "src/crazyswarm_app/campaign/service.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "794a13c31d51fa095120efe80a198424d343dc78d27f0ac91977795d5f52d32e",
+      "preimage_sha256": "794a13c31d51fa095120efe80a198424d343dc78d27f0ac91977795d5f52d32e"
+    },
+    "src/crazyswarm_app/campaign/submissions.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "43a8630857e093fa4b58f350d9c943c2af3f8f1eef91b451b65627b351a97976",
+      "preimage_sha256": "43a8630857e093fa4b58f350d9c943c2af3f8f1eef91b451b65627b351a97976"
+    },
+    "src/crazyswarm_app/campaign/timing.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "33b3bb5ff60381353c7dcffa9f86003dc19a7cbc767f90fb00a8a448f6bc610e",
+      "preimage_sha256": "33b3bb5ff60381353c7dcffa9f86003dc19a7cbc767f90fb00a8a448f6bc610e"
+    },
+    "src/crazyswarm_app/campaign/trajectory.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "ea425ad2f477e4e980cdd51ac67616c8fb44528fb50a8ad6163279fc5f8323c0",
+      "preimage_sha256": "ea425ad2f477e4e980cdd51ac67616c8fb44528fb50a8ad6163279fc5f8323c0"
+    },
+    "src/crazyswarm_app/config.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "11055020c3aa32f2b4286b1f329137f0a7265a11c2de0f7d255187a25094721c",
+      "preimage_sha256": "11055020c3aa32f2b4286b1f329137f0a7265a11c2de0f7d255187a25094721c"
+    },
+    "src/crazyswarm_app/dashboard.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "51f312cb9baf48741b296af8409beb377c0d91feb1ff923ff5d0a97c2ca84e39",
+      "preimage_sha256": "51f312cb9baf48741b296af8409beb377c0d91feb1ff923ff5d0a97c2ca84e39"
+    },
+    "src/crazyswarm_app/dashboard_service.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "64c0556da834323fc7869c4fbb72ff24e93e0a4b6cd24e4b2fd21a9158c1f97b",
+      "preimage_sha256": "64c0556da834323fc7869c4fbb72ff24e93e0a4b6cd24e4b2fd21a9158c1f97b"
+    },
+    "src/crazyswarm_app/domain/commands.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "CONCURRENT_OUT_OF_SCOPE_DRIFT",
+      "postimage_sha256": "86ff7d9fcf374f60d42cf6499d36a6567f3675e867587bc4ed79d188dbeb7ff6",
+      "preimage_sha256": "6aba9415f010bad81db33c2dd67c67117e2281292f459d7eb870fe24991d0373"
+    },
+    "src/crazyswarm_app/domain/errors.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "64113a37dacf413065ea1f0897a94087bc1a2817f052b3732bf4e395a2dfb73a",
+      "preimage_sha256": "64113a37dacf413065ea1f0897a94087bc1a2817f052b3732bf4e395a2dfb73a"
+    },
+    "src/crazyswarm_app/domain/goals.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "CONCURRENT_OUT_OF_SCOPE_DRIFT",
+      "postimage_sha256": "04f7214150335df745b3b85dd0477df5e6cb4594e28334c1ba3fa23d10de837b",
+      "preimage_sha256": "e06479bb50efa16ee1985b8ab199e075fc7ecf6cff27b299d583383738ad3422"
+    },
+    "src/crazyswarm_app/domain/models.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "a298a1f7958239c3ae260e2df21a455cf188a5588395b9222095b3377eb9fcff",
+      "preimage_sha256": "a298a1f7958239c3ae260e2df21a455cf188a5588395b9222095b3377eb9fcff"
+    },
+    "src/crazyswarm_app/domain/simulation.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "393fb0f83bde414d2088ad749e13c5308f6d267a8725344c05fc726147aa1d76",
+      "preimage_sha256": "393fb0f83bde414d2088ad749e13c5308f6d267a8725344c05fc726147aa1d76"
+    },
+    "src/crazyswarm_app/domain/telemetry.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "741a4aa9cc4a405588960eece156b82e85348bf124e61fcb16f66ebb97376f99",
+      "preimage_sha256": "741a4aa9cc4a405588960eece156b82e85348bf124e61fcb16f66ebb97376f99"
+    },
+    "src/crazyswarm_app/domain/trajectory.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "5d48ba0f3bc01d4280887a340408bb99c05bd3156de24823ff543e75a21354ef",
+      "preimage_sha256": "5d48ba0f3bc01d4280887a340408bb99c05bd3156de24823ff543e75a21354ef"
+    },
+    "src/crazyswarm_app/engineering.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "ab2d3a02a50233a759fbd65fd9f8f37185b03b2a94477fa6cfa05738cc4b10e0",
+      "preimage_sha256": "ab2d3a02a50233a759fbd65fd9f8f37185b03b2a94477fa6cfa05738cc4b10e0"
+    },
+    "src/crazyswarm_app/fleet/artifacts.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "67380de6c08f72add380047daa695d2936af8e07e2f6868854cc7269087ea77a",
+      "preimage_sha256": "67380de6c08f72add380047daa695d2936af8e07e2f6868854cc7269087ea77a"
+    },
+    "src/crazyswarm_app/fleet/backends.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "1e54d0186f69ae3542539e07db1c2dbdc7a477212a056731291fd326ea21dcb2",
+      "preimage_sha256": "1e54d0186f69ae3542539e07db1c2dbdc7a477212a056731291fd326ea21dcb2"
+    },
+    "src/crazyswarm_app/fleet/coordination.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "687d5e74cf105970ffdd16a49b329ab9de5532d2a062c48ee4f76feb57171cc3",
+      "preimage_sha256": "687d5e74cf105970ffdd16a49b329ab9de5532d2a062c48ee4f76feb57171cc3"
+    },
+    "src/crazyswarm_app/fleet/coordinator.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "d241ab3a18210720c5138fe302d8922120e39c4d4dc8e619c5f57dec8eb849cd",
+      "preimage_sha256": "d241ab3a18210720c5138fe302d8922120e39c4d4dc8e619c5f57dec8eb849cd"
+    },
+    "src/crazyswarm_app/fleet/docks.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "6577dfff382fed3219a680936eb7be5ef8788cdcef9622dc15273057d1ef73a6",
+      "preimage_sha256": "6577dfff382fed3219a680936eb7be5ef8788cdcef9622dc15273057d1ef73a6"
+    },
+    "src/crazyswarm_app/fleet/execution.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "57fc67bbd7a3714312ed66139146c7cf08a0f371542ddc6740a295ba8146eedc",
+      "preimage_sha256": "57fc67bbd7a3714312ed66139146c7cf08a0f371542ddc6740a295ba8146eedc"
+    },
+    "src/crazyswarm_app/fleet/metrics.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "be868dbf3a0a74ebb25e9ef94ef46ddafd68183ecae1cd327c77e94eb2f686ea",
+      "preimage_sha256": "be868dbf3a0a74ebb25e9ef94ef46ddafd68183ecae1cd327c77e94eb2f686ea"
+    },
+    "src/crazyswarm_app/fleet/persistent.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "3e680dd799cb7a1a0033340361c4c69c7badaf441f7f3d06ccecba2adec11cf7",
+      "preimage_sha256": "3e680dd799cb7a1a0033340361c4c69c7badaf441f7f3d06ccecba2adec11cf7"
+    },
+    "src/crazyswarm_app/fleet/planning.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "21e16c5da99d4eba7d8e9ab38859c022efd9be5f8a28b0c3e2e8e803ddcf7981",
+      "preimage_sha256": "21e16c5da99d4eba7d8e9ab38859c022efd9be5f8a28b0c3e2e8e803ddcf7981"
+    },
+    "src/crazyswarm_app/fleet/preparation.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "a8916b916e4bbe77de2b47bbba48a721456c5dac6a80a9a489c9d1be53822d43",
+      "preimage_sha256": "a8916b916e4bbe77de2b47bbba48a721456c5dac6a80a9a489c9d1be53822d43"
+    },
+    "src/crazyswarm_app/fleet/qualification.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "3341e9b90f842d9632b352bc71e3f6056366cafc68354f7549e74dcee35ff728",
+      "preimage_sha256": "3341e9b90f842d9632b352bc71e3f6056366cafc68354f7549e74dcee35ff728"
+    },
+    "src/crazyswarm_app/fleet/tasks.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "b46ba308c1a7770d25fc83400d159384ca95419d73bb293e2dcbdbf4f71675b4",
+      "preimage_sha256": "b46ba308c1a7770d25fc83400d159384ca95419d73bb293e2dcbdbf4f71675b4"
+    },
+    "src/crazyswarm_app/fleet/zones.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "1b48f9c6591d12dfc3e803b5a31c701005469cc47b9b71e34a09a99c4eee042d",
+      "preimage_sha256": "1b48f9c6591d12dfc3e803b5a31c701005469cc47b9b71e34a09a99c4eee042d"
+    },
+    "src/crazyswarm_app/hardware/models.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "cb101bcc2056db0a6d013f30eee790c46c16f8d467aa534919b2cfc11d6eaf5c",
+      "preimage_sha256": "cb101bcc2056db0a6d013f30eee790c46c16f8d467aa534919b2cfc11d6eaf5c"
+    },
+    "src/crazyswarm_app/isaac/protocol.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "176ff67a2d4f00c9bb9c8bf01379e607e67b89715dc64a53a8627c00b255b008",
+      "preimage_sha256": "176ff67a2d4f00c9bb9c8bf01379e607e67b89715dc64a53a8627c00b255b008"
+    },
+    "src/crazyswarm_app/missions/authority.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "86832cf77ba259ffde485a9a5576f0462f05e7b21eab21abf280de7c3690f3ff",
+      "preimage_sha256": "86832cf77ba259ffde485a9a5576f0462f05e7b21eab21abf280de7c3690f3ff"
+    },
+    "src/crazyswarm_app/missions/base.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "CONCURRENT_OUT_OF_SCOPE_DRIFT",
+      "postimage_sha256": "e99dec4ee72c419e13e9f32cd4396874e0dfb35fe2e9c7f5062e8cfeaa9735b5",
+      "preimage_sha256": "c9d163a49a8dbbecee4ca5a82f32f1430ed578b5744c0c8ebecdf786bcab0542"
+    },
+    "src/crazyswarm_app/missions/catalog.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "c055d112a690204c109b6966afc31783ce0cf7eb3f788f547ffdc923233344a2",
+      "preimage_sha256": "c055d112a690204c109b6966afc31783ce0cf7eb3f788f547ffdc923233344a2"
+    },
+    "src/crazyswarm_app/missions/coordination.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "d37cb990b5881e40fae5423e59ce5e29a41c6ac5fab3a562c4a177a21149e83e",
+      "preimage_sha256": "d37cb990b5881e40fae5423e59ce5e29a41c6ac5fab3a562c4a177a21149e83e"
+    },
+    "src/crazyswarm_app/missions/models.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "e7655602a5ce72761a36b1aef49145a338f032fd292f9aa26ee574d55a0ebf27",
+      "preimage_sha256": "e7655602a5ce72761a36b1aef49145a338f032fd292f9aa26ee574d55a0ebf27"
+    },
+    "src/crazyswarm_app/missions/observation.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "0675b0897501a0f9aa8a87b97406be132e2e113e6c6ea5da6843b26431e74d3f",
+      "preimage_sha256": "0675b0897501a0f9aa8a87b97406be132e2e113e6c6ea5da6843b26431e74d3f"
+    },
+    "src/crazyswarm_app/missions/planning.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "0fbb21cd1fed76868220f4618f6c6476fefbdbee06fd789e819bed38a6b53685",
+      "preimage_sha256": "0fbb21cd1fed76868220f4618f6c6476fefbdbee06fd789e819bed38a6b53685"
+    },
+    "src/crazyswarm_app/missions/registry.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "9b8cd1415e7ddbbbfbd0a01a0e0d074fa7fa1d1d0bd95b6243e881c9c9c004f2",
+      "preimage_sha256": "9b8cd1415e7ddbbbfbd0a01a0e0d074fa7fa1d1d0bd95b6243e881c9c9c004f2"
+    },
+    "src/crazyswarm_app/missions/runner.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "0363679e48b5327cf8314123e7e7c035a348c460e99bf934ee09711153f536df",
+      "preimage_sha256": "0363679e48b5327cf8314123e7e7c035a348c460e99bf934ee09711153f536df"
+    },
+    "src/crazyswarm_app/missions/script.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "fc27a997120858048b617f45afe24042170315ae11ac911869438ca256470b59",
+      "preimage_sha256": "fc27a997120858048b617f45afe24042170315ae11ac911869438ca256470b59"
+    },
+    "src/crazyswarm_app/observability/bridge.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "b676bbc35a2a6598eb80f55dbd6c266767803bb71e067c8efa9e0310cc884977",
+      "preimage_sha256": "b676bbc35a2a6598eb80f55dbd6c266767803bb71e067c8efa9e0310cc884977"
+    },
+    "src/crazyswarm_app/observability/bus.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "1fcfbb4bc8db8e0021676b3428c57b59408529e8614e46b347fc40ab31d8f2c9",
+      "preimage_sha256": "1fcfbb4bc8db8e0021676b3428c57b59408529e8614e46b347fc40ab31d8f2c9"
+    },
+    "src/crazyswarm_app/observability/csv_export.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "07702a86a9adb529dbdc3f309d15d5e8a256b6f89bf2a133460b090de7563126",
+      "preimage_sha256": "07702a86a9adb529dbdc3f309d15d5e8a256b6f89bf2a133460b090de7563126"
+    },
+    "src/crazyswarm_app/observability/evaluation.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "f94e6ad3da7a1024e316615c1ce565f19a67223f1fe3517e480dd397513b7f46",
+      "preimage_sha256": "f94e6ad3da7a1024e316615c1ce565f19a67223f1fe3517e480dd397513b7f46"
+    },
+    "src/crazyswarm_app/observability/events.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "d94c135959f160bca7c25e3158c2fe705386831cc1f36888e1604a4b1a5c3cba",
+      "preimage_sha256": "d94c135959f160bca7c25e3158c2fe705386831cc1f36888e1604a4b1a5c3cba"
+    },
+    "src/crazyswarm_app/observability/recorder.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "2daa135fffd7326a1510c437e6263a68297ef45db987658a23edd92cb66c1369",
+      "preimage_sha256": "2daa135fffd7326a1510c437e6263a68297ef45db987658a23edd92cb66c1369"
+    },
+    "src/crazyswarm_app/observability/replay.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "496bb5cab3c7ad68ebe082b22ab6c1aa2abcc78be07ea3f1b55af778aec845bb",
+      "preimage_sha256": "496bb5cab3c7ad68ebe082b22ab6c1aa2abcc78be07ea3f1b55af778aec845bb"
+    },
+    "src/crazyswarm_app/observability/storage.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "aa3e3abc76751e4f840145500c50dc419867a0120de53dfe3c9d0223a50dc689",
+      "preimage_sha256": "aa3e3abc76751e4f840145500c50dc419867a0120de53dfe3c9d0223a50dc689"
+    },
+    "src/crazyswarm_app/planning/approval.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "5bfb08c3b08849ca3dcdebb7e5a6027e610df2bf57875c9cd216eac5dc33cf74",
+      "preimage_sha256": "5bfb08c3b08849ca3dcdebb7e5a6027e610df2bf57875c9cd216eac5dc33cf74"
+    },
+    "src/crazyswarm_app/planning/builtins.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "20f82ca054a2513c59c62a0863b90fdb3100c83b473d32de1d050231a26ec307",
+      "preimage_sha256": "20f82ca054a2513c59c62a0863b90fdb3100c83b473d32de1d050231a26ec307"
+    },
+    "src/crazyswarm_app/planning/contracts.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "f1dd7392db34e6d68323f85f9d3aed48b44961eb509e2346f137c3405b678766",
+      "preimage_sha256": "f1dd7392db34e6d68323f85f9d3aed48b44961eb509e2346f137c3405b678766"
+    },
+    "src/crazyswarm_app/planning/curriculum.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "8049a93d198af766db868a0ee5b2f4d5c85448f34e894fa18a959b84181cd4ac",
+      "preimage_sha256": "8049a93d198af766db868a0ee5b2f4d5c85448f34e894fa18a959b84181cd4ac"
+    },
+    "src/crazyswarm_app/planning/deconfliction.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "009b149d0108a7fa4981806226211fc9eb8058053673c41c0d7644ae26b6afa2",
+      "preimage_sha256": "009b149d0108a7fa4981806226211fc9eb8058053673c41c0d7644ae26b6afa2"
+    },
+    "src/crazyswarm_app/planning/intent.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "46ee4ff55181ce315bd4e2d5a6b1f41295b7d172dc579700b5d74baf9dea60dc",
+      "preimage_sha256": "46ee4ff55181ce315bd4e2d5a6b1f41295b7d172dc579700b5d74baf9dea60dc"
+    },
+    "src/crazyswarm_app/planning/multidrone.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "5f6c8c9f924c040299dc3ba65abe7d7aa62f3d440d6439d28819c50831c79d53",
+      "preimage_sha256": "5f6c8c9f924c040299dc3ba65abe7d7aa62f3d440d6439d28819c50831c79d53"
+    },
+    "src/crazyswarm_app/planning/qualification.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "2bee8c73bd30e4ad5bef58f2b18dcbdc5cc0e4261ba53703ecc71ff13197c5a5",
+      "preimage_sha256": "2bee8c73bd30e4ad5bef58f2b18dcbdc5cc0e4261ba53703ecc71ff13197c5a5"
+    },
+    "src/crazyswarm_app/planning/registry.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "597cf4e7ffd93543c0432d35b21abf01d357c5ac73b25ca5b66bd6d05a7db242",
+      "preimage_sha256": "597cf4e7ffd93543c0432d35b21abf01d357c5ac73b25ca5b66bd6d05a7db242"
+    },
+    "src/crazyswarm_app/planning/release.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "47fbdece819f6c82924ad0b27a9ac6a5f42e01a0130132d37120468da8c01c88",
+      "preimage_sha256": "47fbdece819f6c82924ad0b27a9ac6a5f42e01a0130132d37120468da8c01c88"
+    },
+    "src/crazyswarm_app/planning/robustness.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "59761fa53d67e0a757ccaee4932e33a7572a0c20de583667f7f869a2c1082074",
+      "preimage_sha256": "59761fa53d67e0a757ccaee4932e33a7572a0c20de583667f7f869a2c1082074"
+    },
+    "src/crazyswarm_app/planning/safety.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "cafa7ddf8fca4be4a3331a8ca896b79e192d8c8bb55b40aa35e6678927bb81b4",
+      "preimage_sha256": "cafa7ddf8fca4be4a3331a8ca896b79e192d8c8bb55b40aa35e6678927bb81b4"
+    },
+    "src/crazyswarm_app/planning/service.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "9002ec5c1c04065ec87cb992129be8e8eecef8b548a9b0e053a3924856d8ec06",
+      "preimage_sha256": "9002ec5c1c04065ec87cb992129be8e8eecef8b548a9b0e053a3924856d8ec06"
+    },
+    "src/crazyswarm_app/provenance.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "5750430a94c185c583d615a0ecab69b5d91b05c922c3e7e9d719d06f4a21d6d2",
+      "preimage_sha256": "5750430a94c185c583d615a0ecab69b5d91b05c922c3e7e9d719d06f4a21d6d2"
+    },
+    "src/crazyswarm_app/safety/audit.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "86a7f6be9c53e1dd5ec491ca07226c37641722cbd327f61f79a676845bb00740",
+      "preimage_sha256": "86a7f6be9c53e1dd5ec491ca07226c37641722cbd327f61f79a676845bb00740"
+    },
+    "src/crazyswarm_app/safety/models.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "02aa4abd318d3af8b32a83a96a61789af5669a6743b703c68f9aca365de3d478",
+      "preimage_sha256": "02aa4abd318d3af8b32a83a96a61789af5669a6743b703c68f9aca365de3d478"
+    },
+    "src/crazyswarm_app/safety/policy.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "f534665ec00c33991026f93ec3562edc957cf7075883860bff5205cf5fe16e69",
+      "preimage_sha256": "f534665ec00c33991026f93ec3562edc957cf7075883860bff5205cf5fe16e69"
+    },
+    "src/crazyswarm_app/safety/state_machine.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "c342cb737f7d93e84617baad0abd4ff50908c7d4deea60b9cb96d4ab2fb33fe6",
+      "preimage_sha256": "c342cb737f7d93e84617baad0abd4ff50908c7d4deea60b9cb96d4ab2fb33fe6"
+    },
+    "src/crazyswarm_app/safety/supervisor.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "35355186a1bed44fe812abab09d1163a4e09b35fc2fbb7cdb5ebbc35163a9cae",
+      "preimage_sha256": "35355186a1bed44fe812abab09d1163a4e09b35fc2fbb7cdb5ebbc35163a9cae"
+    },
+    "src/crazyswarm_app/simulation/clock.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "722c45cb3be4fded5719bdf678674c7cbf013dd6cbc6df68878e471789628f1f",
+      "preimage_sha256": "722c45cb3be4fded5719bdf678674c7cbf013dd6cbc6df68878e471789628f1f"
+    },
+    "src/crazyswarm_app/simulation/factory.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "a49b3e5c8ca84de75c2afd25fc4c5ce4e94cedf61c500ef9b563e210ba6993f3",
+      "preimage_sha256": "a49b3e5c8ca84de75c2afd25fc4c5ce4e94cedf61c500ef9b563e210ba6993f3"
+    },
+    "src/crazyswarm_app/simulation/faults.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "1c72cbc96b25db97b20821a15142e7e49ba7657dbaa656d4730914c650724646",
+      "preimage_sha256": "1c72cbc96b25db97b20821a15142e7e49ba7657dbaa656d4730914c650724646"
+    },
+    "src/crazyswarm_app/simulation/models.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "a978d58e2e3a9e4a867f79bab743b4fcb981279b2a7b057012c5cae50f95785b",
+      "preimage_sha256": "a978d58e2e3a9e4a867f79bab743b4fcb981279b2a7b057012c5cae50f95785b"
+    },
+    "src/crazyswarm_app/simulation/parameters.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "9f9d7a3bb0ef125cfa5de60f69b832398a539752d170533ae9a40a000873a3d4",
+      "preimage_sha256": "9f9d7a3bb0ef125cfa5de60f69b832398a539752d170533ae9a40a000873a3d4"
+    },
+    "src/crazyswarm_app/simulation/physics.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "60a372d2b3f9493e595f55941dfe1f1d619006f714018451e2e42bdb77ccbb97",
+      "preimage_sha256": "60a372d2b3f9493e595f55941dfe1f1d619006f714018451e2e42bdb77ccbb97"
+    },
+    "src/crazyswarm_app/simulation/powertrain.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "65c7eb993fe0879dbd314f0aa7d5606a254ddfa44cca02b0951c53116a63c0c2",
+      "preimage_sha256": "65c7eb993fe0879dbd314f0aa7d5606a254ddfa44cca02b0951c53116a63c0c2"
+    },
+    "src/crazyswarm_app/simulation/sensors.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "707060cd2c2010a598a28e5a9357ecda3f0b7adbe00ecc37a42047b83d06e0f6",
+      "preimage_sha256": "707060cd2c2010a598a28e5a9357ecda3f0b7adbe00ecc37a42047b83d06e0f6"
+    },
+    "src/crazyswarm_app/simulation/vehicle.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "CONCURRENT_OUT_OF_SCOPE_DRIFT",
+      "postimage_sha256": "f425662a16c197936e697359e672297c97cee4d8eeba29fdd8b42b6db8c9d808",
+      "preimage_sha256": "4c979b67bca972a06ec9bd1540c8f5205c34015440fb753eda8a118115e00f10"
+    },
+    "src/crazyswarm_app/simulation/world.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "b465609f1d3b3a024b18448ba07aba20ce0b4ee58f21eb63d21318e2360de1d9",
+      "preimage_sha256": "b465609f1d3b3a024b18448ba07aba20ce0b4ee58f21eb63d21318e2360de1d9"
+    },
+    "src/crazyswarm_app/twin/calibration.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "874327c22a05ace974b5ea030b9620f5b22541cea559120cc772eeb9410649b6",
+      "preimage_sha256": "874327c22a05ace974b5ea030b9620f5b22541cea559120cc772eeb9410649b6"
+    },
+    "src/crazyswarm_app/twin/coordinator.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "WP80_IMPLEMENTATION",
+      "postimage_sha256": "93083658a33dbb191d26d262f4f98852206b39a063626e4b271585390fbd5564",
+      "preimage_sha256": "524ba0217824de4839dc4fb70c0369333571800a92b2f18fdc5e678b79f2eb44"
+    },
+    "src/crazyswarm_app/twin/curriculum.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "b14fcce7ec8b364fb5595a1939143e481e07f2b315cd69a10e1963293ac4d2d8",
+      "preimage_sha256": "b14fcce7ec8b364fb5595a1939143e481e07f2b315cd69a10e1963293ac4d2d8"
+    },
+    "src/crazyswarm_app/twin/ingestion.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "4aac3e897f17ff3a88c6870bc8e2d6c50c6e57a11dcc319456142cb048a22228",
+      "preimage_sha256": "4aac3e897f17ff3a88c6870bc8e2d6c50c6e57a11dcc319456142cb048a22228"
+    },
+    "src/crazyswarm_app/twin/models.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "WP80_IMPLEMENTATION",
+      "postimage_sha256": "e7e39b9079712e26f3183bacc4fc13bc33c253f536de793124efba3abd2815de",
+      "preimage_sha256": "b69cbc4e17a634fb0190ef526ae264b27ca3994fcf8c8d0a1543624cd401561f"
+    },
+    "src/crazyswarm_app/twin/physical_handoff.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "052618a55b599a1fb1daecb15026ca8b9e8c0c9e040aa9be324eba8653f44396",
+      "preimage_sha256": "052618a55b599a1fb1daecb15026ca8b9e8c0c9e040aa9be324eba8653f44396"
+    },
+    "src/crazyswarm_app/twin/pipeline.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "15210e6418160e0882b6b489f41d07a87a8ab4079af831e2d3f474b4cd9be254",
+      "preimage_sha256": "15210e6418160e0882b6b489f41d07a87a8ab4079af831e2d3f474b4cd9be254"
+    },
+    "src/crazyswarm_app/twin/replay.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "WP80_IMPLEMENTATION",
+      "postimage_sha256": "b92dc01245d4c95ed372ac474871b9afafcaaf3b53e81df65d10396714c39f08",
+      "preimage_sha256": "2f7cdcaf278f5861d3a655e58ca3c0b6263e6be8dc7e68eb001d27634cf43f8d"
+    },
+    "src/crazyswarm_app/twin/storage.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "f4dec7be3cece3f6d0d9f6309ab4031358a99cb9a1737768d2557ea2d0c39016",
+      "preimage_sha256": "f4dec7be3cece3f6d0d9f6309ab4031358a99cb9a1737768d2557ea2d0c39016"
+    },
+    "src/crazyswarm_app/vehicles/_cflib_link.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "7df448504b85cd179f27df5c142caa819029317e5bfb7b69a2369966bf27be85",
+      "preimage_sha256": "7df448504b85cd179f27df5c142caa819029317e5bfb7b69a2369966bf27be85"
+    },
+    "src/crazyswarm_app/vehicles/base.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "c2f977ea470d70b8a4a424c36cac1b9de5d4b3ad04f28d61afaab5c0d0b9f37f",
+      "preimage_sha256": "c2f977ea470d70b8a4a424c36cac1b9de5d4b3ad04f28d61afaab5c0d0b9f37f"
+    },
+    "src/crazyswarm_app/vehicles/crazyflie.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "WP80_IMPLEMENTATION",
+      "postimage_sha256": "09a2df7c6781439c62a2ed41c404dfa5f5724b833ac2daddbd2bd1d9ea455524",
+      "preimage_sha256": "e7ea1b9080c00c7ac4622fd440ecff373f62f8b8afed3750a639a299545ee5f0"
+    },
+    "src/crazyswarm_app/vehicles/crazyflie_link.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "b9839ba65d2404d8482f842e9975f8c6396244676757ebe586bab62d5896fe56",
+      "preimage_sha256": "b9839ba65d2404d8482f842e9975f8c6396244676757ebe586bab62d5896fe56"
+    },
+    "src/crazyswarm_app/vehicles/mock_isaac.py": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "9111d1603eab870fd84359e465e08348fe3812be56a3af595015799e6dfa1475",
+      "preimage_sha256": "9111d1603eab870fd84359e465e08348fe3812be56a3af595015799e6dfa1475"
+    },
+    "src/crazyswarm_app/vehicles/providers.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "8c9742742559330d4b588fe64b191ecbfcad380cfe8c679dab557bef8ba78282",
+      "preimage_sha256": "8c9742742559330d4b588fe64b191ecbfcad380cfe8c679dab557bef8ba78282"
+    },
+    "tests/api/test_twin.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "2707ffb7354df38318129f92574a998ac7eff887755ea60157eabcd202a2d8d2",
+      "preimage_sha256": "2707ffb7354df38318129f92574a998ac7eff887755ea60157eabcd202a2d8d2"
+    },
+    "tests/hardware/test_crazyflie_adapter.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "WP80_IMPLEMENTATION",
+      "postimage_sha256": "80f130ff34765c2066bf349cbfb5c9a6e7b7404b26bfe0690a3cc25f4ce206d2",
+      "preimage_sha256": "a0127857f4eaed6ad52eabecfef3e3607adb4aca1166972f3c36246a080d2a9d"
+    },
+    "tests/test_dashboard.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "a82692c99e8eed127144b823b551ae76257686a3185ab108377e4d61d7227074",
+      "preimage_sha256": "a82692c99e8eed127144b823b551ae76257686a3185ab108377e4d61d7227074"
+    },
+    "tests/twin/test_coordinator.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "90c19cf5e15a3e902854a112341303507ef40064b816ebd363ec4b7a22f20410",
+      "preimage_sha256": "90c19cf5e15a3e902854a112341303507ef40064b816ebd363ec4b7a22f20410"
+    },
+    "tests/twin/test_ingestion.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "32908909f9d7df0f2f74ee6bf8763bbff6d5238b5d87c106ee67092c4eed686c",
+      "preimage_sha256": "32908909f9d7df0f2f74ee6bf8763bbff6d5238b5d87c106ee67092c4eed686c"
+    },
+    "tests/twin/test_storage.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "56de4fdc1468c4c741db29ac7ee934e5db83a680c69c804da5eca727705b1c1e",
+      "preimage_sha256": "56de4fdc1468c4c741db29ac7ee934e5db83a680c69c804da5eca727705b1c1e"
+    },
+    "tests/twin/test_twin_pipeline_e2e.py": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "1be98d2bfee9332d5181392aebb0ae66e15feba955e777d9a3dc2bba37686757",
+      "preimage_sha256": "1be98d2bfee9332d5181392aebb0ae66e15feba955e777d9a3dc2bba37686757"
+    },
+    "ui/app/components/CampaignLab.tsx": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "CONCURRENT_OUT_OF_SCOPE_DRIFT",
+      "postimage_sha256": "36af470c78078c388d46babf765aac38eec9da0e5b6c1c7b6fb9c5a1cacfac89",
+      "preimage_sha256": "0f7320aaaec70e2c6a85aef5778af9147bad5b5abb0cb382fe57979f0f63924b"
+    },
+    "ui/app/components/ControlCenter.tsx": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "WP80_IMPLEMENTATION",
+      "postimage_sha256": "d696abea5a6fb3ef10a15aaa07d50302b53ac5d01c386d94e094ca6a08e981fa",
+      "preimage_sha256": "e1dc8e09da5ce362ed695e13be8731bca441774416d2d74b73c4b4452454b4be"
+    },
+    "ui/app/components/RoomScene.tsx": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "0f2ca6bb5364dea127c08738ed974cb669b143f31694e5972a438c1721c2351f",
+      "preimage_sha256": "0f2ca6bb5364dea127c08738ed974cb669b143f31694e5972a438c1721c2351f"
+    },
+    "ui/app/components/TelemetryDock.tsx": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "356b1acb26d666b5cb7356ad7e9aca2dae38f1851959150fb56d7f8c6808311a",
+      "preimage_sha256": "356b1acb26d666b5cb7356ad7e9aca2dae38f1851959150fb56d7f8c6808311a"
+    },
+    "ui/app/globals.css": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "WP80_IMPLEMENTATION",
+      "postimage_sha256": "7e1c76ef143518651d9d71defb85e9681931e688dd9c0b060d4f0f5be7af8c0f",
+      "preimage_sha256": "9c28ae8cfbcb9e332920cc98d78b06cf074bdfa05749d42a33d5a13c14ec3cee"
+    },
+    "ui/app/layout.tsx": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "d84f76788ea7f71740035a99cf6eb29fc9f735ea03fc4d85e632cd294a33f4a0",
+      "preimage_sha256": "d84f76788ea7f71740035a99cf6eb29fc9f735ea03fc4d85e632cd294a33f4a0"
+    },
+    "ui/app/lib/api.generated.ts": {
+      "design_classification": "GENERATED",
+      "disposition": "WP80_IMPLEMENTATION",
+      "postimage_sha256": "c95ae4dee9ea86533da52d0eaa0eaeed509948fd27ea20c1331b115ad0085a5a",
+      "preimage_sha256": "079287f8faee84bc4c39891d5c372e1a44258a57343c76d5cb191dfbcc8b642c"
+    },
+    "ui/app/lib/api.ts": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "WP80_IMPLEMENTATION",
+      "postimage_sha256": "9fe1b707d2d44433f41fa1bd9f92a7a0e5519858e46bfd2d4825d63ff26fa189",
+      "preimage_sha256": "e9047c623281c126044032786145f11555a06c0eb67c7ab2582b8dbc0bc94798"
+    },
+    "ui/app/lib/campaign-preview.ts": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "f4303e13d7fb0969d38da0948357c3e2e023b323e0e8468ac5d0579276798085",
+      "preimage_sha256": "f4303e13d7fb0969d38da0948357c3e2e023b323e0e8468ac5d0579276798085"
+    },
+    "ui/app/lib/campaign-telemetry.ts": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "bca0a82f939c04f95bd53096744ac547fd3c7ebbf9c91b020e47e5c3158b2720",
+      "preimage_sha256": "bca0a82f939c04f95bd53096744ac547fd3c7ebbf9c91b020e47e5c3158b2720"
+    },
+    "ui/app/lib/empty.ts": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "dbe1c2cb9edd09d1f0dfa45c2724bae9b3a797c76c82957731c70b0fa3f88be6",
+      "preimage_sha256": "dbe1c2cb9edd09d1f0dfa45c2724bae9b3a797c76c82957731c70b0fa3f88be6"
+    },
+    "ui/app/lib/models.ts": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "WP80_IMPLEMENTATION",
+      "postimage_sha256": "441ab365ab6371e5845a09cac7f37dab5f6fa9610eedf737a6437ef6e0d5691b",
+      "preimage_sha256": "103b0a99a5b80a0d35575174a44c46bee8e77e364e4abd4488a94730720cfa8e"
+    },
+    "ui/app/lib/playback.ts": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "018206d9395a3eb5da8576c9929258359e14500a2a6b337c23fa78a6627d51b2",
+      "preimage_sha256": "018206d9395a3eb5da8576c9929258359e14500a2a6b337c23fa78a6627d51b2"
+    },
+    "ui/app/lib/spatial.ts": {
+      "design_classification": "RELIED_UPON_UNCHANGED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "bf4f17c4ff97d56ddf4f388114963ff47ef770cb435496fcef8d4da99993535e",
+      "preimage_sha256": "bf4f17c4ff97d56ddf4f388114963ff47ef770cb435496fcef8d4da99993535e"
+    },
+    "ui/app/page.tsx": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "df5abbd859b591ac2644eb9acd82d5191c377c3f351cd75310b3538f4801f752",
+      "preimage_sha256": "df5abbd859b591ac2644eb9acd82d5191c377c3f351cd75310b3538f4801f752"
+    },
+    "ui/openapi.json": {
+      "design_classification": "GENERATED",
+      "disposition": "WP80_IMPLEMENTATION",
+      "postimage_sha256": "1e625549c02d091c86ef03d49d40354561f6b33bd1ac4ddfce1aefa2b13a9293",
+      "preimage_sha256": "d4d8750087d62e52edb04e8cf3d0cfb4fe354d2857153b2875c7c34972b5d234"
+    },
+    "ui/package.json": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "211bd21bf53c0640755efd9af1953a775681a3f71271c05e4700debf17fb38a8",
+      "preimage_sha256": "211bd21bf53c0640755efd9af1953a775681a3f71271c05e4700debf17fb38a8"
+    },
+    "ui/tests/components.test.tsx": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "WP80_IMPLEMENTATION",
+      "postimage_sha256": "387a54c8c3a1dd4f5008bb7613cc01a280e6c776bd3d86d8bf1dea1f55259741",
+      "preimage_sha256": "73d1e95652c6d4fd5935d7d94a189d09989cd4435da4162111780e75eb697999"
+    },
+    "ui/tests/twin-session.test.tsx": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "abbcafa856eec377b05a753f1496a62e69feeab916489afe03512806858a5f35",
+      "preimage_sha256": "abbcafa856eec377b05a753f1496a62e69feeab916489afe03512806858a5f35"
+    },
+    "ui/worker/index.ts": {
+      "design_classification": "IMPLEMENTATION_OWNED",
+      "disposition": "RELIED_UPON_UNCHANGED",
+      "postimage_sha256": "e38df307397866440c457d8f05f4cc393c50965e4461eaeb52047ad0fd91a2ee",
+      "preimage_sha256": "e38df307397866440c457d8f05f4cc393c50965e4461eaeb52047ad0fd91a2ee"
+    }
+  },
+  "hardware_evidence": "NOT_RUN",
+  "implementation_paths": {
+    "design.md": {
+      "classification": "CHANGED",
+      "postimage_sha256": "99b95cd62ba6db0794cb763f75a6ed6fb6c9f858ec4b71ea946edc84d2620499",
+      "preimage_sha256": "e6b17a1fd6e4b9a070fc593014047b854bc40d892cb3d454bb451f2b1700a400"
+    },
+    "docs/project/DESIGN.md": {
+      "classification": "CHANGED",
+      "postimage_sha256": "cc7d64cedab94c5cf663c20d66cf6ac6a4d60aadef235483495e2e8af960b145",
+      "preimage_sha256": "230ff0ca3ff628f6ef7ad88b0ee6945a3079a615f34ccf55fe46d0541d20a383"
+    },
+    "docs/system/README.md": {
+      "classification": "CHANGED",
+      "postimage_sha256": "276279bde4736cfe11d14b2a41938402510b4ae7a87a3bef796917d434499ba4",
+      "preimage_sha256": "c8ba2f8620cacd022c58971e395a7629408932df92c301c5c2f4f37ccc145442"
+    },
+    "scripts/freeze_wp80_implementation.py": {
+      "classification": "NEW",
+      "postimage_sha256": "328a98cef3b90099dd92b6d1d9edf8315ff2d698e55d899fc9e6ab58d6acf412",
+      "preimage_sha256": null
+    },
+    "src/crazyswarm_app/api/app.py": {
+      "classification": "CHANGED",
+      "postimage_sha256": "ff8173e244d6d4b130a1fe21ec60b8da9d2431729e28532877b7f4add4ede4aa",
+      "preimage_sha256": "1998d722376848ce0e8d7399e1e8c1d7dbd95b90aa7d57598bb32c0a852c8d36"
+    },
+    "src/crazyswarm_app/hardware/observation_twin.py": {
+      "classification": "NEW",
+      "postimage_sha256": "5d19e50e6713ba66282cb8d27f4bbcfda69ac8022f598eeba4b0109fbc0fdfe9",
+      "preimage_sha256": null
+    },
+    "src/crazyswarm_app/twin/coordinator.py": {
+      "classification": "CHANGED",
+      "postimage_sha256": "93083658a33dbb191d26d262f4f98852206b39a063626e4b271585390fbd5564",
+      "preimage_sha256": "524ba0217824de4839dc4fb70c0369333571800a92b2f18fdc5e678b79f2eb44"
+    },
+    "src/crazyswarm_app/twin/models.py": {
+      "classification": "CHANGED",
+      "postimage_sha256": "e7e39b9079712e26f3183bacc4fc13bc33c253f536de793124efba3abd2815de",
+      "preimage_sha256": "b69cbc4e17a634fb0190ef526ae264b27ca3994fcf8c8d0a1543624cd401561f"
+    },
+    "src/crazyswarm_app/twin/replay.py": {
+      "classification": "CHANGED",
+      "postimage_sha256": "b92dc01245d4c95ed372ac474871b9afafcaaf3b53e81df65d10396714c39f08",
+      "preimage_sha256": "2f7cdcaf278f5861d3a655e58ca3c0b6263e6be8dc7e68eb001d27634cf43f8d"
+    },
+    "src/crazyswarm_app/vehicles/crazyflie.py": {
+      "classification": "CHANGED",
+      "postimage_sha256": "09a2df7c6781439c62a2ed41c404dfa5f5724b833ac2daddbd2bd1d9ea455524",
+      "preimage_sha256": "e7ea1b9080c00c7ac4622fd440ecff373f62f8b8afed3750a639a299545ee5f0"
+    },
+    "tests/api/test_physical_twin.py": {
+      "classification": "NEW",
+      "postimage_sha256": "fb1cd7cd3d517c1aa0642e7699736f47ef0e66c8d02173f47a9c82b9f624b704",
+      "preimage_sha256": null
+    },
+    "tests/hardware/test_crazyflie_adapter.py": {
+      "classification": "CHANGED",
+      "postimage_sha256": "80f130ff34765c2066bf349cbfb5c9a6e7b7404b26bfe0690a3cc25f4ce206d2",
+      "preimage_sha256": "a0127857f4eaed6ad52eabecfef3e3607adb4aca1166972f3c36246a080d2a9d"
+    },
+    "tests/hardware/test_observation_twin_service.py": {
+      "classification": "NEW",
+      "postimage_sha256": "f0670927cfa6eedb937c78cb7ddf19493e2a8c246fff82dec07e57a06bf0d2c6",
+      "preimage_sha256": null
+    },
+    "ui/app/components/ControlCenter.tsx": {
+      "classification": "CHANGED",
+      "postimage_sha256": "d696abea5a6fb3ef10a15aaa07d50302b53ac5d01c386d94e094ca6a08e981fa",
+      "preimage_sha256": "e1dc8e09da5ce362ed695e13be8731bca441774416d2d74b73c4b4452454b4be"
+    },
+    "ui/app/globals.css": {
+      "classification": "CHANGED",
+      "postimage_sha256": "7e1c76ef143518651d9d71defb85e9681931e688dd9c0b060d4f0f5be7af8c0f",
+      "preimage_sha256": "9c28ae8cfbcb9e332920cc98d78b06cf074bdfa05749d42a33d5a13c14ec3cee"
+    },
+    "ui/app/lib/api.generated.ts": {
+      "classification": "GENERATED",
+      "postimage_sha256": "c95ae4dee9ea86533da52d0eaa0eaeed509948fd27ea20c1331b115ad0085a5a",
+      "preimage_sha256": "079287f8faee84bc4c39891d5c372e1a44258a57343c76d5cb191dfbcc8b642c"
+    },
+    "ui/app/lib/api.ts": {
+      "classification": "CHANGED",
+      "postimage_sha256": "9fe1b707d2d44433f41fa1bd9f92a7a0e5519858e46bfd2d4825d63ff26fa189",
+      "preimage_sha256": "e9047c623281c126044032786145f11555a06c0eb67c7ab2582b8dbc0bc94798"
+    },
+    "ui/app/lib/models.ts": {
+      "classification": "CHANGED",
+      "postimage_sha256": "441ab365ab6371e5845a09cac7f37dab5f6fa9610eedf737a6437ef6e0d5691b",
+      "preimage_sha256": "103b0a99a5b80a0d35575174a44c46bee8e77e364e4abd4488a94730720cfa8e"
+    },
+    "ui/openapi.json": {
+      "classification": "GENERATED",
+      "postimage_sha256": "1e625549c02d091c86ef03d49d40354561f6b33bd1ac4ddfce1aefa2b13a9293",
+      "preimage_sha256": "d4d8750087d62e52edb04e8cf3d0cfb4fe354d2857153b2875c7c34972b5d234"
+    },
+    "ui/tests/components.test.tsx": {
+      "classification": "CHANGED",
+      "postimage_sha256": "387a54c8c3a1dd4f5008bb7613cc01a280e6c776bd3d86d8bf1dea1f55259741",
+      "preimage_sha256": "73d1e95652c6d4fd5935d7d94a189d09989cd4435da4162111780e75eb697999"
+    },
+    "ui/tests/physical-twin.test.tsx": {
+      "classification": "NEW",
+      "postimage_sha256": "6335ff2ac59f81d5f4573246c4a87cf945588f6e37bd1d15f5e4924be8210ab7",
+      "preimage_sha256": null
+    }
+  },
+  "implementation_payload": {
+    "independent_verification": "BLOCKED_WITH_FINDINGS",
+    "sha256": "2b5ffe063f1fc627a91a710e400b41db413ffd915162bc31c3ba5b66ece10946",
+    "status": "IMPLEMENTED"
+  },
+  "review_unit": "WP-80",
+  "schema_version": 1
+}

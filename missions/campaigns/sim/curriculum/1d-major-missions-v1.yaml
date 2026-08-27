@@ -1,0 +1,54 @@
+schema_version: 1
+curriculum_id: 1d-major-missions-v1
+groups:
+  - label: Flight
+    variants:
+      - label: Take off, hover, land
+        case_id: 1d.takeoff_hover_land.canonical_nominal
+        status: EXECUTABLE
+  - label: Target
+    variants:
+      - label: Move to target
+        case_id: 1d.point_to_point_relocation.canonical_nominal
+        status: EXECUTABLE
+      - label: Move and return
+        case_id: 1d.move_return.canonical_nominal
+        status: EXECUTABLE
+  - label: Level path
+    variants:
+      - label: Continuous waypoints
+        case_id: 1d.continuous_waypoint_sequence.canonical_nominal
+        status: EXECUTABLE
+      - label: Curved route
+        case_id: 1d.curved_route.canonical_nominal
+        status: EXECUTABLE
+      - label: Multi-goal route
+        case_id: 1d.static_multi_goal_sequence.canonical_nominal
+        status: EXECUTABLE
+      - label: Boundary route
+        case_id: 1d.boundary_constrained_route.canonical_nominal
+        status: EXECUTABLE
+  - label: 3D path
+    variants:
+      - label: Altitude transition
+        case_id: 1d.altitude_transition.canonical_nominal
+        status: EXECUTABLE
+      - label: Wide altitude transition
+        case_id: 1d.altitude_transition.wide
+        status: EXECUTABLE
+      - label: Wind shift
+        case_id: 1d.altitude_transition.wind_shift
+        status: PLANNED_NOT_EXECUTABLE
+        disabled_reason: Available after online reaction qualification.
+        future_fixture_source: SimulationConfig.disturbance.force_impulse_n_s
+  - label: Shape
+    variants:
+      - label: Circle
+        case_id: 1d.planar_shape_loop.circle
+        status: EXECUTABLE
+      - label: Rounded square
+        case_id: 1d.planar_shape_loop.rounded_square
+        status: EXECUTABLE
+      - label: Figure eight
+        case_id: 1d.planar_shape_loop.figure_eight
+        status: EXECUTABLE

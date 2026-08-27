@@ -36,7 +36,7 @@ import {
 } from "three";
 import { useEffect, useRef, useState } from "react";
 import { Camera, Crosshair, Eye, Layers3, LoaderCircle, ScanLine, ZoomIn, ZoomOut } from "lucide-react";
-import type { DashboardModel, MissionPreview, Provenance, RoomView, Vec3, VehicleView } from "../lib/models";
+import type { CampaignReviewCursorView, DashboardModel, MissionPreview, Provenance, RoomView, Vec3, VehicleView } from "../lib/models";
 import { SourceTimePlaybackBuffer, type RenderedDisplayState } from "../lib/playback";
 import { rangeEndpoint, worldToScene } from "../lib/spatial";
 
@@ -188,6 +188,7 @@ export function RoomScene({
   onSceneCapture,
   onSceneCaptureError,
   twinOverlay,
+  reviewMarker,
 }: {
   model: DashboardModel;
   plannedPath: ScenePathSet;
@@ -200,6 +201,7 @@ export function RoomScene({
   onSceneCapture?: (capture: SceneSnapshotCapture) => Promise<void>;
   onSceneCaptureError?: (message: string) => void;
   twinOverlay?: TwinSceneOverlay;
+  reviewMarker?: CampaignReviewCursorView;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cameraRef = useRef<PerspectiveCamera | null>(null);
@@ -482,6 +484,7 @@ export function RoomScene({
       missionPreview,
       selectedVehicleIds,
       twinOverlay,
+      reviewMarker,
     );
     if (displayHealthRef.current) {
       displayHealthRef.current.textContent = display.health;
@@ -535,7 +538,7 @@ export function RoomScene({
         });
       }
     }
-  }, [model.mode, model.selectedVehicleId, model.vehicles, historicalPath, sensorsVisible, traceVisible, truthVisible, missionPreview, selected?.id, selectedVehicleIds, staticSceneSignature, twinOverlay]);
+  }, [model.mode, model.selectedVehicleId, model.vehicles, historicalPath, sensorsVisible, traceVisible, truthVisible, missionPreview, reviewMarker, selected?.id, selectedVehicleIds, staticSceneSignature, twinOverlay]);
 
   if (!model.room) {
     return <div className="room-empty"><Layers3 size={24} /><strong>No room</strong></div>;
@@ -652,6 +655,11 @@ export function RoomScene({
             <span className="is-plan"><i />Planned</span>
             {model.mode === "REPLAY" ? <span className="is-replay"><i />Replay history</span> : null}
             <small>Source {twinOverlay.sourceTimestampS?.toFixed(3) ?? "—"} s</small>
+          </div>
+        ) : null}
+        {reviewMarker ? (
+          <div className="room-review-marker" aria-live="polite">
+            Review source #{reviewMarker.sourceSequence} · {reviewMarker.sourceTimestampS.toFixed(3)} s
           </div>
         ) : null}
         <div ref={displayHealthRef} className="room-display-health" hidden aria-live="polite" />
@@ -878,6 +886,7 @@ export function syncDynamicScene(
   missionPreview?: MissionPreview,
   selectedVehicleIds?: string[],
   twinOverlay?: TwinSceneOverlay,
+  reviewMarker?: CampaignReviewCursorView,
 ) {
   const activeSyncKeys = new Set<string>();
   const selectedIds = new Set(
@@ -935,6 +944,10 @@ export function syncDynamicScene(
       predicted.visible = layers.trace;
       activeSyncKeys.add("twin-path:predicted");
     }
+  }
+  if (reviewMarker?.positionM) {
+    upsertReviewMarker(scene, reviewMarker);
+    activeSyncKeys.add("campaign-review-marker");
   }
   if (missionPreview) {
     missionPreview.vehicles.forEach((vehicle) => {
@@ -1298,6 +1311,30 @@ function removeStaleSyncedObjects(scene: Scene, activeSyncKeys: Set<string>) {
 function removeAndDispose(scene: Scene, object: Object3D) {
   scene.remove(object);
   disposeObjectTree(object);
+}
+
+function upsertReviewMarker(scene: Scene, cursor: CampaignReviewCursorView) {
+  if (!cursor.positionM) return;
+  const syncKey = "campaign-review-marker";
+  const existing = syncedObject(scene, syncKey);
+  const marker = existing instanceof Group ? existing : new Group();
+  if (!(existing instanceof Group)) {
+    marker.userData.sceneLayer = "dynamic";
+    marker.userData.syncKey = syncKey;
+    marker.userData.visualRole = "campaign-review-source-marker";
+    marker.add(new Mesh(
+      new SphereGeometry(0.09, 18, 12),
+      new MeshBasicMaterial({ color: 0xffffff, wireframe: true }),
+    ));
+    marker.add(new Mesh(
+      new SphereGeometry(0.035, 14, 10),
+      new MeshBasicMaterial({ color: 0xf2c45e }),
+    ));
+    scene.add(marker);
+  }
+  marker.userData.sourceSequence = cursor.sourceSequence;
+  marker.userData.sourceTimestampS = cursor.sourceTimestampS;
+  marker.position.copy(toThree(cursor.positionM));
 }
 
 function addTarget(scene: Scene, target: Vec3) {

@@ -1,0 +1,1892 @@
+{
+  "audit_id": "wp67-70-r2-design-audit-v1",
+  "base_commit": "40cd9947f87eb9bf2719d72e7c72ea867eab9977",
+  "checks": {
+    "certificate_command_classes_complete": true,
+    "clearance_025_speed_witness_exact": true,
+    "clocks_and_latency_exact": true,
+    "fixed_identity_excludes_run_id": true,
+    "generated_outputs_derived": true,
+    "guard_registry_independently_complete": true,
+    "guard_sources_present": true,
+    "nominal_and_stale_horizon_sensitive": true,
+    "physical_and_guaranteed_openings_exact": true,
+    "production_lattice_phase_counterexample_exact": true,
+    "stress_identity_is_explicit_seeded_truth": true,
+    "transit_discovered_and_classified": true,
+    "world_event_cardinality_exact": true,
+    "world_population_exact": true,
+    "world_sequences_contiguous": true
+  },
+  "dynamic_world_resolutions": {
+    "count_1": {
+      "definition": {
+        "obstacle_count": 1,
+        "run_id_participates_in_truth": false,
+        "schema_version": 1,
+        "source_case_id": "1d.online_obstacle_replan.dynamic_nominal",
+        "templates": {
+          "1": {
+            "added": [
+              -0.15,
+              -0.2,
+              0.1,
+              0.2,
+              0.2,
+              0.7
+            ],
+            "moved": [
+              0.2,
+              -0.25,
+              0.1,
+              0.5,
+              0.15,
+              0.7
+            ],
+            "solid_id": "sensed-rock-1"
+          }
+        },
+        "variation_mode": "FIXED",
+        "variation_seed": 42
+      },
+      "definition_sha256": "a3f952941ee7cd649965e5bf7d562841a88b09417c8049033f91e2ded7295019",
+      "event_set_sha256": "5c51265ef0993db67aba06df4df961f81b36a6f324c771c727e4cdc266f05b42",
+      "events": [
+        {
+          "acknowledgement_received": true,
+          "acknowledgement_required": false,
+          "authenticated": true,
+          "battery_percent": null,
+          "duration_s": 3.0,
+          "effective_source_s": 5.0,
+          "event_id": "online-obstacle-appear-1",
+          "expected_disposition": "ACCEPTED_UPDATE",
+          "generation": 1,
+          "kind": "OBSTACLE_ADDED",
+          "perception_change_kind": "SOLID_APPEARED",
+          "replacement_goal": {
+            "frame": "world",
+            "maximum_m": {
+              "x": 0.2,
+              "y": 0.2,
+              "z": 0.7
+            },
+            "minimum_m": {
+              "x": -0.15,
+              "y": -0.2,
+              "z": 0.1
+            },
+            "region_id": "sensed-rock-1"
+          },
+          "role_id": null,
+          "sensor_expires_source_s": 2.62,
+          "sensor_received_source_s": 2.12,
+          "sequence": 1,
+          "solid_id": "sensed-rock-1",
+          "source_id": "campaign-scenario",
+          "trigger_time_s": 2.0,
+          "update_identity": null
+        },
+        {
+          "acknowledgement_received": true,
+          "acknowledgement_required": false,
+          "authenticated": true,
+          "battery_percent": null,
+          "duration_s": 3.0,
+          "effective_source_s": 8.5,
+          "event_id": "online-obstacle-move-1",
+          "expected_disposition": "ACCEPTED_UPDATE",
+          "generation": 2,
+          "kind": "OBSTACLE_MOVED",
+          "perception_change_kind": "SOLID_MOVED",
+          "replacement_goal": {
+            "frame": "world",
+            "maximum_m": {
+              "x": 0.5,
+              "y": 0.15,
+              "z": 0.7
+            },
+            "minimum_m": {
+              "x": 0.2,
+              "y": -0.25,
+              "z": 0.1
+            },
+            "region_id": "sensed-rock-1"
+          },
+          "role_id": null,
+          "sensor_expires_source_s": 6.12,
+          "sensor_received_source_s": 5.62,
+          "sequence": 2,
+          "solid_id": "sensed-rock-1",
+          "source_id": "campaign-scenario",
+          "trigger_time_s": 5.5,
+          "update_identity": null
+        },
+        {
+          "acknowledgement_received": true,
+          "acknowledgement_required": false,
+          "authenticated": true,
+          "battery_percent": null,
+          "duration_s": 3.0,
+          "effective_source_s": 15.5,
+          "event_id": "online-obstacle-remove-1",
+          "expected_disposition": "ACCEPTED_UPDATE",
+          "generation": 3,
+          "kind": "OBSTACLE_REMOVED",
+          "perception_change_kind": "SOLID_DISAPPEARED",
+          "replacement_goal": null,
+          "role_id": null,
+          "sensor_expires_source_s": 13.12,
+          "sensor_received_source_s": 12.62,
+          "sequence": 3,
+          "solid_id": "sensed-rock-1",
+          "source_id": "campaign-scenario",
+          "trigger_time_s": 12.5,
+          "update_identity": "sensed-rock-1"
+        }
+      ],
+      "resolved_case_id": "1d.online_obstacle_replan.dynamic_nominal.world-3ccaaba230fc",
+      "resolved_case_sha256": "7950a23492921a98e90bfd2e3b3396060a7f4a1e0792eafd7193c15466de3285",
+      "resolved_dynamic_world_sha256": "3ccaaba230fc4d61f508b313edd4a3b19add7f28ad9a1242de16b2a7961f26f4"
+    },
+    "count_2": {
+      "definition": {
+        "obstacle_count": 2,
+        "run_id_participates_in_truth": false,
+        "schema_version": 1,
+        "source_case_id": "1d.online_obstacle_replan.dynamic_nominal",
+        "templates": {
+          "1": {
+            "added": [
+              -0.15,
+              -0.2,
+              0.1,
+              0.2,
+              0.2,
+              0.7
+            ],
+            "moved": [
+              0.2,
+              -0.25,
+              0.1,
+              0.5,
+              0.15,
+              0.7
+            ],
+            "solid_id": "sensed-rock-1"
+          },
+          "2": {
+            "added": [
+              0.85,
+              0.45,
+              0.0,
+              1.0,
+              0.9,
+              0.8
+            ],
+            "solid_id": "sensed-wall-2"
+          }
+        },
+        "variation_mode": "FIXED",
+        "variation_seed": 42
+      },
+      "definition_sha256": "60641e1b92ae8f5ca4a7eb2bc58196d9a4e9c483f6f9e06395354051367b1e7b",
+      "event_set_sha256": "6daac810e77b318e86e5f717b79edf4cdc4285c926d77fa0e01e98eeac986bdf",
+      "events": [
+        {
+          "acknowledgement_received": true,
+          "acknowledgement_required": false,
+          "authenticated": true,
+          "battery_percent": null,
+          "duration_s": 3.0,
+          "effective_source_s": 5.0,
+          "event_id": "online-obstacle-appear-1",
+          "expected_disposition": "ACCEPTED_UPDATE",
+          "generation": 1,
+          "kind": "OBSTACLE_ADDED",
+          "perception_change_kind": "SOLID_APPEARED",
+          "replacement_goal": {
+            "frame": "world",
+            "maximum_m": {
+              "x": 0.2,
+              "y": 0.2,
+              "z": 0.7
+            },
+            "minimum_m": {
+              "x": -0.15,
+              "y": -0.2,
+              "z": 0.1
+            },
+            "region_id": "sensed-rock-1"
+          },
+          "role_id": null,
+          "sensor_expires_source_s": 2.62,
+          "sensor_received_source_s": 2.12,
+          "sequence": 1,
+          "solid_id": "sensed-rock-1",
+          "source_id": "campaign-scenario",
+          "trigger_time_s": 2.0,
+          "update_identity": null
+        },
+        {
+          "acknowledgement_received": true,
+          "acknowledgement_required": false,
+          "authenticated": true,
+          "battery_percent": null,
+          "duration_s": 3.0,
+          "effective_source_s": 8.5,
+          "event_id": "online-obstacle-move-1",
+          "expected_disposition": "ACCEPTED_UPDATE",
+          "generation": 2,
+          "kind": "OBSTACLE_MOVED",
+          "perception_change_kind": "SOLID_MOVED",
+          "replacement_goal": {
+            "frame": "world",
+            "maximum_m": {
+              "x": 0.5,
+              "y": 0.15,
+              "z": 0.7
+            },
+            "minimum_m": {
+              "x": 0.2,
+              "y": -0.25,
+              "z": 0.1
+            },
+            "region_id": "sensed-rock-1"
+          },
+          "role_id": null,
+          "sensor_expires_source_s": 6.12,
+          "sensor_received_source_s": 5.62,
+          "sequence": 2,
+          "solid_id": "sensed-rock-1",
+          "source_id": "campaign-scenario",
+          "trigger_time_s": 5.5,
+          "update_identity": null
+        },
+        {
+          "acknowledgement_received": true,
+          "acknowledgement_required": false,
+          "authenticated": true,
+          "battery_percent": null,
+          "duration_s": 3.0,
+          "effective_source_s": 10.5,
+          "event_id": "online-obstacle-appear-2",
+          "expected_disposition": "ACCEPTED_UPDATE",
+          "generation": 3,
+          "kind": "OBSTACLE_ADDED",
+          "perception_change_kind": "SOLID_APPEARED",
+          "replacement_goal": {
+            "frame": "world",
+            "maximum_m": {
+              "x": 1.0,
+              "y": 0.9,
+              "z": 0.8
+            },
+            "minimum_m": {
+              "x": 0.85,
+              "y": 0.45,
+              "z": 0.0
+            },
+            "region_id": "sensed-wall-2"
+          },
+          "role_id": null,
+          "sensor_expires_source_s": 8.12,
+          "sensor_received_source_s": 7.62,
+          "sequence": 3,
+          "solid_id": "sensed-wall-2",
+          "source_id": "campaign-scenario",
+          "trigger_time_s": 7.5,
+          "update_identity": null
+        },
+        {
+          "acknowledgement_received": true,
+          "acknowledgement_required": false,
+          "authenticated": true,
+          "battery_percent": null,
+          "duration_s": 3.0,
+          "effective_source_s": 15.5,
+          "event_id": "online-obstacle-remove-1",
+          "expected_disposition": "ACCEPTED_UPDATE",
+          "generation": 4,
+          "kind": "OBSTACLE_REMOVED",
+          "perception_change_kind": "SOLID_DISAPPEARED",
+          "replacement_goal": null,
+          "role_id": null,
+          "sensor_expires_source_s": 13.12,
+          "sensor_received_source_s": 12.62,
+          "sequence": 4,
+          "solid_id": "sensed-rock-1",
+          "source_id": "campaign-scenario",
+          "trigger_time_s": 12.5,
+          "update_identity": "sensed-rock-1"
+        }
+      ],
+      "resolved_case_id": "1d.online_obstacle_replan.dynamic_nominal.world-341a988378f9",
+      "resolved_case_sha256": "9fc2700daf27fe77024e251f8672391aba0fb28bec5b1b90a0b0fe281514fff1",
+      "resolved_dynamic_world_sha256": "341a988378f9a960ebcf552f71a7818c661c205e155b01fccf095d082019bee5"
+    },
+    "count_3": {
+      "definition": {
+        "obstacle_count": 3,
+        "run_id_participates_in_truth": false,
+        "schema_version": 1,
+        "source_case_id": "1d.online_obstacle_replan.dynamic_nominal",
+        "templates": {
+          "1": {
+            "added": [
+              -0.15,
+              -0.2,
+              0.1,
+              0.2,
+              0.2,
+              0.7
+            ],
+            "moved": [
+              0.2,
+              -0.25,
+              0.1,
+              0.5,
+              0.15,
+              0.7
+            ],
+            "solid_id": "sensed-rock-1"
+          },
+          "2": {
+            "added": [
+              0.85,
+              0.45,
+              0.0,
+              1.0,
+              0.9,
+              0.8
+            ],
+            "solid_id": "sensed-wall-2"
+          },
+          "3": {
+            "added": [
+              0.55,
+              -0.8,
+              0.0,
+              0.75,
+              -0.45,
+              0.8
+            ],
+            "solid_id": "sensed-wall-3"
+          }
+        },
+        "variation_mode": "FIXED",
+        "variation_seed": 42
+      },
+      "definition_sha256": "5ee17b2e5704fbd0c2b4a841399be0cac9d3b6764c4312ba2aa9f10eec67d019",
+      "event_set_sha256": "7c12b67f67f774e39116a663fc5690a94aad24e45f4265e34ba25fbf7281bef4",
+      "events": [
+        {
+          "acknowledgement_received": true,
+          "acknowledgement_required": false,
+          "authenticated": true,
+          "battery_percent": null,
+          "duration_s": 3.0,
+          "effective_source_s": 5.0,
+          "event_id": "online-obstacle-appear-1",
+          "expected_disposition": "ACCEPTED_UPDATE",
+          "generation": 1,
+          "kind": "OBSTACLE_ADDED",
+          "perception_change_kind": "SOLID_APPEARED",
+          "replacement_goal": {
+            "frame": "world",
+            "maximum_m": {
+              "x": 0.2,
+              "y": 0.2,
+              "z": 0.7
+            },
+            "minimum_m": {
+              "x": -0.15,
+              "y": -0.2,
+              "z": 0.1
+            },
+            "region_id": "sensed-rock-1"
+          },
+          "role_id": null,
+          "sensor_expires_source_s": 2.62,
+          "sensor_received_source_s": 2.12,
+          "sequence": 1,
+          "solid_id": "sensed-rock-1",
+          "source_id": "campaign-scenario",
+          "trigger_time_s": 2.0,
+          "update_identity": null
+        },
+        {
+          "acknowledgement_received": true,
+          "acknowledgement_required": false,
+          "authenticated": true,
+          "battery_percent": null,
+          "duration_s": 3.0,
+          "effective_source_s": 8.5,
+          "event_id": "online-obstacle-move-1",
+          "expected_disposition": "ACCEPTED_UPDATE",
+          "generation": 2,
+          "kind": "OBSTACLE_MOVED",
+          "perception_change_kind": "SOLID_MOVED",
+          "replacement_goal": {
+            "frame": "world",
+            "maximum_m": {
+              "x": 0.5,
+              "y": 0.15,
+              "z": 0.7
+            },
+            "minimum_m": {
+              "x": 0.2,
+              "y": -0.25,
+              "z": 0.1
+            },
+            "region_id": "sensed-rock-1"
+          },
+          "role_id": null,
+          "sensor_expires_source_s": 6.12,
+          "sensor_received_source_s": 5.62,
+          "sequence": 2,
+          "solid_id": "sensed-rock-1",
+          "source_id": "campaign-scenario",
+          "trigger_time_s": 5.5,
+          "update_identity": null
+        },
+        {
+          "acknowledgement_received": true,
+          "acknowledgement_required": false,
+          "authenticated": true,
+          "battery_percent": null,
+          "duration_s": 3.0,
+          "effective_source_s": 10.5,
+          "event_id": "online-obstacle-appear-2",
+          "expected_disposition": "ACCEPTED_UPDATE",
+          "generation": 3,
+          "kind": "OBSTACLE_ADDED",
+          "perception_change_kind": "SOLID_APPEARED",
+          "replacement_goal": {
+            "frame": "world",
+            "maximum_m": {
+              "x": 1.0,
+              "y": 0.9,
+              "z": 0.8
+            },
+            "minimum_m": {
+              "x": 0.85,
+              "y": 0.45,
+              "z": 0.0
+            },
+            "region_id": "sensed-wall-2"
+          },
+          "role_id": null,
+          "sensor_expires_source_s": 8.12,
+          "sensor_received_source_s": 7.62,
+          "sequence": 3,
+          "solid_id": "sensed-wall-2",
+          "source_id": "campaign-scenario",
+          "trigger_time_s": 7.5,
+          "update_identity": null
+        },
+        {
+          "acknowledgement_received": true,
+          "acknowledgement_required": false,
+          "authenticated": true,
+          "battery_percent": null,
+          "duration_s": 3.0,
+          "effective_source_s": 12.25,
+          "event_id": "online-obstacle-appear-3",
+          "expected_disposition": "ACCEPTED_UPDATE",
+          "generation": 4,
+          "kind": "OBSTACLE_ADDED",
+          "perception_change_kind": "SOLID_APPEARED",
+          "replacement_goal": {
+            "frame": "world",
+            "maximum_m": {
+              "x": 0.75,
+              "y": -0.45,
+              "z": 0.8
+            },
+            "minimum_m": {
+              "x": 0.55,
+              "y": -0.8,
+              "z": 0.0
+            },
+            "region_id": "sensed-wall-3"
+          },
+          "role_id": null,
+          "sensor_expires_source_s": 9.87,
+          "sensor_received_source_s": 9.37,
+          "sequence": 4,
+          "solid_id": "sensed-wall-3",
+          "source_id": "campaign-scenario",
+          "trigger_time_s": 9.25,
+          "update_identity": null
+        },
+        {
+          "acknowledgement_received": true,
+          "acknowledgement_required": false,
+          "authenticated": true,
+          "battery_percent": null,
+          "duration_s": 3.0,
+          "effective_source_s": 15.5,
+          "event_id": "online-obstacle-remove-1",
+          "expected_disposition": "ACCEPTED_UPDATE",
+          "generation": 5,
+          "kind": "OBSTACLE_REMOVED",
+          "perception_change_kind": "SOLID_DISAPPEARED",
+          "replacement_goal": null,
+          "role_id": null,
+          "sensor_expires_source_s": 13.12,
+          "sensor_received_source_s": 12.62,
+          "sequence": 5,
+          "solid_id": "sensed-rock-1",
+          "source_id": "campaign-scenario",
+          "trigger_time_s": 12.5,
+          "update_identity": "sensed-rock-1"
+        }
+      ],
+      "resolved_case_id": "1d.online_obstacle_replan.dynamic_nominal.world-5a53746293ef",
+      "resolved_case_sha256": "26c05cb54ffc0456904fd247266f9c6cc4666c3bdf77d9ff56a7479809d82d34",
+      "resolved_dynamic_world_sha256": "5a53746293ef45214761384dc3050cf7c6903c810912c1fc6f5832ceb5918277"
+    },
+    "count_4": {
+      "definition": {
+        "obstacle_count": 4,
+        "run_id_participates_in_truth": false,
+        "schema_version": 1,
+        "source_case_id": "1d.online_obstacle_replan.dynamic_nominal",
+        "templates": {
+          "1": {
+            "added": [
+              -0.15,
+              -0.2,
+              0.1,
+              0.2,
+              0.2,
+              0.7
+            ],
+            "moved": [
+              0.2,
+              -0.25,
+              0.1,
+              0.5,
+              0.15,
+              0.7
+            ],
+            "solid_id": "sensed-rock-1"
+          },
+          "2": {
+            "added": [
+              0.85,
+              0.45,
+              0.0,
+              1.0,
+              0.9,
+              0.8
+            ],
+            "solid_id": "sensed-wall-2"
+          },
+          "3": {
+            "added": [
+              0.55,
+              -0.8,
+              0.0,
+              0.75,
+              -0.45,
+              0.8
+            ],
+            "solid_id": "sensed-wall-3"
+          },
+          "4": {
+            "added": [
+              0.9,
+              -0.8,
+              0.0,
+              1.1,
+              -0.45,
+              0.8
+            ],
+            "solid_id": "sensed-wall-4"
+          }
+        },
+        "variation_mode": "FIXED",
+        "variation_seed": 42
+      },
+      "definition_sha256": "8684d7012027d586ee25539feec7d46326c77fa58d69dd1e31e92ae8e0ad1902",
+      "event_set_sha256": "114c451cedc4bd07abf8b6fee28265c536df89f2fb72e2639e7ec30dde4d01df",
+      "events": [
+        {
+          "acknowledgement_received": true,
+          "acknowledgement_required": false,
+          "authenticated": true,
+          "battery_percent": null,
+          "duration_s": 3.0,
+          "effective_source_s": 5.0,
+          "event_id": "online-obstacle-appear-1",
+          "expected_disposition": "ACCEPTED_UPDATE",
+          "generation": 1,
+          "kind": "OBSTACLE_ADDED",
+          "perception_change_kind": "SOLID_APPEARED",
+          "replacement_goal": {
+            "frame": "world",
+            "maximum_m": {
+              "x": 0.2,
+              "y": 0.2,
+              "z": 0.7
+            },
+            "minimum_m": {
+              "x": -0.15,
+              "y": -0.2,
+              "z": 0.1
+            },
+            "region_id": "sensed-rock-1"
+          },
+          "role_id": null,
+          "sensor_expires_source_s": 2.62,
+          "sensor_received_source_s": 2.12,
+          "sequence": 1,
+          "solid_id": "sensed-rock-1",
+          "source_id": "campaign-scenario",
+          "trigger_time_s": 2.0,
+          "update_identity": null
+        },
+        {
+          "acknowledgement_received": true,
+          "acknowledgement_required": false,
+          "authenticated": true,
+          "battery_percent": null,
+          "duration_s": 3.0,
+          "effective_source_s": 8.5,
+          "event_id": "online-obstacle-move-1",
+          "expected_disposition": "ACCEPTED_UPDATE",
+          "generation": 2,
+          "kind": "OBSTACLE_MOVED",
+          "perception_change_kind": "SOLID_MOVED",
+          "replacement_goal": {
+            "frame": "world",
+            "maximum_m": {
+              "x": 0.5,
+              "y": 0.15,
+              "z": 0.7
+            },
+            "minimum_m": {
+              "x": 0.2,
+              "y": -0.25,
+              "z": 0.1
+            },
+            "region_id": "sensed-rock-1"
+          },
+          "role_id": null,
+          "sensor_expires_source_s": 6.12,
+          "sensor_received_source_s": 5.62,
+          "sequence": 2,
+          "solid_id": "sensed-rock-1",
+          "source_id": "campaign-scenario",
+          "trigger_time_s": 5.5,
+          "update_identity": null
+        },
+        {
+          "acknowledgement_received": true,
+          "acknowledgement_required": false,
+          "authenticated": true,
+          "battery_percent": null,
+          "duration_s": 3.0,
+          "effective_source_s": 10.5,
+          "event_id": "online-obstacle-appear-2",
+          "expected_disposition": "ACCEPTED_UPDATE",
+          "generation": 3,
+          "kind": "OBSTACLE_ADDED",
+          "perception_change_kind": "SOLID_APPEARED",
+          "replacement_goal": {
+            "frame": "world",
+            "maximum_m": {
+              "x": 1.0,
+              "y": 0.9,
+              "z": 0.8
+            },
+            "minimum_m": {
+              "x": 0.85,
+              "y": 0.45,
+              "z": 0.0
+            },
+            "region_id": "sensed-wall-2"
+          },
+          "role_id": null,
+          "sensor_expires_source_s": 8.12,
+          "sensor_received_source_s": 7.62,
+          "sequence": 3,
+          "solid_id": "sensed-wall-2",
+          "source_id": "campaign-scenario",
+          "trigger_time_s": 7.5,
+          "update_identity": null
+        },
+        {
+          "acknowledgement_received": true,
+          "acknowledgement_required": false,
+          "authenticated": true,
+          "battery_percent": null,
+          "duration_s": 3.0,
+          "effective_source_s": 12.25,
+          "event_id": "online-obstacle-appear-3",
+          "expected_disposition": "ACCEPTED_UPDATE",
+          "generation": 4,
+          "kind": "OBSTACLE_ADDED",
+          "perception_change_kind": "SOLID_APPEARED",
+          "replacement_goal": {
+            "frame": "world",
+            "maximum_m": {
+              "x": 0.75,
+              "y": -0.45,
+              "z": 0.8
+            },
+            "minimum_m": {
+              "x": 0.55,
+              "y": -0.8,
+              "z": 0.0
+            },
+            "region_id": "sensed-wall-3"
+          },
+          "role_id": null,
+          "sensor_expires_source_s": 9.87,
+          "sensor_received_source_s": 9.37,
+          "sequence": 4,
+          "solid_id": "sensed-wall-3",
+          "source_id": "campaign-scenario",
+          "trigger_time_s": 9.25,
+          "update_identity": null
+        },
+        {
+          "acknowledgement_received": true,
+          "acknowledgement_required": false,
+          "authenticated": true,
+          "battery_percent": null,
+          "duration_s": 3.0,
+          "effective_source_s": 14.0,
+          "event_id": "online-obstacle-appear-4",
+          "expected_disposition": "ACCEPTED_UPDATE",
+          "generation": 5,
+          "kind": "OBSTACLE_ADDED",
+          "perception_change_kind": "SOLID_APPEARED",
+          "replacement_goal": {
+            "frame": "world",
+            "maximum_m": {
+              "x": 1.1,
+              "y": -0.45,
+              "z": 0.8
+            },
+            "minimum_m": {
+              "x": 0.9,
+              "y": -0.8,
+              "z": 0.0
+            },
+            "region_id": "sensed-wall-4"
+          },
+          "role_id": null,
+          "sensor_expires_source_s": 11.62,
+          "sensor_received_source_s": 11.12,
+          "sequence": 5,
+          "solid_id": "sensed-wall-4",
+          "source_id": "campaign-scenario",
+          "trigger_time_s": 11.0,
+          "update_identity": null
+        },
+        {
+          "acknowledgement_received": true,
+          "acknowledgement_required": false,
+          "authenticated": true,
+          "battery_percent": null,
+          "duration_s": 3.0,
+          "effective_source_s": 15.5,
+          "event_id": "online-obstacle-remove-1",
+          "expected_disposition": "ACCEPTED_UPDATE",
+          "generation": 6,
+          "kind": "OBSTACLE_REMOVED",
+          "perception_change_kind": "SOLID_DISAPPEARED",
+          "replacement_goal": null,
+          "role_id": null,
+          "sensor_expires_source_s": 13.12,
+          "sensor_received_source_s": 12.62,
+          "sequence": 6,
+          "solid_id": "sensed-rock-1",
+          "source_id": "campaign-scenario",
+          "trigger_time_s": 12.5,
+          "update_identity": "sensed-rock-1"
+        }
+      ],
+      "resolved_case_id": "1d.online_obstacle_replan.dynamic_nominal.world-7fb41e2607d5",
+      "resolved_case_sha256": "44f4a3b91dbf5c7e5de53a0a1fd8eff98adc4d989e187c3891fa3cb57c101f82",
+      "resolved_dynamic_world_sha256": "7fb41e2607d56ad4399181d67e53eea392dab3d54a9a71ce6e3cfa7c85525bf3"
+    }
+  },
+  "generated_outputs": [
+    "ui/app/lib/api.generated.ts",
+    "ui/openapi.json"
+  ],
+  "guard_registry": {
+    "braking_and_jerk": {
+      "isolated_perturbation": "inject a 1.1 m/s^2 hard-brake sample",
+      "metric": "route_peak_deceleration_m_s2 / route_peak_jerk_m_s3",
+      "threshold": "<=1.0 m/s^2 and <=8.0 m/s^3"
+    },
+    "clearance_and_collision": {
+      "isolated_perturbation": "move a solid 0.01 m inside requested clearance",
+      "metric": "minimum_nominal_envelope_to_solid_clearance_m / collision_count",
+      "threshold": ">=requested clearance and 0 collisions"
+    },
+    "event_commit_completeness": {
+      "isolated_perturbation": "remove one preparation receipt",
+      "metric": "configured/observed/certified/committed/dispatched event identity join",
+      "threshold": "complete for every configured event"
+    },
+    "freshness_and_budget": {
+      "isolated_perturbation": "age the final observation to 0.251 s",
+      "metric": "observation_age_s / start_error_m / cumulative_planning_latency_s",
+      "threshold": "<=0.25 s / <=0.10 m / <=2.0 s"
+    },
+    "goal_and_landing": {
+      "isolated_perturbation": "omit the landing completion record",
+      "metric": "goal_capture_and_landing",
+      "threshold": "both captured with declared terminal limits"
+    },
+    "route_continuity": {
+      "isolated_perturbation": "mirror one replacement onto the opposite feasible side",
+      "metric": "replacement_initial_heading_change_rad / nominal_side_reversal_count",
+      "threshold": "<=pi/2 and 0 nominal side reversals"
+    },
+    "speed": {
+      "isolated_perturbation": "replace every moving sample with 0.10 m/s",
+      "metric": "accepted_epoch_speed_band_coverage_fraction",
+      "threshold": ">=0.95 outside takeoff/cutover/final-capture windows"
+    },
+    "trajectory_tracking": {
+      "isolated_perturbation": "offset observed position 0.04 m from accepted trajectory",
+      "metric": "accepted_epoch_trajectory_tracking_rms_m",
+      "threshold": "<=0.03 m"
+    },
+    "unintended_stop": {
+      "isolated_perturbation": "insert a 0.21 s zero-speed interval inside one moving epoch",
+      "metric": "accepted_epoch_unintended_stop_count",
+      "threshold": "0; speed <=0.02 m/s continuously for >=0.20 s only within a moving epoch"
+    }
+  },
+  "lattice_phase_witnesses": [
+    {
+      "gap_center_offset_from_lattice_m": 0.0,
+      "production_disposition": "SELECTED",
+      "raw_gap_m": 0.61,
+      "result_sha256": "ceb351b9893db97945f062332b55a48c51039f30e78a30fff144cd6cd2657102"
+    },
+    {
+      "gap_center_offset_from_lattice_m": 0.025,
+      "production_disposition": "NO_SOLUTION",
+      "raw_gap_m": 0.61,
+      "result_sha256": "819df402daac914248eb5fb76545001b11fe11e2dad1b4073a7945cb4721ca81"
+    },
+    {
+      "gap_center_offset_from_lattice_m": 0.025,
+      "production_disposition": "NO_SOLUTION",
+      "raw_gap_m": 0.63,
+      "result_sha256": "595720a5c700ca2ef4af4072b19f5283f5142972b8dddd0c3eb360390d0eb18e"
+    },
+    {
+      "gap_center_offset_from_lattice_m": 0.025,
+      "production_disposition": "SELECTED",
+      "raw_gap_m": 0.66,
+      "result_sha256": "573fc4b6c55a9e3bd8c622c32cb99da9387cb85972b100f193fb2b14dfa6f857"
+    }
+  ],
+  "occupancy_witnesses": {
+    "count_1": {
+      "event_count": 3,
+      "event_ids": [
+        "online-obstacle-appear-1",
+        "online-obstacle-move-1",
+        "online-obstacle-remove-1"
+      ],
+      "generations": [
+        1,
+        2,
+        3
+      ],
+      "maximum_simultaneous_obstacles": 1,
+      "sequences": [
+        1,
+        2,
+        3
+      ],
+      "solid_ids": [
+        "sensed-rock-1"
+      ]
+    },
+    "count_2": {
+      "event_count": 4,
+      "event_ids": [
+        "online-obstacle-appear-1",
+        "online-obstacle-move-1",
+        "online-obstacle-appear-2",
+        "online-obstacle-remove-1"
+      ],
+      "generations": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "maximum_simultaneous_obstacles": 2,
+      "sequences": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "solid_ids": [
+        "sensed-rock-1",
+        "sensed-wall-2"
+      ]
+    },
+    "count_3": {
+      "event_count": 5,
+      "event_ids": [
+        "online-obstacle-appear-1",
+        "online-obstacle-move-1",
+        "online-obstacle-appear-2",
+        "online-obstacle-appear-3",
+        "online-obstacle-remove-1"
+      ],
+      "generations": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "maximum_simultaneous_obstacles": 3,
+      "sequences": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "solid_ids": [
+        "sensed-rock-1",
+        "sensed-wall-2",
+        "sensed-wall-3"
+      ]
+    },
+    "count_4": {
+      "event_count": 6,
+      "event_ids": [
+        "online-obstacle-appear-1",
+        "online-obstacle-move-1",
+        "online-obstacle-appear-2",
+        "online-obstacle-appear-3",
+        "online-obstacle-appear-4",
+        "online-obstacle-remove-1"
+      ],
+      "generations": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "maximum_simultaneous_obstacles": 4,
+      "sequences": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "solid_ids": [
+        "sensed-rock-1",
+        "sensed-wall-2",
+        "sensed-wall-3",
+        "sensed-wall-4"
+      ]
+    }
+  },
+  "opening_witnesses": [
+    {
+      "components": {
+        "cell_size_phase_reserve_m": 0.05,
+        "position_uncertainty_m": 0.05,
+        "spline_search_reserve_m": 0.05,
+        "vehicle_radius_m": 0.055
+      },
+      "minimum_clearance_m": 0.15,
+      "physical_protected_opening_m": 0.61,
+      "planner_guaranteed_opening_m": 0.66
+    },
+    {
+      "components": {
+        "cell_size_phase_reserve_m": 0.05,
+        "position_uncertainty_m": 0.05,
+        "spline_search_reserve_m": 0.05,
+        "vehicle_radius_m": 0.055
+      },
+      "minimum_clearance_m": 0.25,
+      "physical_protected_opening_m": 0.81,
+      "planner_guaranteed_opening_m": 0.86
+    }
+  ],
+  "passed": true,
+  "reaction_witnesses": {
+    "certificate_command_witnesses": [
+      {
+        "case": "nominal fresh feasible detour",
+        "certificate": "safe-prefix + corridor + preparation receipt",
+        "command": "MOVING_REPLACEMENT",
+        "dispatch": true
+      },
+      {
+        "case": "late observation with certified safe stationary prefix",
+        "certificate": "safe-prefix only",
+        "command": "STOP_AND_HOLD",
+        "dispatch": true
+      },
+      {
+        "case": "late observation without safe stationary prefix",
+        "certificate": "abort-route certificate",
+        "command": "ABORT_AND_LAND",
+        "dispatch": true
+      },
+      {
+        "case": "missing or tampered preparation receipt",
+        "certificate": "invalid",
+        "command": "NO_REPLACEMENT_DISPATCH",
+        "dispatch": false
+      }
+    ],
+    "clocks_and_latency": {
+      "acknowledgement_latency_s": 0.0006,
+      "complete_response_latency_s": 0.74,
+      "cutover_guard_s": 0.0994,
+      "event_effective_source_s": 5.0,
+      "freshness_limit_s": 0.25,
+      "planning_budget_s": 2.0,
+      "planning_latency_witness_s": 0.5,
+      "prediction_horizon_s": 3.0,
+      "sensor_expiry_s": 0.5,
+      "sensor_latency_s": 0.12,
+      "sensor_received_source_s": 2.12,
+      "trajectory_prediction_step_s": 0.02,
+      "truth_trigger_source_s": 2.0,
+      "validation_queue_latency_s": 0.02
+    },
+    "nominal_reaction_horizon": {
+      "acknowledgement_latency_s": 0.0006,
+      "available_event_lead_s": 3.0,
+      "available_old_epoch_horizon_s": 3.0,
+      "cutover_guard_s": 0.0994,
+      "observation_latency_s": 0.1200000000000001,
+      "passed": true,
+      "planning_latency_s": 0.5,
+      "proposed_cutover_source_s": 2.74,
+      "queue_latency_s": 0.02,
+      "reaction_deadline_source_s": 5.0,
+      "total_reaction_s": 0.7400000000000002
+    },
+    "speed_rows": [
+      {
+        "clearance_m": 0.15,
+        "complete_latency_s": 0.7400000000000001,
+        "jerk_limited_stop_distance_m": 0.060175,
+        "jerk_limited_stop_time_s": 0.415,
+        "margin_m": 0.17022499999999996,
+        "perceived_center_to_surface_distance_m": 0.7,
+        "required_action": "MOVING_DECELERATE_AND_TURN",
+        "required_center_to_surface_distance_m": 0.529775,
+        "response_distance_m": 0.274775,
+        "speed_m_s": 0.29,
+        "urgency_0_to_1": 0.31910000000000016
+      },
+      {
+        "clearance_m": 0.15,
+        "complete_latency_s": 0.7400000000000001,
+        "jerk_limited_stop_distance_m": 0.06375,
+        "jerk_limited_stop_time_s": 0.425,
+        "margin_m": 0.1592499999999999,
+        "perceived_center_to_surface_distance_m": 0.7,
+        "required_action": "MOVING_DECELERATE_AND_TURN",
+        "required_center_to_surface_distance_m": 0.5407500000000001,
+        "response_distance_m": 0.28575000000000006,
+        "speed_m_s": 0.3,
+        "urgency_0_to_1": 0.36300000000000043
+      },
+      {
+        "clearance_m": 0.15,
+        "complete_latency_s": 0.7400000000000001,
+        "jerk_limited_stop_distance_m": 0.15625,
+        "jerk_limited_stop_time_s": 0.625,
+        "margin_m": -0.08125000000000016,
+        "perceived_center_to_surface_distance_m": 0.7,
+        "required_action": "IMMEDIATE_CERTIFIED_FALLBACK",
+        "required_center_to_surface_distance_m": 0.7812500000000001,
+        "response_distance_m": 0.5262500000000001,
+        "speed_m_s": 0.5,
+        "urgency_0_to_1": 1.0
+      },
+      {
+        "clearance_m": 0.25,
+        "complete_latency_s": 0.7400000000000001,
+        "jerk_limited_stop_distance_m": 0.060175,
+        "jerk_limited_stop_time_s": 0.415,
+        "margin_m": 0.07022499999999998,
+        "perceived_center_to_surface_distance_m": 0.7,
+        "required_action": "MOVING_DECELERATE_AND_TURN",
+        "required_center_to_surface_distance_m": 0.629775,
+        "response_distance_m": 0.274775,
+        "speed_m_s": 0.29,
+        "urgency_0_to_1": 0.7191000000000001
+      },
+      {
+        "clearance_m": 0.25,
+        "complete_latency_s": 0.7400000000000001,
+        "jerk_limited_stop_distance_m": 0.06375,
+        "jerk_limited_stop_time_s": 0.425,
+        "margin_m": 0.059249999999999914,
+        "perceived_center_to_surface_distance_m": 0.7,
+        "required_action": "MOVING_DECELERATE_AND_TURN",
+        "required_center_to_surface_distance_m": 0.64075,
+        "response_distance_m": 0.28575000000000006,
+        "speed_m_s": 0.3,
+        "urgency_0_to_1": 0.7630000000000003
+      },
+      {
+        "clearance_m": 0.25,
+        "complete_latency_s": 0.7400000000000001,
+        "jerk_limited_stop_distance_m": 0.15625,
+        "jerk_limited_stop_time_s": 0.625,
+        "margin_m": -0.18125000000000013,
+        "perceived_center_to_surface_distance_m": 0.7,
+        "required_action": "IMMEDIATE_CERTIFIED_FALLBACK",
+        "required_center_to_surface_distance_m": 0.8812500000000001,
+        "response_distance_m": 0.5262500000000001,
+        "speed_m_s": 0.5,
+        "urgency_0_to_1": 1.0
+      }
+    ],
+    "stale_reaction_horizon": {
+      "acknowledgement_latency_s": 0.0006,
+      "available_event_lead_s": 3.0,
+      "available_old_epoch_horizon_s": 3.0,
+      "cutover_guard_s": 0.0994,
+      "observation_latency_s": 0.2509999999999999,
+      "passed": false,
+      "planning_latency_s": 0.5,
+      "proposed_cutover_source_s": 2.871,
+      "queue_latency_s": 0.02,
+      "reaction_deadline_source_s": 5.0,
+      "total_reaction_s": 0.871
+    }
+  },
+  "repeat_identity_witnesses": {
+    "fixed_same_seed_a": "5a53746293ef45214761384dc3050cf7c6903c810912c1fc6f5832ceb5918277",
+    "fixed_same_seed_different_run_id": "5a53746293ef45214761384dc3050cf7c6903c810912c1fc6f5832ceb5918277",
+    "stress_seed_43": "86dba01998885c3fc7cd85e18b4e74bfaf7f01868e4643b0800972e19a45bf34",
+    "stress_seed_44": "bbddc3fdca682f9173f9a3744344df34ff54844359b44114fbe80daa4f773ab6"
+  },
+  "schema_version": 1,
+  "source_derived_guard_categories": {
+    "braking_and_jerk": [
+      {
+        "found": true,
+        "needle": "hard braking",
+        "path": "docs/work-packages/ACTIVE.md"
+      },
+      {
+        "found": true,
+        "needle": "jerk",
+        "path": "docs/project/requirements/MOTION_AND_CONTROL.md"
+      }
+    ],
+    "clearance_and_collision": [
+      {
+        "found": true,
+        "needle": "minimum safe margin",
+        "path": "docs/work-packages/ACTIVE.md"
+      },
+      {
+        "found": true,
+        "needle": "clearance",
+        "path": "docs/project/requirements/PLANNING_AND_GEOMETRY.md"
+      }
+    ],
+    "event_commit_completeness": [
+      {
+        "found": true,
+        "needle": "commit",
+        "path": "docs/project/requirements/REPLANNING_AND_RUNTIME.md"
+      },
+      {
+        "found": true,
+        "needle": "event",
+        "path": "docs/project/requirements/EVIDENCE_AND_REVIEW.md"
+      }
+    ],
+    "freshness_and_budget": [
+      {
+        "found": true,
+        "needle": "stale-cutover",
+        "path": "docs/work-packages/ACTIVE.md"
+      },
+      {
+        "found": true,
+        "needle": "budget",
+        "path": "docs/project/requirements/REPLANNING_AND_RUNTIME.md"
+      }
+    ],
+    "goal_and_landing": [
+      {
+        "found": true,
+        "needle": "goal",
+        "path": "docs/project/requirements/REPLANNING_AND_RUNTIME.md"
+      },
+      {
+        "found": true,
+        "needle": "landing",
+        "path": "docs/project/requirements/MISSION_AND_CURRICULUM.md"
+      }
+    ],
+    "route_continuity": [
+      {
+        "found": true,
+        "needle": "route-side churn",
+        "path": "docs/work-packages/ACTIVE.md"
+      },
+      {
+        "found": true,
+        "needle": "continuity",
+        "path": "docs/project/requirements/MOTION_AND_CONTROL.md"
+      }
+    ],
+    "speed": [
+      {
+        "found": true,
+        "needle": "infeasible speed",
+        "path": "docs/work-packages/ACTIVE.md"
+      },
+      {
+        "found": true,
+        "needle": "speed",
+        "path": "docs/project/requirements/MOTION_AND_CONTROL.md"
+      }
+    ],
+    "trajectory_tracking": [
+      {
+        "found": true,
+        "needle": "tracking",
+        "path": "docs/project/requirements/MOTION_AND_CONTROL.md"
+      },
+      {
+        "found": true,
+        "needle": "tracking",
+        "path": "docs/project/requirements/REPLANNING_AND_RUNTIME.md"
+      }
+    ],
+    "unintended_stop": [
+      {
+        "found": true,
+        "needle": "unintended stop",
+        "path": "docs/work-packages/ACTIVE.md"
+      },
+      {
+        "found": true,
+        "needle": "stop",
+        "path": "docs/project/requirements/MOTION_AND_CONTROL.md"
+      }
+    ]
+  },
+  "source_to_transit_discovery": {
+    "design.md": {
+      "anchors": [],
+      "edit_classification": "MODIFY",
+      "sha256": "e6b17a1fd6e4b9a070fc593014047b854bc40d892cb3d454bb451f2b1700a400",
+      "state": "EXISTING"
+    },
+    "docs/project/DESIGN.md": {
+      "anchors": [],
+      "edit_classification": "MODIFY",
+      "sha256": "230ff0ca3ff628f6ef7ad88b0ee6945a3079a615f34ccf55fe46d0541d20a383",
+      "state": "EXISTING"
+    },
+    "docs/system/README.md": {
+      "anchors": [],
+      "edit_classification": "MODIFY",
+      "sha256": "c8ba2f8620cacd022c58971e395a7629408932df92c301c5c2f4f37ccc145442",
+      "state": "EXISTING"
+    },
+    "missions/campaigns/sim/cases/dynamic-replanning/1d-cases-v1.yaml": {
+      "anchors": [],
+      "edit_classification": "MODIFY",
+      "sha256": "4f460bbeee2761857830f6ed1beefd87e2a2152cee783a003bced564f2d41b57",
+      "state": "EXISTING"
+    },
+    "missions/library/one_drone/online_obstacle_replan/mission.py": {
+      "anchors": [],
+      "edit_classification": "MODIFY",
+      "sha256": "a02ee1491bc62f161eea214f1bc6f9a3c6ddf09c9287a3ea7bb3058c090269e3",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/api/app.py": {
+      "anchors": [
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 79
+        },
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 171
+        },
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 174
+        },
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 187
+        },
+        {
+          "anchor": "CampaignRunRequest",
+          "line": 57
+        },
+        {
+          "anchor": "CampaignRunRequest",
+          "line": 849
+        },
+        {
+          "anchor": "CampaignRunRequest",
+          "line": 2811
+        }
+      ],
+      "edit_classification": "MODIFY",
+      "sha256": "e8d7c2b92947dc63594c06f40f0637f68ee693ba82ff169571fd7633b9e4619d",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/analyzer.py": {
+      "anchors": [
+        {
+          "anchor": "_motion_guard_verdict",
+          "line": 337
+        },
+        {
+          "anchor": "_motion_guard_verdict",
+          "line": 2455
+        },
+        {
+          "anchor": "_classify",
+          "line": 901
+        },
+        {
+          "anchor": "_classify",
+          "line": 2384
+        }
+      ],
+      "edit_classification": "MODIFY",
+      "sha256": "2a7a70bbd7fb88765a5096de5b702137ff4d9caf7905f4f15e92e3eb052a0884",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/api_models.py": {
+      "anchors": [
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 15
+        },
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 45
+        },
+        {
+          "anchor": "CampaignRunRequest",
+          "line": 38
+        }
+      ],
+      "edit_classification": "MODIFY",
+      "sha256": "b1a9506a689d8973261bf1f3ced3d859da55e04dc3919b16f4035c1a8555fb29",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/catalog.py": {
+      "anchors": [],
+      "edit_classification": "MODIFY",
+      "sha256": "101a02d31434e552c58f75e4681850f475ca4ec724b1f8bbcdd7c75c07d994a9",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/corridor.py": {
+      "anchors": [
+        {
+          "anchor": "search_goal_corridor",
+          "line": 70
+        }
+      ],
+      "edit_classification": "MODIFY",
+      "sha256": "4cda334f3d25cb381cf1fb812bce8de2d23e255916e0d7dbdc2e3cee12e9fd23",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/dynamic_obstacles.py": {
+      "anchors": [],
+      "edit_classification": "NEW",
+      "sha256": null,
+      "state": "INTENDED_NEW"
+    },
+    "src/crazyswarm_app/campaign/execution_head.py": {
+      "anchors": [
+        {
+          "anchor": "CampaignExecutionHead",
+          "line": 90
+        },
+        {
+          "anchor": "plan_changed_world_replacement",
+          "line": 33
+        },
+        {
+          "anchor": "plan_changed_world_replacement",
+          "line": 72
+        },
+        {
+          "anchor": "_response_urgency",
+          "line": 408
+        },
+        {
+          "anchor": "_response_urgency",
+          "line": 536
+        },
+        {
+          "anchor": "_response_urgency",
+          "line": 1102
+        }
+      ],
+      "edit_classification": "MODIFY",
+      "sha256": "ba87347101f1b8153bfdb16e3f36ec592f78456e63a94ab9adbc99781f2133a4",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/models.py": {
+      "anchors": [],
+      "edit_classification": "MODIFY",
+      "sha256": "3c008c0b8a6d7334796098072198c675aafbc689a4bcfc20be3afc77460ce771",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/planner.py": {
+      "anchors": [],
+      "edit_classification": "MODIFY",
+      "sha256": "c32774863d2e689baa151e900d3a7fdaebd68d51ee27e8797c458b2b59b07160",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/qualification.py": {
+      "anchors": [
+        {
+          "anchor": "plan_changed_world_replacement",
+          "line": 36
+        },
+        {
+          "anchor": "plan_changed_world_replacement",
+          "line": 659
+        }
+      ],
+      "edit_classification": "PRESERVE",
+      "sha256": "18190b7f62ceb0079e339fd9829f0030a2627ffea970e42862a046ebdf24cb67",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/replanning.py": {
+      "anchors": [
+        {
+          "anchor": "search_goal_corridor",
+          "line": 15
+        },
+        {
+          "anchor": "search_goal_corridor",
+          "line": 935
+        },
+        {
+          "anchor": "plan_changed_world_replacement",
+          "line": 851
+        }
+      ],
+      "edit_classification": "MODIFY",
+      "sha256": "5f4227270538482cd3b6c491d71135e828d0dcdcf5fac6411f72f8519c2c804f",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/runtime_executor.py": {
+      "anchors": [
+        {
+          "anchor": "CampaignExecutionRequest",
+          "line": 22
+        },
+        {
+          "anchor": "CampaignExecutionRequest",
+          "line": 84
+        },
+        {
+          "anchor": "CampaignExecutionRequest",
+          "line": 143
+        },
+        {
+          "anchor": "CampaignExecutionRequest",
+          "line": 396
+        },
+        {
+          "anchor": "CampaignExecutionRequest",
+          "line": 513
+        },
+        {
+          "anchor": "CampaignExecutionRequest",
+          "line": 529
+        },
+        {
+          "anchor": "compile_scenario_trace",
+          "line": 20
+        },
+        {
+          "anchor": "compile_scenario_trace",
+          "line": 88
+        },
+        {
+          "anchor": "SimulatedPerceptionObservationSource",
+          "line": 56
+        },
+        {
+          "anchor": "SimulatedPerceptionObservationSource",
+          "line": 169
+        },
+        {
+          "anchor": "SimulatedPerceptionObservationSource",
+          "line": 401
+        },
+        {
+          "anchor": "SimulatedPerceptionObservationSource",
+          "line": 467
+        },
+        {
+          "anchor": "SimulatedPerceptionObservationSource",
+          "line": 480
+        },
+        {
+          "anchor": "CampaignExecutionHead",
+          "line": 10
+        },
+        {
+          "anchor": "CampaignExecutionHead",
+          "line": 102
+        },
+        {
+          "anchor": "CampaignExecutionHead",
+          "line": 147
+        },
+        {
+          "anchor": "CampaignExecutionHead",
+          "line": 374
+        }
+      ],
+      "edit_classification": "MODIFY",
+      "sha256": "3835eba7f9732e2103a8c92fa2a69088ac27115cf29275e6c7997198aaaa2669",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/scenario.py": {
+      "anchors": [
+        {
+          "anchor": "compile_scenario_trace",
+          "line": 36
+        }
+      ],
+      "edit_classification": "MODIFY",
+      "sha256": "c7e3ddeee88b235551ba2c31c639ef73da0edddfc46eb94cd5a83c24d96ef221",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/scheduling.py": {
+      "anchors": [],
+      "edit_classification": "MODIFY",
+      "sha256": "521aa0fe9d019c8ccbabf0f2204e463458bf1754f7a76da851ea60a66d1c97a8",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/service.py": {
+      "anchors": [
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 48
+        },
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 516
+        },
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 890
+        },
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 912
+        },
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 978
+        },
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 1067
+        },
+        {
+          "anchor": "ResolvedPlanningPackage",
+          "line": 50
+        },
+        {
+          "anchor": "ResolvedPlanningPackage",
+          "line": 113
+        },
+        {
+          "anchor": "ResolvedPlanningPackage",
+          "line": 470
+        },
+        {
+          "anchor": "ResolvedPlanningPackage",
+          "line": 518
+        },
+        {
+          "anchor": "ResolvedPlanningPackage",
+          "line": 914
+        },
+        {
+          "anchor": "ResolvedPlanningPackage",
+          "line": 936
+        },
+        {
+          "anchor": "ResolvedPlanningPackage",
+          "line": 945
+        },
+        {
+          "anchor": "ResolvedPlanningPackage",
+          "line": 979
+        },
+        {
+          "anchor": "CampaignExecutionRequest",
+          "line": 109
+        },
+        {
+          "anchor": "CampaignExecutionRequest",
+          "line": 120
+        },
+        {
+          "anchor": "CampaignExecutionRequest",
+          "line": 237
+        },
+        {
+          "anchor": "CampaignExecutionRequest",
+          "line": 1182
+        },
+        {
+          "anchor": "resolve_planning_package",
+          "line": 54
+        },
+        {
+          "anchor": "resolve_planning_package",
+          "line": 525
+        },
+        {
+          "anchor": "resolve_planning_package",
+          "line": 980
+        }
+      ],
+      "edit_classification": "MODIFY",
+      "sha256": "02377764969b001c44714d266338f5a8a7a491a9d6676ed8689c4e967747c1d5",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/submissions.py": {
+      "anchors": [
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 747
+        },
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 830
+        },
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 2247
+        },
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 2342
+        },
+        {
+          "anchor": "ResolvedPlanningPackage",
+          "line": 650
+        },
+        {
+          "anchor": "ResolvedPlanningPackage",
+          "line": 665
+        },
+        {
+          "anchor": "ResolvedPlanningPackage",
+          "line": 2248
+        },
+        {
+          "anchor": "ResolvedPlanningPackage",
+          "line": 2334
+        },
+        {
+          "anchor": "resolve_planning_package",
+          "line": 2239
+        }
+      ],
+      "edit_classification": "MODIFY",
+      "sha256": "748801249edd55c84dbc9fda8ccbafa992b3f39e5c55d1445ef8b536bf0b25a6",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/trajectory.py": {
+      "anchors": [],
+      "edit_classification": "MODIFY",
+      "sha256": "5653834436ab62c8483ad9b7d45bc249682377879af27cd9ef6ae81fb43bd45e",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/observability/evaluation.py": {
+      "anchors": [],
+      "edit_classification": "MODIFY",
+      "sha256": "f94e6ad3da7a1024e316615c1ce565f19a67223f1fe3517e480dd397513b7f46",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/observability/storage.py": {
+      "anchors": [],
+      "edit_classification": "MODIFY",
+      "sha256": "aa3e3abc76751e4f840145500c50dc419867a0120de53dfe3c9d0223a50dc689",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/simulation/sensors.py": {
+      "anchors": [
+        {
+          "anchor": "SimulatedPerceptionObservationSource",
+          "line": 71
+        }
+      ],
+      "edit_classification": "MODIFY",
+      "sha256": "707060cd2c2010a598a28e5a9357ecda3f0b7adbe00ecc37a42047b83d06e0f6",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/simulation/world.py": {
+      "anchors": [],
+      "edit_classification": "MODIFY",
+      "sha256": "b465609f1d3b3a024b18448ba07aba20ce0b4ee58f21eb63d21318e2360de1d9",
+      "state": "EXISTING"
+    },
+    "tests/campaign/test_dynamic_preparation.py": {
+      "anchors": [],
+      "edit_classification": "NEW",
+      "sha256": null,
+      "state": "INTENDED_NEW"
+    },
+    "ui/app/components/CampaignLab.tsx": {
+      "anchors": [
+        {
+          "anchor": "CampaignLab",
+          "line": 1009
+        },
+        {
+          "anchor": "previewActiveCampaign",
+          "line": 1354
+        },
+        {
+          "anchor": "previewActiveCampaign",
+          "line": 1358
+        }
+      ],
+      "edit_classification": "MODIFY",
+      "sha256": "370df7200383ebeca2811a7900aafd22669f9247d31337a30c575d3090bc77f3",
+      "state": "EXISTING"
+    },
+    "ui/app/components/ControlCenter.tsx": {
+      "anchors": [
+        {
+          "anchor": "CampaignLab",
+          "line": 65
+        },
+        {
+          "anchor": "CampaignLab",
+          "line": 65
+        },
+        {
+          "anchor": "CampaignLab",
+          "line": 1472
+        },
+        {
+          "anchor": "runActiveCampaign",
+          "line": 948
+        },
+        {
+          "anchor": "previewActiveCampaign",
+          "line": 456
+        }
+      ],
+      "edit_classification": "PRESERVE",
+      "sha256": "bcf8bee8b0be031574599de587799a132baf91c769ccf26fd0def3588b149db0",
+      "state": "EXISTING"
+    },
+    "ui/app/globals.css": {
+      "anchors": [],
+      "edit_classification": "MODIFY",
+      "sha256": "9c28ae8cfbcb9e332920cc98d78b06cf074bdfa05749d42a33d5a13c14ec3cee",
+      "state": "EXISTING"
+    },
+    "ui/app/lib/api.generated.ts": {
+      "anchors": [
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 2233
+        },
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 2583
+        },
+        {
+          "anchor": "MotionPreparationRequest",
+          "line": 2586
+        },
+        {
+          "anchor": "CampaignRunRequest",
+          "line": 2222
+        },
+        {
+          "anchor": "CampaignRunRequest",
+          "line": 2223
+        },
+        {
+          "anchor": "CampaignRunRequest",
+          "line": 3668
+        },
+        {
+          "anchor": "CampaignRunRequest",
+          "line": 6702
+        }
+      ],
+      "edit_classification": "GENERATED",
+      "sha256": "e56d9228080827eaa47bac9079d2744a6db467d443e25ffade444b13a497533c",
+      "state": "EXISTING"
+    },
+    "ui/app/lib/api.ts": {
+      "anchors": [
+        {
+          "anchor": "runActiveCampaign",
+          "line": 525
+        },
+        {
+          "anchor": "previewActiveCampaign",
+          "line": 487
+        }
+      ],
+      "edit_classification": "MODIFY",
+      "sha256": "e8f431a15caa0bcdd92d20486e0815c9487bea89b7fd0c6a917456cd18b49eeb",
+      "state": "EXISTING"
+    },
+    "ui/app/lib/models.ts": {
+      "anchors": [],
+      "edit_classification": "MODIFY",
+      "sha256": "07c7060ffadb9476e0c803029163efae2cd39d910b611518552a8994e0fb9192",
+      "state": "EXISTING"
+    },
+    "ui/openapi.json": {
+      "anchors": [],
+      "edit_classification": "GENERATED",
+      "sha256": "687e46946f0c9d6a0e0c7b3d10c0ebd7026c2b0811c5ef79fc212e74723f0fdf",
+      "state": "EXISTING"
+    }
+  }
+}

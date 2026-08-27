@@ -28,6 +28,7 @@ from crazyswarm_app.campaign.replanning import (
 )
 from crazyswarm_app.campaign.submissions import resolve_planning_submission
 from crazyswarm_app.campaign.trajectory import generate_smooth_trajectories
+from crazyswarm_app.domain.commands import TrajectoryReplacementPreparationReceipt
 from crazyswarm_app.domain.models import Vector3
 from crazyswarm_app.domain.simulation import canonical_sha256
 from crazyswarm_app.domain.trajectory import sample_trajectory
@@ -178,6 +179,20 @@ def test_reaction_horizon_failure_commits_nothing_and_uses_contingency(
     assert decision.fallback is SafeFallback.FLEET_ABORT_AND_LAND
 
 
+def test_cutover_does_not_double_count_completed_planning_latency(dynamic_case) -> None:
+    coordinator = InFlightReplanCoordinator(dynamic_case)
+
+    decision = _replan(
+        coordinator,
+        _event(effective_source_s=10.60),
+        planning_latency_s=0.80,
+    )
+
+    assert decision.disposition is DynamicReplanDisposition.ACCEPTED
+    assert decision.reaction_horizon.total_reaction_s == pytest.approx(1.05)
+    assert decision.reaction_horizon.proposed_cutover_source_s == pytest.approx(10.45)
+
+
 def test_partial_acknowledgement_commits_zero_routes(dynamic_case) -> None:
     coordinator = InFlightReplanCoordinator(dynamic_case)
 
@@ -292,20 +307,62 @@ def test_changed_world_object_in_line_produces_real_certified_atomic_replacement
         old_world_sha256=structured_world_from_case(case).world_sha256,
         minimum_clearance_m=0.15,
     )
+    trajectory_by_role = {
+        item.role_id: item for item in proposal.trajectories.trajectories
+    }
+    preparation_receipts = tuple(
+        TrajectoryReplacementPreparationReceipt(
+            vehicle_id=authority.role_id,
+            role_id=authority.role_id,
+            mission_run_id="dynamic-replan-test",
+            fleet_binding_sha256="d" * 64,
+            proposal_sha256=proposal.proposal_sha256,
+            safe_prefix_certificate_sha256=safe_prefix.certificate_sha256,
+            active_trajectory_sha256=authority.old_trajectory_sha256,
+            replacement_trajectory_sha256=authority.replacement_trajectory_sha256,
+            replacement_route_sha256=trajectory_by_role[authority.role_id].route_sha256,
+            replacement_plan_sha256=authority.replacement_plan_sha256,
+            replacement_authority_sha256=authority.authority_sha256,
+            prepared_at_monotonic_s=1.0,
+        )
+        for authority in proposal.route_authorities
+    )
+
+    coordinator = InFlightReplanCoordinator(case)
+    commit_kwargs = {
+        "coordinator": coordinator,
+        "decision_time_source_s": 5.30,
+        "queue_latency_s": 0.0,
+        "acknowledgement_latency_s": 0.02,
+        "cutover_guard_s": 0.10,
+        "safe_prefix_certificate": safe_prefix,
+        "old_epoch": 1,
+        "old_reservation_sha256": "a" * 64,
+    }
+    with pytest.raises(
+        ValueError,
+        match="exactly one preparation receipt is required for every affected role",
+    ):
+        commit_changed_world_replacement(
+            proposal,
+            preparation_receipts=preparation_receipts[:1],
+            **commit_kwargs,
+        )
+    tampered_receipts = (
+        preparation_receipts[0].model_copy(update={"proposal_sha256": "e" * 64}),
+        *preparation_receipts[1:],
+    )
+    with pytest.raises(ValueError, match="preparation receipt identity mismatch"):
+        commit_changed_world_replacement(
+            proposal,
+            preparation_receipts=tampered_receipts,
+            **commit_kwargs,
+        )
 
     decision = commit_changed_world_replacement(
         proposal,
-        coordinator=InFlightReplanCoordinator(case),
-        decision_time_source_s=5.30,
-        queue_latency_s=0.0,
-        acknowledgement_latency_s=0.02,
-        cutover_guard_s=0.10,
-        safe_prefix_certificate=safe_prefix,
-        old_epoch=1,
-        old_reservation_sha256="a" * 64,
-        cancellation_acknowledged_role_ids=frozenset({"Alpha", "Beta"}),
-        replacement_acknowledged_role_ids=frozenset({"Alpha", "Beta"}),
-        fallback_acknowledged_role_ids=frozenset({"Alpha", "Beta"}),
+        preparation_receipts=preparation_receipts,
+        **commit_kwargs,
     )
     assert decision.disposition is DynamicReplanDisposition.ACCEPTED
     assert decision.fleet_decision is not None

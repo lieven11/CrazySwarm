@@ -48,6 +48,7 @@ def test_future_truth_cannot_change_initial_world_or_leak_before_latency() -> No
     assert released == []
     assert source.pop_ready(2.15) is not None
     assert len(released) == 1
+    assert isinstance(first.canonical_payload()["events"][0], dict)
 
 
 def test_run_private_world_sequence_is_reproducible_but_not_preplanned() -> None:
@@ -89,6 +90,46 @@ def test_run_private_world_sequence_is_reproducible_but_not_preplanned() -> None
     assert first[0].source_timestamp_s != alternate[0].source_timestamp_s
     assert first[1].kind is WorldTruthEventKind.SOLID_DISAPPEARED
     assert first[1].source_timestamp_s > first[0].source_timestamp_s
+
+
+def test_seeded_appearance_variation_covers_near_mid_and_far_strata() -> None:
+    template = (
+        WorldTruthEvent.create(
+            event_id="stratified-wall",
+            sequence=1,
+            source_timestamp_s=5.0,
+            effective_source_s=8.0,
+            kind=WorldTruthEventKind.SOLID_APPEARED,
+            solid_id="stratified-wall",
+            obstacle=ObstacleConfig(
+                obstacle_id="stratified-wall",
+                minimum_m=Vector3(x=-0.1, y=-0.2, z=0.1),
+                maximum_m=Vector3(x=0.1, y=0.2, z=0.8),
+            ),
+        ),
+    )
+    bounds = {
+        "volume_minimum_m": Vector3(x=-1.0, y=-1.0, z=0.0),
+        "volume_maximum_m": Vector3(x=1.0, y=1.0, z=1.0),
+    }
+    source_buckets = set()
+    x_buckets = set()
+    for index in range(60):
+        materialized = materialize_seeded_world_events(
+            template,
+            seed_material=f"run-{index}",
+            **bounds,
+        )[0]
+        source_delta = materialized.source_timestamp_s - template[0].source_timestamp_s
+        source_buckets.add(
+            "near" if source_delta < -0.1 else "far" if source_delta > 0.1 else "mid"
+        )
+        assert materialized.obstacle is not None
+        center_x = (materialized.obstacle.minimum_m.x + materialized.obstacle.maximum_m.x) / 2.0
+        x_buckets.add("left" if center_x < -0.06 else "right" if center_x > 0.06 else "mid")
+
+    assert source_buckets == {"near", "mid", "far"}
+    assert x_buckets == {"left", "mid", "right"}
 
 
 def test_future_obstacle_geometry_and_timing_cannot_change_initial_plan_identity() -> None:

@@ -36,7 +36,7 @@ def analyze_differential_actuation_csv(
     vehicle_id: str | None = None,
     physics: PhysicsModelConfig | None = None,
     source_pairing_tolerance_s: float = 0.01,
-    response_horizon_s: float = 0.05,
+    response_horizon_s: float = 0.025,
 ) -> DifferentialActuationAnalysis:
     """Independent X-layout torque/IMU oracle over literal per-motor CSV values."""
 
@@ -53,7 +53,11 @@ def analyze_differential_actuation_csv(
     observations = []
     for before, after in pairwise(selected):
         dt = _source_time(after) - _source_time(before)
-        if not 0.0 < dt <= response_horizon_s:
+        # The retained thrust is an instantaneous envelope value, not an
+        # integral over a telemetry gap.  Longer accelerated-mode gaps can span
+        # several unobserved motor states and therefore cannot support the
+        # magnitude oracle; they remain present for the other CSV guards.
+        if not 0.0 < dt <= response_horizon_s + 1e-12:
             continue
         thrust = tuple(_float(after.get(f"motor_m{index}_thrust_n")) for index in range(1, 5))
         if any(value is None for value in thrust):

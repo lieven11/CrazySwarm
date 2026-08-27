@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -21,8 +22,12 @@ from crazyswarm_app.config import load_config
 
 HEALTH_INTERVAL_S = 2.0
 HEALTH_FAILURE_LIMIT = 3
-STARTUP_GRACE_S = 20.0
+# Importing and validating the full campaign catalog can take longer than 20 seconds
+# on a cold start.  Keep the process alive long enough to finish initialization;
+# once it is running, the normal consecutive-failure checks still detect outages.
+STARTUP_GRACE_S = 90.0
 UI_RELEASES_DIRECTORY = ".crazyswarm-builds"
+UI_RELEASE_MANIFEST = ".crazyswarm-release.json"
 UI_BUILD_EXCLUDES = frozenset(
     {
         ".next",
@@ -35,6 +40,19 @@ UI_BUILD_EXCLUDES = frozenset(
         "out",
     }
 )
+
+
+def is_git_worktree(project_root: Path) -> bool:
+    return (project_root / ".git").is_file()
+
+
+def default_dashboard_ports(project_root: Path) -> tuple[int, int]:
+    """Keep Local stable and give each managed worktree deterministic private ports."""
+
+    if not is_git_worktree(project_root):
+        return 8011, 3001
+    slot = int(hashlib.sha256(str(project_root.resolve()).encode()).hexdigest()[:8], 16) % 2000
+    return 18_000 + slot, 22_000 + slot
 
 
 def find_npm(home_directory: Path | None = None) -> str | None:
@@ -68,14 +86,27 @@ def port_available(host: str, port: int) -> bool:
     return True
 
 
+def signal_process_tree(process: subprocess.Popen[bytes], requested_signal: int) -> None:
+    pid = getattr(process, "pid", None)
+    if isinstance(pid, int):
+        try:
+            os.killpg(pid, requested_signal)
+            return
+        except ProcessLookupError:
+            return
+        except OSError:
+            pass
+    process.send_signal(requested_signal)
+
+
 def stop_process(process: subprocess.Popen[bytes]) -> None:
     if process.poll() is not None:
         return
-    process.send_signal(signal.SIGTERM)
+    signal_process_tree(process, signal.SIGTERM)
     try:
         process.wait(timeout=5)
     except subprocess.TimeoutExpired:
-        process.kill()
+        signal_process_tree(process, signal.SIGKILL)
         process.wait(timeout=2)
 
 
@@ -87,18 +118,65 @@ def _valid_ui_distribution(directory: Path) -> bool:
     )
 
 
-def production_ui_directory(ui_directory: Path) -> Path:
-    current = ui_directory / UI_RELEASES_DIRECTORY / "current"
-    if current.is_symlink() or current.exists():
-        release = current.resolve(strict=True)
-        if _valid_ui_distribution(release):
-            return release
-        raise RuntimeError(f"published UI release is incomplete: {release}")
-    if _valid_ui_distribution(ui_directory):
-        # Backward-compatible first start before the service has published its
-        # first immutable release.
-        return ui_directory
-    raise RuntimeError("UI production build not found; reinstall the dashboard service")
+def ui_source_sha256(ui_directory: Path) -> str:
+    """Hash the UI inputs copied into an immutable production release."""
+
+    digest = hashlib.sha256()
+
+    def visit(directory: Path) -> None:
+        for source in sorted(directory.iterdir(), key=lambda item: item.name):
+            if directory == ui_directory and source.name in UI_BUILD_EXCLUDES:
+                continue
+            relative = source.relative_to(ui_directory)
+            digest.update(relative.as_posix().encode())
+            if source.is_symlink():
+                digest.update(b"L")
+                digest.update(os.readlink(source).encode())
+            elif source.is_file():
+                digest.update(b"F")
+                digest.update(source.read_bytes())
+            elif source.is_dir():
+                digest.update(b"D")
+                visit(source)
+
+    visit(ui_directory)
+    return digest.hexdigest()
+
+
+def release_matches_ui_source(ui_directory: Path, release: Path) -> bool:
+    try:
+        manifest = json.loads((release / UI_RELEASE_MANIFEST).read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return False
+    return bool(
+        manifest.get("schema_version") == 1
+        and manifest.get("release") == release.name
+        and manifest.get("source_sha256") == ui_source_sha256(ui_directory)
+    )
+
+
+def production_ui_directory(ui_directory: Path, release_name: str | None = None) -> Path:
+    releases = ui_directory / UI_RELEASES_DIRECTORY
+    if release_name is not None:
+        if Path(release_name).name != release_name or not release_name.startswith("release-"):
+            raise RuntimeError(f"invalid published UI release name: {release_name}")
+        release = (releases / release_name).resolve(strict=True)
+        if release.parent != releases.resolve():
+            raise RuntimeError(f"published UI release escapes release directory: {release}")
+    else:
+        current = releases / "current"
+        if current.is_symlink() or current.exists():
+            release = current.resolve(strict=True)
+        elif _valid_ui_distribution(ui_directory):
+            # Backward-compatible first start before the service has published its
+            # first immutable release.
+            return ui_directory
+        else:
+            raise RuntimeError("UI production build not found; reinstall the dashboard service")
+
+    if _valid_ui_distribution(release):
+        return release
+    raise RuntimeError(f"published UI release is incomplete: {release}")
 
 
 def _copy_ui_build_source(ui_directory: Path, staging_directory: Path) -> None:
@@ -123,6 +201,7 @@ def build_ui(npm: str, ui_directory: Path, environment: dict[str, str]) -> Path:
     staging = Path(tempfile.mkdtemp(prefix=".build-", dir=releases))
     try:
         _copy_ui_build_source(ui_directory, staging)
+        source_sha256 = ui_source_sha256(staging)
         subprocess.run(
             [npm, "run", "build"],
             cwd=staging,
@@ -136,7 +215,20 @@ def build_ui(npm: str, ui_directory: Path, environment: dict[str, str]) -> Path:
         release_staging = releases / f".{release_name}"
         release_staging.mkdir()
         (staging / "dist").replace(release_staging / "dist")
-        shutil.copy2(ui_directory / "package.json", release_staging / "package.json")
+        shutil.copy2(staging / "package.json", release_staging / "package.json")
+        (release_staging / UI_RELEASE_MANIFEST).write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "release": release_name,
+                    "source_sha256": source_sha256,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
         (release_staging / "node_modules").symlink_to(
             ui_directory / "node_modules",
             target_is_directory=True,
@@ -185,9 +277,21 @@ class ManagedProcess:
     restart_count: int = 0
 
     def start(self, environment: dict[str, str]) -> None:
-        self.process = subprocess.Popen(self.command, cwd=self.cwd, env=environment)
+        # Each managed component owns a process group so npm/node helpers and
+        # Python worker children cannot survive a dashboard restart and retain
+        # ports or hardware handles.
+        self.process = subprocess.Popen(
+            self.command,
+            cwd=self.cwd,
+            env=environment,
+            start_new_session=True,
+        )
         self.started_at_s = time.monotonic()
         self.failed_health_checks = 0
+
+    def terminate(self) -> None:
+        if self.process is not None and self.process.poll() is None:
+            signal_process_tree(self.process, signal.SIGTERM)
 
     def stop(self) -> None:
         if self.process is not None:
@@ -238,11 +342,27 @@ def run_dashboard(
     config_path: Path,
     scenario_path: Path,
     *,
-    api_port: int,
-    ui_port: int,
+    api_port: int | None,
+    ui_port: int | None,
     development: bool = False,
     skip_build: bool = False,
+    hardware_owner: str | None = None,
+    ui_release: str | None = None,
 ) -> int:
+    project_root = Path(__file__).resolve().parents[2]
+    default_api_port, default_ui_port = default_dashboard_ports(project_root)
+    api_port = default_api_port if api_port is None else api_port
+    ui_port = default_ui_port if ui_port is None else ui_port
+    if hardware_owner is not None and is_git_worktree(project_root):
+        raise RuntimeError(
+            "physical hardware runtime may only start from the Local checkout, never a worktree"
+        )
+    if hardware_owner is not None and development:
+        raise RuntimeError(
+            "physical hardware requires the stable production dashboard; pass --production"
+        )
+    if ui_release is not None and development:
+        raise RuntimeError("an immutable UI release may be selected only in production")
     if not port_available("127.0.0.1", api_port):
         raise RuntimeError(f"API port {api_port} is already in use")
     if not port_available("127.0.0.1", ui_port):
@@ -250,7 +370,6 @@ def run_dashboard(
     npm = find_npm()
     if npm is None:
         raise RuntimeError("Node.js and npm are required to start the dashboard")
-    project_root = Path(__file__).resolve().parents[2]
     ui_directory = project_root / "ui"
     if not (ui_directory / "package.json").exists():
         raise RuntimeError(f"UI package not found: {ui_directory}")
@@ -267,16 +386,18 @@ def run_dashboard(
             "CRAZYSWARM_HIDE_LOCAL_TOKEN": "1",
             "CRAZYSWARM_API_URL": f"http://127.0.0.1:{api_port}",
             "CRAZYSWARM_DEV_WATCH": "1" if development else "0",
+            "CRAZYSWARM_PHYSICAL_HARDWARE_ENABLED": ("1" if hardware_owner is not None else "0"),
         }
     )
     if not development and not skip_build:
         build_ui(npm, ui_directory, environment)
     ui_working_directory = ui_directory
     if not development:
-        ui_working_directory = production_ui_directory(ui_directory)
+        ui_working_directory = production_ui_directory(ui_directory, ui_release)
         # Port availability above guarantees that no older dashboard process is
         # still reading an earlier release when it is removed here.
-        prune_inactive_ui_releases(ui_directory, ui_working_directory)
+        if ui_release is None:
+            prune_inactive_ui_releases(ui_directory, ui_working_directory)
 
     api_command = [
         sys.executable,
@@ -292,6 +413,8 @@ def run_dashboard(
     ]
     if development:
         api_command.append("--reload")
+    if hardware_owner is not None:
+        api_command.extend(["--hardware-owner", hardware_owner])
     api = ManagedProcess(
         name="api",
         command=api_command,
@@ -304,7 +427,9 @@ def run_dashboard(
         name="ui",
         command=[npm, "run", ui_script, "--", "--port", str(ui_port)],
         cwd=ui_working_directory,
-        health_url=f"http://127.0.0.1:{ui_port}/control-api/api/v1/state",
+        # The UI server is healthy when it can serve its own shell.  API health is
+        # supervised separately, so an API cold start must not flap the UI process.
+        health_url=f"http://127.0.0.1:{ui_port}/",
     )
     services = (api, ui)
     stopping = False
@@ -312,6 +437,11 @@ def run_dashboard(
     def request_stop(_signal: int, _frame: object) -> None:
         nonlocal stopping
         stopping = True
+        # Forward immediately instead of waiting up to one health interval. This
+        # gives the API time to zero physical outputs and close the Crazyradio
+        # before launchd's service-exit deadline.
+        for service in reversed(services):
+            service.terminate()
 
     previous_term = signal.signal(signal.SIGTERM, request_stop)
     previous_int = signal.signal(signal.SIGINT, request_stop)
@@ -325,6 +455,10 @@ def run_dashboard(
                 "mode": config.default_mode.value,
                 "runtime": "development" if development else "production",
                 "supervised": True,
+                "physical_hardware": (
+                    f"owned by {hardware_owner}" if hardware_owner is not None else "disabled"
+                ),
+                "checkout": "worktree" if is_git_worktree(project_root) else "local",
             },
             indent=2,
         ),

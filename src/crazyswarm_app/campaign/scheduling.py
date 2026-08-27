@@ -198,6 +198,39 @@ def build_ground_first_schedule(
             )
         )
         completion = max(completion, route_end + landing_duration_s)
+    semantics = case.semantics
+    if (
+        semantics is not None
+        and semantics.goal_seeking is not None
+        and semantics.scenario_events
+    ):
+        # The initial route is not the terminal timing authority for a sensed-world
+        # mission.  A final accepted event may legitimately replace that route from
+        # the then-current state. Reserve one complete admitted route, the bounded
+        # planning budget, and landing after the last trigger. This remains a finite,
+        # hash-bound wall watchdog; it does not mark stalled telemetry as fresh.
+        latest_trigger_s = max(
+            event.trigger_time_s for event in semantics.scenario_events
+        )
+        route_start_s = max(
+            action.starts_at_source_s
+            for role in roles
+            for action in role.actions
+            if action.kind is LaunchActionKind.START_ROUTE
+        )
+        maximum_route_duration_s = max(
+            route.route_duration_s for route in candidate.routes
+        )
+        completion = max(
+            completion,
+            route_start_s
+            + latest_trigger_s
+            + case.hard_constraints.planning_budget_s
+            + maximum_route_duration_s
+            + landing_duration_s,
+        )
+        if completion > case.hard_constraints.deadline_s:
+            raise ValueError("dynamic replanning watchdog exceeds the hard mission deadline")
     watchdog = (
         completion / case.hard_constraints.minimum_realtime_factor
         + case.hard_constraints.watchdog_guard_s

@@ -662,7 +662,7 @@ rows:
     support_reason: The immutable case or owning runtime capability remains planned-not-executable; selection
       issues no command.
 - case_id: 1d.online_obstacle_replan.dynamic_nominal
-  expected_case_sha256: b265e16a9b54cfc0271f38c03486244da6e1fe6558c1d6580aa47b79acdac401
+  expected_case_sha256: 24790c25d4bba4716ea63f4424335f5c7039d1bc6d3d8e9157adfac9171e713d
   compatible_template_ids:
   - template.1d.online_obstacle_replan
   default_strategy_authority:

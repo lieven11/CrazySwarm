@@ -7,6 +7,7 @@ import pytest
 
 from crazyswarm_app.api.runtime import create_runtime
 from crazyswarm_app.campaign.catalog import CampaignCatalog
+from crazyswarm_app.campaign.execution import compile_campaign_execution_programs
 from crazyswarm_app.campaign.models import (
     LockedDevelopmentInputs,
     Region3D,
@@ -23,8 +24,10 @@ from crazyswarm_app.campaign.service import (
     CampaignRunMode,
     CampaignRunStatus,
     CampaignService,
+    RunArtifactSet,
+    _execution_artifacts_in_worker,
 )
-from crazyswarm_app.campaign.submissions import resolve_planning_package
+from crazyswarm_app.campaign.submissions import MotionPreparationRequest, resolve_planning_package
 from crazyswarm_app.campaign.timing import BoundedTimingTrace
 from crazyswarm_app.campaign.trajectory import generate_smooth_trajectories
 from crazyswarm_app.config import load_config
@@ -47,9 +50,7 @@ def test_execution_request_rejects_tampered_schedule_and_trajectory_chain() -> N
         case,
         plan.selected,
         planning_submission_id=package.planning_submission.planning_submission_id,
-        planning_submission_sha256=(
-            package.planning_submission.planning_submission_sha256
-        ),
+        planning_submission_sha256=(package.planning_submission.planning_submission_sha256),
     )
     trajectories = generate_smooth_trajectories(
         case,
@@ -61,9 +62,7 @@ def test_execution_request_rejects_tampered_schedule_and_trajectory_chain() -> N
         submission_id=package.execution_profile.submission_id,
         submission_sha256=package.execution_profile.profile_sha256,
         planning_submission_id=package.planning_submission.planning_submission_id,
-        planning_submission_sha256=(
-            package.planning_submission.planning_submission_sha256
-        ),
+        planning_submission_sha256=(package.planning_submission.planning_submission_sha256),
         resolved_planning_package_sha256=package.resolved_package_sha256,
     )
     common = {
@@ -84,11 +83,7 @@ def test_execution_request_rejects_tampered_schedule_and_trajectory_chain() -> N
         CampaignExecutionRequest(
             **common,
             schedule=schedule.model_copy(
-                update={
-                    "source_schedule_duration_s": (
-                        schedule.source_schedule_duration_s + 1.0
-                    )
-                }
+                update={"source_schedule_duration_s": (schedule.source_schedule_duration_s + 1.0)}
             ),
             trajectories=trajectories,
         )
@@ -98,6 +93,250 @@ def test_execution_request_rejects_tampered_schedule_and_trajectory_chain() -> N
             schedule=schedule,
             trajectories=trajectories.model_copy(update={"set_sha256": "0" * 64}),
         )
+
+
+@pytest.mark.parametrize(
+    "case_id",
+    ("2d.bottleneck.canonical_nominal", "3d.bottleneck.canonical_nominal"),
+)
+def test_prepared_bottleneck_request_reaches_execution(case_id: str) -> None:
+    catalog = CampaignCatalog(Path("missions/campaigns/sim/cases"))
+    catalog.discover()
+    case = catalog.get(case_id)
+    package = resolve_planning_package(
+        case,
+        motion_preparation_request=MotionPreparationRequest(),
+    )
+    plan, schedule, trajectories = _execution_artifacts_in_worker(case, package)
+    lock = LockedDevelopmentInputs.from_case(
+        case,
+        submission_id=package.execution_profile.submission_id,
+        submission_sha256=package.execution_profile.profile_sha256,
+        planning_submission_id=package.planning_submission.planning_submission_id,
+        planning_submission_sha256=package.planning_submission.planning_submission_sha256,
+        resolved_planning_package_sha256=package.resolved_package_sha256,
+    )
+
+    request = CampaignExecutionRequest(
+        run_id="prepared-bottleneck-launch-regression",
+        mode=CampaignRunMode.OPERATOR_OBSERVED_REALTIME,
+        locked_inputs=lock,
+        resolved_package=package,
+        case=case,
+        plan=plan,
+        schedule=schedule,
+        trajectories=trajectories,
+    )
+
+    assert request.trajectories.execution_profile_fallback == ("PLANNER_CANDIDATE_NATIVE_TIMING")
+    program = compile_campaign_execution_programs(
+        case=case,
+        plan=plan,
+        schedule=schedule,
+        trajectories=trajectories,
+        mission_source_sha256="0" * 64,
+    )[0]
+    landing = program.operations[-1]
+    assert landing.target_height_m == case.drones[0].landing_region.minimum_m.z
+    assert landing.goal_region.landing_target_m.z == case.drones[0].landing_region.minimum_m.z
+
+
+def test_prepared_one_drone_corner_fallback_reaches_execution() -> None:
+    catalog = CampaignCatalog(Path("missions/campaigns/sim/cases"))
+    catalog.discover()
+    case = catalog.get("1d.altitude_transition.canonical_nominal")
+    package = resolve_planning_package(
+        case,
+        motion_preparation_request=MotionPreparationRequest(balance=50),
+    )
+    plan, schedule, trajectories = _execution_artifacts_in_worker(case, package)
+    assert plan.selected is not None
+    lock = LockedDevelopmentInputs.from_case(
+        case,
+        submission_id=package.execution_profile.submission_id,
+        submission_sha256=package.execution_profile.profile_sha256,
+        planning_submission_id=package.planning_submission.planning_submission_id,
+        planning_submission_sha256=package.planning_submission.planning_submission_sha256,
+        resolved_planning_package_sha256=package.resolved_package_sha256,
+    )
+
+    request = CampaignExecutionRequest(
+        run_id="prepared-one-drone-corner-fallback-regression",
+        mode=CampaignRunMode.OPERATOR_OBSERVED_REALTIME,
+        locked_inputs=lock,
+        resolved_package=package,
+        case=case,
+        plan=plan,
+        schedule=schedule,
+        trajectories=trajectories,
+    )
+
+    assert request.plan.selected is not None
+    assert request.plan.selected.parameters["execution_profile_fallback"] == (
+        "planner_candidate_native_timing"
+    )
+    assert request.trajectories.execution_profile_fallback == ("PLANNER_CANDIDATE_NATIVE_TIMING")
+
+
+@pytest.mark.asyncio
+async def test_prepared_one_drone_altitude_transition_completes(tmp_path: Path) -> None:
+    config = load_config(Path("config/app.yaml")).model_copy(
+        update={"cache_directory": tmp_path / "cache"}
+    )
+    scenario = load_scenario(Path("config/worlds/one_drone.yaml"))
+    scenario = scenario.model_copy(
+        update={
+            "simulation": scenario.simulation.model_copy(
+                update={"clock_mode": ClockMode.ACCELERATED}
+            )
+        }
+    )
+    runtime = create_runtime(config, scenario, evidence_path=tmp_path / "evidence.sqlite3")
+    service = CampaignService(
+        catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
+        state_directory=tmp_path / "campaign",
+        executor=FastSimCampaignExecutor(runtime),
+    )
+
+    await runtime.start()
+    try:
+        service.set_active(
+            "1d.altitude_transition.canonical_nominal",
+            actor_id="prepared-motion-regression",
+            reason="the default prepared mission must remain runnable",
+        )
+        review = await service.run_active(
+            CampaignRunMode.AUTOMATED_ACCELERATED,
+            idempotency_key="prepared-one-drone-altitude-transition-completes",
+            motion_preparation_request=MotionPreparationRequest(balance=50),
+        )
+    finally:
+        await runtime.stop()
+
+    assert review.status is CampaignRunStatus.SUCCEEDED
+    assert review.analysis.vehicles[0].terminal_state == "READY"
+    assert review.analysis.landing[0].terminal_contact == "SIMULATED_GROUND_CONTACT"
+    assert review.analysis.landing[0].motors_cut_after_contact is True
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "case_id",
+    (
+        "1d.hover_endurance.hold_12s",
+        "1d.axis_nudge_return.forward_x_10cm",
+        "1d.axis_nudge_return.left_y_10cm",
+        "1d.axis_nudge_return.right_y_10cm",
+        "1d.short_offset_landing.forward_10cm",
+        "1d.short_offset_landing.forward_20cm",
+        "1d.short_offset_landing.diagonal_20cm",
+        "1d.checkpoint_path.l_shape",
+        "1d.checkpoint_path.u_shape",
+        "1d.checkpoint_path.square",
+        "1d.spatial_step_path.stair_step",
+        "1d.spatial_step_path.vertical_rectangle",
+        "1d.polygon_loop.triangle",
+        "1d.polygon_loop.square",
+    ),
+)
+async def test_new_general_missions_complete_in_fast_sim(
+    tmp_path: Path,
+    case_id: str,
+) -> None:
+    config = load_config(Path("config/app.yaml")).model_copy(
+        update={"cache_directory": tmp_path / "cache"}
+    )
+    scenario = load_scenario(Path("config/worlds/one_drone.yaml"))
+    scenario = scenario.model_copy(
+        update={
+            "simulation": scenario.simulation.model_copy(
+                update={"clock_mode": ClockMode.ACCELERATED}
+            )
+        }
+    )
+    runtime = create_runtime(config, scenario, evidence_path=tmp_path / "evidence.sqlite3")
+    service = CampaignService(
+        catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
+        state_directory=tmp_path / "campaign",
+        executor=FastSimCampaignExecutor(runtime),
+    )
+
+    await runtime.start()
+    try:
+        service.set_active(
+            case_id,
+            actor_id="general-mission-runtime-regression",
+            reason="the simulation curriculum mission must reach its retained terminal gates",
+        )
+        review = await service.run_active(
+            CampaignRunMode.AUTOMATED_ACCELERATED,
+            idempotency_key=f"general-mission-{case_id}",
+        )
+    finally:
+        await runtime.stop()
+
+    assert review.status is CampaignRunStatus.SUCCEEDED
+    assert review.analysis.all_required_behavior_oracles_passed
+    assert review.analysis.vehicles[0].terminal_state == "READY"
+    assert review.analysis.landing[0].terminal_contact == "SIMULATED_GROUND_CONTACT"
+    assert review.analysis.landing[0].motors_cut_after_contact is True
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("case_id", "planning_submission_id"),
+    (
+        ("2d.bottleneck.canonical_nominal", "bottleneck.earliest_safe_release"),
+        ("2d.head_on_conflict.canonical_nominal", "head_on.synchronized_lateral"),
+        ("2d.merge.canonical_nominal", "merge.parallel_lanes"),
+        (
+            "2d.perpendicular_crossing.nominal_equal_priority",
+            "crossing.earliest_equal_release",
+        ),
+    ),
+    ids=("bottleneck", "head-on", "merge", "perpendicular-crossing"),
+)
+async def test_two_drone_conflict_anchor_runs_every_role_to_completion(
+    tmp_path: Path,
+    case_id: str,
+    planning_submission_id: str,
+) -> None:
+    config = load_config(Path("config/app.yaml")).model_copy(
+        update={"cache_directory": tmp_path / "cache"}
+    )
+    scenario = load_scenario(Path("config/worlds/one_drone.yaml"))
+    scenario = scenario.model_copy(
+        update={
+            "simulation": scenario.simulation.model_copy(
+                update={"clock_mode": ClockMode.ACCELERATED}
+            )
+        }
+    )
+    runtime = create_runtime(config, scenario, evidence_path=tmp_path / "evidence.sqlite3")
+    service = CampaignService(
+        catalog=CampaignCatalog(Path("missions/campaigns/sim/cases")),
+        state_directory=tmp_path / "campaign",
+        executor=FastSimCampaignExecutor(runtime),
+    )
+
+    await runtime.start()
+    try:
+        service.set_active(
+            case_id,
+            actor_id="two-drone-launch-regression",
+            reason="both roles must start and finish",
+        )
+        review = await service.run_active(
+            CampaignRunMode.AUTOMATED_ACCELERATED,
+            idempotency_key=f"{case_id}-both-roles-complete",
+            planning_submission_id=planning_submission_id,
+            motion_preparation_request=MotionPreparationRequest(balance=50),
+        )
+    finally:
+        await runtime.stop()
+
+    assert review.status is CampaignRunStatus.SUCCEEDED
+    assert {item.vehicle_id for item in review.analysis.vehicles} == {"Alpha", "Beta"}
 
 
 @pytest.mark.asyncio
@@ -149,9 +388,7 @@ async def test_altitude_speed_submission_executes_with_profile_and_actuator_evid
     assert review.status is CampaignRunStatus.SUCCEEDED
     assert baseline_review.status is CampaignRunStatus.SUCCEEDED
     assert slow_review.status is CampaignRunStatus.SUCCEEDED
-    assert review.baseline_comparison["comparison_kind"] == (
-        "EXACT_CASE_SUBMISSION_BASELINE"
-    )
+    assert review.baseline_comparison["comparison_kind"] == ("EXACT_CASE_SUBMISSION_BASELINE")
     assert review.baseline_comparison["baseline_available"] is True
     assert review.baseline_comparison["baseline_run_id"] == baseline_review.run_id
     run = service.state.runs[-1]
@@ -187,6 +424,69 @@ async def test_altitude_speed_submission_executes_with_profile_and_actuator_evid
     assert landing.post_contact_settling_s is not None
     assert landing.post_contact_settling_s >= 0.10
     assert landing.motors_cut_after_contact is True
+
+
+@pytest.mark.asyncio
+async def test_executor_preserves_failure_before_mission_registration(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = load_config(Path("config/app.yaml")).model_copy(
+        update={"cache_directory": tmp_path / "cache"}
+    )
+    scenario = load_scenario(Path("config/worlds/one_drone.yaml"))
+    runtime = create_runtime(config, scenario, evidence_path=tmp_path / "evidence.sqlite3")
+    catalog = CampaignCatalog(Path("missions/campaigns/sim/cases"))
+    catalog.discover()
+    case = catalog.get("1d.online_obstacle_replan.dynamic_nominal")
+    package = resolve_planning_package(case)
+    plan = BoundedJointPlanner().plan(
+        case,
+        planning_submission=package.planning_submission,
+    )
+    assert plan.selected is not None
+    schedule = build_ground_first_schedule(
+        case,
+        plan.selected,
+        planning_submission_id=package.planning_submission.planning_submission_id,
+        planning_submission_sha256=(package.planning_submission.planning_submission_sha256),
+    )
+    trajectories = generate_smooth_trajectories(
+        case,
+        plan.selected,
+        planning_submission=package.planning_submission,
+    )
+    request = CampaignExecutionRequest(
+        run_id="planner-startup-cleanup-regression",
+        mode=CampaignRunMode.AUTOMATED_ACCELERATED,
+        locked_inputs=LockedDevelopmentInputs.from_case(
+            case,
+            submission_id=package.execution_profile.submission_id,
+            submission_sha256=package.execution_profile.profile_sha256,
+            planning_submission_id=package.planning_submission.planning_submission_id,
+            planning_submission_sha256=(package.planning_submission.planning_submission_sha256),
+            resolved_planning_package_sha256=package.resolved_package_sha256,
+        ),
+        resolved_package=package,
+        case=case,
+        plan=plan,
+        schedule=schedule,
+        trajectories=trajectories,
+    )
+    executor = FastSimCampaignExecutor(runtime)
+
+    async def fail_before_registration(*args: object, **kwargs: object) -> RunArtifactSet:
+        del args, kwargs
+        raise RuntimeError("isolated planner startup failed")
+
+    monkeypatch.setattr(executor, "_execute", fail_before_registration)
+
+    with pytest.raises(RuntimeError, match="isolated planner startup failed"):
+        await executor(request)
+    assert not runtime.dynamic_obstacles
+    assert not runtime.fleet_tasks
+    assert not runtime.fleet_preparations
+    assert not runtime.fleet_coordinators
 
 
 @pytest.mark.asyncio
@@ -306,9 +606,7 @@ async def test_head_on_runtime_commits_object_conditioned_replacement_epoch(
             "parent_case_sha256": source.case_sha256,
             "baseline_sha256": source.case_sha256,
             "replanning_authority": ReplanningAuthority.AUTO_WITHIN_FROZEN_LIMITS,
-            "semantics": source.semantics.model_copy(
-                update={"scenario_events": (event,)}
-            ),
+            "semantics": source.semantics.model_copy(update={"scenario_events": (event,)}),
         }
     )
     package = resolve_planning_package(
@@ -325,9 +623,7 @@ async def test_head_on_runtime_commits_object_conditioned_replacement_epoch(
         case,
         plan.selected,
         planning_submission_id=package.planning_submission.planning_submission_id,
-        planning_submission_sha256=(
-            package.planning_submission.planning_submission_sha256
-        ),
+        planning_submission_sha256=(package.planning_submission.planning_submission_sha256),
     )
     trajectories = generate_smooth_trajectories(
         case,
@@ -339,9 +635,7 @@ async def test_head_on_runtime_commits_object_conditioned_replacement_epoch(
         submission_id=package.execution_profile.submission_id,
         submission_sha256=package.execution_profile.profile_sha256,
         planning_submission_id=package.planning_submission.planning_submission_id,
-        planning_submission_sha256=(
-            package.planning_submission.planning_submission_sha256
-        ),
+        planning_submission_sha256=(package.planning_submission.planning_submission_sha256),
         resolved_planning_package_sha256=package.resolved_package_sha256,
     )
     request = CampaignExecutionRequest(
@@ -379,9 +673,7 @@ async def test_head_on_runtime_commits_object_conditioned_replacement_epoch(
     assert trace["event_count"] == 1
     assert trace["observation_count"] == 1
     record = next(
-        item
-        for item in trace["records"]
-        if item.get("execution_disposition") == "DISPATCHED"
+        item for item in trace["records"] if item.get("execution_disposition") == "DISPATCHED"
     )
     assert record["disposition"] == "ACCEPTED"
     assert record["planning_latency_s"] <= case.hard_constraints.planning_budget_s

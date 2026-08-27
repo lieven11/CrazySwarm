@@ -135,7 +135,11 @@ def _compile_role_program(
                 trajectory=trajectory,
             )
         elif action.kind is LaunchActionKind.LAND:
-            target = landing_region.center_m
+            # The landing region is a volume, but touchdown authority must target
+            # its ground plane rather than hover at the volume's vertical center.
+            target = landing_region.center_m.model_copy(
+                update={"z": landing_region.minimum_m.z}
+            )
             approach = trajectory.points[-1].position_m
             goal_identity = canonical_sha256([case.case_sha256, role_schedule.role_id])[:20]
             goal = LandingGoalRegion(

@@ -21,6 +21,329 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/physical-twin/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Physical Twin Status */
+        get: operations["physical_twin_status_api_v1_physical_twin_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/physical-twin/lab/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Physical Twin Lab Catalog */
+        get: operations["physical_twin_lab_catalog_api_v1_physical_twin_lab_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/physical-twin/lab/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run Physical Twin Lab Rehearsal */
+        post: operations["run_physical_twin_lab_rehearsal_api_v1_physical_twin_lab_runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/physical-twin/lab/physical-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run Physical Twin Lab Motion */
+        post: operations["run_physical_twin_lab_motion_api_v1_physical_twin_lab_physical_runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/physical-twin/lab/physical-flight": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Physical Flight Status */
+        get: operations["physical_flight_status_api_v1_physical_twin_lab_physical_flight_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/physical-twin/lab/physical-flight/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Physical Flight */
+        post: operations["start_physical_flight_api_v1_physical_twin_lab_physical_flight_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/physical-twin/lab/physical-flight/flip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Trigger Acrobatics Flip */
+        post: operations["trigger_acrobatics_flip_api_v1_physical_twin_lab_physical_flight_flip_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/physical-twin/lab/physical-flight/abort": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Abort Physical Flight */
+        post: operations["abort_physical_flight_api_v1_physical_twin_lab_physical_flight_abort_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/physical-twin/lab/physical-readiness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Assess Physical Twin Lab Readiness */
+        post: operations["assess_physical_twin_lab_readiness_api_v1_physical_twin_lab_physical_readiness_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/physical-twin/lab/motor-bench/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Physical Motor Bench */
+        post: operations["start_physical_motor_bench_api_v1_physical_twin_lab_motor_bench_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/physical-twin/lab/motor-actuation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Physical Motor Actuation Status */
+        get: operations["physical_motor_actuation_status_api_v1_physical_twin_lab_motor_actuation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/physical-twin/lab/motor-actuation/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Stop All Physical Motor Output */
+        post: operations["stop_all_physical_motor_output_api_v1_physical_twin_lab_motor_actuation_stop_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/physical-twin/lab/motor-bench/output": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Update Physical Motor Bench */
+        post: operations["update_physical_motor_bench_api_v1_physical_twin_lab_motor_bench_output_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/physical-twin/lab/motor-bench/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Stop Physical Motor Bench */
+        post: operations["stop_physical_motor_bench_api_v1_physical_twin_lab_motor_bench_stop_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/physical-twin/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Physical Twin Live */
+        get: operations["physical_twin_live_api_v1_physical_twin_live_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/physical-twin/binding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Configure Physical Twin */
+        put: operations["configure_physical_twin_api_v1_physical_twin_binding_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/physical-twin/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Connect Physical Twin */
+        post: operations["connect_physical_twin_api_v1_physical_twin_connect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/physical-twin/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Physical Twin */
+        post: operations["confirm_physical_twin_api_v1_physical_twin_confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/physical-twin/disconnect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Disconnect Physical Twin */
+        post: operations["disconnect_physical_twin_api_v1_physical_twin_disconnect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health": {
         parameters: {
             query?: never;
@@ -1588,6 +1911,143 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/twins/calibrations/candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Twin Calibration Candidates */
+        get: operations["twin_calibration_candidates_api_v1_twins_calibrations_candidates_get"];
+        put?: never;
+        /** Create Twin Calibration Candidate */
+        post: operations["create_twin_calibration_candidate_api_v1_twins_calibrations_candidates_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/twins/calibrations/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Twin Calibration Reports */
+        get: operations["twin_calibration_reports_api_v1_twins_calibrations_reports_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/twins/calibrations/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Active Twin Calibration */
+        get: operations["active_twin_calibration_api_v1_twins_calibrations_active_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/twins/calibrations/{calibration_id}/promote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Promote Twin Calibration */
+        post: operations["promote_twin_calibration_api_v1_twins_calibrations__calibration_id__promote_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/twins/curriculum": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Twin Curriculum */
+        get: operations["twin_curriculum_api_v1_twins_curriculum_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/twins/curriculum/{stage_id}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run Twin Curriculum Stage */
+        post: operations["run_twin_curriculum_stage_api_v1_twins_curriculum__stage_id__runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/twins/physical-handoff/assess": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Physical Twin Handoff Assessment */
+        post: operations["physical_twin_handoff_assessment_api_v1_twins_physical_handoff_assess_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/twins/curriculum/{stage_id}/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record Twin Curriculum Result */
+        post: operations["record_twin_curriculum_result_api_v1_twins_curriculum__stage_id__results_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/twins/{session_id}": {
         parameters: {
             query?: never;
@@ -1616,6 +2076,40 @@ export interface paths {
         get: operations["twin_report_api_v1_twins__session_id__report_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/twins/{session_id}/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Twin Timeline */
+        get: operations["twin_timeline_api_v1_twins__session_id__timeline_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/twins/{session_id}/samples": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ingest Twin Samples */
+        post: operations["ingest_twin_samples_api_v1_twins__session_id__samples_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1952,6 +2446,227 @@ export interface components {
              */
             operator_selected: boolean;
         };
+        /** BasicFlightLabCatalog */
+        BasicFlightLabCatalog: {
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /**
+             * Cluster Id
+             * @default basic-flight
+             * @constant
+             */
+            cluster_id: "basic-flight";
+            /**
+             * Cluster Name
+             * @default Basic flight
+             * @constant
+             */
+            cluster_name: "Basic flight";
+            /** Purpose */
+            purpose: string;
+            /**
+             * Qualification Claim
+             * @default NONE
+             * @constant
+             */
+            qualification_claim: "NONE";
+            /**
+             * Clusters
+             * @default []
+             */
+            clusters: components["schemas"]["BasicFlightLabCluster"][];
+            controller_tuning_fixture?: components["schemas"]["ControllerTuningFixtureStatus"] | null;
+            /** Motions */
+            motions: components["schemas"]["BasicFlightLabMotion"][];
+        };
+        /** BasicFlightLabCluster */
+        BasicFlightLabCluster: {
+            /** Cluster Id */
+            cluster_id: string;
+            /** Cluster Name */
+            cluster_name: string;
+            /** Purpose */
+            purpose: string;
+            /**
+             * State
+             * @default READY
+             * @enum {string}
+             */
+            state: "READY" | "SETUP_REQUIRED";
+            /** Detail */
+            detail?: string | null;
+        };
+        /** BasicFlightLabMotion */
+        BasicFlightLabMotion: {
+            /** Motion Id */
+            motion_id: string;
+            /**
+             * Cluster Id
+             * @default basic-flight
+             */
+            cluster_id: string;
+            /** Major Mission */
+            major_mission: string;
+            /** Variant */
+            variant: string;
+            /** Placement Marker */
+            placement_marker?: ("A" | "B" | "C" | "D" | "E") | null;
+            /** Motion */
+            motion: string;
+            /** Summary */
+            summary: string;
+            /**
+             * Physical Scope
+             * @enum {string}
+             */
+            physical_scope: "PROPS_OFF_BENCH" | "FIXTURE_OBSERVATION" | "CONTAINED_FLIGHT";
+            /**
+             * Physical Execution
+             * @default NOT_ENABLED
+             * @enum {string}
+             */
+            physical_execution: "NOT_ENABLED" | "OPERATOR_GATED";
+            /**
+             * Catalog Visibility
+             * @default false
+             */
+            catalog_visibility: boolean;
+            /**
+             * Implementation State
+             * @default READY
+             * @enum {string}
+             */
+            implementation_state: "READY" | "SETUP_REQUIRED" | "RAW";
+            /** Block Reason */
+            block_reason?: string | null;
+            /** Steps */
+            steps: components["schemas"]["BasicFlightLabStep"][];
+            /** Learning Signals */
+            learning_signals: string[];
+        };
+        /** BasicFlightLabRun */
+        BasicFlightLabRun: {
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /** Run Id */
+            run_id: string;
+            /** Motion Id */
+            motion_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "COMPLETED" | "FAILED";
+            /**
+             * Execution Backend
+             * @default FAST_SIM
+             * @enum {string}
+             */
+            execution_backend: "FAST_SIM" | "REAL_CRAZYFLIE";
+            /**
+             * Evidence Class
+             * @default SIMULATED_MODEL
+             * @enum {string}
+             */
+            evidence_class: "SIMULATED_MODEL" | "MEASURED_REAL";
+            /**
+             * Learning Disposition
+             * @default SIMULATOR_INPUT_CANDIDATE
+             * @constant
+             */
+            learning_disposition: "SIMULATOR_INPUT_CANDIDATE";
+            /**
+             * Qualification Claim
+             * @default NONE
+             * @constant
+             */
+            qualification_claim: "NONE";
+            /**
+             * Started At Utc
+             * Format: date-time
+             */
+            started_at_utc: string;
+            /**
+             * Completed At Utc
+             * Format: date-time
+             */
+            completed_at_utc: string;
+            /** Steps */
+            steps: components["schemas"]["BasicFlightLabStepResult"][];
+            learning_sample: components["schemas"]["BasicFlightLearningSample"];
+            /** Artifact Path */
+            artifact_path: string;
+            /** Telemetry Row Count */
+            telemetry_row_count?: number | null;
+            /** Telemetry Csv Sha256 */
+            telemetry_csv_sha256?: string | null;
+            controller_tuning_range_summary?: components["schemas"]["ControllerTuningRangeSummary"] | null;
+            controller_tuning_preparation?: components["schemas"]["ControllerTuningRunPreparation"] | null;
+        };
+        /** BasicFlightLabRunRequest */
+        BasicFlightLabRunRequest: {
+            /**
+             * Motion Id
+             * @default commissioning-baseline
+             */
+            motion_id: string;
+        };
+        /** BasicFlightLabStep */
+        BasicFlightLabStep: {
+            /** Step Id */
+            step_id: string;
+            /** Title */
+            title: string;
+            /** Behavior */
+            behavior: string;
+            /** Containment */
+            containment: string;
+        };
+        /** BasicFlightLabStepResult */
+        BasicFlightLabStepResult: {
+            /** Step Id */
+            step_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "COMPLETED" | "MODELED_ONLY";
+            /** Detail */
+            detail: string;
+        };
+        /** BasicFlightLearningSample */
+        BasicFlightLearningSample: {
+            /** Battery Start Percent */
+            battery_start_percent: number;
+            /** Battery Minimum Percent */
+            battery_minimum_percent: number;
+            /** Battery End Percent */
+            battery_end_percent: number;
+            /** Battery Delta Percent */
+            battery_delta_percent: number;
+            /** Minimum Voltage V */
+            minimum_voltage_v?: number | null;
+            /** Maximum Current A */
+            maximum_current_a?: number | null;
+            /** Peak Motor Command Percent */
+            peak_motor_command_percent?: number | null;
+            /** Hover Rms Drift M */
+            hover_rms_drift_m?: number | null;
+            /** Maximum Altitude M */
+            maximum_altitude_m: number;
+            /** Landing Contact Observed */
+            landing_contact_observed: boolean;
+            /** Final State */
+            final_state: string;
+        };
         /** BrowserTimingEventRequest */
         BrowserTimingEventRequest: {
             /** Correlation Id */
@@ -1978,6 +2693,71 @@ export interface components {
              */
             coalesced_samples: number;
         };
+        /** CalibrationCandidateRequest */
+        CalibrationCandidateRequest: {
+            /** Predecessor Calibration Id */
+            predecessor_calibration_id?: string | null;
+            /** Train Session Ids */
+            train_session_ids: string[];
+            /** Holdout Session Ids */
+            holdout_session_ids: string[];
+            /** Session Geometry Ids */
+            session_geometry_ids: {
+                [key: string]: "straight" | "curve";
+            };
+            /** Session Sha256S */
+            session_sha256s: {
+                [key: string]: string;
+            };
+            /** Parameters */
+            parameters: {
+                [key: string]: number;
+            };
+            /** Baseline */
+            baseline: components["schemas"]["CalibrationSessionResult"][];
+            /** Candidate */
+            candidate: components["schemas"]["CalibrationSessionResult"][];
+        };
+        /** CalibrationPromotionAcceptance */
+        CalibrationPromotionAcceptance: {
+            /** Operator Id */
+            operator_id: string;
+            /**
+             * Acceptance Phrase
+             * @constant
+             */
+            acceptance_phrase: "PROMOTE CALIBRATION";
+        };
+        /** CalibrationSessionResult */
+        CalibrationSessionResult: {
+            /** Session Id */
+            session_id: string;
+            /**
+             * Geometry Id
+             * @enum {string}
+             */
+            geometry_id: "straight" | "curve";
+            /** Accepted */
+            accepted: boolean;
+            /** Whole Session Sha256 */
+            whole_session_sha256: string;
+            /** Repeat Vector Sha256S */
+            repeat_vector_sha256s: [
+                string,
+                string,
+                string
+            ];
+            /** Position Rmse M */
+            position_rmse_m: number;
+            /** Altitude Rmse M */
+            altitude_rmse_m: number;
+            /** Velocity Rmse M S */
+            velocity_rmse_m_s: number;
+            /** Guards */
+            guards: {
+                [key: string]: number | boolean;
+            };
+        };
         /**
          * CampaignRunMode
          * @enum {string}
@@ -1990,6 +2770,12 @@ export interface components {
             submission_id?: string | null;
             /** Planning Submission Id */
             planning_submission_id?: string | null;
+            /** Comparison Context Id */
+            comparison_context_id?: string | null;
+            planning_capability_request?: components["schemas"]["PlanningCapabilityRequest"] | null;
+            execution_capability_request?: components["schemas"]["ExecutionCapabilityRequest"] | null;
+            motion_preparation?: components["schemas"]["MotionPreparationRequest"] | null;
+            coordination_preparation?: components["schemas"]["CoordinationPreparationRequest"] | null;
         };
         /** ChildCaseRequest */
         ChildCaseRequest: {
@@ -2013,11 +2799,113 @@ export interface components {
              */
             allow_partial_fleet: boolean;
         };
+        /** ControllerTuningFixtureStatus */
+        ControllerTuningFixtureStatus: {
+            /** Fixture Id */
+            fixture_id: string;
+            /** Fixture Version */
+            fixture_version: string;
+            /** Artifact Path */
+            artifact_path: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "AWAITING_MEASUREMENTS" | "READY" | "INVALID";
+            /** Implemented Flights Available */
+            implemented_flights_available: boolean;
+            /**
+             * Missing Fields
+             * @default []
+             */
+            missing_fields: string[];
+            /** Detail */
+            detail: string;
+        };
+        /** ControllerTuningRangeSummary */
+        ControllerTuningRangeSummary: {
+            /** Fixture Id */
+            fixture_id: string;
+            /** Fixture Version */
+            fixture_version: string;
+            /**
+             * Model Status
+             * @enum {string}
+             */
+            model_status: "EVALUATED" | "RAW_ONLY";
+            /**
+             * Prediction Source
+             * @enum {string}
+             */
+            prediction_source: "CONFIGURED_PLACEMENT" | "ESTIMATOR_POSE" | "UNAVAILABLE";
+            /**
+             * Valid Range Value Count
+             * @default 0
+             */
+            valid_range_value_count: number;
+            /** Pose Prediction Residual Rms M */
+            pose_prediction_residual_rms_m?: number | null;
+            /** Opposing Range Sum Residual Rms M */
+            opposing_range_sum_residual_rms_m?: number | null;
+            /**
+             * Fitted Pose Sample Count
+             * @default 0
+             */
+            fitted_pose_sample_count: number;
+            /** Estimator To Range Xy Rms M */
+            estimator_to_range_xy_rms_m?: number | null;
+            /**
+             * Continuity Constrained
+             * @default true
+             * @constant
+             */
+            continuity_constrained: true;
+            /**
+             * Qualification Claim
+             * @default NONE
+             * @constant
+             */
+            qualification_claim: "NONE";
+            /** Detail */
+            detail: string;
+        };
+        /** ControllerTuningRunPreparation */
+        ControllerTuningRunPreparation: {
+            /** Fixture Id */
+            fixture_id: string;
+            /** Fixture Version */
+            fixture_version: string;
+            /** Fixture Sha256 */
+            fixture_sha256: string;
+            /**
+             * Station Id
+             * @enum {string}
+             */
+            station_id: "A" | "B" | "C" | "D" | "E";
+            /** Heading Deg */
+            heading_deg: number;
+            /** Target Height M */
+            target_height_m?: number | null;
+        };
         /**
          * CoordinateFrame
          * @enum {string}
          */
         CoordinateFrame: "world" | "home" | "body" | "sensor";
+        /**
+         * CoordinationPreparationRequest
+         * @description Optional exact two-drone launch-gap experiment, separate from motion physics.
+         */
+        CoordinationPreparationRequest: {
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /** Launch Gap S */
+            launch_gap_s: number;
+        };
         /** DeploymentManifest */
         DeploymentManifest: {
             /**
@@ -2106,6 +2994,32 @@ export interface components {
              */
             duration_s: number;
         };
+        /** EstimatorReading */
+        EstimatorReading: {
+            position_variance_m2?: components["schemas"]["Vector3"] | null;
+            /** Converged */
+            converged?: boolean | null;
+            /** Quality Metric Id */
+            quality_metric_id?: string | null;
+        };
+        /** EulerAttitude */
+        EulerAttitude: {
+            /**
+             * Roll Rad
+             * @default 0
+             */
+            roll_rad: number;
+            /**
+             * Pitch Rad
+             * @default 0
+             */
+            pitch_rad: number;
+            /**
+             * Yaw Rad
+             * @default 0
+             */
+            yaw_rad: number;
+        };
         /**
          * EvidenceKind
          * @enum {string}
@@ -2121,6 +3035,56 @@ export interface components {
          * @enum {string}
          */
         ExecutionBackend: "FAST_SIM" | "MOCK_ISAAC" | "ISAAC" | "CRAZYFLIE";
+        /**
+         * ExecutionCapabilityRequest
+         * @description Planner request for a reusable execution capability, not a catalog experiment.
+         */
+        ExecutionCapabilityRequest: {
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /**
+             * Capability Id
+             * @enum {string}
+             */
+            capability_id: "core.constant_path_speed" | "core.route_fidelity" | "core.corner_transition" | "core.energy_aware_retiming";
+            parameters: components["schemas"]["ExecutionProfileParameters"];
+        };
+        /** ExecutionProfileParameters */
+        ExecutionProfileParameters: {
+            /** Target Path Speed M S */
+            target_path_speed_m_s?: number | null;
+            /** Certified Path Speed M S */
+            certified_path_speed_m_s?: number | null;
+            /**
+             * Segment Target Speeds M S
+             * @default []
+             */
+            segment_target_speeds_m_s: number[];
+            /** Target Vertical Rate M S */
+            target_vertical_rate_m_s?: number | null;
+            /** Duration Scale */
+            duration_scale?: number | null;
+            /** Lookahead Time S */
+            lookahead_time_s?: number | null;
+            /** Maximum Path Tube Error M */
+            maximum_path_tube_error_m?: number | null;
+            /** Smoothness Percent */
+            smoothness_percent?: number | null;
+            /**
+             * Entry Exit Ramp S
+             * @default 1.25
+             */
+            entry_exit_ramp_s: number;
+            /**
+             * Steady Window Tolerance Fraction
+             * @default 0.2
+             */
+            steady_window_tolerance_fraction: number;
+        };
         /** FaultInjectionRequest */
         FaultInjectionRequest: {
             fault: components["schemas"]["FaultType"];
@@ -2194,10 +3158,37 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /** FlowReading */
+        FlowReading: {
+            velocity_body_m_s?: components["schemas"]["Vector3"] | null;
+            /** Ground Distance M */
+            ground_distance_m?: number | null;
+            /**
+             * Quality Percent
+             * @default 0
+             */
+            quality_percent: number;
+            /** @default VALID */
+            status: components["schemas"]["FlowStatus"];
+            /** Source Timestamp S */
+            source_timestamp_s?: number | null;
+        };
+        /**
+         * FlowStatus
+         * @enum {string}
+         */
+        FlowStatus: "VALID" | "DEGRADED" | "STALE" | "UNAVAILABLE";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** ImuReading */
+        ImuReading: {
+            acceleration_body_m_s2?: components["schemas"]["Vector3"];
+            angular_velocity_body_rad_s?: components["schemas"]["Vector3"];
+            /** Source Timestamp S */
+            source_timestamp_s?: number | null;
         };
         /**
          * InitialFleetRole
@@ -2288,6 +3279,171 @@ export interface components {
              */
             confirmed: boolean;
         };
+        /**
+         * MotionPreparationRequest
+         * @description Plain operator motion controls retained before safety resolution.
+         */
+        MotionPreparationRequest: {
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /**
+             * Balance
+             * @default 50
+             */
+            balance: number;
+            /** Speed M S */
+            speed_m_s?: number | null;
+            /** Accuracy M */
+            accuracy_m?: number | null;
+            /** Smoothness */
+            smoothness?: number | null;
+        };
+        /**
+         * MotorActuationStatus
+         * @description Backend-authoritative direct-PWM state, independent of the mission UI.
+         */
+        MotorActuationStatus: {
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "IDLE" | "ACTIVE" | "POSSIBLY_ACTIVE" | "STOPPING" | "STOP_FAILED";
+            /** Stop Required */
+            stop_required: boolean;
+            /** Session Id */
+            session_id?: string | null;
+            /** Motor Selection */
+            motor_selection?: ("all" | "m1" | "m2" | "m3" | "m4") | null;
+            /** Commanded Output Percent */
+            commanded_output_percent?: number | null;
+            /** Measured Pwm Percent */
+            measured_pwm_percent?: [
+                number,
+                number,
+                number,
+                number
+            ] | null;
+            /** Measured Output Active */
+            measured_output_active?: boolean | null;
+            /**
+             * Firmware Watchdog Armed
+             * @default false
+             */
+            firmware_watchdog_armed: boolean;
+            /**
+             * Reboot Required
+             * @default false
+             */
+            reboot_required: boolean;
+            /** Detail */
+            detail?: string | null;
+        };
+        /** MotorBenchSession */
+        MotorBenchSession: {
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /** Session Id */
+            session_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ACTIVE" | "STOPPED" | "FAILED";
+            /**
+             * Motor Selection
+             * @enum {string}
+             */
+            motor_selection: "all" | "m1" | "m2" | "m3" | "m4";
+            /** Output Percent */
+            output_percent: number;
+            /** Measured Pwm Percent */
+            measured_pwm_percent?: [
+                number,
+                number,
+                number,
+                number
+            ] | null;
+            /**
+             * Maximum Output Percent
+             * @default 70
+             * @constant
+             */
+            maximum_output_percent: 70;
+            /**
+             * Watchdog Timeout Ms
+             * @default 750
+             * @constant
+             */
+            watchdog_timeout_ms: 750;
+            /**
+             * Firmware Watchdog Armed
+             * @default false
+             */
+            firmware_watchdog_armed: boolean;
+            /**
+             * Reboot Required
+             * @default false
+             */
+            reboot_required: boolean;
+            /**
+             * Telemetry Row Count
+             * @default 0
+             */
+            telemetry_row_count: number;
+            /** Telemetry Artifact Path */
+            telemetry_artifact_path?: string | null;
+            /** Motor Csv Path */
+            motor_csv_path?: string | null;
+            /** Motor Csv Sha256 */
+            motor_csv_sha256?: string | null;
+            /** Error */
+            error?: string | null;
+        };
+        /** MotorBenchStartRequest */
+        MotorBenchStartRequest: {
+            /**
+             * Motor Selection
+             * @default all
+             * @enum {string}
+             */
+            motor_selection: "all" | "m1" | "m2" | "m3" | "m4";
+            /**
+             * Props Removed Confirmed
+             * @constant
+             */
+            props_removed_confirmed: true;
+            /**
+             * Physically Restrained Confirmed
+             * @constant
+             */
+            physically_restrained_confirmed: true;
+        };
+        /** MotorBenchStopRequest */
+        MotorBenchStopRequest: {
+            /** Session Id */
+            session_id: string;
+        };
+        /** MotorBenchUpdateRequest */
+        MotorBenchUpdateRequest: {
+            /** Session Id */
+            session_id: string;
+            /** Output Percent */
+            output_percent: number;
+        };
         /** MoveRelativeCommand */
         MoveRelativeCommand: {
             /**
@@ -2325,6 +3481,16 @@ export interface components {
             frame: components["schemas"]["CoordinateFrame"];
         };
         /**
+         * ObservationProvenance
+         * @enum {string}
+         */
+        ObservationProvenance: "MEASURED_REAL" | "TEST";
+        /**
+         * ObservationTwinState
+         * @enum {string}
+         */
+        ObservationTwinState: "UNCONFIGURED" | "DISCONNECTED" | "CONNECTING" | "PENDING_CONFIRMATION" | "PAIRED" | "SUSPENDED" | "ERROR" | "CONFIGURATION_INVALID";
+        /**
          * OperatingMode
          * @enum {string}
          */
@@ -2341,11 +3507,444 @@ export interface components {
             /** Value */
             value: boolean | number | string;
         };
+        /** PhysicalBasicFlightReadiness */
+        PhysicalBasicFlightReadiness: {
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /** Ready */
+            ready: boolean;
+            /** Estimator Converged */
+            estimator_converged: boolean;
+            /** Battery Percent */
+            battery_percent?: number | null;
+            /** Battery Voltage V */
+            battery_voltage_v?: number | null;
+            /** Floor Distance M */
+            floor_distance_m?: number | null;
+            /**
+             * Faults
+             * @default []
+             */
+            faults: string[];
+            /**
+             * Issues
+             * @default []
+             */
+            issues: string[];
+            /**
+             * Physical Commands Sent
+             * @default false
+             * @constant
+             */
+            physical_commands_sent: false;
+        };
+        /** PhysicalBasicFlightRunRequest */
+        PhysicalBasicFlightRunRequest: {
+            /**
+             * Motion Id
+             * @default commissioning-baseline
+             * @enum {string}
+             */
+            motion_id: "commissioning-baseline" | "arm-disarm" | "hover-12s" | "forward-10cm-return" | "left-10cm-return" | "right-10cm-return" | "forward-20cm-return" | "land-forward-10cm" | "land-forward-20cm" | "land-diagonal-20cm" | "l-shape-stops" | "square-stops" | "triangle-stops" | "l-shape-stops-40cm" | "square-stops-40cm" | "triangle-stops-40cm" | "straight-out-back-continuous" | "tuning-a-floor-start" | "tuning-a-raised-center" | "tuning-a-station-a" | "tuning-a-station-b" | "tuning-a-station-c" | "tuning-a-station-d" | "tuning-a-station-e" | "tuning-a-yaw-minus-45" | "tuning-a-yaw-minus-30" | "tuning-a-yaw-minus-15" | "tuning-a-yaw-zero" | "tuning-a-yaw-plus-15" | "tuning-a-yaw-plus-30" | "tuning-a-yaw-plus-45" | "tuning-a-height-low" | "tuning-a-height-nominal" | "tuning-a-height-high" | "tuning-a-holdout-one" | "tuning-a-holdout-two" | "tuning-b-center-hover" | "tuning-c-x-plus-05" | "tuning-c-x-minus-05" | "tuning-c-y-plus-05" | "tuning-c-y-minus-05" | "tuning-c-x-plus-15" | "tuning-c-x-minus-15" | "tuning-c-y-plus-15" | "tuning-c-y-minus-15" | "tuning-c-x-plus-30" | "tuning-c-x-minus-30" | "tuning-c-y-plus-30" | "tuning-c-y-minus-30" | "tuning-d-yaw-zero" | "tuning-d-yaw-plus-15" | "tuning-d-yaw-minus-15" | "tuning-d-yaw-plus-30" | "tuning-d-yaw-minus-30" | "tuning-d-slow-sweep" | "tuning-d-off-center" | "tuning-e-slow-x" | "tuning-e-stress-x" | "tuning-e-hold-x-positive" | "tuning-e-hold-x-negative" | "tuning-e-hold-y-positive" | "tuning-e-hold-y-negative" | "acro-single-roll";
+            /** Station Id */
+            station_id?: ("A" | "B" | "C" | "D" | "E") | null;
+            /**
+             * Heading Deg
+             * @default 0
+             */
+            heading_deg: number;
+            /** Target Height M */
+            target_height_m?: number | null;
+        };
+        /**
+         * PhysicalFlightOperationStatus
+         * @description Global contained-flight state, independent of the initiating HTTP request.
+         */
+        PhysicalFlightOperationStatus: {
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "IDLE" | "STARTING" | "RUNNING" | "HOVERING_READY" | "FLIPPING" | "ABORTING" | "STOP_UNCONFIRMED" | "COMPLETED" | "ABORTED" | "FAILED";
+            /** Stop Required */
+            stop_required: boolean;
+            /** Operation Id */
+            operation_id?: string | null;
+            /** Motion Id */
+            motion_id?: ("commissioning-baseline" | "arm-disarm" | "hover-12s" | "forward-10cm-return" | "left-10cm-return" | "right-10cm-return" | "forward-20cm-return" | "land-forward-10cm" | "land-forward-20cm" | "land-diagonal-20cm" | "l-shape-stops" | "square-stops" | "triangle-stops" | "l-shape-stops-40cm" | "square-stops-40cm" | "triangle-stops-40cm" | "straight-out-back-continuous" | "tuning-a-floor-start" | "tuning-a-raised-center" | "tuning-a-station-a" | "tuning-a-station-b" | "tuning-a-station-c" | "tuning-a-station-d" | "tuning-a-station-e" | "tuning-a-yaw-minus-45" | "tuning-a-yaw-minus-30" | "tuning-a-yaw-minus-15" | "tuning-a-yaw-zero" | "tuning-a-yaw-plus-15" | "tuning-a-yaw-plus-30" | "tuning-a-yaw-plus-45" | "tuning-a-height-low" | "tuning-a-height-nominal" | "tuning-a-height-high" | "tuning-a-holdout-one" | "tuning-a-holdout-two" | "tuning-b-center-hover" | "tuning-c-x-plus-05" | "tuning-c-x-minus-05" | "tuning-c-y-plus-05" | "tuning-c-y-minus-05" | "tuning-c-x-plus-15" | "tuning-c-x-minus-15" | "tuning-c-y-plus-15" | "tuning-c-y-minus-15" | "tuning-c-x-plus-30" | "tuning-c-x-minus-30" | "tuning-c-y-plus-30" | "tuning-c-y-minus-30" | "tuning-d-yaw-zero" | "tuning-d-yaw-plus-15" | "tuning-d-yaw-minus-15" | "tuning-d-yaw-plus-30" | "tuning-d-yaw-minus-30" | "tuning-d-slow-sweep" | "tuning-d-off-center" | "tuning-e-slow-x" | "tuning-e-stress-x" | "tuning-e-hold-x-positive" | "tuning-e-hold-x-negative" | "tuning-e-hold-y-positive" | "tuning-e-hold-y-negative" | "acro-single-roll") | null;
+            /** Started At Utc */
+            started_at_utc?: string | null;
+            /** Detail */
+            detail?: string | null;
+            result?: components["schemas"]["BasicFlightLabRun"] | null;
+            /** Failure Details */
+            failure_details?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Command Evidence
+             * @default []
+             */
+            command_evidence: {
+                [key: string]: unknown;
+            }[];
+            controller_tuning_preparation?: components["schemas"]["ControllerTuningRunPreparation"] | null;
+            /** Available Action */
+            available_action?: "FLIP" | null;
+        };
+        /** PhysicalTwinBindingRequest */
+        PhysicalTwinBindingRequest: {
+            /** Selected Uri */
+            selected_uri: string;
+            /**
+             * Vehicle Label
+             * @default Crazyflie
+             */
+            vehicle_label: string;
+            /**
+             * Confirm Exact Uri
+             * @constant
+             */
+            confirm_exact_uri: true;
+        };
+        /** PhysicalTwinConfirmRequest */
+        PhysicalTwinConfirmRequest: {
+            /** Connection Nonce */
+            connection_nonce: string;
+            /** Observed Identity Sha256 */
+            observed_identity_sha256: string;
+        };
+        /** PhysicalTwinHandoffRequest */
+        PhysicalTwinHandoffRequest: {
+            /** Session Id */
+            session_id: string;
+            /** Connected */
+            connected: boolean;
+            observed_source_class: components["schemas"]["TwinSourceClass"];
+            /** Now Received S */
+            now_received_s: number;
+            /**
+             * Maximum Age S
+             * @default 0.25
+             */
+            maximum_age_s: number;
+            /** Channels */
+            channels: components["schemas"]["TwinChannelDefinition"][];
+            /** Latest Samples */
+            latest_samples: components["schemas"]["TwinStreamSample"][];
+        };
+        /** PhysicalTwinSourceStatus */
+        PhysicalTwinSourceStatus: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "OBSERVED" | "PREDICTED";
+            /** Vehicle Id */
+            vehicle_id: string;
+            source_class: components["schemas"]["TwinSourceClass"];
+            /**
+             * Freshness
+             * @enum {string}
+             */
+            freshness: "CURRENT" | "STALE" | "MISSING";
+            frame?: components["schemas"]["CoordinateFrame"] | null;
+            /** Source Clock Id */
+            source_clock_id?: string | null;
+            /** Source Epoch */
+            source_epoch?: number | null;
+            /** Raw Source Timestamp S */
+            raw_source_timestamp_s?: number | null;
+            /** Source Timestamp S */
+            source_timestamp_s?: number | null;
+            /** Pair Sequence */
+            pair_sequence?: number | null;
+            /** Alignment Epoch */
+            alignment_epoch?: number | null;
+            /**
+             * Position Availability
+             * @enum {string}
+             */
+            position_availability: "AVAILABLE" | "MISSING" | "INCOMPATIBLE";
+            position_m?: components["schemas"]["Vector3"] | null;
+            /**
+             * Battery Availability
+             * @enum {string}
+             */
+            battery_availability: "AVAILABLE" | "MISSING";
+            /** Battery Voltage V */
+            battery_voltage_v?: number | null;
+            /** Armed */
+            armed?: boolean | null;
+            /** Flying */
+            flying?: boolean | null;
+            /**
+             * Faults
+             * @default []
+             */
+            faults: string[];
+            attitude?: components["schemas"]["EulerAttitude"] | null;
+            imu?: components["schemas"]["ImuReading"] | null;
+            flow?: components["schemas"]["FlowReading"] | null;
+            ranges?: components["schemas"]["RangeReadings"] | null;
+            estimator?: components["schemas"]["EstimatorReading"] | null;
+            transport?: components["schemas"]["TransportReading"] | null;
+            /** Motor Pwm Percent */
+            motor_pwm_percent?: [
+                number,
+                number,
+                number,
+                number
+            ] | null;
+            /** Family Availability */
+            family_availability?: {
+                [key: string]: components["schemas"]["TwinAvailability"];
+            };
+        };
+        /** PhysicalTwinStatus */
+        PhysicalTwinStatus: {
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            state: components["schemas"]["ObservationTwinState"];
+            /** Configured */
+            configured: boolean;
+            /**
+             * Auto Connect Enabled
+             * @default false
+             */
+            auto_connect_enabled: boolean;
+            /** Vehicle Label */
+            vehicle_label?: string | null;
+            /** Redacted Uri */
+            redacted_uri?: string | null;
+            /** Uri Sha256 */
+            uri_sha256?: string | null;
+            /** Connection Nonce */
+            connection_nonce?: string | null;
+            /** Observed Identity Sha256 */
+            observed_identity_sha256?: string | null;
+            /**
+             * Command Readiness
+             * @default NOT_ASSESSED
+             * @enum {string}
+             */
+            command_readiness: "NOT_ASSESSED" | "UNQUALIFIED";
+            /**
+             * Command Readiness Issues
+             * @default []
+             */
+            command_readiness_issues: string[];
+            /** Session Id */
+            session_id?: string | null;
+            observed_source_class?: components["schemas"]["TwinSourceClass"] | null;
+            predicted_source_class?: components["schemas"]["TwinSourceClass"] | null;
+            provenance?: components["schemas"]["ObservationProvenance"] | null;
+            /**
+             * Test Only
+             * @default false
+             */
+            test_only: boolean;
+            /**
+             * Sample Count
+             * @default 0
+             */
+            sample_count: number;
+            /**
+             * Paired Cycle Count
+             * @default 0
+             */
+            paired_cycle_count: number;
+            observed?: components["schemas"]["PhysicalTwinSourceStatus"] | null;
+            predicted?: components["schemas"]["PhysicalTwinSourceStatus"] | null;
+            /** Last Error Code */
+            last_error_code?: string | null;
+            /** Last Error Message */
+            last_error_message?: string | null;
+            last_failure_kind?: components["schemas"]["RadioFailureKind"] | null;
+            /** Last Failure At Utc */
+            last_failure_at_utc?: string | null;
+            /**
+             * Reconnect Attempt
+             * @default 0
+             */
+            reconnect_attempt: number;
+            /**
+             * Reconnect Mode
+             * @default IDLE
+             * @enum {string}
+             */
+            reconnect_mode: "IDLE" | "FAST" | "LOW_DUTY";
+            /** Next Reconnect At Utc */
+            next_reconnect_at_utc?: string | null;
+            /** Suspension Reason */
+            suspension_reason?: string | null;
+            /** Suspension Owner */
+            suspension_owner?: string | null;
+            /** Suspended At Utc */
+            suspended_at_utc?: string | null;
+            /**
+             * Telemetry Owner
+             * @default OBSERVER
+             * @enum {string}
+             */
+            telemetry_owner: "OBSERVER" | "PHYSICAL_OPERATION";
+            /**
+             * Operation Sample Count
+             * @default 0
+             */
+            operation_sample_count: number;
+        };
+        /**
+         * PlanningCapabilityRequest
+         * @description Planner-owned reusable capability request, separate from trajectory time laws.
+         */
+        PlanningCapabilityRequest: {
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /**
+             * Capability Id
+             * @constant
+             */
+            capability_id: "core.route_fidelity";
+        };
         /** PreflightRequest */
         PreflightRequest: {
             /** Mission Id */
             mission_id?: string | null;
         };
+        /**
+         * RadioFailureKind
+         * @description Operator-relevant physical-radio failure classes.
+         *
+         *     These values describe the boundary at which failure was observed. They do
+         *     not claim a hardware root cause without an independent A/B qualification.
+         * @enum {string}
+         */
+        RadioFailureKind: "NONE" | "USB_UNAVAILABLE" | "TARGET_OFFLINE" | "RF_ACK_LOSS" | "OUTBOUND_QUEUE_SATURATED" | "TELEMETRY_STALE" | "PROTOCOL_SETUP_FAILED" | "UNKNOWN";
+        /**
+         * RadioTransportDiagnostics
+         * @description Measured Crazyradio transport state for one connection epoch.
+         */
+        RadioTransportDiagnostics: {
+            /** Connection Epoch */
+            connection_epoch: number;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "HEALTHY" | "DEGRADED" | "STALE" | "DISCONNECTED";
+            /** @default NONE */
+            failure_kind: components["schemas"]["RadioFailureKind"];
+            /**
+             * Acked Packet Count
+             * @default 0
+             */
+            acked_packet_count: number;
+            /**
+             * Lost Packet Count
+             * @default 0
+             */
+            lost_packet_count: number;
+            /** Packet Loss Percent */
+            packet_loss_percent?: number | null;
+            /**
+             * Consecutive Lost Packet Count
+             * @default 0
+             */
+            consecutive_lost_packet_count: number;
+            /**
+             * Maximum Consecutive Lost Packet Count
+             * @default 0
+             */
+            maximum_consecutive_lost_packet_count: number;
+            /** Retry Quality Percent */
+            retry_quality_percent?: number | null;
+            /** Uplink Rssi Raw */
+            uplink_rssi_raw?: number | null;
+            /** Uplink Rate Hz */
+            uplink_rate_hz?: number | null;
+            /** Downlink Rate Hz */
+            downlink_rate_hz?: number | null;
+            /** Uplink Congestion Percent */
+            uplink_congestion_percent?: number | null;
+            /** Downlink Congestion Percent */
+            downlink_congestion_percent?: number | null;
+            /**
+             * Outbound Queue Depth
+             * @default 0
+             */
+            outbound_queue_depth: number;
+            /**
+             * Outbound Queue Capacity
+             * @default 1
+             */
+            outbound_queue_capacity: number;
+            /**
+             * Queue Saturation Count
+             * @default 0
+             */
+            queue_saturation_count: number;
+            /**
+             * Usb Error Count
+             * @default 0
+             */
+            usb_error_count: number;
+            /** Last Ack Age Ms */
+            last_ack_age_ms?: number | null;
+            /** Last Event At Utc */
+            last_event_at_utc?: string | null;
+            /** Last Event Message */
+            last_event_message?: string | null;
+        };
+        /** RangeReadings */
+        RangeReadings: {
+            /** Front M */
+            front_m?: number | null;
+            /** Back M */
+            back_m?: number | null;
+            /** Left M */
+            left_m?: number | null;
+            /** Right M */
+            right_m?: number | null;
+            /** Up M */
+            up_m?: number | null;
+            /** Down M */
+            down_m?: number | null;
+            /**
+             * Max Range M
+             * @default 4
+             */
+            max_range_m: number;
+            /** Statuses */
+            statuses?: {
+                [key: string]: components["schemas"]["RangeStatus"];
+            };
+            /** Source Timestamp S */
+            source_timestamp_s?: number | null;
+        };
+        /**
+         * RangeStatus
+         * @enum {string}
+         */
+        RangeStatus: "VALID" | "NO_HIT" | "CLIPPED" | "STALE" | "UNAVAILABLE";
         /** ReasonRequest */
         ReasonRequest: {
             /** Reason */
@@ -2459,6 +4058,72 @@ export interface components {
          * @enum {string}
          */
         TimingStage: "SIMULATOR_STEP" | "CONTROLLER_SAMPLE" | "COMMAND_COMPLETION" | "MODELED_VEHICLE_TRANSPORT" | "RECORDER_COMMIT" | "WEBSOCKET_ENQUEUE" | "WEBSOCKET_DELIVERY" | "BROWSER_RECEIPT" | "RENDER_FRAME" | "PLAYBACK_BUFFER";
+        /**
+         * TransportReading
+         * @description Command-transport evidence without implying that every adapter is a radio.
+         */
+        TransportReading: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "physical_radio" | "modeled_transport" | "replay";
+            /**
+             * Source Class
+             * @enum {string}
+             */
+            source_class: "MEASURED_REAL" | "SIMULATED_MODEL" | "REPLAYED";
+            /** Delivery Quality Percent */
+            delivery_quality_percent?: number | null;
+            /** Latency Ms */
+            latency_ms?: number | null;
+            /** Packet Loss Percent */
+            packet_loss_percent?: number | null;
+            radio?: components["schemas"]["RadioTransportDiagnostics"] | null;
+        };
+        /**
+         * TwinAvailability
+         * @enum {string}
+         */
+        TwinAvailability: "AVAILABLE" | "MISSING" | "STALE" | "REJECTED" | "INCOMPATIBLE";
+        /** TwinChannelDefinition */
+        TwinChannelDefinition: {
+            /** Channel Id */
+            channel_id: string;
+            /** Unit */
+            unit: string;
+            /** Frame */
+            frame: string;
+            /**
+             * Value Kind
+             * @enum {string}
+             */
+            value_kind: "SCALAR" | "VECTOR3" | "BOOLEAN" | "IDENTIFIER";
+            /**
+             * Required
+             * @default false
+             */
+            required: boolean;
+        };
+        /** TwinCurriculumResultRequest */
+        TwinCurriculumResultRequest: {
+            /** Session Id */
+            session_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "PASSED" | "FAILED";
+            /** Result Sha256 */
+            result_sha256: string;
+        };
+        /** TwinIngestionBatch */
+        TwinIngestionBatch: {
+            /** Session Id */
+            session_id: string;
+            /** Samples */
+            samples: components["schemas"]["TwinStreamSample"][];
+        };
         /** TwinInitialState */
         TwinInitialState: {
             source_class: components["schemas"]["TwinSourceClass"];
@@ -2472,6 +4137,11 @@ export interface components {
             /** Battery Percent */
             battery_percent?: number | null;
         };
+        /**
+         * TwinQuality
+         * @enum {string}
+         */
+        TwinQuality: "GOOD" | "DEGRADED" | "INVALID" | "UNQUALIFIED";
         /** TwinSessionConfig */
         TwinSessionConfig: {
             /** Observed Vehicle Id */
@@ -2490,6 +4160,14 @@ export interface components {
             physics_model_version?: string | null;
             /** Physics Configuration Sha256 */
             physics_configuration_sha256?: string | null;
+            /** Calibration Id */
+            calibration_id?: string | null;
+            /** Curriculum Stage Id */
+            curriculum_stage_id?: string | null;
+            /** Campaign Run Id */
+            campaign_run_id?: string | null;
+            /** Campaign Review Id */
+            campaign_review_id?: string | null;
             observed_initial_state: components["schemas"]["TwinInitialState"];
             simulated_initial_state: components["schemas"]["TwinInitialState"];
             /**
@@ -2513,6 +4191,66 @@ export interface components {
          * @enum {string}
          */
         TwinSourceClass: "MEASURED_REAL" | "SIMULATED_MODEL" | "CONFIGURED" | "TEST";
+        /** TwinStreamSample */
+        TwinStreamSample: {
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /** Sample Id */
+            sample_id: string;
+            /** Session Id */
+            session_id: string;
+            side: components["schemas"]["TwinStreamSide"];
+            /** Vehicle Id */
+            vehicle_id: string;
+            /** Channel Id */
+            channel_id: string;
+            /** Sequence */
+            sequence: number;
+            /** Pair Id */
+            pair_id?: string | null;
+            /** Pair Sequence */
+            pair_sequence?: number | null;
+            /** Alignment Epoch */
+            alignment_epoch?: number | null;
+            /** Source Clock Id */
+            source_clock_id?: string | null;
+            /**
+             * Source Epoch
+             * @default 0
+             */
+            source_epoch: number;
+            /** Raw Source Timestamp S */
+            raw_source_timestamp_s?: number | null;
+            /** Source Timestamp S */
+            source_timestamp_s: number;
+            /** Received Timestamp S */
+            received_timestamp_s: number;
+            availability: components["schemas"]["TwinAvailability"];
+            quality: components["schemas"]["TwinQuality"];
+            /** Unit */
+            unit: string;
+            /** Frame */
+            frame: string;
+            /** Source Frame */
+            source_frame?: string | null;
+            /** Value */
+            value?: number | boolean | string | components["schemas"]["Vector3"] | null;
+            /** Calibration Id */
+            calibration_id?: string | null;
+            /** Raw Payload Sha256 */
+            raw_payload_sha256: string;
+            /** Sample Sha256 */
+            sample_sha256: string;
+        };
+        /**
+         * TwinStreamSide
+         * @enum {string}
+         */
+        TwinStreamSide: "OBSERVED" | "PREDICTED";
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -2548,7 +4286,7 @@ export interface components {
          * VehicleCapability
          * @enum {string}
          */
-        VehicleCapability: "arming" | "relative_positioning" | "global_positioning" | "high_level_commands" | "range_sensing" | "parameter_access" | "emergency_stop" | "time_parameterized_trajectory";
+        VehicleCapability: "arming" | "relative_positioning" | "global_positioning" | "high_level_commands" | "body_rate_thrust" | "range_sensing" | "parameter_access" | "emergency_stop" | "time_parameterized_trajectory";
         /** ZoneDefinition */
         ZoneDefinition: {
             /** Zone Id */
@@ -2589,6 +4327,655 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    physical_twin_status_api_v1_physical_twin_status_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Local-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhysicalTwinStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    physical_twin_lab_catalog_api_v1_physical_twin_lab_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Local-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BasicFlightLabCatalog"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_physical_twin_lab_rehearsal_api_v1_physical_twin_lab_runs_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BasicFlightLabRunRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BasicFlightLabRun"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_physical_twin_lab_motion_api_v1_physical_twin_lab_physical_runs_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhysicalBasicFlightRunRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BasicFlightLabRun"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    physical_flight_status_api_v1_physical_twin_lab_physical_flight_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Local-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhysicalFlightOperationStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_physical_flight_api_v1_physical_twin_lab_physical_flight_start_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhysicalBasicFlightRunRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhysicalFlightOperationStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trigger_acrobatics_flip_api_v1_physical_twin_lab_physical_flight_flip_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhysicalFlightOperationStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    abort_physical_flight_api_v1_physical_twin_lab_physical_flight_abort_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhysicalFlightOperationStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assess_physical_twin_lab_readiness_api_v1_physical_twin_lab_physical_readiness_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhysicalBasicFlightReadiness"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_physical_motor_bench_api_v1_physical_twin_lab_motor_bench_start_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MotorBenchStartRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MotorBenchSession"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    physical_motor_actuation_status_api_v1_physical_twin_lab_motor_actuation_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Local-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MotorActuationStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stop_all_physical_motor_output_api_v1_physical_twin_lab_motor_actuation_stop_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MotorActuationStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_physical_motor_bench_api_v1_physical_twin_lab_motor_bench_output_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MotorBenchUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MotorBenchSession"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stop_physical_motor_bench_api_v1_physical_twin_lab_motor_bench_stop_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MotorBenchStopRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MotorBenchSession"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    physical_twin_live_api_v1_physical_twin_live_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Local-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    configure_physical_twin_api_v1_physical_twin_binding_put: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhysicalTwinBindingRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhysicalTwinStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connect_physical_twin_api_v1_physical_twin_connect_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhysicalTwinStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_physical_twin_api_v1_physical_twin_confirm_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhysicalTwinConfirmRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhysicalTwinStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    disconnect_physical_twin_api_v1_physical_twin_disconnect_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhysicalTwinStatus"];
                 };
             };
             /** @description Validation Error */
@@ -3093,6 +5480,11 @@ export interface operations {
             query?: {
                 submission_id?: string | null;
                 planning_submission_id?: string | null;
+                balance?: number | null;
+                speed_m_s?: number | null;
+                accuracy_m?: number | null;
+                smoothness?: number | null;
+                launch_gap_s?: number | null;
             };
             header?: {
                 "X-Local-Token"?: string | null;
@@ -3129,6 +5521,11 @@ export interface operations {
             query?: {
                 submission_id?: string | null;
                 planning_submission_id?: string | null;
+                balance?: number | null;
+                speed_m_s?: number | null;
+                accuracy_m?: number | null;
+                smoothness?: number | null;
+                launch_gap_s?: number | null;
             };
             header?: {
                 "X-Local-Token"?: string | null;
@@ -6019,6 +8416,331 @@ export interface operations {
             };
         };
     };
+    twin_calibration_candidates_api_v1_twins_calibrations_candidates_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Local-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    }[];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_twin_calibration_candidate_api_v1_twins_calibrations_candidates_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CalibrationCandidateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    twin_calibration_reports_api_v1_twins_calibrations_reports_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Local-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    }[];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    active_twin_calibration_api_v1_twins_calibrations_active_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Local-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string | null;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    promote_twin_calibration_api_v1_twins_calibrations__calibration_id__promote_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path: {
+                calibration_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CalibrationPromotionAcceptance"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    twin_curriculum_api_v1_twins_curriculum_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Local-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_twin_curriculum_stage_api_v1_twins_curriculum__stage_id__runs_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path: {
+                stage_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CampaignRunRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    physical_twin_handoff_assessment_api_v1_twins_physical_handoff_assess_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Local-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhysicalTwinHandoffRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_twin_curriculum_result_api_v1_twins_curriculum__stage_id__results_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path: {
+                stage_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwinCurriculumResultRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     twin_session_api_v1_twins__session_id__get: {
         parameters: {
             query?: never;
@@ -6076,6 +8798,84 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    twin_timeline_api_v1_twins__session_id__timeline_get: {
+        parameters: {
+            query?: {
+                channels?: string;
+                after_source_s?: number | null;
+                limit?: number;
+            };
+            header?: {
+                "X-Local-Token"?: string | null;
+            };
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ingest_twin_samples_api_v1_twins__session_id__samples_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Local-Token"?: string | null;
+                "X-Client-ID": string;
+                "Idempotency-Key": string;
+            };
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwinIngestionBatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

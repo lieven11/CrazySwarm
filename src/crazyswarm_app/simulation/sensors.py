@@ -81,6 +81,7 @@ class SimulatedPerceptionObservationSource(PerceptionObservationSource):
         vehicle_id: str,
         on_release: Callable[[PerceptionObservation], None] | None = None,
     ) -> None:
+        self.timeline = timeline
         observations: list[PerceptionObservation] = []
         for sequence, event in enumerate(timeline.events, start=1):
             region = None

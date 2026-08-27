@@ -11,7 +11,9 @@ from crazyswarm_app.campaign.service import (
     SnapshotAssessmentDisposition,
 )
 from crazyswarm_app.campaign.submissions import (
+    CoordinationPreparationRequest,
     ExecutionCapabilityRequest,
+    MotionPreparationRequest,
     PlanningCapabilityRequest,
 )
 from crazyswarm_app.campaign.timing import TimingStage
@@ -41,6 +43,8 @@ class CampaignRunRequest(CampaignApiModel):
     comparison_context_id: str | None = Field(default=None, min_length=1, max_length=96)
     planning_capability_request: PlanningCapabilityRequest | None = None
     execution_capability_request: ExecutionCapabilityRequest | None = None
+    motion_preparation: MotionPreparationRequest | None = None
+    coordination_preparation: CoordinationPreparationRequest | None = None
 
 
 class ChildCaseRequest(CampaignApiModel):

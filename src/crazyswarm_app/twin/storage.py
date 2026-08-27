@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import base64
 import json
 import os
 import threading
+import zlib
 from pathlib import Path
 from typing import Any
 
@@ -11,7 +13,11 @@ from crazyswarm_app.twin.models import (
     TwinSessionConfig,
     TwinSessionRecord,
     TwinStreamSample,
+    TwinStreamSide,
 )
+
+_COMPRESSED_SAMPLE_BATCH_KIND = "SAMPLE_BATCH_ZLIB_V1"
+_MAX_SAMPLE_BATCH_DECOMPRESSED_BYTES = 2 * 1024 * 1024
 
 
 class DurableTwinStore:
@@ -34,6 +40,11 @@ class DurableTwinStore:
         self._configs: dict[str, TwinSessionConfig] = {}
         self._samples: dict[str, list[TwinStreamSample]] = {}
         self._samples_by_id: dict[tuple[str, str], TwinStreamSample] = {}
+        self._stream_heads: dict[
+            str,
+            dict[tuple[TwinStreamSide, str, str], TwinStreamSample],
+        ] = {}
+        self._deferred_sample_records: dict[str, list[tuple[str, Any]]] = {}
         self._calibration_candidates: dict[str, dict[str, Any]] = {}
         self._calibration_reports: dict[str, dict[str, Any]] = {}
         self._active_calibration_id: str | None = None
@@ -61,6 +72,8 @@ class DurableTwinStore:
             self._records[record.session_id] = record
             self._configs[record.session_id] = config
             self._samples[record.session_id] = []
+            self._stream_heads[record.session_id] = {}
+            self._deferred_sample_records[record.session_id] = []
 
     def update_session(self, record: TwinSessionRecord) -> None:
         with self._lock:
@@ -77,6 +90,7 @@ class DurableTwinStore:
         with self._lock:
             if session_id not in self._records:
                 raise KeyError("unknown twin session")
+            self._hydrate_samples_locked(session_id)
             accepted: list[TwinStreamSample] = []
             accepted_by_id: dict[str, TwinStreamSample] = {}
             idempotent = 0
@@ -110,17 +124,40 @@ class DurableTwinStore:
                         "twin retention byte limit reached; no record was dropped"
                     )
                 self._append(
-                    "SAMPLE_BATCH",
+                    _COMPRESSED_SAMPLE_BATCH_KIND,
                     session_id,
-                    [item.model_dump(mode="json") for item in accepted],
+                    _compressed_sample_batch_payload(accepted),
                 )
                 for sample in accepted:
-                    self._samples[session_id].append(sample)
-                    self._samples_by_id[(session_id, sample.sample_id)] = sample
-                self._sample_bytes_by_session[session_id] = (
-                    retained_bytes + accepted_bytes
-                )
+                    self._index_sample_locked(session_id, sample, count_bytes=False)
+                self._sample_bytes_by_session[session_id] = retained_bytes + accepted_bytes
             return len(accepted), idempotent
+
+    def ingestion_state(
+        self,
+        session_id: str,
+        sample_ids: frozenset[str],
+    ) -> tuple[
+        dict[str, TwinStreamSample],
+        dict[tuple[TwinStreamSide, str, str], TwinStreamSample],
+    ]:
+        """Return only the bounded indexes needed to validate one new batch.
+
+        Ingestion used to materialize and sort the complete session timeline for
+        every 10 Hz batch.  That made live work grow quadratically with session
+        duration and eventually starved the physical-radio callback thread.
+        """
+
+        with self._lock:
+            if session_id not in self._records:
+                raise KeyError("unknown twin session")
+            self._hydrate_samples_locked(session_id)
+            existing = {
+                sample_id: sample
+                for sample_id in sample_ids
+                if (sample := self._samples_by_id.get((session_id, sample_id))) is not None
+            }
+            return existing, dict(self._stream_heads.get(session_id, {}))
 
     def sessions(self) -> tuple[TwinSessionRecord, ...]:
         with self._lock:
@@ -136,6 +173,7 @@ class DurableTwinStore:
 
     def samples(self, session_id: str) -> tuple[TwinStreamSample, ...]:
         with self._lock:
+            self._hydrate_samples_locked(session_id)
             return tuple(self._samples[session_id])
 
     def append_calibration_candidate(
@@ -243,22 +281,15 @@ class DurableTwinStore:
             self._records[session_id] = TwinSessionRecord.model_validate(payload["record"])
             self._configs[session_id] = TwinSessionConfig.model_validate(payload["config"])
             self._samples.setdefault(session_id, [])
+            self._stream_heads.setdefault(session_id, {})
+            self._deferred_sample_records.setdefault(session_id, [])
         elif kind == "SESSION_UPDATED":
             self._records[session_id] = TwinSessionRecord.model_validate(payload)
-        elif kind == "SAMPLE_BATCH":
-            for value in payload:
-                sample = TwinStreamSample.model_validate(value)
-                key = (session_id, sample.sample_id)
-                existing = self._samples_by_id.get(key)
-                if existing is not None and existing.sample_sha256 != sample.sample_sha256:
-                    raise ValueError("twin journal contains conflicting sample identity")
-                if existing is None:
-                    self._samples.setdefault(session_id, []).append(sample)
-                    self._samples_by_id[key] = sample
-                    self._sample_bytes_by_session[session_id] = (
-                        self._sample_bytes_by_session.get(session_id, 0)
-                        + _sample_storage_bytes(sample)
-                    )
+        elif kind in {"SAMPLE_BATCH", _COMPRESSED_SAMPLE_BATCH_KIND}:
+            # Retained timelines can contain millions of validated sample models.
+            # Keep their bounded journal payloads lazy during process startup and
+            # hydrate only the session requested for review or resumed ingestion.
+            self._deferred_sample_records.setdefault(session_id, []).append((kind, payload))
         elif kind == "CALIBRATION_CANDIDATE":
             if session_id in self._calibration_candidates:
                 raise ValueError("twin journal contains duplicate calibration candidate")
@@ -286,6 +317,45 @@ class DurableTwinStore:
         else:
             raise ValueError(f"unknown twin journal record kind: {kind}")
 
+    def _hydrate_samples_locked(self, session_id: str) -> None:
+        deferred = self._deferred_sample_records.get(session_id)
+        if not deferred:
+            return
+        for kind, payload in deferred:
+            values = (
+                _decompress_sample_batch_payload(payload)
+                if kind == _COMPRESSED_SAMPLE_BATCH_KIND
+                else payload
+            )
+            for value in values:
+                sample = TwinStreamSample.model_validate(value)
+                key = (session_id, sample.sample_id)
+                existing = self._samples_by_id.get(key)
+                if existing is not None and existing.sample_sha256 != sample.sample_sha256:
+                    raise ValueError("twin journal contains conflicting sample identity")
+                if existing is None:
+                    self._index_sample_locked(session_id, sample)
+        self._deferred_sample_records[session_id] = []
+
+    def _index_sample_locked(
+        self,
+        session_id: str,
+        sample: TwinStreamSample,
+        *,
+        count_bytes: bool = True,
+    ) -> None:
+        self._samples.setdefault(session_id, []).append(sample)
+        self._samples_by_id[(session_id, sample.sample_id)] = sample
+        stream = (sample.side, sample.vehicle_id, sample.channel_id)
+        previous = self._stream_heads.setdefault(session_id, {}).get(stream)
+        if previous is None or sample.sequence > previous.sequence:
+            self._stream_heads[session_id][stream] = sample
+        if count_bytes:
+            self._sample_bytes_by_session[session_id] = (
+                self._sample_bytes_by_session.get(session_id, 0)
+                + _sample_storage_bytes(sample)
+            )
+
 
 def _sample_storage_bytes(sample: TwinStreamSample) -> int:
     return len(
@@ -295,3 +365,47 @@ def _sample_storage_bytes(sample: TwinStreamSample) -> int:
             separators=(",", ":"),
         ).encode()
     )
+
+
+def _compressed_sample_batch_payload(
+    samples: list[TwinStreamSample],
+) -> dict[str, Any]:
+    values = [item.model_dump(mode="json") for item in samples]
+    encoded = json.dumps(values, sort_keys=True, separators=(",", ":")).encode()
+    compressed = zlib.compress(encoded, level=9)
+    return {
+        "codec": "zlib-json-v1",
+        "sample_count": len(values),
+        "samples_sha256": canonical_sha256(values),
+        "data_base64": base64.b64encode(compressed).decode("ascii"),
+    }
+
+
+def _decompress_sample_batch_payload(payload: Any) -> list[dict[str, Any]]:
+    try:
+        if not isinstance(payload, dict) or payload.get("codec") != "zlib-json-v1":
+            raise ValueError("unsupported compressed twin sample codec")
+        compressed = base64.b64decode(str(payload["data_base64"]), validate=True)
+        decompressor = zlib.decompressobj()
+        encoded = decompressor.decompress(
+            compressed,
+            _MAX_SAMPLE_BATCH_DECOMPRESSED_BYTES + 1,
+        )
+        if (
+            len(encoded) > _MAX_SAMPLE_BATCH_DECOMPRESSED_BYTES
+            or not decompressor.eof
+            or decompressor.unconsumed_tail
+        ):
+            raise ValueError("compressed twin sample batch exceeds its bound")
+        values = json.loads(encoded)
+        if not isinstance(values, list):
+            raise ValueError("compressed twin sample batch is not a list")
+        if len(values) != int(payload["sample_count"]):
+            raise ValueError("compressed twin sample count mismatch")
+        if canonical_sha256(values) != payload["samples_sha256"]:
+            raise ValueError("compressed twin sample hash mismatch")
+        if not all(isinstance(value, dict) for value in values):
+            raise ValueError("compressed twin sample value is not an object")
+        return values
+    except (KeyError, TypeError, ValueError, zlib.error) as error:
+        raise ValueError("corrupt compressed twin sample batch") from error

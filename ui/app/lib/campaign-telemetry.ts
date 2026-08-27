@@ -7,12 +7,25 @@ export type CampaignAxis = typeof AXES[number];
 
 export interface CampaignTelemetryChartSample {
   timeS: number;
+  sourceTimestampS?: number;
+  receivedTimestampS?: number;
+  sourceSequence?: number;
+  sourceClockId?: string;
+  sourceClockEpoch?: number;
+  correlationId?: string;
+  state?: string;
+  positionM?: { x: number; y: number; z: number };
+  groundTruthPositionM?: { x: number; y: number; z: number };
+  velocityMS?: { x: number; y: number; z: number };
   speedMS?: number;
   altitudeM?: number;
   motorPercent: Partial<Record<CampaignMotorId, number>>;
   attitudeDeg: Partial<Record<CampaignAxis, number>>;
   accelerationMS2: Partial<Record<CampaignAxis, number>>;
   angularVelocityRadS: Partial<Record<CampaignAxis, number>>;
+  commandedMotorPercent: Partial<Record<CampaignMotorId, number>>;
+  appliedMotorPercent: Partial<Record<CampaignMotorId, number>>;
+  faults: string[];
 }
 
 export interface CampaignTelemetryVehicleChart {
@@ -21,6 +34,7 @@ export interface CampaignTelemetryVehicleChart {
   altitudeSource: "Ground truth" | "Position estimate" | "Unavailable";
   motorSource: "Applied PWM" | "Command" | "Unavailable";
   samples: CampaignTelemetryChartSample[];
+  cursorSamples: CampaignTelemetryChartSample[];
 }
 
 export interface CampaignTelemetryChartView {
@@ -31,6 +45,16 @@ export interface CampaignTelemetryChartView {
 
 type RawSample = {
   absoluteTimeS: number;
+  sourceTimestampS?: number;
+  receivedTimestampS?: number;
+  sourceSequence?: number;
+  sourceClockId?: string;
+  sourceClockEpoch?: number;
+  correlationId?: string;
+  state?: string;
+  positionM?: { x: number; y: number; z: number };
+  groundTruthPositionM?: { x: number; y: number; z: number };
+  velocityMS?: { x: number; y: number; z: number };
   speedMS?: number;
   groundTruthAltitudeM?: number;
   estimatedAltitudeM?: number;
@@ -39,7 +63,50 @@ type RawSample = {
   attitudeDeg: Partial<Record<CampaignAxis, number>>;
   accelerationMS2: Partial<Record<CampaignAxis, number>>;
   angularVelocityRadS: Partial<Record<CampaignAxis, number>>;
+  faults: string[];
 };
+
+export function nearestCampaignTelemetrySample(
+  samples: CampaignTelemetryChartSample[],
+  sourceTimestampS: number,
+): CampaignTelemetryChartSample | undefined {
+  return samples
+    .filter((sample) => (
+      sample.sourceTimestampS !== undefined
+      && sample.sourceSequence !== undefined
+    ))
+    .toSorted((left, right) => (
+      Math.abs(left.sourceTimestampS! - sourceTimestampS)
+      - Math.abs(right.sourceTimestampS! - sourceTimestampS)
+      || left.sourceSequence! - right.sourceSequence!
+      || (left.correlationId ?? "").localeCompare(right.correlationId ?? "")
+    ))[0];
+}
+
+export function exactCampaignTelemetrySample(
+  samples: CampaignTelemetryChartSample[],
+  identity: Pick<CampaignTelemetryChartSample,
+    | "sourceTimestampS"
+    | "sourceSequence"
+    | "sourceClockId"
+    | "sourceClockEpoch"
+    | "correlationId"
+  >,
+): CampaignTelemetryChartSample | undefined {
+  if (identity.sourceTimestampS === undefined || identity.sourceSequence === undefined) {
+    return undefined;
+  }
+  return samples.find((sample) => (
+    sample.sourceTimestampS === identity.sourceTimestampS
+    && sample.sourceSequence === identity.sourceSequence
+    && (identity.sourceClockId === undefined
+      || sample.sourceClockId === identity.sourceClockId)
+    && (identity.sourceClockEpoch === undefined
+      || sample.sourceClockEpoch === identity.sourceClockEpoch)
+    && (identity.correlationId === undefined
+      || sample.correlationId === identity.correlationId)
+  ));
+}
 
 export function parseCampaignTelemetryCsv(
   source: string,
@@ -56,8 +123,9 @@ export function parseCampaignTelemetryCsv(
   rows.slice(1).forEach((row, rowIndex) => {
     if (!row.some((cell) => cell.length)) return;
     const vehicleId = cell(row, column, "vehicle_id") || "Unknown vehicle";
+    const sourceTimestampS = numericCell(row, column, "source_timestamp_s");
     const absoluteTimeS = firstFinite(
-      numericCell(row, column, "source_timestamp_s"),
+      sourceTimestampS,
       numericCell(row, column, "simulation_timestamp_s"),
       numericCell(row, column, "replay_timestamp_s"),
       numericCell(row, column, "event_sequence"),
@@ -70,6 +138,9 @@ export function parseCampaignTelemetryCsv(
     ];
     const speedMS = velocity.every((value) => value !== undefined)
       ? Math.hypot(...velocity as [number, number, number])
+      : undefined;
+    const velocityMS = velocity.every((value) => value !== undefined)
+      ? { x: velocity[0]!, y: velocity[1]!, z: velocity[2]! }
       : undefined;
     const appliedMotorPercent: Partial<Record<CampaignMotorId, number>> = {};
     const commandedMotorPercent: Partial<Record<CampaignMotorId, number>> = {};
@@ -96,6 +167,16 @@ export function parseCampaignTelemetryCsv(
     }
     const sample: RawSample = {
       absoluteTimeS,
+      sourceTimestampS,
+      receivedTimestampS: numericCell(row, column, "received_timestamp_s"),
+      sourceSequence: ordinalCell(row, column, "telemetry_sequence"),
+      sourceClockId: cell(row, column, "source_clock_id") || undefined,
+      sourceClockEpoch: ordinalCell(row, column, "source_clock_epoch"),
+      correlationId: cell(row, column, "event_id") || undefined,
+      state: cell(row, column, "state") || undefined,
+      positionM: vectorCell(row, column, "position"),
+      groundTruthPositionM: vectorCell(row, column, "ground_truth"),
+      velocityMS,
       speedMS,
       groundTruthAltitudeM: numericCell(row, column, "ground_truth_z_m"),
       estimatedAltitudeM: numericCell(row, column, "position_z_m"),
@@ -104,6 +185,7 @@ export function parseCampaignTelemetryCsv(
       attitudeDeg,
       accelerationMS2,
       angularVelocityRadS,
+      faults: jsonStringArrayCell(row, column, "faults_json"),
     };
     samplesByVehicle.set(vehicleId, [...(samplesByVehicle.get(vehicleId) ?? []), sample]);
     earliestTimeS = Math.min(earliestTimeS, absoluteTimeS);
@@ -115,7 +197,12 @@ export function parseCampaignTelemetryCsv(
   const vehicles = [...samplesByVehicle.entries()]
     .toSorted(([left], [right]) => left.localeCompare(right))
     .map(([vehicleId, rawSamples]) => {
-      const ordered = rawSamples.toSorted((left, right) => left.absoluteTimeS - right.absoluteTimeS);
+      const ordered = rawSamples.toSorted((left, right) => (
+        left.absoluteTimeS - right.absoluteTimeS
+        || (left.sourceSequence ?? Number.MAX_SAFE_INTEGER)
+          - (right.sourceSequence ?? Number.MAX_SAFE_INTEGER)
+        || (left.correlationId ?? "").localeCompare(right.correlationId ?? "")
+      ));
       const hasGroundTruth = ordered.some((sample) => sample.groundTruthAltitudeM !== undefined);
       const hasEstimatedAltitude = ordered.some((sample) => sample.estimatedAltitudeM !== undefined);
       const hasAppliedMotor = ordered.some((sample) => MOTOR_IDS.some(
@@ -124,8 +211,18 @@ export function parseCampaignTelemetryCsv(
       const hasCommandedMotor = ordered.some((sample) => MOTOR_IDS.some(
         (motorId) => sample.commandedMotorPercent[motorId] !== undefined,
       ));
-      const samples = ordered.map<CampaignTelemetryChartSample>((sample) => ({
+      const cursorSamples = ordered.map<CampaignTelemetryChartSample>((sample) => ({
         timeS: Math.max(0, sample.absoluteTimeS - earliestTimeS),
+        sourceTimestampS: sample.sourceTimestampS,
+        receivedTimestampS: sample.receivedTimestampS,
+        sourceSequence: sample.sourceSequence,
+        sourceClockId: sample.sourceClockId,
+        sourceClockEpoch: sample.sourceClockEpoch,
+        correlationId: sample.correlationId,
+        state: sample.state,
+        positionM: sample.positionM,
+        groundTruthPositionM: sample.groundTruthPositionM,
+        velocityMS: sample.velocityMS,
         speedMS: sample.speedMS,
         altitudeM: hasGroundTruth
           ? sample.groundTruthAltitudeM
@@ -133,13 +230,16 @@ export function parseCampaignTelemetryCsv(
         motorPercent: hasAppliedMotor
           ? sample.appliedMotorPercent
           : sample.commandedMotorPercent,
+        commandedMotorPercent: sample.commandedMotorPercent,
+        appliedMotorPercent: sample.appliedMotorPercent,
         attitudeDeg: sample.attitudeDeg,
         accelerationMS2: sample.accelerationMS2,
         angularVelocityRadS: sample.angularVelocityRadS,
+        faults: sample.faults,
       }));
       return {
         vehicleId,
-        sampleCount: samples.length,
+        sampleCount: cursorSamples.length,
         altitudeSource: hasGroundTruth
           ? "Ground truth" as const
           : hasEstimatedAltitude
@@ -150,7 +250,8 @@ export function parseCampaignTelemetryCsv(
           : hasCommandedMotor
             ? "Command" as const
             : "Unavailable" as const,
-        samples: downsample(samples, sampleLimit),
+        samples: downsample(cursorSamples, sampleLimit),
+        cursorSamples,
       };
     });
 
@@ -226,6 +327,45 @@ function numericCell(
   if (!value) return undefined;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function vectorCell(
+  row: string[],
+  columns: Map<string, number>,
+  prefix: string,
+): { x: number; y: number; z: number } | undefined {
+  const values = (["x", "y", "z"] as const).map(
+    (axis) => numericCell(row, columns, `${prefix}_${axis}_m`),
+  );
+  return values.every((value) => value !== undefined)
+    ? { x: values[0]!, y: values[1]!, z: values[2]! }
+    : undefined;
+}
+
+function ordinalCell(
+  row: string[],
+  columns: Map<string, number>,
+  name: string,
+): number | undefined {
+  const value = numericCell(row, columns, name);
+  return value !== undefined && Number.isSafeInteger(value) && value >= 0 ? value : undefined;
+}
+
+function jsonStringArrayCell(
+  row: string[],
+  columns: Map<string, number>,
+  name: string,
+): string[] {
+  const value = cell(row, columns, name);
+  if (!value) return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) && parsed.every((item) => typeof item === "string")
+      ? parsed
+      : [];
+  } catch {
+    return [];
+  }
 }
 
 function firstFinite(...values: Array<number | undefined>): number {

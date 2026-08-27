@@ -1,0 +1,358 @@
+{
+  "audit_id": "wp67-70-design-audit-v1",
+  "base_commit": "40cd9947f87eb9bf2719d72e7c72ea867eab9977",
+  "boundary_preimages": {
+    "design.md": {
+      "owner": "durable dynamic preparation UI rule",
+      "sha256": "aa066ed1a656327f4d386dc8523b39a5a17cc0e9be04b01ca178124791011e19",
+      "state": "EXISTING"
+    },
+    "docs/project/DESIGN.md": {
+      "owner": "Campaign workspace surface specification",
+      "sha256": "7a6d00db0f1c9e725af73008e95c0d5922eef114167c0a8bb463609072146ee6",
+      "state": "EXISTING"
+    },
+    "docs/system/README.md": {
+      "owner": "public preparation/runtime/evidence transit map",
+      "sha256": "c8ba2f8620cacd022c58971e395a7629408932df92c301c5c2f4f37ccc145442",
+      "state": "EXISTING"
+    },
+    "missions/campaigns/sim/cases/dynamic-replanning/1d-cases-v1.yaml": {
+      "owner": "immutable two-object source fixture and numerical geometry preimage",
+      "sha256": "4f460bbeee2761857830f6ed1beefd87e2a2152cee783a003bced564f2d41b57",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/api/app.py": {
+      "owner": "preview, package-download, and run API transit",
+      "sha256": "e8d7c2b92947dc63594c06f40f0637f68ee693ba82ff169571fd7633b9e4619d",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/analyzer.py": {
+      "owner": "offline motion and root-cause analysis",
+      "sha256": "2a7a70bbd7fb88765a5096de5b702137ff4d9caf7905f4f15e92e3eb052a0884",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/api_models.py": {
+      "owner": "run request validation",
+      "sha256": "b1a9506a689d8973261bf1f3ced3d859da55e04dc3919b16f4035c1a8555fb29",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/corridor.py": {
+      "owner": "bounded A* objective and diagnostics",
+      "sha256": "4cda334f3d25cb381cf1fb812bce8de2d23e255916e0d7dbdc2e3cee12e9fd23",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/dynamic_obstacles.py": {
+      "owner": "new hash-bound obstacle population and repeat-mode resolver",
+      "sha256": null,
+      "state": "INTENDED_NEW"
+    },
+    "src/crazyswarm_app/campaign/execution_head.py": {
+      "owner": "reaction, fresh-state handoff, fallback, and retained event evidence",
+      "sha256": "ba87347101f1b8153bfdb16e3f36ec592f78456e63a94ab9adbc99781f2133a4",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/planner.py": {
+      "owner": "planning-bound motion contract transit",
+      "sha256": "c32774863d2e689baa151e900d3a7fdaebd68d51ee27e8797c458b2b59b07160",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/replanning.py": {
+      "owner": "changed-world search, splice, clearance, and cutover certification",
+      "sha256": "5f4227270538482cd3b6c491d71135e828d0dcdcf5fac6411f72f8519c2c804f",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/runtime_executor.py": {
+      "owner": "production event materialization and retained source identity",
+      "sha256": "3835eba7f9732e2103a8c92fa2a69088ac27115cf29275e6c7997198aaaa2669",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/scenario.py": {
+      "owner": "resolved event static admission",
+      "sha256": "c7e3ddeee88b235551ba2c31c639ef73da0edddfc46eb94cd5a83c24d96ef221",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/scheduling.py": {
+      "owner": "resolved last-event watchdog reserve",
+      "sha256": "521aa0fe9d019c8ccbabf0f2204e463458bf1754f7a76da851ea60a66d1c97a8",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/service.py": {
+      "owner": "resolved-package preparation and execution",
+      "sha256": "02377764969b001c44714d266338f5a8a7a491a9d6676ed8689c4e967747c1d5",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/submissions.py": {
+      "owner": "operator controls, planning clearance, speed cap, and package hashes",
+      "sha256": "748801249edd55c84dbc9fda8ccbafa992b3f39e5c55d1445ef8b536bf0b25a6",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/campaign/trajectory.py": {
+      "owner": "planning-bound motion contract transit",
+      "sha256": "5653834436ab62c8483ad9b7d45bc249682377879af27cd9ef6ae81fb43bd45e",
+      "state": "EXISTING"
+    },
+    "src/crazyswarm_app/observability/evaluation.py": {
+      "owner": "dynamic completeness and unintended-stop evaluation",
+      "sha256": "f94e6ad3da7a1024e316615c1ce565f19a67223f1fe3517e480dd397513b7f46",
+      "state": "EXISTING"
+    },
+    "tests/api/test_campaign.py": {
+      "owner": "public API contract and package identity tests",
+      "sha256": "2260884d110d326e5d0448eeb62b776c0cd1696c3751ddb74988287cab711c9f",
+      "state": "EXISTING"
+    },
+    "tests/campaign/test_dynamic_perception_replanning.py": {
+      "owner": "production dynamic execution and failure counterexamples",
+      "sha256": "d3a8fa0a9b6b4254e97938459ced5072b6e6cf5fc0ca98567fa4933e857d4f12",
+      "state": "EXISTING"
+    },
+    "tests/campaign/test_dynamic_preparation.py": {
+      "owner": "new population, clearance, speed, repeat, and watchdog contract tests",
+      "sha256": null,
+      "state": "INTENDED_NEW"
+    },
+    "tests/campaign/test_goal_corridor.py": {
+      "owner": "gap and route-continuity boundary tests",
+      "sha256": "887150e3b835bb57467dd4e4619045e0941c92257f5e36cab8176434772a6445",
+      "state": "EXISTING"
+    },
+    "tests/campaign/test_motion_quality_contract.py": {
+      "owner": "goal-seeking path-tube non-applicability tests",
+      "sha256": "1e06468a1d62105d73c2b6c66aa8963c422c88b0d6ca27ecf22df5115b78f8bc",
+      "state": "EXISTING"
+    },
+    "tests/observability/test_evaluation.py": {
+      "owner": "stop and dynamic-evidence regressions",
+      "sha256": "19d58f5dd210f01081bb64f55a336e5bc7de214ce21e4584d33a621e8cebd4ca",
+      "state": "EXISTING"
+    },
+    "ui/app/components/CampaignLab.tsx": {
+      "owner": "dynamic preparation controls",
+      "sha256": "77948d225815fcf6df72a3f916e9fa0129e45b6615dcebe4238f5ace17f09cd4",
+      "state": "EXISTING"
+    },
+    "ui/app/globals.css": {
+      "owner": "responsive dynamic preparation layout",
+      "sha256": "9c28ae8cfbcb9e332920cc98d78b06cf074bdfa05749d42a33d5a13c14ec3cee",
+      "state": "EXISTING"
+    },
+    "ui/app/lib/api.generated.ts": {
+      "owner": "generated request/response contract",
+      "sha256": "e56d9228080827eaa47bac9079d2744a6db467d443e25ffade444b13a497533c",
+      "state": "EXISTING"
+    },
+    "ui/app/lib/api.ts": {
+      "owner": "preview, download, and run client transit",
+      "sha256": "e8f431a15caa0bcdd92d20486e0815c9487bea89b7fd0c6a917456cd18b49eeb",
+      "state": "EXISTING"
+    },
+    "ui/app/lib/models.ts": {
+      "owner": "operator-facing dynamic preparation types",
+      "sha256": "07c7060ffadb9476e0c803029163efae2cd39d910b611518552a8994e0fb9192",
+      "state": "EXISTING"
+    },
+    "ui/openapi.json": {
+      "owner": "generated public API schema",
+      "sha256": "687e46946f0c9d6a0e0c7b3d10c0ebd7026c2b0811c5ef79fc212e74723f0fdf",
+      "state": "EXISTING"
+    },
+    "ui/tests/campaign-lab.test.tsx": {
+      "owner": "rendered labels, interaction, and request tests",
+      "sha256": "c55235524eecc768e07ba66aeea69f3d64302bcbbfe0e717e1242102a6f2cfbd",
+      "state": "EXISTING"
+    }
+  },
+  "checks": {
+    "all_claim_boundaries_declared": true,
+    "all_control_keys_unique": true,
+    "gap_boundary_sensitive": true,
+    "opening_formula_exact": true,
+    "population_cardinality_exact": true,
+    "population_ids_unique": true,
+    "speed_cap_sensitive": true
+  },
+  "claims": {
+    "WP67_DYNAMIC_PREPARATION": {
+      "required_boundaries": [
+        "design.md",
+        "docs/project/DESIGN.md",
+        "src/crazyswarm_app/api/app.py",
+        "src/crazyswarm_app/campaign/api_models.py",
+        "src/crazyswarm_app/campaign/dynamic_obstacles.py",
+        "src/crazyswarm_app/campaign/scheduling.py",
+        "src/crazyswarm_app/campaign/service.py",
+        "src/crazyswarm_app/campaign/submissions.py",
+        "ui/app/components/CampaignLab.tsx",
+        "ui/app/lib/api.ts",
+        "ui/app/lib/models.ts"
+      ]
+    },
+    "WP68_MOVING_REPLAN_CONTINUITY": {
+      "required_boundaries": [
+        "src/crazyswarm_app/campaign/corridor.py",
+        "src/crazyswarm_app/campaign/execution_head.py",
+        "src/crazyswarm_app/campaign/replanning.py",
+        "src/crazyswarm_app/campaign/runtime_executor.py"
+      ]
+    },
+    "WP69_EVALUATION_TRUTH": {
+      "required_boundaries": [
+        "src/crazyswarm_app/campaign/analyzer.py",
+        "src/crazyswarm_app/observability/evaluation.py"
+      ]
+    },
+    "WP70_REPRODUCIBLE_QUALIFICATION": {
+      "required_boundaries": [
+        "missions/campaigns/sim/cases/dynamic-replanning/1d-cases-v1.yaml",
+        "src/crazyswarm_app/campaign/dynamic_obstacles.py",
+        "src/crazyswarm_app/campaign/runtime_executor.py",
+        "tests/campaign/test_dynamic_preparation.py",
+        "tests/campaign/test_goal_corridor.py"
+      ]
+    }
+  },
+  "control_spec": {
+    "minimum_clearance_m": {
+      "default": 0.15,
+      "label": "Clearance",
+      "maximum": 0.3,
+      "minimum": 0.15,
+      "step": 0.01,
+      "unit": "m"
+    },
+    "obstacle_count": {
+      "default": 3,
+      "label": "Obstacles",
+      "maximum": 4,
+      "minimum": 1,
+      "step": 1,
+      "unit": "count"
+    },
+    "speed_m_s": {
+      "dynamic_safety_cap": 0.3,
+      "label": "Speed",
+      "unit": "m/s"
+    },
+    "variation_mode": {
+      "default": "FIXED",
+      "label": "Variation",
+      "values": [
+        "FIXED",
+        "SEEDED_STRESS"
+      ]
+    }
+  },
+  "missing_claim_boundaries": {
+    "WP67_DYNAMIC_PREPARATION": [],
+    "WP68_MOVING_REPLAN_CONTINUITY": [],
+    "WP69_EVALUATION_TRUTH": [],
+    "WP70_REPRODUCIBLE_QUALIFICATION": []
+  },
+  "numerical_witnesses": {
+    "gap_boundary": [
+      {
+        "admitted": false,
+        "gap_m": 0.59
+      },
+      {
+        "admitted": true,
+        "gap_m": 0.61
+      },
+      {
+        "admitted": true,
+        "gap_m": 0.63
+      }
+    ],
+    "opening": [
+      {
+        "minimum_clearance_m": 0.15,
+        "minimum_opening_m": 0.61
+      },
+      {
+        "minimum_clearance_m": 0.2,
+        "minimum_opening_m": 0.71
+      },
+      {
+        "minimum_clearance_m": 0.3,
+        "minimum_opening_m": 0.91
+      }
+    ],
+    "population": [
+      {
+        "event_count": 3,
+        "event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-move-1",
+          "online-obstacle-remove-1"
+        ],
+        "maximum_simultaneous_obstacles": 1,
+        "obstacle_count": 1
+      },
+      {
+        "event_count": 4,
+        "event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-move-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-remove-1"
+        ],
+        "maximum_simultaneous_obstacles": 2,
+        "obstacle_count": 2
+      },
+      {
+        "event_count": 5,
+        "event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-move-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-appear-3",
+          "online-obstacle-remove-1"
+        ],
+        "maximum_simultaneous_obstacles": 3,
+        "obstacle_count": 3
+      },
+      {
+        "event_count": 6,
+        "event_ids": [
+          "online-obstacle-appear-1",
+          "online-obstacle-move-1",
+          "online-obstacle-appear-2",
+          "online-obstacle-appear-3",
+          "online-obstacle-appear-4",
+          "online-obstacle-remove-1"
+        ],
+        "maximum_simultaneous_obstacles": 4,
+        "obstacle_count": 4
+      }
+    ],
+    "reaction_speed": [
+      {
+        "complete_response_distance_m": 0.274775,
+        "jerk_limited_stop_distance_m": 0.060175,
+        "jerk_limited_stop_time_s": 0.415,
+        "requested_speed_m_s": 0.29,
+        "required_center_to_surface_distance_m": 0.529775,
+        "resolved_speed_m_s": 0.29
+      },
+      {
+        "complete_response_distance_m": 0.28575,
+        "jerk_limited_stop_distance_m": 0.06375,
+        "jerk_limited_stop_time_s": 0.425,
+        "requested_speed_m_s": 0.3,
+        "required_center_to_surface_distance_m": 0.5407500000000001,
+        "resolved_speed_m_s": 0.3
+      },
+      {
+        "complete_response_distance_m": 0.52625,
+        "jerk_limited_stop_distance_m": 0.15625,
+        "jerk_limited_stop_time_s": 0.625,
+        "requested_speed_m_s": 0.5,
+        "required_center_to_surface_distance_m": 0.78125,
+        "resolved_speed_m_s": 0.3
+      }
+    ]
+  },
+  "passed": true,
+  "schema_version": 1
+}

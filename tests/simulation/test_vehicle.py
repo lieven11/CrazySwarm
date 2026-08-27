@@ -26,7 +26,14 @@ from crazyswarm_app.domain.models import (
 from crazyswarm_app.simulation.faults import FaultInjector, FaultType, FaultWindow
 from crazyswarm_app.simulation.models import SimulationConfig
 from crazyswarm_app.simulation.vehicle import SimulatedVehicle
-from crazyswarm_app.simulation.world import IndoorWorld, WorldConfig
+from crazyswarm_app.simulation.world import (
+    DynamicWorldTimeline,
+    IndoorWorld,
+    ObstacleConfig,
+    WorldConfig,
+    WorldTruthEvent,
+    WorldTruthEventKind,
+)
 
 
 def make_vehicle(
@@ -89,6 +96,48 @@ async def test_nominal_hover_move_and_land() -> None:
     assert vehicle.telemetry_history[-1].telemetry.flow is not None
     assert vehicle.telemetry_history[-1].telemetry.motors is not None
     assert vehicle.telemetry_history[-1].telemetry.battery_current_a is not None
+
+
+@pytest.mark.asyncio
+async def test_dynamic_obstacle_contact_terminates_vehicle_on_swept_envelope() -> None:
+    obstacle = ObstacleConfig(
+        obstacle_id="appearing-ceiling",
+        minimum_m=Vector3(x=-0.2, y=-0.2, z=0.15),
+        maximum_m=Vector3(x=0.2, y=0.2, z=0.5),
+    )
+    timeline = DynamicWorldTimeline(
+        (),
+        (
+            WorldTruthEvent.create(
+                event_id="appearing-ceiling-event",
+                sequence=1,
+                source_timestamp_s=0.2,
+                effective_source_s=2.0,
+                kind=WorldTruthEventKind.SOLID_APPEARED,
+                solid_id=obstacle.obstacle_id,
+                obstacle=obstacle,
+            ),
+        ),
+    )
+    vehicle = SimulatedVehicle(
+        VehicleIdentity(vehicle_id="sim01", display_name="Simulation 1", adapter="sim"),
+        IndoorWorld(
+            WorldConfig(width_m=4.0, depth_m=4.0, height_m=2.5),
+            dynamic_timeline=timeline,
+        ),
+    )
+    await vehicle.connect()
+    await vehicle.execute(command(vehicle, "arm", ArmCommand()))
+
+    with pytest.raises(CrazySwarmError, match="dynamic geometry") as caught:
+        await vehicle.execute(
+            command(vehicle, "takeoff", TakeoffCommand(height_m=0.4, duration_s=2.0))
+        )
+
+    assert caught.value.details["obstacle_id"] == obstacle.obstacle_id
+    assert caught.value.details["dynamic"] is True
+    assert vehicle.state is VehicleState.FAULT
+    assert "DYNAMIC_OBSTACLE_COLLISION_TERMINATION" in (await vehicle.snapshot()).telemetry.faults
 
 
 @pytest.mark.asyncio

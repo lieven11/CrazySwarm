@@ -1,0 +1,161 @@
+{
+  "clock_counterexample": {
+    "observed_final_mapped_s": 2271.529,
+    "observed_first_available_raw_s": 1933.909,
+    "observed_first_cycle_availability": "MISSING",
+    "predicted_final_mapped_s": 126.30000000002777
+  },
+  "estimator": {
+    "available_samples": 1263,
+    "converged_false": 1232,
+    "converged_true": 31,
+    "first_position_variance_m2": {
+      "x": 3.5223491191864014,
+      "y": 3.471426248550415,
+      "z": 0.008530098013579845
+    },
+    "last_position_variance_m2": {
+      "x": 6.781398296356201,
+      "y": 5.0028300285339355,
+      "z": 0.015330570749938488
+    }
+  },
+  "evidence_boundary": "PRODUCTION_ENTRY / HARDWARE / OBSERVED_REALTIME",
+  "flow": {
+    "available_samples": 1263,
+    "ground_distance_m": {
+      "maximum": 0.023,
+      "median": 0.018,
+      "minimum": 0.011
+    },
+    "horizontal_speed_m_s": {
+      "maximum": 8.172208694229592,
+      "median": 3.846194686298385,
+      "p95": 7.005082784645294
+    },
+    "quality_percent": {
+      "maximum": 5.098039215686274,
+      "median": 3.5294117647058822,
+      "minimum": 2.3529411764705883
+    },
+    "reported_statuses": {
+      "VALID": 1263
+    },
+    "usability": "UNQUALIFIED"
+  },
+  "ground_truth_available": false,
+  "normalized_sample_count": 70784,
+  "normalized_samples_sha256": "d2a4a91399f4a5f902e9e01fdce7a9da9c7bbb44df19efc6343421692c80e1b7",
+  "observed_battery": {
+    "available_samples": 1263,
+    "first_cycle_availability": "MISSING",
+    "first_v": 3.906158447265625,
+    "last_v": 3.869208335876465,
+    "minimum_quantized_step_v": 0.005278587341308594,
+    "total_samples": 1264,
+    "unique_values": [
+      3.869208335876465,
+      3.8744869232177734,
+      3.879765510559082,
+      3.8850440979003906,
+      3.890322685241699,
+      3.895601272583008,
+      3.9008798599243164,
+      3.906158447265625
+    ]
+  },
+  "paired_cycles": 1264,
+  "reconstruction": {
+    "command": "python scripts/extract_wp86_hardware_observation.py --check missions/campaigns/sim/qualification/wp86-hardware-observation-v1.json",
+    "script": "scripts/extract_wp86_hardware_observation.py",
+    "source": ".cache/crazyswarm/digital-twin/twin-journal-v1.jsonl"
+  },
+  "samples_by_side": {
+    "OBSERVED": 35392,
+    "PREDICTED": 35392
+  },
+  "samples_by_side_and_channel": {
+    "OBSERVED": {
+      "attitude.euler": 1264,
+      "battery.current": 1264,
+      "battery.state": 1264,
+      "battery.voltage": 1264,
+      "command.identity": 1264,
+      "estimator.health": 1264,
+      "flow.state": 1264,
+      "imu.acceleration": 1264,
+      "imu.angular_velocity": 1264,
+      "motor.m1.pwm": 1264,
+      "motor.m1.state": 1264,
+      "motor.m1.thrust": 1264,
+      "motor.m2.pwm": 1264,
+      "motor.m2.state": 1264,
+      "motor.m2.thrust": 1264,
+      "motor.m3.pwm": 1264,
+      "motor.m3.state": 1264,
+      "motor.m3.thrust": 1264,
+      "motor.m4.pwm": 1264,
+      "motor.m4.state": 1264,
+      "motor.m4.thrust": 1264,
+      "perception.world_revision": 1264,
+      "plan.identity": 1264,
+      "pose.position": 1264,
+      "range.state": 1264,
+      "replan.identity": 1264,
+      "safety.state": 1264,
+      "velocity.linear": 1264
+    },
+    "PREDICTED": {
+      "attitude.euler": 1264,
+      "battery.current": 1264,
+      "battery.state": 1264,
+      "battery.voltage": 1264,
+      "command.identity": 1264,
+      "estimator.health": 1264,
+      "flow.state": 1264,
+      "imu.acceleration": 1264,
+      "imu.angular_velocity": 1264,
+      "motor.m1.pwm": 1264,
+      "motor.m1.state": 1264,
+      "motor.m1.thrust": 1264,
+      "motor.m2.pwm": 1264,
+      "motor.m2.state": 1264,
+      "motor.m2.thrust": 1264,
+      "motor.m3.pwm": 1264,
+      "motor.m3.state": 1264,
+      "motor.m3.thrust": 1264,
+      "motor.m4.pwm": 1264,
+      "motor.m4.state": 1264,
+      "motor.m4.thrust": 1264,
+      "perception.world_revision": 1264,
+      "plan.identity": 1264,
+      "pose.position": 1264,
+      "range.state": 1264,
+      "replan.identity": 1264,
+      "safety.state": 1264,
+      "velocity.linear": 1264
+    }
+  },
+  "schema_version": 1,
+  "sequence_first": 1,
+  "sequence_last": 1264,
+  "session_envelope_count": 1266,
+  "session_envelope_hashes_sha256": "776878f93f4c00b00e7ac05ff8a1060636ba32d0b20f6e62781226efddd4e05f",
+  "session_id": "twin-f33a1e55c4f2431480f1f41cd6f45a19",
+  "stationary_checks": {
+    "acceleration_norm_m_s2": {
+      "median": 9.821394299592873,
+      "p95": 9.875391009879804
+    },
+    "angular_rate_norm_rad_s": {
+      "median": 0.004393564046811655,
+      "p95": 0.008407443101033536
+    },
+    "attitude_span_rad": {
+      "x": 0.016240412757743926,
+      "y": 0.023804985612058852,
+      "z": 0.006831453067917278
+    }
+  },
+  "status": "COMPLETE"
+}

@@ -9,6 +9,8 @@ two authoritative ledgers: one for finished work and one for everything still op
 |---|---|
 | What is finished and frozen? | [`work-packages/COMPLETED.md`](work-packages/COMPLETED.md) |
 | What is active, next, or externally blocked? | [`work-packages/ACTIVE.md`](work-packages/ACTIVE.md) |
+| Which requirements apply to this task? | [`project/requirements/README.md`](project/requirements/README.md) |
+| How should a retained run and its CSV be analyzed efficiently? | [`guides/RUN_ANALYSIS_PROTOCOL.md`](guides/RUN_ANALYSIS_PROTOCOL.md) |
 | How will the placeholder campaign catalog become a real learning curriculum? | [`work-packages/ACTIVE.md`](work-packages/ACTIVE.md#wp-35--semantic-truth-gate-and-executable-case-contract) |
 | What belongs in a mission, planner, control center, or simulator? | [`system/README.md`](system/README.md) |
 | How do planner, fleet-policy, recovery, and Safety Kernel modules connect? | [`system/PLANNING_AND_RECOVERY_PLUGINS.md`](system/PLANNING_AND_RECOVERY_PLUGINS.md) |
@@ -29,9 +31,12 @@ two authoritative ledgers: one for finished work and one for everything still op
 | What qualifies predictive two-drone deconfliction? | [`qualification/PREDICTIVE_DECONFLICTION_WP22.md`](qualification/PREDICTIVE_DECONFLICTION_WP22.md) |
 | What qualifies the progressive mission curriculum? | [`qualification/MISSION_CURRICULUM_WP23.md`](qualification/MISSION_CURRICULUM_WP23.md) |
 | How should a mission be authored, reviewed, and operated safely? | [`guides/MISSION_SAFETY_GUIDE.md`](guides/MISSION_SAFETY_GUIDE.md) |
+| How do parallel tasks avoid restarting or stealing the physical runtime? | [`guides/HARDWARE_RUNTIME_OWNERSHIP.md`](guides/HARDWARE_RUNTIME_OWNERSHIP.md) |
+| How do I enter the measured controller-tuning box geometry and unlock missions A–E? | [`guides/CONTROLLER_TUNING_FIXTURE.md`](guides/CONTROLLER_TUNING_FIXTURE.md) |
+| How does the staged cushioned-acrobatics hover and Flip workflow work? | [`guides/CUSHIONED_ACROBATICS.md`](guides/CUSHIONED_ACROBATICS.md) |
 | What is the product and how do I run it? | [`project/README.md`](project/README.md) |
 | What is the long-range development roadmap? | [`project/DEVELOPMENT_GUIDE.md`](project/DEVELOPMENT_GUIDE.md) |
-| Which durable workflow and operator requirements must future feature iterations reuse? | [`project/WORKFLOW_AND_REQUIREMENTS.md`](project/WORKFLOW_AND_REQUIREMENTS.md) |
+| Which durable workflow and operator requirements must future feature iterations reuse? | [`project/requirements/README.md`](project/requirements/README.md) |
 | Which design decisions must every UI implementation follow? | [`../design.md`](../design.md) |
 | What should the operator interface look like? | [`project/DESIGN.md`](project/DESIGN.md) |
 
@@ -39,7 +44,7 @@ two authoritative ledgers: one for finished work and one for everything still op
 
 ```text
 docs/
-├── project/          product overview, design, and long-range development guide
+├── project/          product overview, routed requirements, decisions, and development guide
 ├── work-packages/    the only two current planning ledgers
 ├── system/           responsibility boundaries and codebase map
 ├── guides/           runnable simulator, Isaac, and physical procedures
@@ -64,6 +69,16 @@ to implement next.
    evidence or limitation statements in `qualification/`.
 5. Use one of `PLANNED`, `IN_PROGRESS`, `IMPLEMENTED`, `QUALIFIED`, `COMPLETE`, or
    `EXTERNALLY_BLOCKED`. `IMPLEMENTED` never implies that the full closeout gate passed.
+6. Define each durable requirement exactly once under `project/requirements/`. Keep
+   historical rationale in `project/decisions/` or `project/retrospectives/` and use
+   the requirements index to select only task-relevant context.
+
+Validate routed documentation with:
+
+```bash
+python scripts/check_requirement_catalog.py
+python scripts/check_project_map.py
+```
 
 Current planning contracts include the
 [multi-drone conflict-planning contract](reference/MULTI_DRONE_CONFLICT_PLANNING_V1.md),

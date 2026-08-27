@@ -1,0 +1,1513 @@
+{
+  "base_commit": "40cd9947f87eb9bf2719d72e7c72ea867eab9977",
+  "boundary_manifest": [
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "design.md",
+      "preimage": "7a57441cd1cb76fa733c2cf0de9548f6e5a753ec0f9c647c81230f5270b21651"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "docs/system/README.md",
+      "preimage": "37171a98d1fd5a78f470be1598a0ab317aad99fefb671655f5c6a6b6fd336b87"
+    },
+    {
+      "classification": "DESIGN_ARTIFACT",
+      "path": "missions/campaigns/real/qualification/wp90-design-audit.json",
+      "preimage": "SELF"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "scripts/audit_wp89_design.py",
+      "preimage": "4fb715d1abd01153226f495193e2f8fd69af7d08b339e76afb3d20e9ac065db0"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "scripts/audit_wp90_design.py",
+      "preimage": "cb327dbc0357de1980cd33fb268e2a70bf5d37a54bfa9b19249d8db2e30776a6"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "scripts/export_openapi.py",
+      "preimage": "821e27fd8a36e7e893ee4a6a5fa0fed4304d462dec1cdc6758961c6cd4c2bafa"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/api/app.py",
+      "preimage": "206dd828d1e5be8c359d0161cb75656b624aa6dd295d866651612f2cbcf338a5"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/domain/telemetry.py",
+      "preimage": "fb508285206f367e74308bb15031d5ec283e73dfba00a0fcf22934f114bd9b5d"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/hardware/basic_flight_lab.py",
+      "preimage": "482a4e1481bf14b3d6d346b5d37075cb98d2db802f4687d28f897561857d0884"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/hardware/controller_tuning_lab.py",
+      "preimage": "663c861d18d839bd039d4e0ac621367b1fa6640645ca7e9113e207d0347e536a"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/hardware/observation_twin.py",
+      "preimage": "5eac44049ac79df6db98dd2de5c0808d0be071bf3f61276149e058a9e9f50316"
+    },
+    {
+      "classification": "NEW",
+      "path": "src/crazyswarm_app/safety/avoidance.py",
+      "preimage": "ABSENT"
+    },
+    {
+      "classification": "PRESERVE_SECTIONED",
+      "path": "src/crazyswarm_app/vehicles/_cflib_link.py",
+      "sections": [
+        {
+          "selector": "LOG_GROUPS",
+          "sha256": "ac8094e06be16e429335c5054d090deb8ed8964bee96dd9a6cf5211eec65e7d5"
+        },
+        {
+          "selector": "CflibCrazyflieLink._cached_sample",
+          "sha256": "bb14f2ace0b10ce9ca7b8b4fa436663447726fafe4532589c52a67fcbaf4211b"
+        },
+        {
+          "selector": "CflibCrazyflieLink._on_log_data",
+          "sha256": "099942104a92e676c4c4fbd724047e4c783a3800ca89b096aabad932b1a2e789"
+        }
+      ]
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/vehicles/crazyflie.py",
+      "preimage": "63bcd6fd469d697d3256f5503a3dcad1a7a2c30df9750163da2df960424fd6ed"
+    },
+    {
+      "classification": "PRESERVE_SECTIONED",
+      "path": "src/crazyswarm_app/vehicles/crazyflie_link.py",
+      "sections": [
+        {
+          "selector": "CrazyflieRawSample",
+          "sha256": "ee48a058937f8e2e3a41bf54b3c3fd0a5b05110ed8135d85a6cad7a23655e6dc"
+        }
+      ]
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "tests/api/test_physical_twin.py",
+      "preimage": "d60b4f175316fe52737ab3942a93903edc01a1c7b466ed5c3a03d81c80a26a29"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "tests/hardware/test_basic_flight_lab.py",
+      "preimage": "78339c6f7ac751176a4dae0b1497c5b7fe29a2a739703dc1218290d45c68ff61"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "tests/hardware/test_controller_tuning_lab.py",
+      "preimage": "41a5647b47b34cc04e427f168ab9aeaebf1868e3f5b688250198ca0f6a40ee6c"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "tests/hardware/test_crazyflie_adapter.py",
+      "preimage": "ea3019d6ed5354be73893510bec3e67921ad2ac26455cbc67252df20cf41a009"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "tests/hardware/test_observation_twin_service.py",
+      "preimage": "5e271620e3f6917a22459c3360ff3ccde2d69cbc305b33fd62b25eb7f17a8014"
+    },
+    {
+      "classification": "NEW",
+      "path": "tests/safety/test_avoidance.py",
+      "preimage": "ABSENT"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/components/ControlCenter.tsx",
+      "preimage": "fdacfe16cd92ff5893c280caebf5d1f30150a020fec11bf0138f449b784ec5d2"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/components/TwinBasicFlightLab.tsx",
+      "preimage": "3ed51613ad44e4efd44d671031de201f2418ce405c723715fb066b23185914e1"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/globals.css",
+      "preimage": "8fcdc596ba26eeb40b5c40f6db5e582b6033fe7be6b7600de593ff4c46de1810"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/lib/api.generated.ts",
+      "preimage": "32e8d9534fb176306e784a4494b5c20cd80477ddc634d89eca0bd97c10f7b934"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/lib/api.ts",
+      "preimage": "45bc875823c1cfd7dc74423b49bf6f998dbfbcab4c7cd2dae737bccf6c602cdb"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/lib/models.ts",
+      "preimage": "01b5cabd546527011e77f91c6a9f0f1d6a7bb637592198b2b1f8a1b9ecc2910a"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/openapi.json",
+      "preimage": "a695b513077937fa3bd6e4904ff01397984bbcfa29ce0c47bafcedcda9879c93"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/package.json",
+      "preimage": "211bd21bf53c0640755efd9af1953a775681a3f71271c05e4700debf17fb38a8"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/tests/api-adapter.test.ts",
+      "preimage": "b5109743684fb3b05ecb4b02d198991a0e6df3aee5f4306e5eb9d6d74d2b4055"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/tests/control-api-timeout.test.ts",
+      "preimage": "e13e93220a6c7f3bf03b7c36c59ce3eb278d83aeef59bae72b59786d312f8879"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/tests/twin-basic-flight-lab.test.tsx",
+      "preimage": "69a51e0aafa55899375e05d3c4c78c03bef8eb6cc45a272b40ca37c543c8b8bc"
+    }
+  ],
+  "design_payload_sha256": "d1ebe1a395856fe52b520ea426fcf5eb977840f7646cc5c9b7ae3b3f38b4be0b",
+  "errors": [],
+  "inherited_wp89_r1_payload_sha256": "18a7d8186543ba688c52fdabe4a196998f5eecbf860827b804ce1317e3ff4089",
+  "isolated_vectors": [
+    {
+      "category": "MODE_AUTHORITY",
+      "direction": "exact enum",
+      "field": "mode",
+      "metric_id": "M_MODE_ENUM",
+      "mutation": "ON",
+      "observed_failures": [
+        "M_MODE_ENUM"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-TOGGLE"
+    },
+    {
+      "category": "MODE_AUTHORITY",
+      "direction": "must remain true",
+      "field": "monitor_payload_unchanged",
+      "metric_id": "M_MONITOR_IDENTITY",
+      "mutation": false,
+      "observed_failures": [
+        "M_MONITOR_IDENTITY"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-TOGGLE"
+    },
+    {
+      "category": "RANGE_VALIDITY",
+      "direction": "VALID only",
+      "field": "range_status",
+      "metric_id": "M_RANGE_STATUS",
+      "mutation": "NO_HIT",
+      "observed_failures": [
+        "M_RANGE_STATUS"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-SENSOR"
+    },
+    {
+      "category": "RANGE_VALIDITY",
+      "direction": "present",
+      "field": "range_value",
+      "metric_id": "M_RANGE_PRESENT",
+      "mutation": "__MISSING__",
+      "observed_failures": [
+        "M_RANGE_PRESENT"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-SENSOR"
+    },
+    {
+      "category": "RANGE_VALIDITY",
+      "direction": "finite",
+      "field": "range_value",
+      "metric_id": "M_RANGE_FINITE",
+      "mutation": "__NAN__",
+      "observed_failures": [
+        "M_RANGE_FINITE"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-SENSOR"
+    },
+    {
+      "category": "RANGE_VALIDITY",
+      "direction": ">= 0",
+      "field": "range_value",
+      "metric_id": "M_RANGE_NONNEGATIVE",
+      "mutation": -0.001,
+      "observed_failures": [
+        "M_RANGE_NONNEGATIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-SENSOR"
+    },
+    {
+      "category": "RANGE_VALIDITY",
+      "direction": "< max_range",
+      "field": "range_value",
+      "metric_id": "M_RANGE_BELOW_MAX",
+      "mutation": 4.0,
+      "observed_failures": [
+        "M_RANGE_BELOW_MAX"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-SENSOR"
+    },
+    {
+      "category": "RANGE_FRESHNESS",
+      "direction": "present",
+      "field": "range_ts",
+      "metric_id": "M_RANGE_TS_PRESENT",
+      "mutation": "__MISSING__",
+      "observed_failures": [
+        "M_RANGE_TS_PRESENT"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-SENSOR"
+    },
+    {
+      "category": "RANGE_FRESHNESS",
+      "direction": ">= 0",
+      "field": "range_ts",
+      "metric_id": "M_RANGE_AGE_NONNEGATIVE",
+      "mutation": 100.5,
+      "observed_failures": [
+        "M_RANGE_AGE_NONNEGATIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-SENSOR"
+    },
+    {
+      "category": "RANGE_FRESHNESS",
+      "direction": "<= 0.4 s",
+      "field": "range_ts",
+      "metric_id": "M_RANGE_AGE_MAX",
+      "mutation": 99.9,
+      "observed_failures": [
+        "M_RANGE_AGE_MAX"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-SENSOR"
+    },
+    {
+      "category": "KINEMATIC_VALUE",
+      "direction": "present",
+      "field": "yaw",
+      "metric_id": "M_YAW_PRESENT",
+      "mutation": "__MISSING__",
+      "observed_failures": [
+        "M_YAW_PRESENT"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-PROJECTION"
+    },
+    {
+      "category": "KINEMATIC_VALUE",
+      "direction": "finite",
+      "field": "yaw",
+      "metric_id": "M_YAW_FINITE",
+      "mutation": "__NAN__",
+      "observed_failures": [
+        "M_YAW_FINITE"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-PROJECTION"
+    },
+    {
+      "category": "KINEMATIC_FRESHNESS",
+      "direction": "present",
+      "field": "yaw_ts",
+      "metric_id": "M_YAW_TS_PRESENT",
+      "mutation": "__MISSING__",
+      "observed_failures": [
+        "M_YAW_TS_PRESENT"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "KINEMATIC_FRESHNESS",
+      "direction": ">= 0",
+      "field": "yaw_ts",
+      "metric_id": "M_YAW_AGE_NONNEGATIVE",
+      "mutation": 100.5,
+      "observed_failures": [
+        "M_YAW_AGE_NONNEGATIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "KINEMATIC_FRESHNESS",
+      "direction": "<= 0.4 s",
+      "field": "yaw_ts",
+      "metric_id": "M_YAW_AGE_MAX",
+      "mutation": 99.9,
+      "observed_failures": [
+        "M_YAW_AGE_MAX"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "KINEMATIC_VALUE",
+      "direction": "present",
+      "field": "vx",
+      "metric_id": "M_VX_PRESENT",
+      "mutation": "__MISSING__",
+      "observed_failures": [
+        "M_VX_PRESENT"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-PROJECTION"
+    },
+    {
+      "category": "KINEMATIC_VALUE",
+      "direction": "finite",
+      "field": "vx",
+      "metric_id": "M_VX_FINITE",
+      "mutation": "__NAN__",
+      "observed_failures": [
+        "M_VX_FINITE"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-PROJECTION"
+    },
+    {
+      "category": "KINEMATIC_FRESHNESS",
+      "direction": "present",
+      "field": "vx_ts",
+      "metric_id": "M_VX_TS_PRESENT",
+      "mutation": "__MISSING__",
+      "observed_failures": [
+        "M_VX_TS_PRESENT"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "KINEMATIC_FRESHNESS",
+      "direction": ">= 0",
+      "field": "vx_ts",
+      "metric_id": "M_VX_AGE_NONNEGATIVE",
+      "mutation": 100.5,
+      "observed_failures": [
+        "M_VX_AGE_NONNEGATIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "KINEMATIC_FRESHNESS",
+      "direction": "<= 0.4 s",
+      "field": "vx_ts",
+      "metric_id": "M_VX_AGE_MAX",
+      "mutation": 99.9,
+      "observed_failures": [
+        "M_VX_AGE_MAX"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "KINEMATIC_VALUE",
+      "direction": "present",
+      "field": "vy",
+      "metric_id": "M_VY_PRESENT",
+      "mutation": "__MISSING__",
+      "observed_failures": [
+        "M_VY_PRESENT"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-PROJECTION"
+    },
+    {
+      "category": "KINEMATIC_VALUE",
+      "direction": "finite",
+      "field": "vy",
+      "metric_id": "M_VY_FINITE",
+      "mutation": "__NAN__",
+      "observed_failures": [
+        "M_VY_FINITE"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-PROJECTION"
+    },
+    {
+      "category": "KINEMATIC_FRESHNESS",
+      "direction": "present",
+      "field": "vy_ts",
+      "metric_id": "M_VY_TS_PRESENT",
+      "mutation": "__MISSING__",
+      "observed_failures": [
+        "M_VY_TS_PRESENT"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "KINEMATIC_FRESHNESS",
+      "direction": ">= 0",
+      "field": "vy_ts",
+      "metric_id": "M_VY_AGE_NONNEGATIVE",
+      "mutation": 100.5,
+      "observed_failures": [
+        "M_VY_AGE_NONNEGATIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "KINEMATIC_FRESHNESS",
+      "direction": "<= 0.4 s",
+      "field": "vy_ts",
+      "metric_id": "M_VY_AGE_MAX",
+      "mutation": 99.9,
+      "observed_failures": [
+        "M_VY_AGE_MAX"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": "present",
+      "field": "var_px",
+      "metric_id": "M_VAR_PX_PRESENT",
+      "mutation": "__MISSING__",
+      "observed_failures": [
+        "M_VAR_PX_PRESENT"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": "finite",
+      "field": "var_px",
+      "metric_id": "M_VAR_PX_FINITE",
+      "mutation": "__NAN__",
+      "observed_failures": [
+        "M_VAR_PX_FINITE"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": ">= 0",
+      "field": "var_px",
+      "metric_id": "M_VAR_PX_NONNEGATIVE",
+      "mutation": -0.001,
+      "observed_failures": [
+        "M_VAR_PX_NONNEGATIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-DISTANCE"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": "present",
+      "field": "var_px_ts",
+      "metric_id": "M_VAR_PX_TS_PRESENT",
+      "mutation": "__MISSING__",
+      "observed_failures": [
+        "M_VAR_PX_TS_PRESENT"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": ">= 0",
+      "field": "var_px_ts",
+      "metric_id": "M_VAR_PX_AGE_NONNEGATIVE",
+      "mutation": 100.5,
+      "observed_failures": [
+        "M_VAR_PX_AGE_NONNEGATIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": "<= 0.4 s",
+      "field": "var_px_ts",
+      "metric_id": "M_VAR_PX_AGE_MAX",
+      "mutation": 99.9,
+      "observed_failures": [
+        "M_VAR_PX_AGE_MAX"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": "present",
+      "field": "var_py",
+      "metric_id": "M_VAR_PY_PRESENT",
+      "mutation": "__MISSING__",
+      "observed_failures": [
+        "M_VAR_PY_PRESENT"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": "finite",
+      "field": "var_py",
+      "metric_id": "M_VAR_PY_FINITE",
+      "mutation": "__NAN__",
+      "observed_failures": [
+        "M_VAR_PY_FINITE"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": ">= 0",
+      "field": "var_py",
+      "metric_id": "M_VAR_PY_NONNEGATIVE",
+      "mutation": -0.001,
+      "observed_failures": [
+        "M_VAR_PY_NONNEGATIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-DISTANCE"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": "present",
+      "field": "var_py_ts",
+      "metric_id": "M_VAR_PY_TS_PRESENT",
+      "mutation": "__MISSING__",
+      "observed_failures": [
+        "M_VAR_PY_TS_PRESENT"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": ">= 0",
+      "field": "var_py_ts",
+      "metric_id": "M_VAR_PY_AGE_NONNEGATIVE",
+      "mutation": 100.5,
+      "observed_failures": [
+        "M_VAR_PY_AGE_NONNEGATIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": "<= 0.4 s",
+      "field": "var_py_ts",
+      "metric_id": "M_VAR_PY_AGE_MAX",
+      "mutation": 99.9,
+      "observed_failures": [
+        "M_VAR_PY_AGE_MAX"
+      ],
+      "passed": true,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "GEOMETRY",
+      "direction": "> 0",
+      "field": "vehicle_radius",
+      "metric_id": "M_RADIUS_POSITIVE",
+      "mutation": 0.0,
+      "observed_failures": [
+        "M_RADIUS_POSITIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-DISTANCE"
+    },
+    {
+      "category": "GEOMETRY",
+      "direction": "0 <= offset < radius",
+      "field": "sensor_offset",
+      "metric_id": "M_SENSOR_OFFSET_BOUNDED",
+      "mutation": 0.055,
+      "observed_failures": [
+        "M_SENSOR_OFFSET_BOUNDED"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-DISTANCE"
+    },
+    {
+      "category": "GEOMETRY",
+      "direction": ">= 0",
+      "field": "range_uncertainty",
+      "metric_id": "M_RANGE_UNCERTAINTY_NONNEGATIVE",
+      "mutation": -0.001,
+      "observed_failures": [
+        "M_RANGE_UNCERTAINTY_NONNEGATIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-RPL-012"
+    },
+    {
+      "category": "GEOMETRY",
+      "direction": ">= 0",
+      "field": "policy_margin",
+      "metric_id": "M_MARGIN_NONNEGATIVE",
+      "mutation": -0.001,
+      "observed_failures": [
+        "M_MARGIN_NONNEGATIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-DISTANCE"
+    },
+    {
+      "category": "LATENCY",
+      "direction": ">= 0",
+      "field": "sample_age_budget",
+      "metric_id": "M_LATENCY_SAMPLE_AGE_NONNEGATIVE",
+      "mutation": -0.001,
+      "observed_failures": [
+        "M_LATENCY_SAMPLE_AGE_NONNEGATIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-RPL-012"
+    },
+    {
+      "category": "LATENCY",
+      "direction": ">= 0",
+      "field": "host_budget",
+      "metric_id": "M_LATENCY_HOST_NONNEGATIVE",
+      "mutation": -0.001,
+      "observed_failures": [
+        "M_LATENCY_HOST_NONNEGATIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-RPL-012"
+    },
+    {
+      "category": "LATENCY",
+      "direction": ">= 0",
+      "field": "transport_budget",
+      "metric_id": "M_LATENCY_TRANSPORT_NONNEGATIVE",
+      "mutation": -0.001,
+      "observed_failures": [
+        "M_LATENCY_TRANSPORT_NONNEGATIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-RPL-012"
+    },
+    {
+      "category": "LATENCY",
+      "direction": ">= 0",
+      "field": "commit_budget",
+      "metric_id": "M_LATENCY_COMMIT_NONNEGATIVE",
+      "mutation": -0.001,
+      "observed_failures": [
+        "M_LATENCY_COMMIT_NONNEGATIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-RPL-012"
+    },
+    {
+      "category": "BRAKING",
+      "direction": "> 0",
+      "field": "maximum_acceleration",
+      "metric_id": "M_ACCELERATION_POSITIVE",
+      "mutation": 0.0,
+      "observed_failures": [
+        "M_ACCELERATION_POSITIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-DISTANCE"
+    },
+    {
+      "category": "BRAKING",
+      "direction": "> 0",
+      "field": "maximum_jerk",
+      "metric_id": "M_JERK_POSITIVE",
+      "mutation": 0.0,
+      "observed_failures": [
+        "M_JERK_POSITIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-RPL-012"
+    },
+    {
+      "category": "SPEED_LIMITING",
+      "direction": "> 0",
+      "field": "speed_cap",
+      "metric_id": "M_SPEED_CAP_POSITIVE",
+      "mutation": 0.0,
+      "observed_failures": [
+        "M_SPEED_CAP_POSITIVE"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-LIMIT"
+    },
+    {
+      "category": "SPEED_LIMITING",
+      "direction": "0 < floor <= cap",
+      "field": "speed_floor",
+      "metric_id": "M_SPEED_FLOOR_ORDER",
+      "mutation": 0.11,
+      "observed_failures": [
+        "M_SPEED_FLOOR_ORDER"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-LIMIT"
+    },
+    {
+      "category": "SPEED_LIMITING",
+      "direction": "nondecreasing with clearance",
+      "field": "safe_speed_monotonic",
+      "metric_id": "M_SAFE_SPEED_MONOTONIC",
+      "mutation": false,
+      "observed_failures": [
+        "M_SAFE_SPEED_MONOTONIC"
+      ],
+      "passed": true,
+      "source_id": "SRC-RPL-012"
+    },
+    {
+      "category": "SPEED_LIMITING",
+      "direction": "preserved",
+      "field": "retime_displacement_preserved",
+      "metric_id": "M_RETIME_DISPLACEMENT",
+      "mutation": false,
+      "observed_failures": [
+        "M_RETIME_DISPLACEMENT"
+      ],
+      "passed": true,
+      "source_id": "SRC-OP-LIMIT"
+    },
+    {
+      "category": "RECOVERY_TRACE",
+      "direction": "observed",
+      "field": "recovery_land_dispatched",
+      "metric_id": "M_RECOVERY_LAND_DISPATCH",
+      "mutation": false,
+      "observed_failures": [
+        "M_RECOVERY_LAND_DISPATCH"
+      ],
+      "passed": true,
+      "source_id": "SRC-WFL-017-024-048"
+    },
+    {
+      "category": "RECOVERY_TRACE",
+      "direction": "observed",
+      "field": "recovery_ground_confirmed",
+      "metric_id": "M_RECOVERY_GROUND_CONFIRM",
+      "mutation": false,
+      "observed_failures": [
+        "M_RECOVERY_GROUND_CONFIRM"
+      ],
+      "passed": true,
+      "source_id": "SRC-WFL-017-024-048"
+    },
+    {
+      "category": "RECOVERY_TRACE",
+      "direction": "fail closed",
+      "field": "recovery_failure_stop_required",
+      "metric_id": "M_RECOVERY_FAILURE_STOP_REQUIRED",
+      "mutation": false,
+      "observed_failures": [
+        "M_RECOVERY_FAILURE_STOP_REQUIRED"
+      ],
+      "passed": true,
+      "source_id": "SRC-WFL-017-024-048"
+    },
+    {
+      "category": "RETAINED_TRUTH",
+      "direction": "retained",
+      "field": "evidence.mode",
+      "metric_id": "M_EVIDENCE_MODE",
+      "mutation": "__MISSING__",
+      "observed_failures": [
+        "M_EVIDENCE_MODE"
+      ],
+      "passed": true,
+      "source_id": "SRC-WFL-017-024-048"
+    },
+    {
+      "category": "RETAINED_TRUTH",
+      "direction": "retained",
+      "field": "evidence.decision",
+      "metric_id": "M_EVIDENCE_DECISION",
+      "mutation": "__MISSING__",
+      "observed_failures": [
+        "M_EVIDENCE_DECISION"
+      ],
+      "passed": true,
+      "source_id": "SRC-WFL-017-024-048"
+    },
+    {
+      "category": "RETAINED_TRUTH",
+      "direction": "retained",
+      "field": "evidence.evaluation_count",
+      "metric_id": "M_EVIDENCE_COUNT",
+      "mutation": "__MISSING__",
+      "observed_failures": [
+        "M_EVIDENCE_COUNT"
+      ],
+      "passed": true,
+      "source_id": "SRC-WFL-017-024-048"
+    },
+    {
+      "category": "RETAINED_TRUTH",
+      "direction": "retained",
+      "field": "evidence.minimum_margin",
+      "metric_id": "M_EVIDENCE_MARGIN",
+      "mutation": "__MISSING__",
+      "observed_failures": [
+        "M_EVIDENCE_MARGIN"
+      ],
+      "passed": true,
+      "source_id": "SRC-WFL-017-024-048"
+    },
+    {
+      "category": "RETAINED_TRUTH",
+      "direction": "retained",
+      "field": "evidence.binding_ray",
+      "metric_id": "M_EVIDENCE_BINDING_RAY",
+      "mutation": "__MISSING__",
+      "observed_failures": [
+        "M_EVIDENCE_BINDING_RAY"
+      ],
+      "passed": true,
+      "source_id": "SRC-WFL-017-024-048"
+    },
+    {
+      "category": "RETAINED_TRUTH",
+      "direction": "retained",
+      "field": "evidence.intervention_reason",
+      "metric_id": "M_EVIDENCE_INTERVENTION",
+      "mutation": "__MISSING__",
+      "observed_failures": [
+        "M_EVIDENCE_INTERVENTION"
+      ],
+      "passed": true,
+      "source_id": "SRC-WFL-017-024-048"
+    }
+  ],
+  "metric_count": 60,
+  "metric_registry": [
+    {
+      "category": "MODE_AUTHORITY",
+      "direction": "exact enum",
+      "field": "mode",
+      "metric_id": "M_MODE_ENUM",
+      "mutation": "ON",
+      "source_id": "SRC-OP-TOGGLE"
+    },
+    {
+      "category": "MODE_AUTHORITY",
+      "direction": "must remain true",
+      "field": "monitor_payload_unchanged",
+      "metric_id": "M_MONITOR_IDENTITY",
+      "mutation": false,
+      "source_id": "SRC-OP-TOGGLE"
+    },
+    {
+      "category": "RANGE_VALIDITY",
+      "direction": "VALID only",
+      "field": "range_status",
+      "metric_id": "M_RANGE_STATUS",
+      "mutation": "NO_HIT",
+      "source_id": "SRC-OP-SENSOR"
+    },
+    {
+      "category": "RANGE_VALIDITY",
+      "direction": "present",
+      "field": "range_value",
+      "metric_id": "M_RANGE_PRESENT",
+      "mutation": "__MISSING__",
+      "source_id": "SRC-OP-SENSOR"
+    },
+    {
+      "category": "RANGE_VALIDITY",
+      "direction": "finite",
+      "field": "range_value",
+      "metric_id": "M_RANGE_FINITE",
+      "mutation": "__NAN__",
+      "source_id": "SRC-OP-SENSOR"
+    },
+    {
+      "category": "RANGE_VALIDITY",
+      "direction": ">= 0",
+      "field": "range_value",
+      "metric_id": "M_RANGE_NONNEGATIVE",
+      "mutation": -0.001,
+      "source_id": "SRC-OP-SENSOR"
+    },
+    {
+      "category": "RANGE_VALIDITY",
+      "direction": "< max_range",
+      "field": "range_value",
+      "metric_id": "M_RANGE_BELOW_MAX",
+      "mutation": 4.0,
+      "source_id": "SRC-OP-SENSOR"
+    },
+    {
+      "category": "RANGE_FRESHNESS",
+      "direction": "present",
+      "field": "range_ts",
+      "metric_id": "M_RANGE_TS_PRESENT",
+      "mutation": "__MISSING__",
+      "source_id": "SRC-OP-SENSOR"
+    },
+    {
+      "category": "RANGE_FRESHNESS",
+      "direction": ">= 0",
+      "field": "range_ts",
+      "metric_id": "M_RANGE_AGE_NONNEGATIVE",
+      "mutation": 100.5,
+      "source_id": "SRC-OP-SENSOR"
+    },
+    {
+      "category": "RANGE_FRESHNESS",
+      "direction": "<= 0.4 s",
+      "field": "range_ts",
+      "metric_id": "M_RANGE_AGE_MAX",
+      "mutation": 99.9,
+      "source_id": "SRC-OP-SENSOR"
+    },
+    {
+      "category": "KINEMATIC_VALUE",
+      "direction": "present",
+      "field": "yaw",
+      "metric_id": "M_YAW_PRESENT",
+      "mutation": "__MISSING__",
+      "source_id": "SRC-OP-PROJECTION"
+    },
+    {
+      "category": "KINEMATIC_VALUE",
+      "direction": "finite",
+      "field": "yaw",
+      "metric_id": "M_YAW_FINITE",
+      "mutation": "__NAN__",
+      "source_id": "SRC-OP-PROJECTION"
+    },
+    {
+      "category": "KINEMATIC_FRESHNESS",
+      "direction": "present",
+      "field": "yaw_ts",
+      "metric_id": "M_YAW_TS_PRESENT",
+      "mutation": "__MISSING__",
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "KINEMATIC_FRESHNESS",
+      "direction": ">= 0",
+      "field": "yaw_ts",
+      "metric_id": "M_YAW_AGE_NONNEGATIVE",
+      "mutation": 100.5,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "KINEMATIC_FRESHNESS",
+      "direction": "<= 0.4 s",
+      "field": "yaw_ts",
+      "metric_id": "M_YAW_AGE_MAX",
+      "mutation": 99.9,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "KINEMATIC_VALUE",
+      "direction": "present",
+      "field": "vx",
+      "metric_id": "M_VX_PRESENT",
+      "mutation": "__MISSING__",
+      "source_id": "SRC-OP-PROJECTION"
+    },
+    {
+      "category": "KINEMATIC_VALUE",
+      "direction": "finite",
+      "field": "vx",
+      "metric_id": "M_VX_FINITE",
+      "mutation": "__NAN__",
+      "source_id": "SRC-OP-PROJECTION"
+    },
+    {
+      "category": "KINEMATIC_FRESHNESS",
+      "direction": "present",
+      "field": "vx_ts",
+      "metric_id": "M_VX_TS_PRESENT",
+      "mutation": "__MISSING__",
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "KINEMATIC_FRESHNESS",
+      "direction": ">= 0",
+      "field": "vx_ts",
+      "metric_id": "M_VX_AGE_NONNEGATIVE",
+      "mutation": 100.5,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "KINEMATIC_FRESHNESS",
+      "direction": "<= 0.4 s",
+      "field": "vx_ts",
+      "metric_id": "M_VX_AGE_MAX",
+      "mutation": 99.9,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "KINEMATIC_VALUE",
+      "direction": "present",
+      "field": "vy",
+      "metric_id": "M_VY_PRESENT",
+      "mutation": "__MISSING__",
+      "source_id": "SRC-OP-PROJECTION"
+    },
+    {
+      "category": "KINEMATIC_VALUE",
+      "direction": "finite",
+      "field": "vy",
+      "metric_id": "M_VY_FINITE",
+      "mutation": "__NAN__",
+      "source_id": "SRC-OP-PROJECTION"
+    },
+    {
+      "category": "KINEMATIC_FRESHNESS",
+      "direction": "present",
+      "field": "vy_ts",
+      "metric_id": "M_VY_TS_PRESENT",
+      "mutation": "__MISSING__",
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "KINEMATIC_FRESHNESS",
+      "direction": ">= 0",
+      "field": "vy_ts",
+      "metric_id": "M_VY_AGE_NONNEGATIVE",
+      "mutation": 100.5,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "KINEMATIC_FRESHNESS",
+      "direction": "<= 0.4 s",
+      "field": "vy_ts",
+      "metric_id": "M_VY_AGE_MAX",
+      "mutation": 99.9,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": "present",
+      "field": "var_px",
+      "metric_id": "M_VAR_PX_PRESENT",
+      "mutation": "__MISSING__",
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": "finite",
+      "field": "var_px",
+      "metric_id": "M_VAR_PX_FINITE",
+      "mutation": "__NAN__",
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": ">= 0",
+      "field": "var_px",
+      "metric_id": "M_VAR_PX_NONNEGATIVE",
+      "mutation": -0.001,
+      "source_id": "SRC-OP-DISTANCE"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": "present",
+      "field": "var_px_ts",
+      "metric_id": "M_VAR_PX_TS_PRESENT",
+      "mutation": "__MISSING__",
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": ">= 0",
+      "field": "var_px_ts",
+      "metric_id": "M_VAR_PX_AGE_NONNEGATIVE",
+      "mutation": 100.5,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": "<= 0.4 s",
+      "field": "var_px_ts",
+      "metric_id": "M_VAR_PX_AGE_MAX",
+      "mutation": 99.9,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": "present",
+      "field": "var_py",
+      "metric_id": "M_VAR_PY_PRESENT",
+      "mutation": "__MISSING__",
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": "finite",
+      "field": "var_py",
+      "metric_id": "M_VAR_PY_FINITE",
+      "mutation": "__NAN__",
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": ">= 0",
+      "field": "var_py",
+      "metric_id": "M_VAR_PY_NONNEGATIVE",
+      "mutation": -0.001,
+      "source_id": "SRC-OP-DISTANCE"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": "present",
+      "field": "var_py_ts",
+      "metric_id": "M_VAR_PY_TS_PRESENT",
+      "mutation": "__MISSING__",
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": ">= 0",
+      "field": "var_py_ts",
+      "metric_id": "M_VAR_PY_AGE_NONNEGATIVE",
+      "mutation": 100.5,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "ESTIMATOR_UNCERTAINTY",
+      "direction": "<= 0.4 s",
+      "field": "var_py_ts",
+      "metric_id": "M_VAR_PY_AGE_MAX",
+      "mutation": 99.9,
+      "source_id": "SRC-WP89-D1"
+    },
+    {
+      "category": "GEOMETRY",
+      "direction": "> 0",
+      "field": "vehicle_radius",
+      "metric_id": "M_RADIUS_POSITIVE",
+      "mutation": 0.0,
+      "source_id": "SRC-OP-DISTANCE"
+    },
+    {
+      "category": "GEOMETRY",
+      "direction": "0 <= offset < radius",
+      "field": "sensor_offset",
+      "metric_id": "M_SENSOR_OFFSET_BOUNDED",
+      "mutation": 0.055,
+      "source_id": "SRC-OP-DISTANCE"
+    },
+    {
+      "category": "GEOMETRY",
+      "direction": ">= 0",
+      "field": "range_uncertainty",
+      "metric_id": "M_RANGE_UNCERTAINTY_NONNEGATIVE",
+      "mutation": -0.001,
+      "source_id": "SRC-RPL-012"
+    },
+    {
+      "category": "GEOMETRY",
+      "direction": ">= 0",
+      "field": "policy_margin",
+      "metric_id": "M_MARGIN_NONNEGATIVE",
+      "mutation": -0.001,
+      "source_id": "SRC-OP-DISTANCE"
+    },
+    {
+      "category": "LATENCY",
+      "direction": ">= 0",
+      "field": "sample_age_budget",
+      "metric_id": "M_LATENCY_SAMPLE_AGE_NONNEGATIVE",
+      "mutation": -0.001,
+      "source_id": "SRC-RPL-012"
+    },
+    {
+      "category": "LATENCY",
+      "direction": ">= 0",
+      "field": "host_budget",
+      "metric_id": "M_LATENCY_HOST_NONNEGATIVE",
+      "mutation": -0.001,
+      "source_id": "SRC-RPL-012"
+    },
+    {
+      "category": "LATENCY",
+      "direction": ">= 0",
+      "field": "transport_budget",
+      "metric_id": "M_LATENCY_TRANSPORT_NONNEGATIVE",
+      "mutation": -0.001,
+      "source_id": "SRC-RPL-012"
+    },
+    {
+      "category": "LATENCY",
+      "direction": ">= 0",
+      "field": "commit_budget",
+      "metric_id": "M_LATENCY_COMMIT_NONNEGATIVE",
+      "mutation": -0.001,
+      "source_id": "SRC-RPL-012"
+    },
+    {
+      "category": "BRAKING",
+      "direction": "> 0",
+      "field": "maximum_acceleration",
+      "metric_id": "M_ACCELERATION_POSITIVE",
+      "mutation": 0.0,
+      "source_id": "SRC-OP-DISTANCE"
+    },
+    {
+      "category": "BRAKING",
+      "direction": "> 0",
+      "field": "maximum_jerk",
+      "metric_id": "M_JERK_POSITIVE",
+      "mutation": 0.0,
+      "source_id": "SRC-RPL-012"
+    },
+    {
+      "category": "SPEED_LIMITING",
+      "direction": "> 0",
+      "field": "speed_cap",
+      "metric_id": "M_SPEED_CAP_POSITIVE",
+      "mutation": 0.0,
+      "source_id": "SRC-OP-LIMIT"
+    },
+    {
+      "category": "SPEED_LIMITING",
+      "direction": "0 < floor <= cap",
+      "field": "speed_floor",
+      "metric_id": "M_SPEED_FLOOR_ORDER",
+      "mutation": 0.11,
+      "source_id": "SRC-OP-LIMIT"
+    },
+    {
+      "category": "SPEED_LIMITING",
+      "direction": "nondecreasing with clearance",
+      "field": "safe_speed_monotonic",
+      "metric_id": "M_SAFE_SPEED_MONOTONIC",
+      "mutation": false,
+      "source_id": "SRC-RPL-012"
+    },
+    {
+      "category": "SPEED_LIMITING",
+      "direction": "preserved",
+      "field": "retime_displacement_preserved",
+      "metric_id": "M_RETIME_DISPLACEMENT",
+      "mutation": false,
+      "source_id": "SRC-OP-LIMIT"
+    },
+    {
+      "category": "RECOVERY_TRACE",
+      "direction": "observed",
+      "field": "recovery_land_dispatched",
+      "metric_id": "M_RECOVERY_LAND_DISPATCH",
+      "mutation": false,
+      "source_id": "SRC-WFL-017-024-048"
+    },
+    {
+      "category": "RECOVERY_TRACE",
+      "direction": "observed",
+      "field": "recovery_ground_confirmed",
+      "metric_id": "M_RECOVERY_GROUND_CONFIRM",
+      "mutation": false,
+      "source_id": "SRC-WFL-017-024-048"
+    },
+    {
+      "category": "RECOVERY_TRACE",
+      "direction": "fail closed",
+      "field": "recovery_failure_stop_required",
+      "metric_id": "M_RECOVERY_FAILURE_STOP_REQUIRED",
+      "mutation": false,
+      "source_id": "SRC-WFL-017-024-048"
+    },
+    {
+      "category": "RETAINED_TRUTH",
+      "direction": "retained",
+      "field": "evidence.mode",
+      "metric_id": "M_EVIDENCE_MODE",
+      "mutation": "__MISSING__",
+      "source_id": "SRC-WFL-017-024-048"
+    },
+    {
+      "category": "RETAINED_TRUTH",
+      "direction": "retained",
+      "field": "evidence.decision",
+      "metric_id": "M_EVIDENCE_DECISION",
+      "mutation": "__MISSING__",
+      "source_id": "SRC-WFL-017-024-048"
+    },
+    {
+      "category": "RETAINED_TRUTH",
+      "direction": "retained",
+      "field": "evidence.evaluation_count",
+      "metric_id": "M_EVIDENCE_COUNT",
+      "mutation": "__MISSING__",
+      "source_id": "SRC-WFL-017-024-048"
+    },
+    {
+      "category": "RETAINED_TRUTH",
+      "direction": "retained",
+      "field": "evidence.minimum_margin",
+      "metric_id": "M_EVIDENCE_MARGIN",
+      "mutation": "__MISSING__",
+      "source_id": "SRC-WFL-017-024-048"
+    },
+    {
+      "category": "RETAINED_TRUTH",
+      "direction": "retained",
+      "field": "evidence.binding_ray",
+      "metric_id": "M_EVIDENCE_BINDING_RAY",
+      "mutation": "__MISSING__",
+      "source_id": "SRC-WFL-017-024-048"
+    },
+    {
+      "category": "RETAINED_TRUTH",
+      "direction": "retained",
+      "field": "evidence.intervention_reason",
+      "metric_id": "M_EVIDENCE_INTERVENTION",
+      "mutation": "__MISSING__",
+      "source_id": "SRC-WFL-017-024-048"
+    }
+  ],
+  "numerical_oracle": {
+    "boundary_safe_speed_m_s": {
+      "equal": 0.1,
+      "minus_1e_6": 0.09999896662686868,
+      "plus_1e_6": 0.1
+    },
+    "commands": {
+      "ample_clearance": {
+        "action": "CLEAR",
+        "distance_m": 0.1,
+        "duration_s": 1.0
+      },
+      "below_floor": {
+        "action": "BLOCK_BEFORE_DISPATCH",
+        "clearance_m": 0.179999,
+        "safe_speed_m_s": 0.01999885714145775
+      },
+      "monitor_only": {
+        "action": "RECORD_ONLY",
+        "input_payload_sha256": "07bfdf2e29a05b5febcf621136c280db93c0ab434523e42e065f95759466ba69",
+        "output_payload_sha256": "07bfdf2e29a05b5febcf621136c280db93c0ab434523e42e065f95759466ba69"
+      },
+      "post_dispatch_loss": {
+        "action": "RECOVER_ABORT_LAND",
+        "command_outcome": "UNKNOWN"
+      },
+      "retimed_at_half_speed": {
+        "action": "LIMIT",
+        "clearance_m": 0.20695284707521047,
+        "distance_m": 0.1,
+        "duration_s": 1.9999999999999996,
+        "safe_speed_m_s": 0.05000000000000002
+      }
+    },
+    "projection": {
+      "moving_away_front": 0.0,
+      "yaw_0_front": 0.06,
+      "yaw_pi_2_front": 0.04
+    },
+    "required_range_m": {
+      "higher_latency": 0.27418033988749896,
+      "higher_variance": 0.40418033988749896,
+      "speed_0": 0.16299999999999998,
+      "speed_0_02": 0.18,
+      "speed_0_05": 0.20695284707521047,
+      "speed_0_10": 0.25418033988749894
+    }
+  },
+  "packet_id": "WP-90",
+  "recovery_trace": {
+    "asserted_observations": {
+      "recovery_failure_stop_required": true,
+      "recovery_ground_confirmed": true,
+      "recovery_land_dispatched": true
+    },
+    "command": [
+      ".venv/bin/pytest",
+      "-q",
+      "tests/hardware/test_basic_flight_lab.py::test_airborne_stability_guard_uses_existing_failure_abort_and_land_path",
+      "tests/hardware/test_basic_flight_lab.py::test_recovered_observer_ground_state_clears_unconfirmed_abort"
+    ],
+    "exit_code": 0,
+    "node_ids": [
+      "tests/hardware/test_basic_flight_lab.py::test_airborne_stability_guard_uses_existing_failure_abort_and_land_path",
+      "tests/hardware/test_basic_flight_lab.py::test_recovered_observer_ground_state_clears_unconfirmed_abort"
+    ],
+    "normalized_result": "2_PASSED"
+  },
+  "required_categories": [
+    "BRAKING",
+    "ESTIMATOR_UNCERTAINTY",
+    "GEOMETRY",
+    "KINEMATIC_FRESHNESS",
+    "KINEMATIC_VALUE",
+    "LATENCY",
+    "MODE_AUTHORITY",
+    "RANGE_FRESHNESS",
+    "RANGE_VALIDITY",
+    "RECOVERY_TRACE",
+    "RETAINED_TRUTH",
+    "SPEED_LIMITING"
+  ],
+  "result": "PASS",
+  "schema_version": 1,
+  "source_category_map_derived_from_payload": {
+    "SRC-OP-DISTANCE": [
+      "BRAKING",
+      "ESTIMATOR_UNCERTAINTY",
+      "GEOMETRY",
+      "LATENCY"
+    ],
+    "SRC-OP-LIMIT": [
+      "SPEED_LIMITING"
+    ],
+    "SRC-OP-PROJECTION": [
+      "KINEMATIC_FRESHNESS",
+      "KINEMATIC_VALUE"
+    ],
+    "SRC-OP-SENSOR": [
+      "RANGE_FRESHNESS",
+      "RANGE_VALIDITY"
+    ],
+    "SRC-OP-TOGGLE": [
+      "MODE_AUTHORITY"
+    ],
+    "SRC-RPL-012": [
+      "BRAKING",
+      "GEOMETRY",
+      "LATENCY",
+      "SPEED_LIMITING"
+    ],
+    "SRC-WFL-017-024-048": [
+      "RECOVERY_TRACE",
+      "RETAINED_TRUTH"
+    ],
+    "SRC-WP89-D1": [
+      "ESTIMATOR_UNCERTAINTY",
+      "KINEMATIC_FRESHNESS",
+      "KINEMATIC_VALUE"
+    ]
+  },
+  "whole_pass_failures": []
+}

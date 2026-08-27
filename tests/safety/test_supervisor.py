@@ -185,6 +185,74 @@ async def test_health_assessment_and_enforcement_are_deterministic() -> None:
 
 
 @pytest.mark.asyncio
+async def test_watchdog_distinguishes_source_progress_from_receive_freshness(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    supervisor, vehicle = await ready_supervisor(
+        policy=SafetyPolicy(telemetry_timeout_s=0.25)
+    )
+    session = supervisor.session(vehicle.identity.vehicle_id)
+    assert session.telemetry is not None
+    baseline = session.telemetry
+    assert session.telemetry_received_at_monotonic_s is not None
+    baseline_received_at = session.telemetry_received_at_monotonic_s
+
+    # Re-delivery of the same authoritative source sample is not a heartbeat.
+    monkeypatch.setattr(
+        "crazyswarm_app.safety.supervisor.time.monotonic",
+        lambda: baseline_received_at + 0.30,
+    )
+    supervisor.receive_telemetry(baseline)
+    assert session.telemetry_received_at_monotonic_s == baseline_received_at
+    stale = supervisor.evaluate_health(
+        vehicle.identity.vehicle_id,
+        now_s=baseline_received_at + 0.30,
+    )
+    assert [issue.code for issue in stale.issues].count(ErrorCode.TELEMETRY_STALE.value) == 1
+    assert stale.action is RecoveryAction.REJECT_NEW_COMMANDS
+
+    # A new source sample renews receive-clock freshness even when the source clock
+    # advanced by much less than the wall delay. Both clocks remain independently
+    # observable instead of manufacturing source-time progress.
+    next_received_at = baseline_received_at + 0.31
+    next_sample = baseline.model_copy(
+        update={
+            "sequence": baseline.sequence + 1,
+            "source_timestamp_s": baseline.source_timestamp_s + 0.01,
+        }
+    )
+    monkeypatch.setattr(
+        "crazyswarm_app.safety.supervisor.time.monotonic",
+        lambda: next_received_at,
+    )
+    supervisor.receive_telemetry(next_sample)
+    assert session.telemetry is next_sample
+    assert session.telemetry.source_timestamp_s == baseline.source_timestamp_s + 0.01
+    assert session.telemetry_received_at_monotonic_s == next_received_at
+    assert not any(
+        issue.code == ErrorCode.TELEMETRY_STALE.value
+        for issue in supervisor.evaluate_health(
+            vehicle.identity.vehicle_id,
+            now_s=next_received_at + 0.24,
+        ).issues
+    )
+
+    # A producer that emits a new sequence while its source clock is frozen is
+    # distinguishable from both a duplicate and a receive dropout: receive freshness
+    # advances, while the retained authoritative source timestamp does not.
+    frozen_received_at = next_received_at + 0.10
+    frozen_sample = next_sample.model_copy(update={"sequence": next_sample.sequence + 1})
+    monkeypatch.setattr(
+        "crazyswarm_app.safety.supervisor.time.monotonic",
+        lambda: frozen_received_at,
+    )
+    supervisor.receive_telemetry(frozen_sample)
+    assert session.telemetry is frozen_sample
+    assert session.telemetry.source_timestamp_s == next_sample.source_timestamp_s
+    assert session.telemetry_received_at_monotonic_s == frozen_received_at
+
+
+@pytest.mark.asyncio
 async def test_each_health_fault_has_an_explicit_recovery_action() -> None:
     supervisor, vehicle = await ready_supervisor()
     report = await supervisor.preflight(vehicle.identity.vehicle_id, OWNER)

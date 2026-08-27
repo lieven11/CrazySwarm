@@ -1,0 +1,3502 @@
+{
+  "aggregate_cheat_mean_m": 0.04526666666666667,
+  "applicability": "required; no N/A branch",
+  "authorization": "ok yes i authorize",
+  "base_design_sha256": "52570fcfcef8c7e5d62f79eb8c111522c236fe2a590500bcf086092bbc5e43c6",
+  "batch": "WP-62-through-WP-66-R3",
+  "cases": {
+    "aggregate_cheat": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.002
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.053
+      }
+    ],
+    "duplicate_overwrite": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.2
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      }
+    ],
+    "invalid_not_applicable": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": false,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": null
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      }
+    ],
+    "malformed_identity_extra_field": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64",
+          "repeat_id": "accelerated-1"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      }
+    ],
+    "malformed_identity_missing_field": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      }
+    ],
+    "malformed_identity_scalar": [
+      {
+        "applicable": true,
+        "identity": "WP-64|curved|accelerated|1",
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      }
+    ],
+    "missing_value": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        }
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      }
+    ],
+    "missing_wp66_realtime_2": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      }
+    ],
+    "nan_failure": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": {
+          "injected_python_float": "nan"
+        }
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      }
+    ],
+    "negative_infinity_failure": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": {
+          "injected_python_float": "-inf"
+        }
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      }
+    ],
+    "negative_value": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": -0.001
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      }
+    ],
+    "non_mapping_record": [
+      null,
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      }
+    ],
+    "non_numeric_value": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": "0.01"
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      }
+    ],
+    "ordinal_bool": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": true,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      }
+    ],
+    "ordinal_float": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1.0,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      }
+    ],
+    "oversized_integer": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      }
+    ],
+    "passing": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      }
+    ],
+    "positive_infinity_failure": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": {
+          "injected_python_float": "inf"
+        }
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      }
+    ],
+    "reordered_passing": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      }
+    ],
+    "single_threshold_failure": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.051
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      }
+    ],
+    "unexpected_wp66_realtime_4": [
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.curved_route.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.planar_shape_loop.figure_eight",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 2,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "AUTOMATED_ACCELERATED",
+          "ordinal": 3,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.altitude_transition.canonical_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-64"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 1,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.047
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 2,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.048
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 3,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.049
+      },
+      {
+        "applicable": true,
+        "identity": {
+          "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+          "mode": "OPERATOR_OBSERVED_REALTIME",
+          "ordinal": 4,
+          "packet_id": "WP-66"
+        },
+        "tracking_rms_m": 0.01
+      }
+    ]
+  },
+  "comparator": "finite value <= 0.05 m on every exact repeat",
+  "expected_count": 15,
+  "expected_identities": [
+    {
+      "case_id": "1d.curved_route.canonical_nominal",
+      "mode": "AUTOMATED_ACCELERATED",
+      "ordinal": 1,
+      "packet_id": "WP-64"
+    },
+    {
+      "case_id": "1d.curved_route.canonical_nominal",
+      "mode": "AUTOMATED_ACCELERATED",
+      "ordinal": 2,
+      "packet_id": "WP-64"
+    },
+    {
+      "case_id": "1d.curved_route.canonical_nominal",
+      "mode": "AUTOMATED_ACCELERATED",
+      "ordinal": 3,
+      "packet_id": "WP-64"
+    },
+    {
+      "case_id": "1d.curved_route.canonical_nominal",
+      "mode": "OPERATOR_OBSERVED_REALTIME",
+      "ordinal": 1,
+      "packet_id": "WP-64"
+    },
+    {
+      "case_id": "1d.planar_shape_loop.figure_eight",
+      "mode": "AUTOMATED_ACCELERATED",
+      "ordinal": 1,
+      "packet_id": "WP-64"
+    },
+    {
+      "case_id": "1d.planar_shape_loop.figure_eight",
+      "mode": "AUTOMATED_ACCELERATED",
+      "ordinal": 2,
+      "packet_id": "WP-64"
+    },
+    {
+      "case_id": "1d.planar_shape_loop.figure_eight",
+      "mode": "AUTOMATED_ACCELERATED",
+      "ordinal": 3,
+      "packet_id": "WP-64"
+    },
+    {
+      "case_id": "1d.planar_shape_loop.figure_eight",
+      "mode": "OPERATOR_OBSERVED_REALTIME",
+      "ordinal": 1,
+      "packet_id": "WP-64"
+    },
+    {
+      "case_id": "1d.altitude_transition.canonical_nominal",
+      "mode": "AUTOMATED_ACCELERATED",
+      "ordinal": 1,
+      "packet_id": "WP-64"
+    },
+    {
+      "case_id": "1d.altitude_transition.canonical_nominal",
+      "mode": "AUTOMATED_ACCELERATED",
+      "ordinal": 2,
+      "packet_id": "WP-64"
+    },
+    {
+      "case_id": "1d.altitude_transition.canonical_nominal",
+      "mode": "AUTOMATED_ACCELERATED",
+      "ordinal": 3,
+      "packet_id": "WP-64"
+    },
+    {
+      "case_id": "1d.altitude_transition.canonical_nominal",
+      "mode": "OPERATOR_OBSERVED_REALTIME",
+      "ordinal": 1,
+      "packet_id": "WP-64"
+    },
+    {
+      "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+      "mode": "OPERATOR_OBSERVED_REALTIME",
+      "ordinal": 1,
+      "packet_id": "WP-66"
+    },
+    {
+      "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+      "mode": "OPERATOR_OBSERVED_REALTIME",
+      "ordinal": 2,
+      "packet_id": "WP-66"
+    },
+    {
+      "case_id": "1d.online_obstacle_replan.dynamic_nominal",
+      "mode": "OPERATOR_OBSERVED_REALTIME",
+      "ordinal": 3,
+      "packet_id": "WP-66"
+    }
+  ],
+  "identity_fields": [
+    "packet_id",
+    "case_id",
+    "mode",
+    "ordinal"
+  ],
+  "metric": "tracking_rms_m",
+  "outcomes": {
+    "aggregate_cheat": {
+      "expected_count": 15,
+      "failures": [
+        "WP-66|1d.online_obstacle_replan.dynamic_nominal|OPERATOR_OBSERVED_REALTIME|3:ABOVE_THRESHOLD"
+      ],
+      "observed_record_count": 15,
+      "passed": false,
+      "unique_expected_observed_count": 15
+    },
+    "duplicate_overwrite": {
+      "expected_count": 15,
+      "failures": [
+        "WP-64|1d.curved_route.canonical_nominal|AUTOMATED_ACCELERATED|1:ABOVE_THRESHOLD",
+        "WP-64|1d.curved_route.canonical_nominal|AUTOMATED_ACCELERATED|1:DUPLICATE"
+      ],
+      "observed_record_count": 16,
+      "passed": false,
+      "unique_expected_observed_count": 15
+    },
+    "invalid_not_applicable": {
+      "expected_count": 15,
+      "failures": [
+        "WP-64|1d.planar_shape_loop.figure_eight|AUTOMATED_ACCELERATED|1:INVALID_NOT_APPLICABLE",
+        "WP-64|1d.planar_shape_loop.figure_eight|AUTOMATED_ACCELERATED|1:MISSING_OR_NON_NUMERIC"
+      ],
+      "observed_record_count": 15,
+      "passed": false,
+      "unique_expected_observed_count": 15
+    },
+    "malformed_identity_extra_field": {
+      "expected_count": 15,
+      "failures": [
+        "WP-64|1d.curved_route.canonical_nominal|AUTOMATED_ACCELERATED|1:MISSING",
+        "record-0:INVALID_IDENTITY"
+      ],
+      "observed_record_count": 15,
+      "passed": false,
+      "unique_expected_observed_count": 14
+    },
+    "malformed_identity_missing_field": {
+      "expected_count": 15,
+      "failures": [
+        "WP-64|1d.curved_route.canonical_nominal|AUTOMATED_ACCELERATED|1:MISSING",
+        "record-0:INVALID_IDENTITY"
+      ],
+      "observed_record_count": 15,
+      "passed": false,
+      "unique_expected_observed_count": 14
+    },
+    "malformed_identity_scalar": {
+      "expected_count": 15,
+      "failures": [
+        "WP-64|1d.curved_route.canonical_nominal|AUTOMATED_ACCELERATED|1:MISSING",
+        "record-0:INVALID_IDENTITY"
+      ],
+      "observed_record_count": 15,
+      "passed": false,
+      "unique_expected_observed_count": 14
+    },
+    "missing_value": {
+      "expected_count": 15,
+      "failures": [
+        "WP-64|1d.curved_route.canonical_nominal|OPERATOR_OBSERVED_REALTIME|1:MISSING_OR_NON_NUMERIC",
+        "record-3:INVALID_RECORD_FIELDS"
+      ],
+      "observed_record_count": 15,
+      "passed": false,
+      "unique_expected_observed_count": 15
+    },
+    "missing_wp66_realtime_2": {
+      "expected_count": 15,
+      "failures": [
+        "WP-66|1d.online_obstacle_replan.dynamic_nominal|OPERATOR_OBSERVED_REALTIME|2:MISSING"
+      ],
+      "observed_record_count": 14,
+      "passed": false,
+      "unique_expected_observed_count": 14
+    },
+    "nan_failure": {
+      "expected_count": 15,
+      "failures": [
+        "WP-64|1d.altitude_transition.canonical_nominal|AUTOMATED_ACCELERATED|3:NON_FINITE"
+      ],
+      "observed_record_count": 15,
+      "passed": false,
+      "unique_expected_observed_count": 15
+    },
+    "negative_infinity_failure": {
+      "expected_count": 15,
+      "failures": [
+        "WP-66|1d.online_obstacle_replan.dynamic_nominal|OPERATOR_OBSERVED_REALTIME|1:NON_FINITE"
+      ],
+      "observed_record_count": 15,
+      "passed": false,
+      "unique_expected_observed_count": 15
+    },
+    "negative_value": {
+      "expected_count": 15,
+      "failures": [
+        "WP-64|1d.planar_shape_loop.figure_eight|AUTOMATED_ACCELERATED|3:NEGATIVE"
+      ],
+      "observed_record_count": 15,
+      "passed": false,
+      "unique_expected_observed_count": 15
+    },
+    "non_mapping_record": {
+      "expected_count": 15,
+      "failures": [
+        "WP-64|1d.curved_route.canonical_nominal|AUTOMATED_ACCELERATED|1:MISSING",
+        "record-0:INVALID_RECORD"
+      ],
+      "observed_record_count": 15,
+      "passed": false,
+      "unique_expected_observed_count": 14
+    },
+    "non_numeric_value": {
+      "expected_count": 15,
+      "failures": [
+        "WP-64|1d.planar_shape_loop.figure_eight|AUTOMATED_ACCELERATED|2:MISSING_OR_NON_NUMERIC"
+      ],
+      "observed_record_count": 15,
+      "passed": false,
+      "unique_expected_observed_count": 15
+    },
+    "ordinal_bool": {
+      "expected_count": 15,
+      "failures": [
+        "WP-64|1d.curved_route.canonical_nominal|AUTOMATED_ACCELERATED|1:MISSING",
+        "record-0:INVALID_IDENTITY"
+      ],
+      "observed_record_count": 15,
+      "passed": false,
+      "unique_expected_observed_count": 14
+    },
+    "ordinal_float": {
+      "expected_count": 15,
+      "failures": [
+        "WP-64|1d.curved_route.canonical_nominal|AUTOMATED_ACCELERATED|1:MISSING",
+        "record-0:INVALID_IDENTITY"
+      ],
+      "observed_record_count": 15,
+      "passed": false,
+      "unique_expected_observed_count": 14
+    },
+    "oversized_integer": {
+      "expected_count": 15,
+      "failures": [
+        "WP-64|1d.planar_shape_loop.figure_eight|OPERATOR_OBSERVED_REALTIME|1:ABOVE_THRESHOLD"
+      ],
+      "observed_record_count": 15,
+      "passed": false,
+      "unique_expected_observed_count": 15
+    },
+    "passing": {
+      "expected_count": 15,
+      "failures": [],
+      "observed_record_count": 15,
+      "passed": true,
+      "unique_expected_observed_count": 15
+    },
+    "positive_infinity_failure": {
+      "expected_count": 15,
+      "failures": [
+        "WP-64|1d.altitude_transition.canonical_nominal|OPERATOR_OBSERVED_REALTIME|1:NON_FINITE"
+      ],
+      "observed_record_count": 15,
+      "passed": false,
+      "unique_expected_observed_count": 15
+    },
+    "reordered_passing": {
+      "expected_count": 15,
+      "failures": [],
+      "observed_record_count": 15,
+      "passed": true,
+      "unique_expected_observed_count": 15
+    },
+    "single_threshold_failure": {
+      "expected_count": 15,
+      "failures": [
+        "WP-64|1d.altitude_transition.canonical_nominal|AUTOMATED_ACCELERATED|1:ABOVE_THRESHOLD"
+      ],
+      "observed_record_count": 15,
+      "passed": false,
+      "unique_expected_observed_count": 15
+    },
+    "unexpected_wp66_realtime_4": {
+      "expected_count": 15,
+      "failures": [
+        "WP-66|1d.online_obstacle_replan.dynamic_nominal|OPERATOR_OBSERVED_REALTIME|4:UNEXPECTED"
+      ],
+      "observed_record_count": 16,
+      "passed": false,
+      "unique_expected_observed_count": 15
+    }
+  },
+  "r2_design_sha256": "4201ea8a858e1d91b3f5877bdfacbd4716b5fa59b42cac9ac9d796cf38477806",
+  "schema_version": 1,
+  "threshold_m": 0.05
+}

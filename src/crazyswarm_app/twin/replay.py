@@ -31,25 +31,24 @@ def derive_twin_residuals(
             (item for item in values if item.side is TwinStreamSide.OBSERVED),
             key=lambda item: (item.source_timestamp_s, item.sequence, item.sample_id),
         )
-        predicted = sorted(
-            (item for item in values if item.side is TwinStreamSide.PREDICTED),
-            key=lambda item: (item.source_timestamp_s, item.sequence, item.sample_id),
-        )
+        predicted = tuple(item for item in values if item.side is TwinStreamSide.PREDICTED)
         for sample in observed:
-            compatible = [
-                item
-                for item in predicted
-                if item.unit == sample.unit and item.frame == sample.frame
-            ]
-            nearest = min(
-                compatible,
-                key=lambda item: (
-                    abs(item.source_timestamp_s - sample.source_timestamp_s),
-                    item.source_timestamp_s,
-                    item.sequence,
-                    item.sample_id,
+            # A paired hardware residual is causal only when both samples came
+            # from the same admitted pair and common alignment segment. Never
+            # borrow the nearest prediction from an earlier producer epoch.
+            nearest = next(
+                (
+                    item
+                    for item in predicted
+                    if sample.pair_id is not None
+                    and item.pair_id == sample.pair_id
+                    and item.pair_sequence == sample.pair_sequence
+                    and item.alignment_epoch == sample.alignment_epoch
+                    and item.session_id == sample.session_id
+                    and item.unit == sample.unit
+                    and item.frame == sample.frame
                 ),
-                default=None,
+                None,
             )
             delta = (
                 abs(nearest.source_timestamp_s - sample.source_timestamp_s)
@@ -80,10 +79,13 @@ def derive_twin_residuals(
                 "schema_version": 1,
                 "session_id": sample.session_id,
                 "channel_id": channel_id,
+                "pair_id": sample.pair_id if nearest is not None else None,
+                "pair_sequence": sample.pair_sequence if nearest is not None else None,
+                "alignment_epoch": sample.alignment_epoch if nearest is not None else None,
+                "observed_source_epoch": sample.source_epoch,
+                "predicted_source_epoch": (nearest.source_epoch if nearest is not None else None),
                 "observed_sample_sha256": sample.sample_sha256,
-                "predicted_sample_sha256": (
-                    nearest.sample_sha256 if nearest is not None else None
-                ),
+                "predicted_sample_sha256": (nearest.sample_sha256 if nearest is not None else None),
                 "source_timestamp_s": sample.source_timestamp_s,
                 "alignment_delta_s": delta,
                 "availability": availability,

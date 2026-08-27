@@ -1,0 +1,1282 @@
+{
+  "base_commit": "40cd9947f87eb9bf2719d72e7c72ea867eab9977",
+  "boundaries": [
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "design.md",
+      "preimage_sha256": "4cdb026c8f4f89328592e9fdeadf88678f06e9a115394d6db0d2396070d80759"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "docs/guides/MISSION_SAFETY_GUIDE.md",
+      "preimage_sha256": "bdbae92afd05779479aaf51b77aab3356c715044954275a14966d6b4d2a358bf"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "docs/project/DESIGN.md",
+      "preimage_sha256": "cce61f0f93a3e512d4a381d80d094970e81aa0185f76ab62b16e9296a305fbd4"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "docs/project/requirements/EVIDENCE_AND_REVIEW.md",
+      "preimage_sha256": "3fd8e4ea132c18a18e42b1741f1171a18d68a24cbecbaaa40b171d170a8d8b30"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "docs/project/requirements/FIDELITY_AND_TRANSFER.md",
+      "preimage_sha256": "903232a4c188e4416f2f14660b17a4f9985c712a1f5e6a2f013387d14703c446"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "docs/project/requirements/MISSION_AND_CURRICULUM.md",
+      "preimage_sha256": "afc22865dffdaa37b1e1337736cf5db66f590cd2083bdb342c739f947c9d9473"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "docs/project/requirements/MOTION_AND_CONTROL.md",
+      "preimage_sha256": "e1c791fa22b52cc151f0d87237ed65880fd74126e74e296e7c2226ebced79727"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "docs/project/requirements/PLANNING_AND_GEOMETRY.md",
+      "preimage_sha256": "70050854ac5da82940c6205356d09fae9d2b46fda84896db54369bb9a05af39a"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "docs/project/requirements/workflow/COST_SCOPE_AND_HANDOFF.md",
+      "preimage_sha256": "25f5465639b082350a2093bcf5ff72e1945efc4824916f456709e491d9f77a85"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "docs/project/requirements/workflow/PREFREEZE_AND_ORACLES.md",
+      "preimage_sha256": "827a6a398a57a83552cf6beada7ce3ee05e84b3df5c527079d81963eb1116f8c"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "docs/project/requirements/workflow/WORK_PACKET_GATES.md",
+      "preimage_sha256": "10942f18196ff44fc850a291f97c510638cc013899e9256641b81453649cac33"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "docs/reference/LANDING_GOAL_REGION_V1.md",
+      "preimage_sha256": "7c5a38b0f5cee4aeabb09f8afc449880d110f9c0ac5a6795808dc3d11385c86c"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "docs/system/PLANNING_AND_RECOVERY_PLUGINS.md",
+      "preimage_sha256": "3e33d0df88e3e2e72d0dc1dedd2240cfbebb16c871dfadc67ede236dafb830c4"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "docs/system/README.md",
+      "preimage_sha256": "276279bde4736cfe11d14b2a41938402510b4ae7a87a3bef796917d434499ba4"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "missions/campaigns/real/authorized_cases/basic-flight-and-route-following/real-mirrors-v1.yaml",
+      "preimage_sha256": "6f9ec6548eee3f109f4f39d4a82deeed2ec1b0f4622e9f56db5b067199abf1bd"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "scripts/audit_wp87_88_design.py",
+      "preimage_sha256": "f93d0ad9030d415b6763e82d1779f0e32d325d3cefe360b889740888930935f6"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "scripts/export_openapi.py",
+      "preimage_sha256": "821e27fd8a36e7e893ee4a6a5fa0fed4304d462dec1cdc6758961c6cd4c2bafa"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/__init__.py",
+      "preimage_sha256": "e450c007b3667482bbacb354abc0016588b8d0e71818f629f016a22b48fa6a66"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/api/app.py",
+      "preimage_sha256": "ff8173e244d6d4b130a1fe21ec60b8da9d2431729e28532877b7f4add4ede4aa"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/api/models.py",
+      "preimage_sha256": "ae78fa0502d73b28625e01df41364b9517237838b574ec28daf714eda151026e"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/api/runtime.py",
+      "preimage_sha256": "64dcf8b92acc1b9757238dbd4be990c98e82c917d5ac8e1999b932eb9d0703f5"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/api/security.py",
+      "preimage_sha256": "adc1443db1b30d3b13d11c62c89fe2f855f707fd5d7bb05c0235fb734ae56e11"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/analyzer.py",
+      "preimage_sha256": "2a7a70bbd7fb88765a5096de5b702137ff4d9caf7905f4f15e92e3eb052a0884"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/api_models.py",
+      "preimage_sha256": "a1d5e1a804737cc7e083f033f209d09e9082d87b8816952c3435f2c77ef10ccc"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/catalog.py",
+      "preimage_sha256": "64aaa10fd065b39657ebae28e76e01512528637dc1eaca3970b93b3ed76634be"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/corridor.py",
+      "preimage_sha256": "4cda334f3d25cb381cf1fb812bce8de2d23e255916e0d7dbdc2e3cee12e9fd23"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/execution.py",
+      "preimage_sha256": "599c443567089b8412bf61e337da6ccce0d9ecf389493e9d269275cf11affd6c"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/execution_head.py",
+      "preimage_sha256": "ba87347101f1b8153bfdb16e3f36ec592f78456e63a94ab9adbc99781f2133a4"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/geometry.py",
+      "preimage_sha256": "f011ece2306fb5a2505818eb7dac8771a21bb72a6dffc62a8f3bcb9c30d21802"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/models.py",
+      "preimage_sha256": "b8164e332e48184e6b92dd19d4b7200e7915d5180f64109ea38ce2942b1a5827"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/perception.py",
+      "preimage_sha256": "e8b39b2f753c5550b41b52c4eb1ae58e48ab8449d563a08498443978431fb565"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/physical_truth.py",
+      "preimage_sha256": "e34b9c75527a7e3a3c55a1a4fb673d2a49e012816362929b7799062003eba4c9"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/planner.py",
+      "preimage_sha256": "0341feb0cc79fbd241212e551f5b0d69e7e2aa80a14517a69c7e761c7bb99398"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/replanning.py",
+      "preimage_sha256": "5f4227270538482cd3b6c491d71135e828d0dcdcf5fac6411f72f8519c2c804f"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/runtime_executor.py",
+      "preimage_sha256": "3835eba7f9732e2103a8c92fa2a69088ac27115cf29275e6c7997198aaaa2669"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/scenario.py",
+      "preimage_sha256": "c7e3ddeee88b235551ba2c31c639ef73da0edddfc46eb94cd5a83c24d96ef221"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/scheduling.py",
+      "preimage_sha256": "521aa0fe9d019c8ccbabf0f2204e463458bf1754f7a76da851ea60a66d1c97a8"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/semantic_audit.py",
+      "preimage_sha256": "78420241b129477f8e623acab8ee2e79040604266835dc01d92a17ca2c658158"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/service.py",
+      "preimage_sha256": "794a13c31d51fa095120efe80a198424d343dc78d27f0ac91977795d5f52d32e"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/submissions.py",
+      "preimage_sha256": "43a8630857e093fa4b58f350d9c943c2af3f8f1eef91b451b65627b351a97976"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/timing.py",
+      "preimage_sha256": "33b3bb5ff60381353c7dcffa9f86003dc19a7cbc767f90fb00a8a448f6bc610e"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/campaign/trajectory.py",
+      "preimage_sha256": "ea425ad2f477e4e980cdd51ac67616c8fb44528fb50a8ad6163279fc5f8323c0"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/config.py",
+      "preimage_sha256": "11055020c3aa32f2b4286b1f329137f0a7265a11c2de0f7d255187a25094721c"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/domain/commands.py",
+      "preimage_sha256": "86ff7d9fcf374f60d42cf6499d36a6567f3675e867587bc4ed79d188dbeb7ff6"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/domain/errors.py",
+      "preimage_sha256": "64113a37dacf413065ea1f0897a94087bc1a2817f052b3732bf4e395a2dfb73a"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/domain/goals.py",
+      "preimage_sha256": "04f7214150335df745b3b85dd0477df5e6cb4594e28334c1ba3fa23d10de837b"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/domain/models.py",
+      "preimage_sha256": "a298a1f7958239c3ae260e2df21a455cf188a5588395b9222095b3377eb9fcff"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/domain/simulation.py",
+      "preimage_sha256": "393fb0f83bde414d2088ad749e13c5308f6d267a8725344c05fc726147aa1d76"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/domain/telemetry.py",
+      "preimage_sha256": "741a4aa9cc4a405588960eece156b82e85348bf124e61fcb16f66ebb97376f99"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/domain/trajectory.py",
+      "preimage_sha256": "5d48ba0f3bc01d4280887a340408bb99c05bd3156de24823ff543e75a21354ef"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/engineering.py",
+      "preimage_sha256": "ab2d3a02a50233a759fbd65fd9f8f37185b03b2a94477fa6cfa05738cc4b10e0"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/fleet/artifacts.py",
+      "preimage_sha256": "67380de6c08f72add380047daa695d2936af8e07e2f6868854cc7269087ea77a"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/fleet/backends.py",
+      "preimage_sha256": "1e54d0186f69ae3542539e07db1c2dbdc7a477212a056731291fd326ea21dcb2"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/fleet/coordination.py",
+      "preimage_sha256": "687d5e74cf105970ffdd16a49b329ab9de5532d2a062c48ee4f76feb57171cc3"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/fleet/coordinator.py",
+      "preimage_sha256": "d241ab3a18210720c5138fe302d8922120e39c4d4dc8e619c5f57dec8eb849cd"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/fleet/docks.py",
+      "preimage_sha256": "6577dfff382fed3219a680936eb7be5ef8788cdcef9622dc15273057d1ef73a6"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/fleet/execution.py",
+      "preimage_sha256": "57fc67bbd7a3714312ed66139146c7cf08a0f371542ddc6740a295ba8146eedc"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/fleet/metrics.py",
+      "preimage_sha256": "be868dbf3a0a74ebb25e9ef94ef46ddafd68183ecae1cd327c77e94eb2f686ea"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/fleet/persistent.py",
+      "preimage_sha256": "3e680dd799cb7a1a0033340361c4c69c7badaf441f7f3d06ccecba2adec11cf7"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/fleet/planning.py",
+      "preimage_sha256": "21e16c5da99d4eba7d8e9ab38859c022efd9be5f8a28b0c3e2e8e803ddcf7981"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/fleet/preparation.py",
+      "preimage_sha256": "a8916b916e4bbe77de2b47bbba48a721456c5dac6a80a9a489c9d1be53822d43"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/fleet/qualification.py",
+      "preimage_sha256": "3341e9b90f842d9632b352bc71e3f6056366cafc68354f7549e74dcee35ff728"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/fleet/tasks.py",
+      "preimage_sha256": "b46ba308c1a7770d25fc83400d159384ca95419d73bb293e2dcbdbf4f71675b4"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/fleet/zones.py",
+      "preimage_sha256": "1b48f9c6591d12dfc3e803b5a31c701005469cc47b9b71e34a09a99c4eee042d"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/hardware/models.py",
+      "preimage_sha256": "cb101bcc2056db0a6d013f30eee790c46c16f8d467aa534919b2cfc11d6eaf5c"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/hardware/observation_twin.py",
+      "preimage_sha256": "f39069a6342b11e92d475fd9066a6fcf5ed2675bd470f4f69299fdcdae0ab115"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/isaac/protocol.py",
+      "preimage_sha256": "176ff67a2d4f00c9bb9c8bf01379e607e67b89715dc64a53a8627c00b255b008"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/missions/authority.py",
+      "preimage_sha256": "86832cf77ba259ffde485a9a5576f0462f05e7b21eab21abf280de7c3690f3ff"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/missions/base.py",
+      "preimage_sha256": "e99dec4ee72c419e13e9f32cd4396874e0dfb35fe2e9c7f5062e8cfeaa9735b5"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/missions/catalog.py",
+      "preimage_sha256": "c055d112a690204c109b6966afc31783ce0cf7eb3f788f547ffdc923233344a2"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/missions/coordination.py",
+      "preimage_sha256": "d37cb990b5881e40fae5423e59ce5e29a41c6ac5fab3a562c4a177a21149e83e"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/missions/models.py",
+      "preimage_sha256": "e7655602a5ce72761a36b1aef49145a338f032fd292f9aa26ee574d55a0ebf27"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/missions/observation.py",
+      "preimage_sha256": "0675b0897501a0f9aa8a87b97406be132e2e113e6c6ea5da6843b26431e74d3f"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/missions/planning.py",
+      "preimage_sha256": "0fbb21cd1fed76868220f4618f6c6476fefbdbee06fd789e819bed38a6b53685"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/missions/registry.py",
+      "preimage_sha256": "9b8cd1415e7ddbbbfbd0a01a0e0d074fa7fa1d1d0bd95b6243e881c9c9c004f2"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/missions/runner.py",
+      "preimage_sha256": "0363679e48b5327cf8314123e7e7c035a348c460e99bf934ee09711153f536df"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/missions/script.py",
+      "preimage_sha256": "fc27a997120858048b617f45afe24042170315ae11ac911869438ca256470b59"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/observability/bridge.py",
+      "preimage_sha256": "b676bbc35a2a6598eb80f55dbd6c266767803bb71e067c8efa9e0310cc884977"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/observability/bus.py",
+      "preimage_sha256": "1fcfbb4bc8db8e0021676b3428c57b59408529e8614e46b347fc40ab31d8f2c9"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/observability/csv_export.py",
+      "preimage_sha256": "07702a86a9adb529dbdc3f309d15d5e8a256b6f89bf2a133460b090de7563126"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/observability/evaluation.py",
+      "preimage_sha256": "f94e6ad3da7a1024e316615c1ce565f19a67223f1fe3517e480dd397513b7f46"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/observability/events.py",
+      "preimage_sha256": "d94c135959f160bca7c25e3158c2fe705386831cc1f36888e1604a4b1a5c3cba"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/observability/recorder.py",
+      "preimage_sha256": "2daa135fffd7326a1510c437e6263a68297ef45db987658a23edd92cb66c1369"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/observability/replay.py",
+      "preimage_sha256": "496bb5cab3c7ad68ebe082b22ab6c1aa2abcc78be07ea3f1b55af778aec845bb"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/observability/storage.py",
+      "preimage_sha256": "aa3e3abc76751e4f840145500c50dc419867a0120de53dfe3c9d0223a50dc689"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/planning/approval.py",
+      "preimage_sha256": "5bfb08c3b08849ca3dcdebb7e5a6027e610df2bf57875c9cd216eac5dc33cf74"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/planning/builtins.py",
+      "preimage_sha256": "20f82ca054a2513c59c62a0863b90fdb3100c83b473d32de1d050231a26ec307"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/planning/contracts.py",
+      "preimage_sha256": "f1dd7392db34e6d68323f85f9d3aed48b44961eb509e2346f137c3405b678766"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/planning/curriculum.py",
+      "preimage_sha256": "8049a93d198af766db868a0ee5b2f4d5c85448f34e894fa18a959b84181cd4ac"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/planning/deconfliction.py",
+      "preimage_sha256": "009b149d0108a7fa4981806226211fc9eb8058053673c41c0d7644ae26b6afa2"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/planning/intent.py",
+      "preimage_sha256": "46ee4ff55181ce315bd4e2d5a6b1f41295b7d172dc579700b5d74baf9dea60dc"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/planning/multidrone.py",
+      "preimage_sha256": "5f6c8c9f924c040299dc3ba65abe7d7aa62f3d440d6439d28819c50831c79d53"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/planning/qualification.py",
+      "preimage_sha256": "2bee8c73bd30e4ad5bef58f2b18dcbdc5cc0e4261ba53703ecc71ff13197c5a5"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/planning/registry.py",
+      "preimage_sha256": "597cf4e7ffd93543c0432d35b21abf01d357c5ac73b25ca5b66bd6d05a7db242"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/planning/release.py",
+      "preimage_sha256": "47fbdece819f6c82924ad0b27a9ac6a5f42e01a0130132d37120468da8c01c88"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/planning/robustness.py",
+      "preimage_sha256": "59761fa53d67e0a757ccaee4932e33a7572a0c20de583667f7f869a2c1082074"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/planning/safety.py",
+      "preimage_sha256": "cafa7ddf8fca4be4a3331a8ca896b79e192d8c8bb55b40aa35e6678927bb81b4"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/planning/service.py",
+      "preimage_sha256": "9002ec5c1c04065ec87cb992129be8e8eecef8b548a9b0e053a3924856d8ec06"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/provenance.py",
+      "preimage_sha256": "5750430a94c185c583d615a0ecab69b5d91b05c922c3e7e9d719d06f4a21d6d2"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/qualification/physical.py",
+      "preimage_sha256": "7a7ee3d4730533fa7674b5a5d30d6b9fd8a3781db8e9470bf42097f0385634cc"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/safety/audit.py",
+      "preimage_sha256": "86a7f6be9c53e1dd5ec491ca07226c37641722cbd327f61f79a676845bb00740"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/safety/models.py",
+      "preimage_sha256": "02aa4abd318d3af8b32a83a96a61789af5669a6743b703c68f9aca365de3d478"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/safety/policy.py",
+      "preimage_sha256": "f534665ec00c33991026f93ec3562edc957cf7075883860bff5205cf5fe16e69"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/safety/state_machine.py",
+      "preimage_sha256": "c342cb737f7d93e84617baad0abd4ff50908c7d4deea60b9cb96d4ab2fb33fe6"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/safety/supervisor.py",
+      "preimage_sha256": "35355186a1bed44fe812abab09d1163a4e09b35fc2fbb7cdb5ebbc35163a9cae"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/simulation/clock.py",
+      "preimage_sha256": "722c45cb3be4fded5719bdf678674c7cbf013dd6cbc6df68878e471789628f1f"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/simulation/factory.py",
+      "preimage_sha256": "a49b3e5c8ca84de75c2afd25fc4c5ce4e94cedf61c500ef9b563e210ba6993f3"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/simulation/faults.py",
+      "preimage_sha256": "1c72cbc96b25db97b20821a15142e7e49ba7657dbaa656d4730914c650724646"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/simulation/models.py",
+      "preimage_sha256": "a978d58e2e3a9e4a867f79bab743b4fcb981279b2a7b057012c5cae50f95785b"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/simulation/parameters.py",
+      "preimage_sha256": "9f9d7a3bb0ef125cfa5de60f69b832398a539752d170533ae9a40a000873a3d4"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/simulation/physics.py",
+      "preimage_sha256": "60a372d2b3f9493e595f55941dfe1f1d619006f714018451e2e42bdb77ccbb97"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/simulation/powertrain.py",
+      "preimage_sha256": "65c7eb993fe0879dbd314f0aa7d5606a254ddfa44cca02b0951c53116a63c0c2"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/simulation/sensors.py",
+      "preimage_sha256": "707060cd2c2010a598a28e5a9357ecda3f0b7adbe00ecc37a42047b83d06e0f6"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/simulation/vehicle.py",
+      "preimage_sha256": "f425662a16c197936e697359e672297c97cee4d8eeba29fdd8b42b6db8c9d808"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/simulation/world.py",
+      "preimage_sha256": "b465609f1d3b3a024b18448ba07aba20ce0b4ee58f21eb63d21318e2360de1d9"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/twin/calibration.py",
+      "preimage_sha256": "874327c22a05ace974b5ea030b9620f5b22541cea559120cc772eeb9410649b6"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/twin/coordinator.py",
+      "preimage_sha256": "93083658a33dbb191d26d262f4f98852206b39a063626e4b271585390fbd5564"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/twin/curriculum.py",
+      "preimage_sha256": "b14fcce7ec8b364fb5595a1939143e481e07f2b315cd69a10e1963293ac4d2d8"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/twin/ingestion.py",
+      "preimage_sha256": "4aac3e897f17ff3a88c6870bc8e2d6c50c6e57a11dcc319456142cb048a22228"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/twin/models.py",
+      "preimage_sha256": "940988db1082be6f5a99aadf96143c6cce59566f403d78300106d065169b9c65"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/twin/physical_handoff.py",
+      "preimage_sha256": "052618a55b599a1fb1daecb15026ca8b9e8c0c9e040aa9be324eba8653f44396"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/twin/pipeline.py",
+      "preimage_sha256": "b9a9322d71112b5bc9606aa81e74d32a20db4a789f209606309736beefe7f73e"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/twin/replay.py",
+      "preimage_sha256": "e949e49207fa69abd186d94f3527a54fb42bb490064e857fce5ab59dc77b5013"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/twin/storage.py",
+      "preimage_sha256": "f4dec7be3cece3f6d0d9f6309ab4031358a99cb9a1737768d2557ea2d0c39016"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/vehicles/_cflib_link.py",
+      "preimage_sha256": "7df448504b85cd179f27df5c142caa819029317e5bfb7b69a2369966bf27be85"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/vehicles/base.py",
+      "preimage_sha256": "c2f977ea470d70b8a4a424c36cac1b9de5d4b3ad04f28d61afaab5c0d0b9f37f"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/vehicles/crazyflie.py",
+      "preimage_sha256": "09a2df7c6781439c62a2ed41c404dfa5f5724b833ac2daddbd2bd1d9ea455524"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/vehicles/crazyflie_link.py",
+      "preimage_sha256": "b9839ba65d2404d8482f842e9975f8c6396244676757ebe586bab62d5896fe56"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/vehicles/mock_isaac.py",
+      "preimage_sha256": "9111d1603eab870fd84359e465e08348fe3812be56a3af595015799e6dfa1475"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "src/crazyswarm_app/vehicles/providers.py",
+      "preimage_sha256": "8c9742742559330d4b588fe64b191ecbfcad380cfe8c679dab557bef8ba78282"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "tests/api/test_physical_twin.py",
+      "preimage_sha256": "fb1cd7cd3d517c1aa0642e7699736f47ef0e66c8d02173f47a9c82b9f624b704"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "tests/campaign/test_campaign_service.py",
+      "preimage_sha256": "e0a5c45cb00d9cf70cfd53511e63f0d0ba7147e4fe129aca9f416250389c3ef3"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "tests/hardware/test_crazyflie_adapter.py",
+      "preimage_sha256": "80f130ff34765c2066bf349cbfb5c9a6e7b7404b26bfe0690a3cc25f4ce206d2"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "tests/safety/test_supervisor.py",
+      "preimage_sha256": "ec01429fd28162a8c25f67c90cc0bfa70eef413b6c9c7fc7314b70b62f2b0bf0"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/components/CampaignLab.tsx",
+      "preimage_sha256": "b6236247622af4c71ef03855816ed10b4b0b1675f9234d7884bc4b2cda9486f6"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/components/ControlCenter.tsx",
+      "preimage_sha256": "4d3b6f253d9e5e4c05ad90c839371f3f088f846d76d6fa14e411c8e3b296eb1a"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/components/RoomScene.tsx",
+      "preimage_sha256": "0f2ca6bb5364dea127c08738ed974cb669b143f31694e5972a438c1721c2351f"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/components/TelemetryDock.tsx",
+      "preimage_sha256": "356b1acb26d666b5cb7356ad7e9aca2dae38f1851959150fb56d7f8c6808311a"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/components/TwinObservationReadout.tsx",
+      "preimage_sha256": "8292613b91ef70153af413c3e92a32f716a8573867fb34bbecfadfc039385b96"
+    },
+    {
+      "classification": "GENERATED",
+      "path": "ui/app/lib/api.generated.ts",
+      "preimage_sha256": "0d845ca132369ec3e213d9a1102bf12f01d3ca0ec171046880c34bbfe48ebf1c"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/lib/api.ts",
+      "preimage_sha256": "98cf5351246510592621146dc283b07135b676041ce4827747d9094b269a0d51"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/lib/campaign-preview.ts",
+      "preimage_sha256": "f4303e13d7fb0969d38da0948357c3e2e023b323e0e8468ac5d0579276798085"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/lib/campaign-telemetry.ts",
+      "preimage_sha256": "bca0a82f939c04f95bd53096744ac547fd3c7ebbf9c91b020e47e5c3158b2720"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/lib/empty.ts",
+      "preimage_sha256": "dbe1c2cb9edd09d1f0dfa45c2724bae9b3a797c76c82957731c70b0fa3f88be6"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/lib/models.ts",
+      "preimage_sha256": "4b404e967de1fac3c886c116bdde952e9e6a16f740b1272b7e9369fe520f8b00"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/lib/playback.ts",
+      "preimage_sha256": "018206d9395a3eb5da8576c9929258359e14500a2a6b337c23fa78a6627d51b2"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/app/lib/spatial.ts",
+      "preimage_sha256": "bf4f17c4ff97d56ddf4f388114963ff47ef770cb435496fcef8d4da99993535e"
+    },
+    {
+      "classification": "GENERATED",
+      "path": "ui/openapi.json",
+      "preimage_sha256": "866a45395eb6077ea9f79e74e101db94ae15fd86dbb29f24abbb5dbf676e646d"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/package.json",
+      "preimage_sha256": "211bd21bf53c0640755efd9af1953a775681a3f71271c05e4700debf17fb38a8"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/tests/api-adapter.test.ts",
+      "preimage_sha256": "9339d2dbde52aceb377537338e6c62dd961f10711283e55097e53513db76051c"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/tests/campaign-lab.test.tsx",
+      "preimage_sha256": "e22d38752e50a91a6d01945acbc8e4ed3c17882f77f33d99fba0b4b536e0e0ed"
+    },
+    {
+      "classification": "SCOPED_EXISTING",
+      "path": "ui/tests/physical-twin.test.tsx",
+      "preimage_sha256": "6335ff2ac59f81d5f4573246c4a87cf945588f6e37bd1d15f5e4924be8210ab7"
+    }
+  ],
+  "contract": {
+    "battery_policy": {
+      "bands": [
+        "HIGH",
+        "MID",
+        "LOW_ALLOWED",
+        "REJECTED"
+      ],
+      "case_identity_rule": "same_case_grouped_by_observed_start_band",
+      "physical_override_allowed": false
+    },
+    "claims": [
+      {
+        "boundary": "PRODUCTION_ENTRY",
+        "claim_id": "non_bypassable_flight_safety",
+        "clock": "OBSERVED_REALTIME",
+        "counterexample": "expired or mismatched permit, active lease, stale telemetry, and browser loss",
+        "effect": "server flight authority admits, preempts, lands, or cuts motors",
+        "environment": "HARDWARE",
+        "observation": "permit/state/dispatch/watchdog/telemetry/terminal audit",
+        "oracle": "independent state geometry and clock reconstruction plus link spy",
+        "trigger": "served Play, abort, land, or emergency action"
+      },
+      {
+        "boundary": "PRODUCTION_ENTRY",
+        "claim_id": "digital_twin_cluster_hierarchy",
+        "clock": "NOT_APPLICABLE",
+        "counterexample": "renamed/reordered Simulation selection cannot leak",
+        "effect": "Twin-specific cluster/major/variant hierarchy binds exact case",
+        "environment": "NO_RUNTIME",
+        "observation": "API and DOM selection identities and locked Play state",
+        "oracle": "catalog-to-DOM set equality",
+        "trigger": "served Digital twin selection and catalog load"
+      },
+      {
+        "boundary": "PRODUCTION_ENTRY",
+        "claim_id": "basic_flight_progression",
+        "clock": "OBSERVED_REALTIME",
+        "counterexample": "skipped prerequisite, wrong axis, renamed child, or premature promotion",
+        "effect": "one bounded canonical intent executes through WP-87",
+        "environment": "HARDWARE",
+        "observation": "case/plan/permit/command/telemetry/outcome/promotion identities",
+        "oracle": "independent route time terminal reconstruction",
+        "trigger": "served Twin case Play after gates"
+      },
+      {
+        "boundary": "PRODUCTION_ENTRY",
+        "claim_id": "battery_band_comparison",
+        "clock": "OBSERVED_REALTIME",
+        "counterexample": "forced battery value, below-floor start, or failed repeat hidden by average",
+        "effect": "run is admitted/rejected and grouped without changing case identity",
+        "environment": "HARDWARE",
+        "observation": "voltage/percent/source/start/min/end/energy/terminal result",
+        "oracle": "independent band and admission-floor recomputation",
+        "trigger": "same hover case under naturally observed start battery"
+      },
+      {
+        "boundary": "PRODUCTION_ENTRY",
+        "claim_id": "props_off_motor_diagnostics",
+        "clock": "OBSERVED_REALTIME",
+        "counterexample": "props installed, no restraint, stale attestation, or uncalibrated ratio",
+        "effect": "official diagnostic executes or optional ratio stays blocked",
+        "environment": "HARDWARE",
+        "observation": "attestations/mapping/raw motor/current/thermal/result/disarm",
+        "oracle": "link spy and raw firmware variable comparison",
+        "trigger": "served Stage 0 action under bench permit"
+      },
+      {
+        "boundary": "PRODUCTION_ENTRY",
+        "claim_id": "served_safety_controls",
+        "clock": "OBSERVED_REALTIME",
+        "counterexample": "editable focus, repeat, modal delay, lease conflict, or stale session",
+        "effect": "immediate emergency dispatch or supervised abort/land",
+        "environment": "HARDWARE",
+        "observation": "focus/session/input/dispatch and later state clocks",
+        "oracle": "browser event trace correlated with monotonic link trace",
+        "trigger": "visible control or valid Space/Enter input in hot session"
+      }
+    ],
+    "guard_registry": [
+      {
+        "category": "arming",
+        "isolated_failure": "expired case-bound permit produces zero arm dispatch",
+        "metric": "exact state/identity/preflight/permit conjunction",
+        "pass_relation": "all required fields current and exact before arm"
+      },
+      {
+        "category": "battery",
+        "isolated_failure": "one value immediately below the derived floor rejects before arm",
+        "metric": "observed start percent/voltage versus derived admission floor",
+        "pass_relation": "start >= max(configured minimum, mission need + reserve, validated voltage floor)"
+      },
+      {
+        "category": "flight_limits",
+        "isolated_failure": "one 0.41 m command exceeds the 0.40 m Cluster 1 command cap",
+        "metric": "raw and reconstructed altitude/speed/rate/acceleration/duration extrema",
+        "pass_relation": "every raw and reconstructed maximum <= frozen resolved limit"
+      },
+      {
+        "category": "containment",
+        "isolated_failure": "0.90 s response budget exceeds the warning-to-hard interval",
+        "metric": "continuous protected occupancy and stopping reach versus physical and hard bounds",
+        "pass_relation": "protected occupancy <= physical bound and certified stopping reach < warning-to-hard interval"
+      },
+      {
+        "category": "abort",
+        "isolated_failure": "missing landing observation prevents ordinary abort completion",
+        "metric": "preemption-to-future-cancel and controlled terminal trace",
+        "pass_relation": "no superseded command dispatch and observed landed/disarmed terminal state"
+      },
+      {
+        "category": "landing",
+        "isolated_failure": "command completion without landed telemetry remains incomplete",
+        "metric": "capture interval, descent target, terminal membership/speed/state/contact",
+        "pass_relation": "fresh capture through observed landed/not-flying and disarmed terminal state"
+      },
+      {
+        "category": "emergency",
+        "isolated_failure": "editable focus/repeat is suppressed while a valid Space press still dispatches once",
+        "metric": "hot-session input-to-lowest-level dispatch and later observed latch",
+        "pass_relation": "one immediate dispatch independent of lease/ordinary permit; no fabricated acknowledgement"
+      }
+    ],
+    "mission_inventory": [
+      {
+        "causal_question": "Can exact physical authority arm then disarm without lift or stale authority?",
+        "disposition": "EXECUTABLE_AFTER_GATE",
+        "enablement_gates": [
+          "props_removed",
+          "restrained",
+          "bench_permit"
+        ],
+        "key": "ground.arm_disarm_props_off",
+        "major": "Ground checks",
+        "oracle": "supervisor state changes and zero flight command/airborne observation",
+        "prerequisites": [],
+        "stage": 0
+      },
+      {
+        "causal_question": "Does the official bounded motor sequence preserve identity/order and return disarmed?",
+        "disposition": "EXECUTABLE_AFTER_GATE",
+        "enablement_gates": [
+          "props_removed",
+          "restrained",
+          "official_interface"
+        ],
+        "key": "ground.official_motor_sequence_props_off",
+        "major": "Ground checks",
+        "oracle": "firmware result plus per-motor raw evidence and terminal disarm",
+        "prerequisites": [],
+        "stage": 0
+      },
+      {
+        "causal_question": "Does a calibrated 30 percent bench command remain bounded and symmetric?",
+        "disposition": "PLANNED_NOT_EXECUTABLE",
+        "enablement_gates": [
+          "props_removed",
+          "restrained",
+          "calibrated_mapping",
+          "current_thermal_bound"
+        ],
+        "key": "ground.collective_30_percent_props_off",
+        "major": "Ground checks",
+        "oracle": "independent current/thermal/motor comparison under exact mapping",
+        "prerequisites": [
+          "ground.official_motor_sequence_props_off"
+        ],
+        "stage": 1
+      },
+      {
+        "causal_question": "Does a calibrated 40 percent bench command add a distinct bounded load point?",
+        "disposition": "PLANNED_NOT_EXECUTABLE",
+        "enablement_gates": [
+          "props_removed",
+          "restrained",
+          "calibrated_mapping",
+          "current_thermal_bound"
+        ],
+        "key": "ground.collective_40_percent_props_off",
+        "major": "Ground checks",
+        "oracle": "independent current/thermal/motor comparison and 30-to-40 response delta",
+        "prerequisites": [
+          "ground.collective_30_percent_props_off"
+        ],
+        "stage": 2
+      },
+      {
+        "causal_question": "Can the never-flown vehicle lift vertically, hold 0.30 m, and land at origin?",
+        "disposition": "EXECUTABLE_AFTER_GATE",
+        "enablement_gates": [
+          "contained_flight_permit",
+          "observer",
+          "watchdog"
+        ],
+        "key": "takeoff.takeoff_0_30_hold_3_land",
+        "major": "Takeoff and landing",
+        "oracle": "independent altitude/time/containment/landing reconstruction",
+        "prerequisites": [
+          "ground.arm_disarm_props_off",
+          "ground.official_motor_sequence_props_off"
+        ],
+        "stage": 1
+      },
+      {
+        "causal_question": "Is 10 second hover stable within the first-flight envelope?",
+        "disposition": "EXECUTABLE_AFTER_GATE",
+        "enablement_gates": [
+          "three_first_lift_passes"
+        ],
+        "key": "hover.hover_0_30_10",
+        "major": "Hover",
+        "oracle": "drift/speed/attitude/body-rate/motor/energy/landing guard vector",
+        "prerequisites": [
+          "takeoff.takeoff_0_30_hold_3_land"
+        ],
+        "stage": 2
+      },
+      {
+        "causal_question": "Does stability persist for 30 seconds without hiding a failed repeat?",
+        "disposition": "EXECUTABLE_AFTER_GATE",
+        "enablement_gates": [
+          "two_hover_10_passes"
+        ],
+        "key": "hover.hover_0_30_30",
+        "major": "Hover",
+        "oracle": "per-repeat hover guard vector and time-window comparison",
+        "prerequisites": [
+          "hover.hover_0_30_10"
+        ],
+        "stage": 3
+      },
+      {
+        "causal_question": "Can the vehicle make one bounded vertical step and return without overshoot?",
+        "disposition": "EXECUTABLE_AFTER_GATE",
+        "enablement_gates": [
+          "hover_10_qualified"
+        ],
+        "key": "vertical.vertical_step_0_30_0_40_0_30",
+        "major": "Vertical motion",
+        "oracle": "independent Z/rate/settling/headroom reconstruction",
+        "prerequisites": [
+          "hover.hover_0_30_10"
+        ],
+        "stage": 3
+      },
+      {
+        "causal_question": "Can the vehicle move +X 0.10 m and return to origin?",
+        "disposition": "EXECUTABLE_AFTER_GATE",
+        "enablement_gates": [
+          "hover_10_qualified"
+        ],
+        "key": "translation.x_out_back_0_10",
+        "major": "Translation",
+        "oracle": "signed HOME-frame displacement and landing reconstruction",
+        "prerequisites": [
+          "hover.hover_0_30_10"
+        ],
+        "stage": 3
+      },
+      {
+        "causal_question": "Can the vehicle move +Y 0.10 m and return to origin?",
+        "disposition": "EXECUTABLE_AFTER_GATE",
+        "enablement_gates": [
+          "hover_10_qualified"
+        ],
+        "key": "translation.y_out_back_0_10",
+        "major": "Translation",
+        "oracle": "signed HOME-frame displacement and landing reconstruction",
+        "prerequisites": [
+          "hover.hover_0_30_10"
+        ],
+        "stage": 3
+      },
+      {
+        "causal_question": "Can yaw move +30 then -30 degrees while position remains bounded?",
+        "disposition": "EXECUTABLE_AFTER_GATE",
+        "enablement_gates": [
+          "hover_10_qualified"
+        ],
+        "key": "turn.yaw_plus_minus_30",
+        "major": "Turn",
+        "oracle": "unwrapped yaw, yaw rate, position drift, and landing reconstruction",
+        "prerequisites": [
+          "hover.hover_0_30_10"
+        ],
+        "stage": 3
+      },
+      {
+        "causal_question": "Can one slow complete turn preserve hover and yaw continuity?",
+        "disposition": "EXECUTABLE_AFTER_GATE",
+        "enablement_gates": [
+          "yaw_30_qualified"
+        ],
+        "key": "turn.yaw_full_360_slow",
+        "major": "Turn",
+        "oracle": "unwrapped 360 degree progress without modulo shortcut plus drift guard",
+        "prerequisites": [
+          "turn.yaw_plus_minus_30"
+        ],
+        "stage": 4
+      },
+      {
+        "causal_question": "Can two qualified axes compose into a bounded square and return?",
+        "disposition": "EXECUTABLE_AFTER_GATE",
+        "enablement_gates": [
+          "x_y_translation_qualified"
+        ],
+        "key": "shape.square_side_0_10",
+        "major": "Shapes",
+        "oracle": "ordered corner regions, containment, return, and landing reconstruction",
+        "prerequisites": [
+          "translation.x_out_back_0_10",
+          "translation.y_out_back_0_10"
+        ],
+        "stage": 4
+      },
+      {
+        "causal_question": "Can the vehicle follow one continuous 0.10 m radius circle without waypoint stops?",
+        "disposition": "EXECUTABLE_AFTER_GATE",
+        "enablement_gates": [
+          "x_y_yaw_qualified"
+        ],
+        "key": "shape.circle_radius_0_10",
+        "major": "Shapes",
+        "oracle": "independent radial error, continuity, speed, containment, return, and landing reconstruction",
+        "prerequisites": [
+          "translation.x_out_back_0_10",
+          "translation.y_out_back_0_10",
+          "turn.yaw_plus_minus_30"
+        ],
+        "stage": 4
+      },
+      {
+        "causal_question": "Does an observed below-floor battery block flight before arm?",
+        "disposition": "EXECUTABLE_AFTER_GATE",
+        "enablement_gates": [
+          "observed_battery_truth"
+        ],
+        "key": "battery.start_below_admission_reject",
+        "major": "Battery behavior",
+        "oracle": "independent floor recomputation and zero arm/takeoff dispatch",
+        "prerequisites": [
+          "ground.arm_disarm_props_off"
+        ],
+        "stage": 1
+      },
+      {
+        "causal_question": "Does controlled abort cancel future work and land while state remains healthy?",
+        "disposition": "EXECUTABLE_AFTER_GATE",
+        "enablement_gates": [
+          "contained_flight_permit",
+          "landing_state_healthy"
+        ],
+        "key": "safety.controlled_abort_from_hover",
+        "major": "Safety drills",
+        "oracle": "link dispatch trace plus independent landing/terminal reconstruction",
+        "prerequisites": [
+          "takeoff.takeoff_0_30_hold_3_land"
+        ],
+        "stage": 2
+      },
+      {
+        "causal_question": "Does a plan outside protected containment reject before arm?",
+        "disposition": "EXECUTABLE_AFTER_GATE",
+        "enablement_gates": [
+          "containment_contract"
+        ],
+        "key": "safety.containment_boundary_reject",
+        "major": "Safety drills",
+        "oracle": "independent protected-occupancy calculation and zero command dispatch",
+        "prerequisites": [
+          "ground.arm_disarm_props_off"
+        ],
+        "stage": 1
+      }
+    ],
+    "numerical_witness": {
+      "battery": {
+        "configured_takeoff_minimum_percent": 30.0,
+        "failing_start_percent": 39.9,
+        "mission_need_percent": 15.0,
+        "passing_start_percent": 55.0,
+        "reserve_percent": 20.0,
+        "validated_voltage_floor_as_percent": 40.0
+      },
+      "horizontal": {
+        "expected_nominal_protected_radius_m": 0.25,
+        "hard_center_radius_m": 0.35,
+        "late_response_budget_s": 0.9,
+        "maximum_speed_m_s": 0.15,
+        "minimum_deceleration_m_s2": 0.5,
+        "physical_containment_radius_m": 0.5,
+        "position_uncertainty_m": 0.05,
+        "response_budget_s": 0.25,
+        "route_center_radius_m": 0.1,
+        "vehicle_swept_radius_m": 0.1,
+        "warning_center_radius_m": 0.2
+      },
+      "vertical": {
+        "hard_height_m": 0.5,
+        "height_uncertainty_m": 0.05,
+        "maximum_commanded_height_m": 0.4,
+        "overshoot_budget_m": 0.05,
+        "perturbed_commanded_height_m": 0.41
+      }
+    },
+    "packets": [
+      {
+        "depends_on": [],
+        "packet_id": "WP-87"
+      },
+      {
+        "depends_on": [
+          "WP-87"
+        ],
+        "packet_id": "WP-88"
+      }
+    ],
+    "sensor_scope": {
+      "automatic_calibration": false,
+      "perception_missions": false,
+      "required_safety_observations": [
+        "position_height",
+        "attitude",
+        "battery",
+        "link",
+        "firmware_supervisor"
+      ]
+    }
+  },
+  "errors": [],
+  "generated_outputs": [
+    "ui/app/lib/api.generated.ts",
+    "ui/openapi.json"
+  ],
+  "intended_new_paths": [
+    {
+      "path": "missions/campaigns/real/cases/basic-flight-commissioning/1d-cases-v1.yaml",
+      "preimage": "ABSENT"
+    },
+    {
+      "path": "missions/campaigns/real/curriculum/digital-twin-basic-flight-v1.yaml",
+      "preimage": "ABSENT"
+    },
+    {
+      "path": "src/crazyswarm_app/hardware/flight_authority.py",
+      "preimage": "ABSENT"
+    },
+    {
+      "path": "tests/hardware/test_flight_authority.py",
+      "preimage": "ABSENT"
+    },
+    {
+      "path": "ui/tests/digital-twin-campaign-lab.test.tsx",
+      "preimage": "ABSENT"
+    }
+  ],
+  "packet_ids": [
+    "WP-87",
+    "WP-88"
+  ],
+  "payload_bytes": 35197,
+  "payload_sha256": "8b5a1cb6a0241395b3b63a176aac36a42169621aad716b3e98ce73bc21c0537b",
+  "production_trace": [
+    "served Digital twin cluster selection",
+    "authenticated API request and exact plan/permit identity",
+    "campaign or mission execution owner",
+    "SafetySupervisor and physical flight-authority gate",
+    "Crazyflie adapter and pinned Crazyradio link",
+    "source-qualified telemetry and supervisor state",
+    "recorder/export/evaluator",
+    "Campaign Review and safety audit"
+  ],
+  "schema_version": 1,
+  "source_category_map": {
+    "MISSION_SAFETY_GUIDE": [
+      "abort",
+      "arming",
+      "battery",
+      "emergency",
+      "flight_limits",
+      "landing"
+    ],
+    "REQ-MIS-002": [
+      "battery"
+    ],
+    "REQ-MOT-005": [
+      "containment",
+      "flight_limits"
+    ],
+    "REQ-XFR-008": [
+      "abort",
+      "arming",
+      "containment",
+      "emergency",
+      "flight_limits",
+      "landing"
+    ],
+    "SAFETY_KERNEL": [
+      "abort",
+      "arming",
+      "battery",
+      "containment",
+      "emergency",
+      "flight_limits",
+      "landing"
+    ],
+    "operator_explicit": [
+      "abort",
+      "arming",
+      "battery",
+      "containment",
+      "emergency",
+      "flight_limits",
+      "landing"
+    ]
+  }
+}

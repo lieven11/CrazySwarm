@@ -66,11 +66,29 @@ class GoalCaptureAttempt(ContractModel):
     horizontal_capture_margin_m: float | None = None
     vertical_capture_margin_m: float | None = None
     speed_capture_margin_m_s: float | None = None
+    source_timestamp_s: float | None = Field(default=None, ge=0.0)
+    source_clock_id: Identifier | None = None
+    source_clock_epoch: int | None = Field(default=None, ge=0)
+    source_sequence: int | None = Field(default=None, ge=0)
     aligned: bool
+
+    @model_validator(mode="after")
+    def source_identity_is_complete(self) -> GoalCaptureAttempt:
+        identity = (
+            self.source_timestamp_s,
+            self.source_clock_id,
+            self.source_clock_epoch,
+            self.source_sequence,
+        )
+        if any(value is not None for value in identity) and not all(
+            value is not None for value in identity
+        ):
+            raise ValueError("goal capture attempt source identity must be complete")
+        return self
 
 
 class GoalCaptureRecord(ContractModel):
-    schema_version: Literal[1, 2] = 2
+    schema_version: Literal[1, 2, 3] = 3
     goal: LandingGoalRegion
     attempts: tuple[GoalCaptureAttempt, ...]
     attempt_count: int = Field(ge=1)
@@ -86,6 +104,15 @@ class GoalCaptureRecord(ContractModel):
     disarmed_source_timestamp_s: float | None = Field(default=None, ge=0.0)
     post_contact_settling_s: float | None = Field(default=None, ge=0.0)
     motors_cut_after_contact: bool | None = None
+    authorized_capture_position_m: Vector3 | None = None
+    descent_target_position_m: Vector3 | None = None
+    commanded_pre_descent_horizontal_adjustment_m: float | None = Field(
+        default=None, ge=0.0
+    )
+    alignment_duration_s: float | None = Field(default=None, ge=0.0)
+    contact_source_clock_id: Identifier | None = None
+    contact_source_clock_epoch: int | None = Field(default=None, ge=0)
+    contact_source_sequence: int | None = Field(default=None, ge=0)
     correction_count: int = Field(default=0, ge=0)
     terminal_state: str | None = None
     terminal_contact: Literal[
@@ -100,4 +127,27 @@ class GoalCaptureRecord(ContractModel):
             raise ValueError("goal attempt count does not match attempt evidence")
         if self.descent_authorized != (self.outcome is not GoalCaptureOutcome.REJECTED):
             raise ValueError("goal descent authority contradicts capture outcome")
+        contact_identity = (
+            self.contact_source_timestamp_s,
+            self.contact_source_clock_id,
+            self.contact_source_clock_epoch,
+            self.contact_source_sequence,
+        )
+        if self.schema_version == 3 and any(
+            value is not None for value in contact_identity
+        ) and not all(
+            value is not None for value in contact_identity
+        ):
+            raise ValueError("goal contact source identity must be complete")
+        v3_values = (
+            self.authorized_capture_position_m,
+            self.descent_target_position_m,
+            self.commanded_pre_descent_horizontal_adjustment_m,
+            self.alignment_duration_s,
+            self.contact_source_clock_id,
+            self.contact_source_clock_epoch,
+            self.contact_source_sequence,
+        )
+        if self.schema_version < 3 and any(value is not None for value in v3_values):
+            raise ValueError("historical goal capture records cannot contain v3 evidence")
         return self

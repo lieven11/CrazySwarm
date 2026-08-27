@@ -4,12 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from crazyswarm_app.domain.models import CoordinateFrame
+from crazyswarm_app.domain.models import CoordinateFrame, Vector3
 from crazyswarm_app.twin.coordinator import TwinCoordinator
 from crazyswarm_app.twin.models import TwinInitialState, TwinSessionConfig, TwinSourceClass
 
 
-def _csv() -> bytes:
+def _csv(*, source_times: tuple[float, ...] = (1.0, 1.02)) -> bytes:
     columns = [
         "vehicle_id",
         "source_timestamp_s",
@@ -42,7 +42,7 @@ def _csv() -> bytes:
     stream = io.StringIO()
     writer = csv.DictWriter(stream, fieldnames=columns)
     writer.writeheader()
-    for sequence, source_s in enumerate((1.0, 1.02), start=1):
+    for sequence, source_s in enumerate(source_times, start=1):
         row = {
             "vehicle_id": "Alpha",
             "source_timestamp_s": source_s,
@@ -111,7 +111,7 @@ def test_csv_pipeline_persists_observed_predicted_missing_and_residuals(
         for item in timeline.residuals
         if item.channel_id == "pose.position" and item.source_timestamp_s == 1.0
     )
-    assert pose_residual.value is not None
+    assert isinstance(pose_residual.value, Vector3)
     assert pose_residual.value.x == pytest.approx(0.01)
     missing = [item for item in timeline.samples if item.availability.value == "MISSING"]
     assert missing and all(item.value is None for item in missing)
@@ -124,3 +124,39 @@ def test_csv_pipeline_persists_observed_predicted_missing_and_residuals(
     assert predicted_imu.value is None
     restarted = TwinCoordinator(root).timeline(session.session_id)
     assert restarted.timeline_sha256 == timeline.timeline_sha256
+
+
+def test_csv_pipeline_bounds_derived_rate_and_preserves_final_source_row(
+    tmp_path: Path,
+) -> None:
+    coordinator = TwinCoordinator(tmp_path / "twin")
+    session = coordinator.create_session(
+        TwinSessionConfig(
+            observed_vehicle_id="Alpha",
+            simulated_vehicle_id="Alpha-model",
+            mission_id="straight-1d",
+            mission_version="1",
+            observed_initial_state=TwinInitialState(
+                source_class=TwinSourceClass.CONFIGURED,
+                source_id="fast-sim-observed",
+                frame=CoordinateFrame.WORLD,
+            ),
+            simulated_initial_state=TwinInitialState(
+                source_class=TwinSourceClass.SIMULATED_MODEL,
+                source_id="physics-model",
+                frame=CoordinateFrame.WORLD,
+            ),
+            ground_truth_available=True,
+        )
+    )
+
+    receipts = coordinator.ingest_telemetry_csv(
+        session.session_id,
+        _csv(source_times=(1.0, 1.01, 1.02, 1.05, 1.06, 1.09)),
+        minimum_source_period_s=0.05,
+    )
+
+    assert sum(item.accepted_count for item in receipts) == 3 * 56
+    assert {
+        item.source_timestamp_s for item in coordinator.timeline(session.session_id).samples
+    } == {1.0, 1.05, 1.09}

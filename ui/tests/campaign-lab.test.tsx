@@ -51,6 +51,11 @@ function campaignCase(overrides: Partial<CampaignCaseView> = {}): CampaignCaseVi
       backend_profile_id: "fast-sim-v1",
       configuration_sha256: "0".repeat(64),
     },
+    motion_preparation_limits: {
+      accuracy_min_m: 0.01,
+      accuracy_max_m: 0.08,
+      accuracy_binding: "mission goal tolerance",
+    },
     ...overrides,
   };
 }
@@ -274,6 +279,48 @@ describe("campaign laboratory", () => {
     expect(onChange).toHaveBeenCalledWith("curved");
   });
 
+  it("shows compact lifecycle dots on the selected variant and its choices", () => {
+    render(
+      <CampaignDropdown
+        label="Variant"
+        level={3}
+        value="review"
+        onChange={vi.fn()}
+        options={[
+          {
+            value: "progress",
+            label: "Canonical nominal",
+            badge: "In progress",
+            badgeClassName: "state-active_development",
+            badgePresentation: "dot",
+          },
+          {
+            value: "review",
+            label: "Wide altitude transition",
+            badge: "In review",
+            badgeClassName: "state-baselined",
+            badgePresentation: "dot",
+          },
+          {
+            value: "completed",
+            label: "High altitude transition",
+            badge: "Completed",
+            badgeClassName: "state-promoted",
+            badgePresentation: "dot",
+          },
+        ]}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: /Wide altitude transition.*In review/i });
+    expect(within(trigger).getByTitle("In review")).toHaveClass("is-dot", "state-baselined");
+    fireEvent.click(trigger);
+    expect(within(screen.getByRole("option", { name: /In progress.*Canonical nominal/i }))
+      .getByTitle("In progress")).toHaveClass("is-dot", "state-active_development");
+    expect(within(screen.getByRole("option", { name: /Completed.*High altitude transition/i }))
+      .getByTitle("Completed")).toHaveClass("is-dot", "state-promoted");
+  });
+
   it("turns immutable identifiers into operator-facing names", () => {
     expect(humanizeCampaignValue("continuous_waypoint_sequence"))
       .toBe("Continuous waypoint sequence");
@@ -292,7 +339,7 @@ describe("campaign laboratory", () => {
     })).toBe("Altitude transition · Accelerated · Needs rerun");
   });
 
-  it("offers the four explicit workflow actions without a duplicate state picker", async () => {
+  it("offers four lifecycle-only status controls without a duplicate state picker", async () => {
     const value = campaignCase({ lifecycle: "ACTIVE_DEVELOPMENT" });
     const setCampaignCaseLifecycle = vi.fn(async () => ({}));
     const api = {
@@ -306,16 +353,17 @@ describe("campaign laboratory", () => {
 
     render(<CampaignLab api={api} onNotice={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: /Campaign laboratory/i }));
-    const inactive = await screen.findByRole("button", { name: "Inactive" });
+    const notStarted = await screen.findByRole("button", { name: "Not started" });
     expect(screen.queryByRole("combobox", { name: "Mission state" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Check only" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Preview plan" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Qualification" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Constraint matrix" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Use mission" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "Review" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Use mission" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "In progress" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "In review" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Completed" })).toBeVisible();
-    fireEvent.click(inactive);
+    fireEvent.click(notStarted);
 
     await waitFor(() => expect(setCampaignCaseLifecycle).toHaveBeenCalledWith(
       value.case_id,
@@ -401,21 +449,176 @@ describe("campaign laboratory", () => {
       setActiveCampaignCase,
     } as unknown as ControlApi;
 
+    const onNotice = vi.fn();
+    render(<CampaignLab api={api} onNotice={onNotice} />);
+    fireEvent.click(screen.getByRole("button", { name: /Campaign laboratory/i }));
+
+    expect(await screen.findByText("Continuous waypoint sequence · Realtime · No review")).toBeVisible();
+    const majorMission = screen.getByRole("button", { name: "Continuous waypoint sequence" });
+    fireEvent.click(majorMission);
+    fireEvent.click(screen.getByRole("option", { name: /^Continuous waypoint sequence/ }));
+    expect(setActiveCampaignCase).not.toHaveBeenCalled();
+    expect(onNotice).toHaveBeenCalledWith("Stop the active campaign run before selecting another mission");
+  });
+
+  it("uses the distinct two-drone curriculum and exposes resolution and launch-gap controls", async () => {
+    const basic = campaignCase();
+    const conflict = campaignCase({
+      case_id: "2d.bottleneck.canonical_nominal",
+      case_sha256: "c".repeat(64),
+      cluster: "GEOMETRIC_CONFLICT_RESOLUTION",
+      family: "bottleneck",
+      drone_count: 2,
+      planning_submissions: [
+        campaignPlanningSubmission({
+          planning_submission_id: "bottleneck.earliest_safe_release",
+          display_name: "Earliest safe release",
+          maneuver_dimensions: ["TIMING"],
+          strategy_authority: ["GROUND_DELAY"],
+        }),
+        campaignPlanningSubmission({
+          planning_submission_id: "bottleneck.vertical_layer",
+          display_name: "Vertical layer",
+          maneuver_dimensions: ["VERTICAL"],
+          strategy_authority: ["VERTICAL_LAYER"],
+        }),
+      ],
+    });
+    window.localStorage.setItem("crazyswarm.campaign-workspace.v1", JSON.stringify({
+      selectedId: basic.case_id,
+    }));
+    const setActiveCampaignCase = vi.fn(async () => ({}));
+    const api = {
+      campaignQualificationUrl: vi.fn(
+        () => "/control-api/api/v1/campaign/qualification/export",
+      ),
+      campaignCatalog: vi.fn(async () => ({
+        cases: [basic, conflict],
+        hierarchy: {},
+        two_drone_missions: {
+          schema_version: 1,
+          curriculum_id: "2d-conflict-missions-v1",
+          groups: [{
+            label: "Traffic",
+            variants: [{
+              label: "Narrow bottleneck",
+              case_id: conflict.case_id,
+              status: "EXECUTABLE",
+            }],
+          }],
+        },
+      })),
+      campaignState: vi.fn(async () => ({ runs: [], reviews: [] })),
+      setActiveCampaignCase,
+    } as unknown as ControlApi;
+
     render(<CampaignLab api={api} onNotice={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: /Campaign laboratory/i }));
 
-    const useMission = await screen.findByRole("button", { name: "Use mission" });
-    expect(screen.getByText("Continuous waypoint sequence · Realtime · No review")).toBeVisible();
-    expect(useMission).toBeDisabled();
-    expect(useMission).toHaveAttribute(
-      "title",
-      "Stop the active campaign run before selecting another mission",
-    );
-    fireEvent.click(useMission);
-    expect(setActiveCampaignCase).not.toHaveBeenCalled();
+    await screen.findByRole("button", { name: "Basic flight & routes" });
+    fireEvent.click(screen.getByRole("button", { name: "2D" }));
+
+    await waitFor(() => expect(setActiveCampaignCase).toHaveBeenCalledWith(
+      conflict.case_id,
+      "operator selected mission from catalog hierarchy",
+    ));
+    expect(screen.getByRole("button", { name: "2D" })).toHaveClass("is-selected");
+    expect(screen.queryByRole("button", { name: "Conflict resolution" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Traffic" })).toBeVisible();
+    expect(screen.getByRole("button", { name: /Narrow bottleneck.*Not started/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /^Earliest safe release/ })).toBeVisible();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Tune launch gap" }));
+    const startGap = screen.getByRole("slider", { name: "Start gap" });
+    expect(startGap).toBeVisible();
+    fireEvent.change(startGap, { target: { value: "7.5" } });
+    expect(startGap).toHaveValue("7.5");
+    for (const label of ["Balance", "Speed", "Accuracy", "Smoothness"]) {
+      expect(screen.getByRole("slider", { name: label })).toBeVisible();
+    }
   });
 
-  it("keeps submission selection in the catalog hierarchy and its evidence in the detail pane", async () => {
+  it("never exposes two-drone launch-gap preparation for a 1D mission", async () => {
+    const oneDroneTimingCase = campaignCase({
+      case_id: "1d.altitude_transition.canonical_nominal",
+      family: "altitude_transition",
+      planning_submissions: [campaignPlanningSubmission({
+        planning_submission_id: "altitude.timing-capable",
+        maneuver_dimensions: ["TIMING"],
+        coordination: {
+          synchronized_launch_required: false,
+          synchronized_route_start_required: false,
+          minimum_simultaneous_flight_s: 0,
+          maximum_release_delay_s: 10,
+        },
+      })],
+    });
+    const onCoordinationPreparationChange = vi.fn();
+    const api = {
+      campaignQualificationUrl: vi.fn(
+        () => "/control-api/api/v1/campaign/qualification/export",
+      ),
+      campaignCatalog: vi.fn(async () => ({
+        cases: [oneDroneTimingCase],
+        hierarchy: {},
+      })),
+      campaignState: vi.fn(async () => ({ runs: [], reviews: [] })),
+    } as unknown as ControlApi;
+
+    render(
+      <CampaignLab
+        api={api}
+        onNotice={vi.fn()}
+        onCoordinationPreparationChange={onCoordinationPreparationChange}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Campaign laboratory/i }));
+
+    await screen.findByText("Altitude transition · Realtime · No review");
+    expect(screen.queryByRole("checkbox", { name: "Tune launch gap" }))
+      .not.toBeInTheDocument();
+    expect(screen.queryByText("Launch timing")).not.toBeInTheDocument();
+    const motion = screen.getByRole("region", { name: "Motion preparation" });
+    expect(within(motion).getByText("4")).toBeVisible();
+    expect(onCoordinationPreparationChange).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it("selects a discovered simulation mission regardless of catalog implementation status", async () => {
+    const available = campaignCase();
+    const planned = campaignCase({
+      case_id: "1d.failure_recovery.dynamic_nominal",
+      case_sha256: "c".repeat(64),
+      cluster: "FAILURE_RECOVERY_AND_REPLANNING",
+      family: "failure_recovery",
+      variation_name: "dynamic_nominal",
+      implementation_status: "PLANNED_NOT_EXECUTABLE",
+      execution_eligibility: "STATIC_VALIDATE_ONLY",
+    });
+    const setActiveCampaignCase = vi.fn(async () => ({}));
+    const api = {
+      campaignQualificationUrl: vi.fn(
+        () => "/control-api/api/v1/campaign/qualification/export",
+      ),
+      campaignCatalog: vi.fn(async () => ({ cases: [available, planned], hierarchy: {} })),
+      campaignState: vi.fn(async () => ({ runs: [], reviews: [] })),
+      setActiveCampaignCase,
+    } as unknown as ControlApi;
+
+    render(<CampaignLab api={api} onNotice={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: /Campaign laboratory/i }));
+
+    const cluster = await screen.findByRole("button", { name: "Basic flight & routes" });
+    fireEvent.click(cluster);
+    fireEvent.click(screen.getByRole("option", { name: "Recovery & replanning" }));
+
+    await waitFor(() => expect(setActiveCampaignCase).toHaveBeenCalledWith(
+      planned.case_id,
+      "operator selected mission from catalog hierarchy",
+    ));
+    expect(screen.getByRole("button", { name: /Dynamic nominal.*Not started/i })).toBeEnabled();
+    expect(screen.queryByText(/Unavailable: Planned not executable/i)).not.toBeInTheDocument();
+  });
+
+  it("replaces technical submission choices with the shared preparation hierarchy", async () => {
     const baseline = campaignSubmission();
     const constantSpeed = campaignSubmission({
       submission_id: "1d.altitude_transition.canonical_nominal.constant-path-speed",
@@ -462,27 +665,99 @@ describe("campaign laboratory", () => {
     const detail = document.querySelector<HTMLElement>(".campaign-case-detail");
     expect(controls).not.toBeNull();
     expect(detail).not.toBeNull();
-    expect(within(controls!).getByText("Execution submission")).toBeVisible();
-    expect(within(controls!).getByText("Planning contract")).toBeVisible();
-    expect(within(detail!).queryByText("Execution submission")).not.toBeInTheDocument();
-    expect(within(detail!).getByText("Planner-retimed baseline")).toBeVisible();
-    expect(within(detail!).getByText("Planner-owned time law")).toBeVisible();
+    expect(within(controls!).getByText("Major mission")).toBeVisible();
+    expect(within(controls!).getByText("Variant")).toBeVisible();
+    expect(within(controls!).getByText("Motion")).toBeVisible();
+    expect(within(controls!).queryByText("Execution submission")).not.toBeInTheDocument();
+    expect(within(controls!).queryByText("Planning contract")).not.toBeInTheDocument();
+    expect(within(detail!).queryByText("Planner-retimed baseline")).not.toBeInTheDocument();
+    expect(screen.queryByText("Eligible")).not.toBeInTheDocument();
+    expect(screen.getByRole("slider", { name: "Smoothness" })).toBeVisible();
+  });
 
-    fireEvent.click(within(controls!).getByRole("button", { name: /Planner-retimed baseline/i }));
-    fireEvent.click(screen.getByRole("option", { name: /Constant path speed/i }));
-    expect(within(detail!).getByText("Constant path speed")).toBeVisible();
-    expect(within(detail!).getByText("0.35 m/s path speed")).toBeVisible();
+  it("renders the five plain major missions and bounded motion controls without internal labels", async () => {
+    const cases = [
+      ["1d.takeoff_hover_land.canonical_nominal", "takeoff_hover_land"],
+      ["1d.move_to_target.canonical_nominal", "move_to_target"],
+      ["1d.curved_route.canonical_nominal", "curved_route"],
+      ["1d.altitude_transition.canonical_nominal", "altitude_transition"],
+      ["1d.planar_shape_loop.figure_eight", "planar_shape_loop"],
+    ].map(([case_id, family]) => campaignCase({
+      case_id,
+      family,
+      ...(family === "curved_route" || family === "altitude_transition" || family === "planar_shape_loop"
+        ? {
+          motion_preparation_limits: {
+            accuracy_min_m: 0.01,
+            accuracy_max_m: 5.1884487084291395,
+            accuracy_binding: "flight-volume route span",
+          },
+        }
+        : {}),
+    }));
+    const majorMissions = {
+      schema_version: 1 as const,
+      curriculum_id: "1d-major-missions-v1" as const,
+      groups: [
+        { label: "Flight" as const, variants: [{ label: "Take off, hover, land", case_id: cases[0].case_id, status: "EXECUTABLE" as const }] },
+        { label: "Target" as const, variants: [{ label: "Move to target", case_id: cases[1].case_id, status: "EXECUTABLE" as const }] },
+        { label: "Level path" as const, variants: [{ label: "Curved route", case_id: cases[2].case_id, status: "EXECUTABLE" as const }] },
+        { label: "3D path" as const, variants: [
+          { label: "Altitude transition", case_id: cases[3].case_id, status: "EXECUTABLE" as const },
+          { label: "Wind shift", case_id: "1d.wind_shift.reserved", status: "PLANNED_NOT_EXECUTABLE" as const, disabled_reason: "Available after dynamic reaction qualification." },
+        ] },
+        { label: "Shape" as const, variants: [{ label: "Figure eight", case_id: cases[4].case_id, status: "EXECUTABLE" as const }] },
+      ],
+    };
+    const api = {
+      campaignQualificationUrl: vi.fn(() => "/control-api/api/v1/campaign/qualification/export"),
+      campaignCatalog: vi.fn(async () => ({
+        cases,
+        hierarchy: {},
+        major_missions: majorMissions,
+      })),
+      campaignState: vi.fn(async () => ({ runs: [], reviews: [] })),
+      setActiveCampaignCase: vi.fn(async () => ({})),
+    } as unknown as ControlApi;
 
-    fireEvent.click(within(controls!).getByRole("button", { name: /Baseline planning authority/i }));
-    fireEvent.click(screen.getByRole("option", { name: /Constraint-directed vertical planning/i }));
-    const planningDetail = within(detail!).getByRole("region", {
-      name: /Selected planning contract: Constraint-directed vertical planning/i,
-    });
-    expect(within(planningDetail).getByText("Constraint-directed vertical planning")).toBeVisible();
-    expect(within(planningDetail).getByText(/Vertical · Release time/i)).toBeVisible();
-    expect(within(planningDetail).getByText("Support")).toBeVisible();
-    expect(within(planningDetail).getByText("Evidence gate")).toBeVisible();
-    expect(within(planningDetail).getByText("Learning value")).toBeVisible();
+    render(<CampaignLab api={api} onNotice={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: /Campaign laboratory/i }));
+    const majorMission = await screen.findByRole("button", { name: "Flight" });
+    fireEvent.click(majorMission);
+    for (const label of ["Flight", "Target", "Level path", "3D path", "Shape"]) {
+      expect(screen.getByRole("option", { name: new RegExp(`^${label}`) })).toBeVisible();
+    }
+    fireEvent.click(screen.getByRole("option", { name: /^3D path/ }));
+    await waitFor(() => expect(api.setActiveCampaignCase).toHaveBeenCalledWith(
+      cases[3].case_id,
+      "operator selected major mission",
+    ));
+
+    const balance = screen.getByRole("slider", { name: "Balance" });
+    expect(balance).toHaveAttribute("type", "range");
+    expect(balance).toBeEnabled();
+    expect(balance).toHaveValue("50");
+    fireEvent.change(balance, { target: { value: "60" } });
+    expect(balance).toHaveValue("60");
+    expect(screen.getByRole("slider", { name: "Speed" })).toBeVisible();
+    const accuracy = screen.getByRole("slider", { name: "Accuracy" });
+    expect(accuracy).toBeVisible();
+    expect(accuracy).toHaveAttribute("max", "5.1884487084291395");
+    fireEvent.change(accuracy, { target: { value: "4" } });
+    expect(accuracy).toHaveValue("4");
+    fireEvent.focus(accuracy);
+    expect(screen.getByText("Accuracy: flight-volume route span 5.19 m maximum.")).toBeVisible();
+    const smoothness = screen.getByRole("slider", { name: "Smoothness" });
+    expect(smoothness).toBeVisible();
+    fireEvent.change(smoothness, { target: { value: "70" } });
+    expect(smoothness).toHaveValue("70");
+    expect(screen.queryByText("Tune")).not.toBeInTheDocument();
+
+    const variant = screen.getByRole("button", { name: /Altitude transition/i });
+    fireEvent.click(variant);
+    expect(screen.queryByRole("option", { name: /Wind shift/i })).not.toBeInTheDocument();
+    expect(screen.queryByText("Eligible")).not.toBeInTheDocument();
+    expect(screen.queryByText("Planner-retimed baseline")).not.toBeInTheDocument();
   });
 
   it("configures the bottom dock run mode without starting from the workspace", async () => {
@@ -554,7 +829,8 @@ describe("campaign laboratory", () => {
     expect(await screen.findByText("Move return · Realtime · No review")).toBeVisible();
     expect(screen.getByRole("button", { name: `Copy mission case ID ${value.case_id}` }))
       .toHaveTextContent(value.case_id);
-    fireEvent.click(await screen.findByRole("button", { name: "Use mission" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Canonical nominal.*Not started/i }));
+    fireEvent.click(screen.getByRole("option", { name: /Not started.*Canonical nominal/i }));
     await waitFor(() => expect(onActiveCaseChange).toHaveBeenCalledWith(value));
 
     fireEvent.click(screen.getByRole("tab", { name: "Active run" }));
@@ -629,6 +905,26 @@ describe("campaign laboratory", () => {
 
     expect(await screen.findByText("Move return · Realtime · No review")).toBeVisible();
     expect(campaignCatalog).toHaveBeenCalledTimes(2);
+  });
+
+  it("renders explicit loading and empty catalog states", async () => {
+    let resolveCatalog: ((value: { cases: CampaignCaseView[]; hierarchy: object }) => void) | undefined;
+    const api = {
+      campaignQualificationUrl: vi.fn(
+        () => "/control-api/api/v1/campaign/qualification/export",
+      ),
+      campaignCatalog: vi.fn(() => new Promise<{ cases: CampaignCaseView[]; hierarchy: object }>((resolve) => {
+        resolveCatalog = resolve;
+      })),
+      campaignState: vi.fn(async () => ({ runs: [], reviews: [] })),
+    } as unknown as ControlApi;
+
+    render(<CampaignLab api={api} onNotice={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: /Campaign laboratory/i }));
+    expect(screen.getByText("Loading campaign workspace")).toBeVisible();
+
+    resolveCatalog?.({ cases: [], hierarchy: {} });
+    expect(await screen.findByText("Select a mission case")).toBeVisible();
   });
 
   it("shows every run for the active campaign and saves per-run observation logs", async () => {
@@ -781,7 +1077,8 @@ describe("campaign laboratory", () => {
         };
         return workspace.snapshots![0];
       }),
-      moveCampaignCaseToReview: vi.fn(async () => ({})),
+      previewActiveCampaign: vi.fn(async () => ({})),
+      setCampaignCaseLifecycle: vi.fn(async () => ({})),
     } as unknown as ControlApi;
     const onCampaignRunChange = vi.fn();
 
@@ -818,8 +1115,8 @@ describe("campaign laboratory", () => {
     expect(api.campaignTelemetryCharts).toHaveBeenCalledWith("campaign-run-2");
     expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Needs rerun" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Review" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Review" })).toHaveClass("campaign-action-review");
+    expect(screen.getByRole("button", { name: "In review" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "In review" })).toHaveClass("campaign-action-review");
     expect(screen.getByRole("button", { name: "Completed" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Review snapshot 1 from run 2" }));
     expect(screen.getByRole("dialog", { name: /Aug 10/i })).toBeVisible();
@@ -846,7 +1143,7 @@ describe("campaign laboratory", () => {
       [],
     ));
     fireEvent.click(screen.getByRole("button", { name: "Close snapshot review" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Review" })).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole("button", { name: "In review" })).toBeEnabled());
 
     fireEvent.change(screen.getByRole("textbox", { name: "Operator comment for run 2" }), {
       target: { value: "Second run stayed smooth." },
@@ -868,10 +1165,11 @@ describe("campaign laboratory", () => {
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     await waitFor(() => expect(api.deleteCampaignRun).toHaveBeenCalledWith("campaign-run-2"));
     await waitFor(() => expect(onCampaignRunChange).toHaveBeenCalledWith(workspace.runs[1]));
-    fireEvent.click(screen.getByRole("button", { name: "Review" }));
-    await waitFor(() => expect(api.moveCampaignCaseToReview).toHaveBeenCalledWith(
+    fireEvent.click(screen.getByRole("button", { name: "In review" }));
+    await waitFor(() => expect(api.setCampaignCaseLifecycle).toHaveBeenCalledWith(
       value.case_id,
-      "operator moved case to review",
+      "BASELINED",
+      "operator marked mission as in review",
     ));
   });
 

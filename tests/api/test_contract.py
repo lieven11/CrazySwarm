@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import importlib
 import time
 
+import pytest
 from fastapi.testclient import TestClient
 
 from crazyswarm_app.api.runtime import ApplicationRuntime
 from crazyswarm_app.domain.models import VehicleState
 from tests.api.conftest import auth_headers
+
+api_app = importlib.import_module("crazyswarm_app.api.app")
 
 
 def test_auth_origin_health_and_generated_schema(
@@ -30,6 +34,25 @@ def test_auth_origin_health_and_generated_schema(
     )
     assert rejected.status_code == 403
     assert rejected.json()["error"]["code"] == "ORIGIN_NOT_ALLOWED"
+
+
+def test_health_uses_process_start_provenance_snapshot(
+    api_client: tuple[TestClient, ApplicationRuntime],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, _ = api_client
+
+    def unexpected_provenance_refresh() -> object:
+        raise AssertionError("health must not run Git subprocesses per request")
+
+    monkeypatch.setattr(api_app, "repository_provenance", unexpected_provenance_refresh)
+
+    first = client.get("/api/v1/health", headers=auth_headers())
+    second = client.get("/api/v1/health", headers=auth_headers())
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert first.json()["repository_commit"] == second.json()["repository_commit"]
 
 
 def test_vehicle_inspection_and_parameter_capability(

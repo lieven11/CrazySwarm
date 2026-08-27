@@ -262,6 +262,7 @@ class FleetCoordinator:
         self._bindings: dict[str, FleetCommandBinding] = {}
         self._separation: list[SeparationObservation] = []
         self._intervened_pairs: set[tuple[str, str]] = set()
+        self._freshness_aborted_task_ids: set[str] = set()
         self._coordination_policy_ids: set[str] = set()
         crossing_task_ids = tuple(
             sorted(
@@ -1437,6 +1438,13 @@ class FleetCoordinator:
     async def enforce_separation(
         self, *, active_only: bool = True
     ) -> tuple[SeparationObservation, ...]:
+        # Separation is a relationship between at least two vehicles. A one-drone
+        # campaign previously sampled and republished a full telemetry envelope on
+        # every 10 ms monitor pass even though no pair could be evaluated. Besides
+        # serving no safety decision, that multiplied each retained run by roughly
+        # five relative to the configured 20 Hz telemetry evidence cadence.
+        if len(self.deployment.fleet) < 2:
+            return ()
         samples: dict[str, TelemetryEnvelope] = {}
         launch_blocked = False
         for member in self.deployment.fleet:
@@ -1765,11 +1773,25 @@ class FleetCoordinator:
                 record = self.tasks.record(task_id)
                 if not child.done():
                     if record.owner_vehicle_id is not None and record.lease is not None:
-                        self.tasks.renew(
-                            task_id,
-                            record.owner_vehicle_id,
-                            record.lease.generation,
-                        )
+                        now_s = time.monotonic()
+                        # A 10 s task lease does not need a durable renewal event on
+                        # every 10 ms fleet-monitor pass. That produced thousands of
+                        # redundant records per one-drone run, retained large completed
+                        # coordinator graphs, and eventually paused realtime telemetry
+                        # long enough to trip the unchanged 0.25 s freshness watchdog.
+                        # Renew at half-life so a blocked monitor still retains five
+                        # seconds of authority margin without turning normal liveness
+                        # into high-rate evidence traffic.
+                        if (
+                            record.lease.expires_at_monotonic_s - now_s
+                            <= self.tasks.lease_duration_s / 2.0
+                        ):
+                            self.tasks.renew(
+                                task_id,
+                                record.owner_vehicle_id,
+                                record.lease.generation,
+                                now_s=now_s,
+                            )
                     continue
                 result = await child
                 pending.remove(task_id)
@@ -1796,7 +1818,11 @@ class FleetCoordinator:
                 received is None
                 or now - received > self.deployment.constraints.observation_freshness_s
             )
-            if stale:
+            if stale and task_id not in self._freshness_aborted_task_ids:
+                # The first authoritative stale decision owns recovery. Reissuing
+                # abort on every 10 ms monitor pass produced dozens of competing
+                # recovery commands and obscured the single watchdog cause.
+                self._freshness_aborted_task_ids.add(task_id)
                 await self.abort_vehicle(vehicle_id, reason="STALE_FLEET_OBSERVATION")
                 self._emit(
                     "STALE_MEMBER_ABORTED",

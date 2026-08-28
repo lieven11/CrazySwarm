@@ -1186,6 +1186,43 @@ async def test_failed_stop_and_hold_is_retained_before_landing_fallback() -> Non
 
 
 @pytest.mark.asyncio
+async def test_enforced_takeoff_from_launch_floor_uses_up_ray_and_dispatches() -> None:
+    class FloorStartLink(FreshAvoidanceLink):
+        def takeoff(
+            self,
+            height_m: float,
+            duration_s: float,
+            yaw_rad: float | None,
+        ) -> None:
+            super().takeoff(height_m, duration_s, yaw_rad)
+            self.values["range.zrange"] = height_m * 1_000.0
+
+    link = FloorStartLink()
+    link.values.update(
+        {
+            "stateEstimate.z": 0.029,
+            "range.up": 2_408.0,
+            "range.zrange": 27.0,
+        }
+    )
+    adapter = vehicle(link)
+    await adapter.connect()
+    adapter.install_command_permit(permit(PermitScope.CONTAINED_FLIGHT))
+    adapter.configure_obstacle_avoidance(AvoidanceMode.ENFORCED)
+
+    await adapter.execute(
+        command(TakeoffCommand(height_m=0.30, duration_s=2.0), "floor-start-takeoff")
+    )
+
+    takeoff = next(item for item in link.commands if item[0] == "takeoff")
+    assert takeoff[1] == pytest.approx(0.30)
+    assert takeoff[2] == pytest.approx(2.71)
+    assert adapter.avoidance_evidence[0]["decision"] == "LIMIT"
+    assert adapter.avoidance_evidence[0]["binding_ray"] == "up"
+    await adapter.disconnect()
+
+
+@pytest.mark.asyncio
 async def test_unconfirmed_stop_and_hold_times_out_before_landing_fallback(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

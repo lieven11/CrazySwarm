@@ -12741,3 +12741,18 @@ requested by the operator.
   deliberate opt-out.
 - Hardware, radio, motors, persistent dashboard service, deployment, and physical flight
   remained `NOT_RUN_NOT_AUTHORIZED`.
+
+### Operator-reported floor-start correction — 2026-08-28
+
+The first operator attempt after implementation was blocked before takeoff. Retained
+evidence proved that the upward command had `2.408 m` of up clearance, while the
+non-closing down ray measured the expected `0.027 m` launch-floor distance and
+incorrectly became the binding ray. Directional evaluation now emits margins only for
+closing rays during commanded vertical motion and excludes its opposite vertical ray.
+The exact floor-start vector is a regression test: it binds `up`, limits the `0.271 m`
+climb to `0.10 m/s`, preserves the `0.30 m` target, and cannot treat the launch floor
+as an obstacle to upward motion.
+The full focused safety/adapter/basic-flight suite passes with `117 passed`, including
+the unchanged post-dispatch hover response. This correction remains
+`IMPLEMENTED_UNVERIFIED`; live deployment still requires the operator-owned hardware
+deployment procedure.

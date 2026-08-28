@@ -281,11 +281,19 @@ def _evaluate_command(
         )
         > 1e-12
     }
+    validated_rays = set(closing_rays)
+    evaluated_rays = set(RAYS)
+    if isinstance(command, TakeoffCommand):
+        validated_rays.discard("down")
+        evaluated_rays = set(validated_rays)
+    elif isinstance(command, MoveRelativeCommand) and abs(displacement_z_m) > 1e-12:
+        validated_rays.discard("down" if displacement_z_m > 0.0 else "up")
+        evaluated_rays = set(validated_rays)
     invalid_fields = _invalid_fields(
         sample,
         evaluation_time_monotonic_s=evaluation_time_monotonic_s,
         maximum_range_m=maximum_range_m,
-        closing_rays=closing_rays,
+        closing_rays=validated_rays,
     )
     if invalid_fields:
         return AvoidanceEvaluation(
@@ -309,6 +317,7 @@ def _evaluate_command(
     var_pz_m2 = values["kalman.varPZ"]
 
     requested_rays = _ray_margins(
+        included_rays=evaluated_rays,
         ranges_m=ranges_m,
         measured_body_x_m_s=measured_body_x,
         measured_body_y_m_s=measured_body_y,
@@ -326,6 +335,7 @@ def _evaluate_command(
         else None
     )
     safe_speed_m_s = _maximum_safe_speed(
+        included_rays=evaluated_rays,
         ranges_m=ranges_m,
         measured_body_x_m_s=measured_body_x,
         measured_body_y_m_s=measured_body_y,
@@ -461,6 +471,7 @@ def _sample_age_is_valid(age_s: float) -> bool:
 
 def _maximum_safe_speed(
     *,
+    included_rays: set[str],
     ranges_m: dict[str, float],
     measured_body_x_m_s: float,
     measured_body_y_m_s: float,
@@ -474,6 +485,7 @@ def _maximum_safe_speed(
 ) -> float:
     def admitted(speed_m_s: float) -> bool:
         margins = _ray_margins(
+            included_rays=included_rays,
             ranges_m=ranges_m,
             measured_body_x_m_s=measured_body_x_m_s,
             measured_body_y_m_s=measured_body_y_m_s,
@@ -506,6 +518,7 @@ def _maximum_safe_speed(
 
 def _ray_margins(
     *,
+    included_rays: set[str],
     ranges_m: dict[str, float],
     measured_body_x_m_s: float,
     measured_body_y_m_s: float,
@@ -552,7 +565,7 @@ def _ray_margins(
             ),
         )
         for ray in RAYS
-        if ray in ranges_m
+        if ray in included_rays and ray in ranges_m
     )
 
 

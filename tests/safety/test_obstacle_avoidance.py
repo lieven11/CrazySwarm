@@ -327,6 +327,31 @@ def test_takeoff_blocks_when_upward_clearance_is_inside_stopping_envelope() -> N
     assert result.command.height_m == pytest.approx(0.30)
 
 
+def test_takeoff_from_floor_ignores_nonclosing_down_ray() -> None:
+    raw = sample()
+    raw.values.update(
+        {
+            "stateEstimate.z": 0.029,
+            "range.up": 2_408.0,
+            "range.zrange": 27.0,
+        }
+    )
+
+    result = evaluate_takeoff(
+        raw,
+        TakeoffCommand(height_m=0.30, duration_s=2.0),
+        mode=AvoidanceMode.ENFORCED,
+        evaluation_time_monotonic_s=100.0,
+    )
+
+    assert result.decision is AvoidanceDecision.LIMIT
+    assert result.binding_ray == "up"
+    assert result.safe_speed_m_s == pytest.approx(0.10)
+    assert result.command.height_m == pytest.approx(0.30)
+    assert result.command.duration_s == pytest.approx(2.71)
+    assert {ray.ray for ray in result.rays} == {"up"}
+
+
 def test_missing_nonclosing_vertical_range_does_not_block_horizontal_move() -> None:
     raw = sample()
     raw.values.pop("range.up")

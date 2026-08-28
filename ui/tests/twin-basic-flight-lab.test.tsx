@@ -169,6 +169,39 @@ describe("Digital Twin basic-flight campaign lab", () => {
     expect(onPhysicalStatusChange).toHaveBeenCalledWith(pairedStatus);
   });
 
+  it("sends enforced avoidance only after the bottom-left switch is turned on", async () => {
+    const startPhysicalFlight = vi.fn().mockResolvedValue({
+      state: "STARTING",
+      stopRequired: true,
+      operationId: "physical-operation-avoidance",
+      motionId: "commissioning-baseline",
+      avoidance: { mode: "ENFORCED", evaluationCount: 0 },
+    });
+    const api = {
+      twinBasicFlightCatalog: vi.fn().mockResolvedValue(catalog),
+      physicalFlightStatus: vi.fn().mockResolvedValue({ state: "IDLE", stopRequired: false }),
+      startPhysicalFlight,
+    } as unknown as ControlApi;
+
+    render(<TwinBasicFlightLab
+      api={api}
+      onNotice={vi.fn()}
+      physicalStatus={pairedGroundedStatus}
+    />);
+
+    const toggle = await screen.findByRole("switch", { name: /Avoidance/ });
+    expect(toggle).toHaveAttribute("aria-checked", "false");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Run 30 cm commissioning flight" }));
+
+    await waitFor(() => expect(startPhysicalFlight).toHaveBeenCalledWith(
+      "commissioning-baseline",
+      undefined,
+      "ENFORCED",
+    ));
+  });
+
   it("shows the controller-tuning cluster with A to E staged and F to H raw", async () => {
     const tuningCatalog: TwinBasicFlightCatalogView = {
       ...catalog,
@@ -397,6 +430,7 @@ describe("Digital Twin basic-flight campaign lab", () => {
     expect(await screen.findByRole("button", { name: /Cushioned acrobatics/ })).toBeVisible();
     expect(screen.getByRole("button", { name: "Single flip" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Positive roll · 360°Ready" })).toBeVisible();
+    expect(screen.queryByRole("switch", { name: /Avoidance/ })).not.toBeInTheDocument();
     const start = screen.getByRole("button", { name: "Start 50 cm hover" });
     expect(start).toBeEnabled();
     fireEvent.click(start);

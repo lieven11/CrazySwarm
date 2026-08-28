@@ -281,6 +281,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 .fixture-health { display: flex; align-items: center; gap: 7px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font: 8px/1 var(--font-mono); }
 .health-glyph { display: inline-flex; }
 .fixture-back { color: var(--white); }
+.fixture-mission-dock-stage { min-height: 86px; display: flex; align-items: center; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 18px; background: rgba(255,255,255,.025); }
+.fixture-mission-dock-stage .mission-dock { position: relative; inset: auto; margin: 14px 16px; }
 
 @media (max-width: 720px) {
   .fixture-page { padding: 24px 14px; }
@@ -1432,7 +1434,13 @@ body, .control-center, .workspace, .room-stage { background: #000; }
 .twin-physical-run-button:not(:disabled) { border-color: #d94f28; color: #fff; background: #d94f28; }
 .twin-physical-run-button:hover:not(:disabled) { background: #ef6038; }
 .twin-mission-dock.has-flip-control { width: min(410px, calc(100vw - 32px)); }
+.twin-mission-dock.has-avoidance-control { width: min(430px, calc(100vw - 32px)); }
 .twin-mission-dock .twin-flip-button { width: auto; min-width: 68px; padding: 0 13px; }
+.twin-avoidance-toggle { height: 40px; display: grid; grid-template-columns: 14px auto auto; align-items: center; gap: 5px; padding: 0 9px; border: 1px solid rgba(255,255,255,.09); border-radius: 15px; color: var(--soft); background: rgba(255,255,255,.045); font-size: 9px; font-weight: 680; }
+.twin-avoidance-toggle:hover:not(:disabled) { background: rgba(255,255,255,.08); }
+.twin-avoidance-toggle[aria-checked="true"] { border-color: rgba(217,79,40,.5); color: #fff; background: rgba(217,79,40,.18); }
+.twin-avoidance-toggle small { min-width: 18px; color: var(--muted); font: 700 8px/1 var(--font-mono); text-align: right; }
+.twin-avoidance-toggle[aria-checked="true"] small { color: #ffb091; }
 .twin-lab-safety-note { display: flex; align-items: flex-start; gap: 9px; padding: 13px; border: 1px solid rgba(255,255,255,.08); border-radius: 13px; color: var(--soft); background: rgba(255,255,255,.025); }
 .twin-lab-safety-note > span, .twin-learning-result header > span { display: grid; gap: 4px; }
 .twin-lab-safety-note strong { font-size: 11px; }

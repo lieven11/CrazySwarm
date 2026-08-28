@@ -20,7 +20,7 @@ boundaries.
 | Planning or submissions | `campaign/service.py`, `campaign/planner.py`, `planning/` | case/submission data, planning requirements |
 | Runtime replanning | `campaign/replanning.py`, `campaign/runtime_executor.py` | safety supervisor, retained analysis/evidence |
 | Fleet coordination | `fleet/coordinator.py`, `fleet/tasks.py` | preparation, policy, fleet tests |
-| Vehicle safety/authority | `safety/supervisor.py`, `missions/authority.py` | domain commands, safety policy/tests |
+| Vehicle safety/authority | `safety/supervisor.py`, `safety/obstacle_avoidance.py`, `missions/authority.py` | domain commands, safety policy/adapter tests |
 | Fast Sim physics/tuning | `simulation/vehicle.py`, `simulation/physics.py`, `simulation/parameters.py` | world config, physics contract/tests |
 | Telemetry/evidence | `observability/recorder.py`, `observability/storage.py`, `observability/csv_export.py` | telemetry/evaluation contracts and tests |
 | API/operator workflow | `api/app.py`, `api/runtime.py` | API models, UI API client, focused API tests |
@@ -98,6 +98,7 @@ SafetySupervisor -> backend-neutral Vehicle -> Fast Sim / Isaac / Crazyflie
 | Role-to-vehicle allocation | Fleet planner/coordinator | Allocation uses current capability, energy, location, and availability. |
 | Inter-vehicle separation and handover | Fleet coordinator | One authoritative policy must observe all members and avoid conflicting decisions. |
 | Geofence, health, command authority, watchdog, recovery | Safety supervisor and mission runner | Safety cannot depend on optional mission code or browser health. |
+| Physical per-ray obstacle guarding | Obstacle-avoidance evaluator and Crazyflie command adapter | Hover/translation decisions use current measured ranges and velocity and remain server-side through dispatch and recovery. |
 | Physics, sensors, energy evolution, collisions | Simulation backend | These are modeled consequences of commands and the configured world. |
 | Low-level attitude/motor stabilization | Flight controller or simulation model | It is time-critical vehicle behavior below mission planning. |
 | Evidence, provenance, replay | Observability layer | Decisions and inputs must be reconstructable independently of the UI. |
@@ -424,6 +425,15 @@ does not require `armed=false` in that mode. The UI remains one Play action; arm
 normalization is not a separate operator workflow. These backend and UI boundaries
 are covered by `tests/hardware/test_basic_flight_lab.py` and
 `ui/tests/twin-basic-flight-lab.test.tsx`.
+`src/crazyswarm_app/safety/obstacle_avoidance.py` owns the pure per-ray physical
+translation evaluator. `CrazyflieVehicle` supplies raw, per-variable timestamped range,
+HOME-velocity, yaw, and estimator-variance inputs before dispatch and throughout each
+relative move. `MONITOR_ONLY` records the same decision evidence without changing the
+command. Operator-selected `ENFORCED` mode can preserve displacement and yaw while
+retiming a move, reject it before dispatch, or route a newly unsafe dispatched move
+through the existing abort-and-land recovery boundary. The `/start` request and global
+status carry mode and evidence; the Campaign Laboratory dock only exposes the switch
+for contained hover/translations, never observer, arm/disarm, or acrobatics workflows.
 `src/crazyswarm_app/hardware/controller_tuning_lab.py` owns the second Digital Twin
 physical mission cluster, its versioned box-fixture contract, advisory characterization state,
 central-ray range model, continuity-constrained range-derived pose fit, and bounded
@@ -466,9 +476,10 @@ maneuvers. The selected mission ID and command-plan hash are retained with the r
 Admission uses the exact paired identity and a
 real radio connection; reported supervisor faults are recorded but are not a software
 admission gate. `supervisor.info` is consumed from the bounded firmware log stream;
-the command refresh loop does not add synchronous supervisor requests. Battery and
-range data are recorded as learning observations rather
-than used as pass/fail gates. A reported supervisor crash is sent the firmware recovery
+the command refresh loop does not add synchronous supervisor requests. Battery data and
+monitor-only range decisions remain learning observations; range data becomes a
+pass/fail input only for an operator-selected enforced contained translation. A reported
+supervisor crash is sent the firmware recovery
 request on the next physical flight action. The physical command adapter retains every telemetry sample consumed by
 preflight and command-completion polling, then archives it through the normal
 `run-telemetry-v1` CSV and `run-files` manifest path for later analysis. All other

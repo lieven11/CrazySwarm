@@ -10324,7 +10324,7 @@ Independent verification: `DESIGN_VERIFIED`
 
 Status: `IMPLEMENTED`
 
-Independent verification: `IMPLEMENTED_UNVERIFIED`
+Independent verification: `BLOCKED_WITH_FINDINGS`
 
 - Implemented the accepted bounded projection, diagnostics, authoritative edit-state
   reconciliation, and exact-pair clock/residual behavior without adding command,
@@ -12378,9 +12378,9 @@ Independent verification: `BLOCKED_WITH_FINDINGS`
 
 ## WP-91 — final bounded WP-90 D2 closure
 
-Status: `DEFINED_NOT_STARTED`
+Status: `IMPLEMENTED`
 
-Independent verification: `DESIGN_VERIFIED`
+Independent verification: `IMPLEMENTATION_VERIFIED`
 
 Operator authorization: `2026-08-27`, verbatim: “ok then continue with one run,
 after that do the implementation and verify once and then analze what is missing i
@@ -12566,3 +12566,106 @@ authored action label, or single scalar variance is accepted as proof.
 - Verdict: `DESIGN_VERIFIED`. Product implementation is authorized only after the
   requested checkpoint commit/push and creation of a new implementation branch. The
   hardware/runtime prohibitions remain unchanged.
+
+### WP-91 implementation handoff
+
+- The complete pre-implementation tree was committed as
+  `da6d73ab7ddbea20d64dfe4d378ed8bd98757b88` and pushed to
+  `origin/codex/1d-replanning-digital-twin`; implementation then began on the new
+  `codex/wp91-obstacle-avoidance` branch from that exact commit.
+- Exact implementation payload SHA-256:
+  `78846eeab2d6ed70c255836bf59117420924cf21b921633da84bf83d6d735ad0`.
+  The pre/post file hashes and author evidence are frozen in
+  `missions/campaigns/real/qualification/wp91-implementation-manifest.json`.
+- The implementation adds the pure per-ray evaluator, monitor/enforced request and
+  status transit, pre-dispatch retiming/blocking, guarded hover and translation sample
+  loops, existing abort/land recovery, durable marker/evidence retention, generated
+  OpenAPI/types, and the bottom-dock switch with its scope exclusions.
+- Author verification: 116 focused Python safety/adapter/contained-flight/
+  controller-tuning/API tests, 38 UI adapter/component tests, 3 rendered HTML tests,
+  strict mypy, Ruff, TypeScript, targeted ESLint, production UI build, project map,
+  design audit, and whitespace checks pass. The isolated production trace uses only an
+  injected fake link and temporary cache/evidence storage.
+- `scripts/check_requirement_catalog.py` retains a pre-existing base failure:
+  `REQ-XFR-011` exists while the committed index still declares XFR `10` and total
+  `150` instead of `11` and `151`. WP-91 changes no requirement-catalog file.
+- Hardware, dashboard service, radio, motors, and physical flight remain
+  `NOT_RUN_NOT_AUTHORIZED`. A different fresh verifier receives this manifest once;
+  no automatic implementation correction or recheck is authorized.
+
+### WP-91 implementation-gate outcome
+
+- Verifier: `/root/wp91_implementation_verifier`; one frozen implementation review,
+  with no correction or recheck, as authorized.
+- The verifier reproduced every manifest hash and payload
+  `78846eeab2d6ed70c255836bf59117420924cf21b921633da84bf83d6d735ad0`,
+  confirmed the pushed checkpoint/branch ancestry and unchanged preservation-only link
+  sections, and independently reproduced the declared Python/UI/static/generated
+  evidence without hardware access.
+- P1 `MUST_FIX_NOW`: `MONITOR_ONLY` takes an unconditional extra pre-dispatch snapshot
+  for hover/move. A transient second-read failure prevents dispatch even though the
+  base path dispatched before its completion-loop sample, violating the frozen promise
+  that monitor mode does not change command ordering, outcome, or recovery.
+- P1 `MUST_FIX_NOW`: the exact accepted age boundary is numerically rejected. At
+  ordinary monotonic values, `100.0 - 99.6` rounds slightly above `0.4`, so the current
+  comparison blocks an authored `age == 0.400000 s` sample; the author test covers only
+  `99.599999` and misses equality.
+- Residual P2: component/jsdom semantics and generic rendered HTML pass, but no retained
+  real-viewport inspection proves switch wrapping, clipping, or the 40 px touch target.
+- Verdict: `BLOCKED_WITH_FINDINGS`. The implemented payload remains frozen and
+  unverified. Per the explicit review budget, no automatic correction or implementation
+  recheck follows; the two P1s and P2 are handed back as the exact remaining work.
+
+### WP-91 operator-authorized implementation correction
+
+- Authorization: `2026-08-28`, verbatim: “Ok continue by fixing the team aiming
+  issues”. This new operator instruction authorizes one bounded correction of the two
+  P1 findings and the retained-viewport P2, followed by the same verifier's one focused
+  recheck. It does not authorize hardware or live-runtime access.
+- Monitor transparency: `MONITOR_ONLY` now evaluates the adapter's already-cached
+  snapshot and never adds a pre-dispatch link read. A transient second-read failure
+  regression proves the move is dispatched in the same order as the avoidance-disabled
+  path; only the normal completion refresh then reports the link loss.
+- Inclusive age boundary: freshness uses an absolute `1e-12 s` floating-point
+  tolerance around the exact `0.400000 s` upper bound while retaining strict negative
+  age rejection. The exact `100.0 - 99.6` boundary passes, and samples above the bound
+  by `1e-6 s` still fail.
+- Viewport evidence: the existing test-only fixture gallery now renders the production
+  mission-dock/switch markup and CSS. Retained browser measurements at `1280x720` and
+  `390x844` prove a `40 px` switch, stable three-column labels, and no switch or dock
+  scroll overflow. Evidence is frozen in
+  `missions/campaigns/real/qualification/wp91-viewport-inspection.json`.
+- Corrected implementation payload SHA-256:
+  `52b7441391b3f3d975c0712b45b53b371edb14216b332453a03137bdbfabbe54`.
+  Its 19 exact pre/post file identities and updated author checks replace the blocked
+  candidate in `missions/campaigns/real/qualification/wp91-implementation-manifest.json`;
+  the initial blocked payload remains recorded there and above for traceability.
+- Corrected author verification: 118 focused Python tests, 177 UI unit tests, 3 rendered
+  HTML tests, strict mypy, Ruff, TypeScript, ESLint, production UI build, project-map
+  check, design audit, and whitespace checks pass. Hardware, dashboard service, radio,
+  motors, and physical flight remain `NOT_RUN_NOT_AUTHORIZED`.
+- Independent verification remained `IMPLEMENTED_UNVERIFIED` pending the same
+  verifier's single focused recheck. Only the monitor-path P1, exact-boundary P1, and
+  viewport P2 were in that recheck scope; no third implementation review was
+  authorized.
+
+### WP-91 corrected implementation-gate outcome
+
+- Verifier: `/root/wp91_implementation_verifier`; one initial implementation review,
+  one operator-authorized correction, and one focused recheck. No third review is
+  permitted.
+- The verifier reproduced the corrected manifest identity, all 19 pre/post hashes, and
+  payload `52b7441391b3f3d975c0712b45b53b371edb14216b332453a03137bdbfabbe54`;
+  preservation-only link files remain unchanged.
+- Monitor transparency passes an independent transient-second-read probe: exactly one
+  move dispatch occurs before the normal completion refresh returns
+  `LINK_LOST / UNKNOWN_OUTCOME`, matching the avoidance-disabled ordering.
+- The exact `100.0 - 99.6` freshness boundary is accepted; an age greater by `1e-6 s`
+  and a negative age are both rejected.
+- The authorized viewport fixture/evidence is internally consistent with the production
+  classes and CSS. Retained desktop/narrow measurements prove the 40 px target and no
+  switch/dock overflow. Residual P2: the verifier had no browser backend available and
+  therefore did not independently re-observe the pixels; this does not block the gate.
+- Verdict: `IMPLEMENTATION_VERIFIED`. All P0/P1 findings are resolved. Hardware,
+  dashboard service, radio, motors, and physical flight remained
+  `NOT_RUN_NOT_AUTHORIZED`.

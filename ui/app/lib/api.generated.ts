@@ -2414,6 +2414,16 @@ export interface components {
             /** Report Id */
             report_id: string;
         };
+        /**
+         * AvoidanceDecision
+         * @enum {string}
+         */
+        AvoidanceDecision: "CLEAR" | "LIMIT" | "BLOCK_BEFORE_DISPATCH" | "RECOVER_ABORT_LAND" | "RECORD_ONLY";
+        /**
+         * AvoidanceMode
+         * @enum {string}
+         */
+        AvoidanceMode: "MONITOR_ONLY" | "ENFORCED";
         /** BackendBindingProfile */
         BackendBindingProfile: {
             /**
@@ -3490,6 +3500,23 @@ export interface components {
          * @enum {string}
          */
         ObservationTwinState: "UNCONFIGURED" | "DISCONNECTED" | "CONNECTING" | "PENDING_CONFIRMATION" | "PAIRED" | "SUSPENDED" | "ERROR" | "CONFIGURATION_INVALID";
+        /** ObstacleAvoidanceStatus */
+        ObstacleAvoidanceStatus: {
+            /** @default MONITOR_ONLY */
+            mode: components["schemas"]["AvoidanceMode"];
+            decision?: components["schemas"]["AvoidanceDecision"] | null;
+            /**
+             * Evaluation Count
+             * @default 0
+             */
+            evaluation_count: number;
+            /** Minimum Margin M */
+            minimum_margin_m?: number | null;
+            /** Binding Ray */
+            binding_ray?: ("front" | "back" | "left" | "right") | null;
+            /** Intervention Reason */
+            intervention_reason?: string | null;
+        };
         /**
          * OperatingMode
          * @enum {string}
@@ -3559,6 +3586,8 @@ export interface components {
             heading_deg: number;
             /** Target Height M */
             target_height_m?: number | null;
+            /** @default MONITOR_ONLY */
+            avoidance_mode: components["schemas"]["AvoidanceMode"];
         };
         /**
          * PhysicalFlightOperationStatus
@@ -3601,6 +3630,7 @@ export interface components {
             controller_tuning_preparation?: components["schemas"]["ControllerTuningRunPreparation"] | null;
             /** Available Action */
             available_action?: "FLIP" | null;
+            avoidance?: components["schemas"]["ObstacleAvoidanceStatus"];
         };
         /** PhysicalTwinBindingRequest */
         PhysicalTwinBindingRequest: {

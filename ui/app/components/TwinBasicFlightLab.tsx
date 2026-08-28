@@ -82,6 +82,7 @@ export function TwinBasicFlightLab({
   const [triggeringFlip, setTriggeringFlip] = useState(false);
   const [run, setRun] = useState<TwinBasicFlightRunView>();
   const [runError, setRunError] = useState<string>();
+  const [avoidanceEnabled, setAvoidanceEnabled] = useState(false);
   const [flightOperation, setFlightOperation] = useState<PhysicalFlightOperationStatusView>();
   const launcherRef = useRef<HTMLButtonElement>(null);
   const workspaceRef = useRef<HTMLElement>(null);
@@ -282,6 +283,11 @@ export function TwinBasicFlightLab({
   const observedSupervisor = physicalStatus?.observed;
   const controllerPreparationSelected = selected?.clusterId === "controller-characterization-tuning"
     && selected.placementMarker !== undefined;
+  const avoidanceAvailable = selected?.physicalScope === "CONTAINED_FLIGHT"
+    && selected.motionId !== "acro-single-roll";
+  const avoidanceMode = avoidanceAvailable && avoidanceEnabled
+    ? "ENFORCED" as const
+    : "MONITOR_ONLY" as const;
   const parsedHeadingDeg = headingInput.trim() === "" ? 0 : Number(headingInput);
   const parsedHeightM = heightInput.trim() === "" ? undefined : Number(heightInput);
   const controllerFlightHeightRequired = controllerPreparationSelected
@@ -376,18 +382,25 @@ export function TwinBasicFlightLab({
     setRunError(undefined);
     setWorkspaceTab("run");
     try {
-      const operation = controllerPreparationSelected
+      const preparation = controllerPreparationSelected ? {
+        stationId: selected.placementMarker!,
+        headingDeg: parsedHeadingDeg,
+        targetHeightM: parsedHeightM,
+      } : undefined;
+      const operation = avoidanceMode === "ENFORCED"
         ? await api.startPhysicalFlight(
           selected.motionId as PhysicalBasicFlightMotionId,
-          {
-          stationId: selected.placementMarker!,
-          headingDeg: parsedHeadingDeg,
-          targetHeightM: parsedHeightM,
-          },
+          preparation,
+          avoidanceMode,
         )
-        : await api.startPhysicalFlight(
-          selected.motionId as PhysicalBasicFlightMotionId,
-        );
+        : preparation
+          ? await api.startPhysicalFlight(
+            selected.motionId as PhysicalBasicFlightMotionId,
+            preparation,
+          )
+          : await api.startPhysicalFlight(
+            selected.motionId as PhysicalBasicFlightMotionId,
+          );
       handledFlightTerminalRef.current = undefined;
       acceptFlightOperation(operation);
       onNotice(selected.physicalScope === "FIXTURE_OBSERVATION"
@@ -666,7 +679,7 @@ export function TwinBasicFlightLab({
         ? "Start 50 cm hover"
         : `Run ${selected?.motion ?? "physical mission"}`;
   const missionDock = dockHost ? createPortal(
-    <section className={`mission-dock twin-mission-dock ${motorStopRequired ? "has-motor-control" : ""} ${flightOperation?.availableAction === "FLIP" ? "has-flip-control" : ""}`} aria-label="Digital Twin mission controls">
+    <section className={`mission-dock twin-mission-dock ${motorStopRequired ? "has-motor-control" : ""} ${flightOperation?.availableAction === "FLIP" ? "has-flip-control" : ""} ${avoidanceAvailable && !physicalFlightActive && !motorStopRequired ? "has-avoidance-control" : ""}`} aria-label="Digital Twin mission controls">
       <button
         className="mission-dock-summary"
         type="button"
@@ -720,24 +733,41 @@ export function TwinBasicFlightLab({
           </button>
         </>
       ) : (
-        <button
-          className="dock-run-button twin-physical-run-button"
-          type="button"
-          aria-label={running ? "Connecting to physical drone" : startLabel}
-          disabled={
-            !selected
-            || running
-            || !physicalFlightStartReady
-          }
-          title={
-            !physicalFlightStartReady
-              ? physicalFlightBlockReason
-              : undefined
-          }
-          onClick={() => void startPhysical()}
-        >
-          {running ? <LoaderCircle className="spin" size={16} /> : <Play size={15} fill="currentColor" />}
-        </button>
+        <>
+          {avoidanceAvailable ? (
+            <button
+              className="twin-avoidance-toggle"
+              type="button"
+              role="switch"
+              aria-checked={avoidanceEnabled}
+              disabled={running}
+              title="Monitor ranges when off; limit or block unsafe movement when on"
+              onClick={() => setAvoidanceEnabled((enabled) => !enabled)}
+            >
+              <ShieldCheck size={13} />
+              <span>Avoidance</span>
+              <small>{avoidanceEnabled ? "On" : "Off"}</small>
+            </button>
+          ) : null}
+          <button
+            className="dock-run-button twin-physical-run-button"
+            type="button"
+            aria-label={running ? "Connecting to physical drone" : startLabel}
+            disabled={
+              !selected
+              || running
+              || !physicalFlightStartReady
+            }
+            title={
+              !physicalFlightStartReady
+                ? physicalFlightBlockReason
+                : undefined
+            }
+            onClick={() => void startPhysical()}
+          >
+            {running ? <LoaderCircle className="spin" size={16} /> : <Play size={15} fill="currentColor" />}
+          </button>
+        </>
       )}
     </section>,
     dockHost,

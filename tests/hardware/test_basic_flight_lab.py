@@ -33,12 +33,18 @@ from crazyswarm_app.hardware.basic_flight_lab import (
     MotorBenchUpdateRequest,
     PhysicalBasicFlightRunRequest,
     _contained_flight_commands,
+    _resolved_avoidance_request,
 )
 from crazyswarm_app.hardware.observation_twin import PhysicalCommandTarget
+from crazyswarm_app.safety.obstacle_avoidance import AvoidanceMode
 from crazyswarm_app.simulation.world import load_scenario
 from crazyswarm_app.vehicles.crazyflie import CrazyflieVehicle
 from crazyswarm_app.vehicles.crazyflie_link import CrazyflieRawSample
-from tests.hardware.test_crazyflie_adapter import URI, FakeCrazyflieLink
+from tests.hardware.test_crazyflie_adapter import (
+    URI,
+    FakeCrazyflieLink,
+    FreshAvoidanceLink,
+)
 
 
 @pytest.mark.asyncio
@@ -170,6 +176,25 @@ def test_physical_curriculum_stays_inside_low_slow_containment() -> None:
             assert (x_m**2 + y_m**2) ** 0.5 <= maximum_center_radius_m + 1e-6
             assert payload.z_m == 0.0  # type: ignore[union-attr]
             assert payload.yaw_rad == 0.0  # type: ignore[union-attr]
+
+
+def test_non_translation_workflows_force_monitor_only_avoidance() -> None:
+    for motion_id in ("arm-disarm", "tuning-a-station-a", SINGLE_ROLL_MOTION_ID):
+        resolved = _resolved_avoidance_request(
+            PhysicalBasicFlightRunRequest(
+                motion_id=motion_id,  # type: ignore[arg-type]
+                avoidance_mode=AvoidanceMode.ENFORCED,
+            )
+        )
+        assert resolved.avoidance_mode is AvoidanceMode.MONITOR_ONLY
+
+    contained = _resolved_avoidance_request(
+        PhysicalBasicFlightRunRequest(
+            motion_id="forward-10cm-return",
+            avoidance_mode=AvoidanceMode.ENFORCED,
+        )
+    )
+    assert contained.avoidance_mode is AvoidanceMode.ENFORCED
 
 
 def test_checkpoint_shapes_are_centered_larger_and_return_home() -> None:
@@ -324,7 +349,9 @@ async def test_airborne_stability_guard_uses_existing_failure_abort_and_land_pat
         _duration_s: float,
         *,
         stability_guard: object | None = None,
+        avoidance_command: object | None = None,
     ) -> None:
+        del avoidance_command
         sample = await vehicle.snapshot()
         if stability_guard is not None:
             stability_guard.observe(sample)  # type: ignore[attr-defined]
@@ -352,6 +379,59 @@ async def test_airborne_stability_guard_uses_existing_failure_abort_and_land_pat
 
     assert rejected.value.code is ErrorCode.PREFLIGHT_FAILED
     assert rejected.value.details["trigger"] == "near_floor"
+    assert [item[0] for item in link.commands].count("land") == 1
+    assert link.bitfield & (1 << 4) == 0
+
+
+@pytest.mark.asyncio
+async def test_post_dispatch_avoidance_uses_existing_failure_abort_and_land_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = load_config(Path("config/app.yaml")).model_copy(
+        update={"cache_directory": tmp_path / "cache"}
+    )
+    runtime = create_runtime(
+        config,
+        load_scenario(Path("config/worlds/one_drone.yaml")),
+        evidence_path=tmp_path / "evidence.sqlite3",
+    )
+    link = FreshAvoidanceLink(unsafe_after_dispatch=True)
+    original_wait = CrazyflieVehicle._wait_duration_and_refresh
+
+    async def fast_wait(
+        vehicle: CrazyflieVehicle,
+        duration_s: float,
+        **kwargs: object,
+    ) -> None:
+        if vehicle._active_avoidance_command is not None:
+            await original_wait(vehicle, duration_s, **kwargs)  # type: ignore[arg-type]
+            return
+        await vehicle.snapshot()
+
+    monkeypatch.setattr(
+        "crazyswarm_app.vehicles.crazyflie.CrazyflieVehicle._wait_duration_and_refresh",
+        fast_wait,
+    )
+    service = BasicFlightLabService(runtime, physical_link_factory=lambda: link)
+
+    with pytest.raises(CrazySwarmError) as rejected:
+        await service.run_physical(
+            PhysicalBasicFlightRunRequest(
+                motion_id="land-forward-10cm",
+                avoidance_mode=AvoidanceMode.ENFORCED,
+            ),
+            target=PhysicalCommandTarget(
+                selected_uri=URI,
+                vehicle_label="Test Crazyflie",
+                observed_identity_sha256="a" * 64,
+            ),
+            operator_id="test-operator",
+        )
+
+    assert rejected.value.code is ErrorCode.PREFLIGHT_FAILED
+    assert rejected.value.details["decision"] == "RECOVER_ABORT_LAND"
+    assert [item[0] for item in link.commands].count("move") == 1
     assert [item[0] for item in link.commands].count("land") == 1
     assert link.bitfield & (1 << 4) == 0
 
@@ -1381,6 +1461,15 @@ async def test_process_restart_restores_uncertain_flight_and_abort_reconnects_ex
                 "stop_required": True,
                 "detail": "Physical drone action running",
                 "command_evidence": [],
+                "avoidance_mode": "ENFORCED",
+                "avoidance": {
+                    "mode": "ENFORCED",
+                    "decision": "LIMIT",
+                    "evaluation_count": 4,
+                    "minimum_margin_m": 0.031,
+                    "binding_ray": "front",
+                    "intervention_reason": "insufficient_clearance",
+                },
             }
         )
         + "\n",
@@ -1396,6 +1485,9 @@ async def test_process_restart_restores_uncertain_flight_and_abort_reconnects_ex
     restored = await service.physical_flight_status()
     assert restored.state == "STOP_UNCONFIRMED"
     assert restored.stop_required is True
+    assert restored.avoidance.mode is AvoidanceMode.ENFORCED
+    assert restored.avoidance.decision == "LIMIT"
+    assert restored.avoidance.evaluation_count == 4
 
     aborted = await service.abort_physical_flight()
 
@@ -1415,6 +1507,7 @@ async def test_process_restart_restores_uncertain_flight_and_abort_reconnects_ex
     terminal = await restarted.physical_flight_status()
     assert terminal.state == "ABORTED"
     assert terminal.stop_required is False
+    assert terminal.avoidance == restored.avoidance
 
 
 @pytest.mark.asyncio

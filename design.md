@@ -284,8 +284,14 @@ Apply `[CMP-01]` and `[CMP-02]`.
   mission adds no checkpoint dwell. Ground readiness may physically arm for three
   seconds while recording telemetry, then disarm without takeoff. Do not
   place manual confirmation checklists in this surface; automatic link, estimator, and
-  fault preflight owns admission. Battery and range observations are learning data and
-  do not gate these actions. Digital Twin exposes physical actions only—Simulation
+  fault preflight owns admission. Battery observations and monitor-only range decisions
+  remain learning data. For contained hover and translation missions only, place one
+  compact `Avoidance off` / `Avoidance on` switch immediately beside Play. Off is the
+  quiet default and preserves authored commands; on freezes enforced range guarding
+  into the start request. Hide the switch for observation, arm/disarm, and cushioned
+  acrobatics, and replace it with the global recovery action while a flight is active.
+  The switch uses a visible text state and `role="switch"`; orange may reinforce the
+  enforced state but cannot be its only indicator. Digital Twin exposes physical actions only—Simulation
   rehearsals belong in the Simulation environment. A contained physical flight start
   returns immediately to backend-owned operation
   state. From `STARTING` through landing/disarm, the bottom Play position becomes a

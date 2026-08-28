@@ -1,4 +1,4 @@
-import { AlertOctagon, AlertTriangle, Check, EyeOff, LoaderCircle, Pause, Play, Radio, ShieldX, Square, WifiOff } from "lucide-react";
+import { AlertOctagon, AlertTriangle, Beaker, Check, EyeOff, LoaderCircle, Pause, Play, Radio, ShieldCheck, ShieldX, Square, WifiOff } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { fixtureForState } from "../lib/fixtures";
@@ -18,6 +18,31 @@ export function FixtureGallery() {
         </div>
       </section>
       <section className="fixture-section"><h2>Mode identity</h2><div className="fixture-row">{(["SIM", "LIVE", "SHADOW", "REPLAY"] as OperatingMode[]).map((mode) => <ModeBadge key={mode} mode={mode} label={mode === "SIM" ? "SIMULATION" : mode} />)}</div></section>
+      <section className="fixture-section" aria-labelledby="avoidance-control-title">
+        <h2 id="avoidance-control-title">Obstacle-avoidance mission control</h2>
+        <div className="fixture-mission-dock-stage">
+          <section className="mission-dock twin-mission-dock has-avoidance-control" aria-label="Digital Twin mission controls">
+            <button className="mission-dock-summary" type="button" aria-expanded="false">
+              <Beaker size={17} />
+              <span><strong>Move forward 20 cm</strong><small>READY · BODY FRAME</small></span>
+            </button>
+            <button
+              className="twin-avoidance-toggle"
+              type="button"
+              role="switch"
+              aria-checked="false"
+              title="Monitor ranges when off; limit or block unsafe movement when on"
+            >
+              <ShieldCheck size={13} />
+              <span>Avoidance</span>
+              <small>Off</small>
+            </button>
+            <button className="dock-run-button twin-physical-run-button" type="button" aria-label="Run selected mission">
+              <Play size={14} fill="currentColor" />
+            </button>
+          </section>
+        </div>
+      </section>
       <section className="fixture-section"><h2>Data and permission states</h2><div className="state-grid">
         <StateCard icon={<LoaderCircle />} title="Loading" body="Connecting to local control service" className="is-loading" />
         <StateCard icon={<WifiOff />} title="Disconnected" body="No API data · configured room only" />

@@ -4,6 +4,7 @@ import queue
 import threading
 import time
 from collections.abc import Callable
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import ClassVar
@@ -30,6 +31,9 @@ from crazyswarm_app.domain.models import (
 )
 from crazyswarm_app.domain.telemetry import RadioFailureKind, RadioTransportDiagnostics
 from crazyswarm_app.hardware.models import CommandPermit, PermitScope
+from crazyswarm_app.safety.obstacle_avoidance import (
+    AvoidanceMode,
+)
 from crazyswarm_app.vehicles import _cflib_link
 from crazyswarm_app.vehicles._cflib_link import LOG_GROUPS
 from crazyswarm_app.vehicles.crazyflie import CrazyflieVehicle
@@ -800,6 +804,55 @@ class FakeCrazyflieLink:
         self.bitfield &= ~((1 << 1) | (1 << 4))
 
 
+class FreshAvoidanceLink(FakeCrazyflieLink):
+    def __init__(
+        self,
+        *,
+        unsafe_after_dispatch: bool = False,
+        unsafe_after_hover: bool = False,
+    ) -> None:
+        super().__init__()
+        self.unsafe_after_dispatch = unsafe_after_dispatch
+        self.unsafe_after_hover = unsafe_after_hover
+        self.values.update(
+            {
+                "stabilizer.yaw": 0.0,
+                "kalman.varPX": 0.0004,
+                "kalman.varPY": 0.0004,
+                "range.front": 500.0,
+                "range.back": 500.0,
+                "range.left": 500.0,
+                "range.right": 500.0,
+            }
+        )
+
+    def read_sample(self) -> CrazyflieRawSample:
+        raw = super().read_sample()
+        return replace(
+            raw,
+            value_received_at_monotonic_s={
+                name: raw.received_at_monotonic_s for name in raw.values
+            },
+        )
+
+    def go_to_relative(
+        self,
+        x_m: float,
+        y_m: float,
+        z_m: float,
+        yaw_rad: float,
+        duration_s: float,
+    ) -> None:
+        super().go_to_relative(x_m, y_m, z_m, yaw_rad, duration_s)
+        if self.unsafe_after_dispatch:
+            self.values["range.front"] = 50.0
+
+    def hold_position(self, duration_s: float) -> None:
+        super().hold_position(duration_s)
+        if self.unsafe_after_hover:
+            self.values["range.front"] = 50.0
+
+
 def vehicle(link: FakeCrazyflieLink | None = None) -> CrazyflieVehicle:
     return CrazyflieVehicle(vehicle_id="cf01", selected_uri=URI, link=link or FakeCrazyflieLink())
 
@@ -946,6 +999,125 @@ async def test_body_move_uses_latest_measured_yaw_and_preserves_home_mapping() -
     assert mapped[0] == "move"
     assert mapped[1] == pytest.approx(0.0, abs=1e-9)
     assert mapped[2] == pytest.approx(0.2)
+    await adapter.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_enforced_avoidance_retimes_before_relative_move_dispatch() -> None:
+    link = FreshAvoidanceLink()
+    # Independently computed from the frozen radius, uncertainty, latency, braking,
+    # margin, and sensor-offset relation at 0.05 m/s.
+    link.values["range.front"] = 206.95284707521048
+    adapter = CrazyflieVehicle(
+        vehicle_id="cf01",
+        selected_uri=URI,
+        link=link,
+        telemetry_period_s=0.005,
+    )
+    await adapter.connect()
+    adapter.install_command_permit(permit(PermitScope.CONTAINED_FLIGHT))
+    adapter.configure_obstacle_avoidance(AvoidanceMode.ENFORCED)
+
+    await adapter.execute(
+        command(MoveRelativeCommand(x_m=0.002, duration_s=0.02), "avoidance-retime")
+    )
+
+    move = next(item for item in link.commands if item[0] == "move")
+    assert move[1:5] == pytest.approx((0.002, 0.0, 0.0, 0.0))
+    assert move[5] == pytest.approx(0.04)
+    assert adapter.avoidance_evidence[0]["decision"] == "LIMIT"
+    assert adapter.avoidance_evidence[0]["phase"] == "PRE_DISPATCH"
+    await adapter.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_monitor_avoids_new_pre_dispatch_read_and_preserves_dispatch_order() -> None:
+    class FailingSecondReadLink(FreshAvoidanceLink):
+        def __init__(self) -> None:
+            super().__init__()
+            self.read_count = 0
+
+        def read_sample(self) -> CrazyflieRawSample:
+            self.read_count += 1
+            if self.read_count == 2:
+                raise RuntimeError("injected transient second sample failure")
+            return super().read_sample()
+
+    link = FailingSecondReadLink()
+    adapter = vehicle(link)
+    await adapter.connect()
+    adapter.install_command_permit(permit(PermitScope.CONTAINED_FLIGHT))
+    adapter.configure_obstacle_avoidance(AvoidanceMode.MONITOR_ONLY)
+
+    with pytest.raises(CrazySwarmError) as rejected:
+        await adapter.execute(
+            command(MoveRelativeCommand(x_m=0.01, duration_s=0.01), "monitor-order")
+        )
+
+    assert rejected.value.code is ErrorCode.LINK_LOST
+    assert rejected.value.details["command_outcome"] == "UNKNOWN_OUTCOME"
+    assert [item[0] for item in link.commands].count("move") == 1
+    assert adapter.avoidance_evidence[0]["phase"] == "PRE_DISPATCH"
+    await adapter.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_enforced_avoidance_blocks_invalid_sample_before_dispatch() -> None:
+    link = FreshAvoidanceLink()
+    adapter = vehicle(link)
+    await adapter.connect()
+    adapter.install_command_permit(permit(PermitScope.CONTAINED_FLIGHT))
+    adapter.configure_obstacle_avoidance(AvoidanceMode.ENFORCED)
+    link.values.pop("range.front")
+
+    with pytest.raises(CrazySwarmError) as rejected:
+        await adapter.execute(
+            command(MoveRelativeCommand(x_m=0.01, duration_s=0.1), "avoidance-block")
+        )
+
+    assert rejected.value.code is ErrorCode.PREFLIGHT_FAILED
+    assert rejected.value.details["decision"] == "BLOCK_BEFORE_DISPATCH"
+    assert not [item for item in link.commands if item[0] == "move"]
+    await adapter.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_enforced_post_dispatch_obstacle_requests_recovery() -> None:
+    link = FreshAvoidanceLink(unsafe_after_dispatch=True)
+    adapter = vehicle(link)
+    await adapter.connect()
+    adapter.install_command_permit(permit(PermitScope.CONTAINED_FLIGHT))
+    adapter.configure_obstacle_avoidance(AvoidanceMode.ENFORCED)
+
+    with pytest.raises(CrazySwarmError) as rejected:
+        await adapter.execute(
+            command(MoveRelativeCommand(x_m=0.002, duration_s=0.02), "avoidance-recover")
+        )
+
+    assert rejected.value.code is ErrorCode.PREFLIGHT_FAILED
+    assert rejected.value.details["decision"] == "RECOVER_ABORT_LAND"
+    assert rejected.value.details["phase"] == "POST_DISPATCH"
+    assert len([item for item in link.commands if item[0] == "move"]) == 1
+    await adapter.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_enforced_hover_is_guarded_after_dispatch() -> None:
+    link = FreshAvoidanceLink(unsafe_after_hover=True)
+    link.bitfield |= (1 << 1) | (1 << 4)
+    link.values.update({"stateEstimate.z": 0.3, "range.zrange": 300.0})
+    adapter = vehicle(link)
+    await adapter.connect()
+    adapter.install_command_permit(permit(PermitScope.CONTAINED_FLIGHT))
+    adapter.configure_obstacle_avoidance(AvoidanceMode.ENFORCED)
+
+    with pytest.raises(CrazySwarmError) as rejected:
+        await adapter.execute(command(HoverCommand(duration_s=0.02), "avoidance-hover"))
+
+    assert rejected.value.code is ErrorCode.PREFLIGHT_FAILED
+    assert rejected.value.details["decision"] == "RECOVER_ABORT_LAND"
+    assert rejected.value.details["phase"] == "POST_DISPATCH"
+    assert len([item for item in link.commands if item[0] == "hold"]) == 1
     await adapter.disconnect()
 
 

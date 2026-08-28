@@ -57,6 +57,14 @@ from crazyswarm_app.domain.telemetry import (
     VehicleTelemetry,
 )
 from crazyswarm_app.hardware.models import CommandPermit, PermitScope
+from crazyswarm_app.safety.obstacle_avoidance import (
+    AvoidanceDecision,
+    AvoidanceEvaluation,
+    AvoidanceMode,
+    as_post_dispatch,
+    evaluate_hover,
+    evaluate_move_relative,
+)
 from crazyswarm_app.vehicles.base import Vehicle
 from crazyswarm_app.vehicles.crazyflie_link import (
     CrazyflieConnectionMetadata,
@@ -327,7 +335,12 @@ class CrazyflieVehicle(Vehicle):
         self._last_source_timestamp_ms: int | None = None
         self._last_source_timestamp_s = 0.0
         self._latest = self._disconnected_sample()
+        self._latest_raw: CrazyflieRawSample | None = None
         self._telemetry_history: deque[TelemetryEnvelope] = deque(maxlen=100_000)
+        self._avoidance_mode = AvoidanceMode.MONITOR_ONLY
+        self._avoidance_evidence: list[dict[str, object]] = []
+        self._avoidance_listener: Callable[[dict[str, object]], None] | None = None
+        self._active_avoidance_command: MoveRelativeCommand | HoverCommand | None = None
 
     @property
     def identity(self) -> VehicleIdentity:
@@ -409,7 +422,7 @@ class CrazyflieVehicle(Vehicle):
         )
 
     @property
-    def execution_metadata(self) -> dict[str, str | int | float | None]:
+    def execution_metadata(self) -> dict[str, object]:
         hardware_configuration = {
             "adapter_version": CRAZYFLIE_ADAPTER_VERSION,
             "command_mapping_id": CRAZYFLIE_COMMAND_MAPPING_ID,
@@ -438,6 +451,8 @@ class CrazyflieVehicle(Vehicle):
             "simulation_fixed_step_s": None,
             "initial_state_sha256": None,
             "run_identity_sha256": None,
+            "obstacle_avoidance": self.obstacle_avoidance_status,
+            "obstacle_avoidance_evidence": list(self._avoidance_evidence),
         }
 
     @property
@@ -495,6 +510,7 @@ class CrazyflieVehicle(Vehicle):
         borrowed._source_epoch = self._source_epoch
         borrowed._last_source_timestamp_ms = self._last_source_timestamp_ms
         borrowed._last_source_timestamp_s = self._last_source_timestamp_s
+        borrowed._latest_raw = self._latest_raw
         return borrowed
 
     @property
@@ -521,6 +537,48 @@ class CrazyflieVehicle(Vehicle):
 
     def clear_command_permit(self) -> None:
         self._permit = None
+
+    def configure_obstacle_avoidance(
+        self,
+        mode: AvoidanceMode,
+        *,
+        evidence_listener: Callable[[dict[str, object]], None] | None = None,
+    ) -> None:
+        self._avoidance_mode = mode
+        self._avoidance_evidence.clear()
+        self._avoidance_listener = evidence_listener
+
+    @property
+    def avoidance_evaluation_count(self) -> int:
+        return len(self._avoidance_evidence)
+
+    @property
+    def avoidance_evidence(self) -> tuple[dict[str, object], ...]:
+        return tuple(self._avoidance_evidence)
+
+    @property
+    def obstacle_avoidance_status(self) -> dict[str, object]:
+        binding_item = min(
+            (
+                (margin, item)
+                for item in self._avoidance_evidence
+                if isinstance(
+                    (margin := item.get("minimum_margin_m")), int | float
+                )
+                and not isinstance(margin, bool)
+            ),
+            key=lambda pair: pair[0],
+            default=None,
+        )
+        latest = self._avoidance_evidence[-1] if self._avoidance_evidence else {}
+        return {
+            "mode": self._avoidance_mode.value,
+            "decision": latest.get("decision"),
+            "evaluation_count": len(self._avoidance_evidence),
+            "minimum_margin_m": binding_item[0] if binding_item else None,
+            "binding_ray": binding_item[1].get("binding_ray") if binding_item else None,
+            "intervention_reason": latest.get("intervention_reason"),
+        }
 
     @property
     def latest_motor_pwm_percent(self) -> tuple[float, float, float, float] | None:
@@ -667,6 +725,7 @@ class CrazyflieVehicle(Vehicle):
         finally:
             self._metadata = None
             self._permit = None
+            self._latest_raw = None
             self._latest = self._disconnected_sample()
 
     async def execute(self, command: CommandEnvelope) -> CommandAcknowledgement:
@@ -684,6 +743,28 @@ class CrazyflieVehicle(Vehicle):
         dispatched = False
         try:
             payload = command.payload
+            avoidance_command: MoveRelativeCommand | HoverCommand | None = None
+            if isinstance(payload, MoveRelativeCommand | HoverCommand):
+                if self._avoidance_mode is AvoidanceMode.ENFORCED:
+                    await self.snapshot()
+                evaluation = self._evaluate_obstacle_avoidance(
+                    payload,
+                    phase="PRE_DISPATCH",
+                )
+                if (
+                    self._avoidance_mode is AvoidanceMode.ENFORCED
+                    and evaluation.decision
+                    is AvoidanceDecision.BLOCK_BEFORE_DISPATCH
+                ):
+                    raise CrazySwarmError(
+                        ErrorCode.PREFLIGHT_FAILED,
+                        "obstacle avoidance blocked unsafe horizontal command",
+                        details=evaluation.evidence(phase="PRE_DISPATCH"),
+                    )
+                avoidance_command = evaluation.command
+                if isinstance(payload, MoveRelativeCommand):
+                    assert isinstance(evaluation.command, MoveRelativeCommand)
+                    payload = evaluation.command
             if isinstance(payload, ArmCommand):
                 dispatched = True
                 await asyncio.to_thread(self._link.request_arm, True)
@@ -714,8 +795,10 @@ class CrazyflieVehicle(Vehicle):
             elif isinstance(payload, HoverCommand):
                 dispatched = True
                 await asyncio.to_thread(self._link.hold_position, payload.duration_s)
-                await self._wait_duration_and_refresh(
+                assert avoidance_command is not None
+                await self._wait_guarded_horizontal_command(
                     payload.duration_s,
+                    avoidance_command=avoidance_command,
                     stability_guard=_AirborneStabilityGuard(command_kind=payload.kind.value),
                 )
             elif isinstance(payload, MoveRelativeCommand):
@@ -729,8 +812,9 @@ class CrazyflieVehicle(Vehicle):
                     payload.yaw_rad,
                     payload.duration_s,
                 )
-                await self._wait_duration_and_refresh(
+                await self._wait_guarded_horizontal_command(
                     payload.duration_s,
+                    avoidance_command=payload,
                     stability_guard=_AirborneStabilityGuard(command_kind=payload.kind.value),
                 )
             elif isinstance(payload, BodyRateThrustCommand):
@@ -866,6 +950,7 @@ class CrazyflieVehicle(Vehicle):
                 details=details,
             )
         envelope = self._normalize(raw)
+        self._latest_raw = raw
         self._latest = envelope
         self._telemetry_history.append(envelope)
         self._sequence += 1
@@ -1072,10 +1157,74 @@ class CrazyflieVehicle(Vehicle):
             sample = await self.snapshot()
             if stability_guard is not None:
                 stability_guard.observe(sample)
+            if self._active_avoidance_command is not None:
+                evaluation = as_post_dispatch(
+                    self._evaluate_obstacle_avoidance(
+                        self._active_avoidance_command,
+                        phase="POST_DISPATCH",
+                    )
+                )
+                if evaluation.decision is AvoidanceDecision.RECOVER_ABORT_LAND:
+                    evidence = evaluation.evidence(phase="POST_DISPATCH")
+                    self._avoidance_evidence[-1] = evidence
+                    if self._avoidance_listener is not None:
+                        self._avoidance_listener(self.obstacle_avoidance_status)
+                    raise CrazySwarmError(
+                        ErrorCode.PREFLIGHT_FAILED,
+                        "obstacle avoidance requested abort and land",
+                        details=evidence,
+                    )
             remaining = deadline - time.monotonic()
             if remaining <= 0.0:
                 return
             await asyncio.sleep(min(self._telemetry_period_s, remaining))
+
+    async def _wait_guarded_horizontal_command(
+        self,
+        duration_s: float,
+        *,
+        avoidance_command: MoveRelativeCommand | HoverCommand,
+        stability_guard: _AirborneStabilityGuard,
+    ) -> None:
+        self._active_avoidance_command = avoidance_command
+        try:
+            await self._wait_duration_and_refresh(
+                duration_s,
+                stability_guard=stability_guard,
+            )
+        finally:
+            self._active_avoidance_command = None
+
+    def _evaluate_obstacle_avoidance(
+        self,
+        command: MoveRelativeCommand | HoverCommand,
+        *,
+        phase: str,
+    ) -> AvoidanceEvaluation:
+        if isinstance(command, MoveRelativeCommand):
+            evaluation = evaluate_move_relative(
+                self._latest_raw,
+                command,
+                mode=self._avoidance_mode,
+                evaluation_time_monotonic_s=time.monotonic(),
+                maximum_range_m=self._max_range_m,
+            )
+        else:
+            evaluation = evaluate_hover(
+                self._latest_raw,
+                command,
+                mode=self._avoidance_mode,
+                evaluation_time_monotonic_s=time.monotonic(),
+                maximum_range_m=self._max_range_m,
+            )
+        self._avoidance_evidence.append(evaluation.evidence(phase=phase))
+        if self._avoidance_listener is not None:
+            if self._avoidance_mode is AvoidanceMode.MONITOR_ONLY:
+                with suppress(Exception):
+                    self._avoidance_listener(self.obstacle_avoidance_status)
+            else:
+                self._avoidance_listener(self.obstacle_avoidance_status)
+        return evaluation
 
     def _home_frame_displacement(self, payload: MoveRelativeCommand) -> tuple[float, float]:
         if payload.frame is CoordinateFrame.HOME:

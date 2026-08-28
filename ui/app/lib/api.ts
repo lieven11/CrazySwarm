@@ -23,6 +23,7 @@ import type {
   MissionOption,
   MissionPreview,
   MissionRunView,
+  ObstacleAvoidanceMode,
   ParameterView,
   PhysicalBasicFlightMotionId,
   PhysicalFlightOperationStatusView,
@@ -290,11 +291,13 @@ export class ControlApi {
   async startPhysicalFlight(
     motionId: PhysicalBasicFlightMotionId,
     preparation?: ControllerTuningPreparationInput,
+    avoidanceMode: ObstacleAvoidanceMode = "MONITOR_ONLY",
   ): Promise<PhysicalFlightOperationStatusView> {
     return mapPhysicalFlightOperation(await this.post(
       "/api/v1/physical-twin/lab/physical-flight/start",
       {
         motion_id: motionId,
+        avoidance_mode: avoidanceMode,
         ...(preparation ? {
           station_id: preparation.stationId,
           heading_deg: preparation.headingDeg,
@@ -1974,6 +1977,13 @@ function mapPhysicalFlightOperation(value: unknown): PhysicalFlightOperationStat
   ] as const;
   const state = allowedStates.find((candidate) => candidate === source?.state);
   if (!source || !state) throw new Error("Physical flight status response is incomplete");
+  const avoidance = asRecord(source.avoidance);
+  const avoidanceDecision = [
+    "CLEAR", "LIMIT", "BLOCK_BEFORE_DISPATCH", "RECOVER_ABORT_LAND", "RECORD_ONLY",
+  ].find((candidate) => candidate === avoidance?.decision);
+  const bindingRay = ["front", "back", "left", "right"].find(
+    (candidate) => candidate === avoidance?.binding_ray,
+  );
   return {
     state,
     stopRequired: source.stop_required === true,
@@ -1988,6 +1998,16 @@ function mapPhysicalFlightOperation(value: unknown): PhysicalFlightOperationStat
       source.controller_tuning_preparation,
     ),
     availableAction: source.available_action === "FLIP" ? "FLIP" : undefined,
+    avoidance: {
+      mode: avoidance?.mode === "ENFORCED" ? "ENFORCED" : "MONITOR_ONLY",
+      decision: avoidanceDecision as PhysicalFlightOperationStatusView["avoidance"]["decision"],
+      evaluationCount: finiteNumber(avoidance?.evaluation_count) ?? 0,
+      minimumMarginM: finiteNumber(avoidance?.minimum_margin_m),
+      bindingRay: bindingRay as PhysicalFlightOperationStatusView["avoidance"]["bindingRay"],
+      interventionReason: typeof avoidance?.intervention_reason === "string"
+        ? avoidance.intervention_reason
+        : undefined,
+    },
   };
 }
 

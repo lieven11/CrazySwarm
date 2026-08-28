@@ -1,0 +1,142 @@
+{
+  "accepted_design_payload_sha256": "8b31bb73849ea1b9b2bffc63ded11ddf6b36e5bd67d5a95eedf89f87c8013bb6",
+  "author_checks": {
+    "design_audit": "PASS; scripts/audit_wp91_design.py --check",
+    "generated_contracts": "PASS; OpenAPI export and openapi-typescript regeneration",
+    "hardware_runtime": "NOT_RUN_NOT_AUTHORIZED",
+    "project_map": "PASS; scripts/check_project_map.py",
+    "python_static": "PASS; Ruff and strict mypy on changed production and test owners",
+    "python_tests": "PASS; 118 safety, adapter, contained-flight, controller-tuning, and API tests",
+    "requirement_catalog": "PRE_EXISTING_FAILURE; REQ-XFR-011 is absent from the committed index counts (150 displayed versus 151 definitions); no WP-91 requirement files changed",
+    "ui_build": "PASS; vinext production build and rendered HTML test",
+    "ui_static": "PASS; TypeScript and targeted ESLint",
+    "ui_tests": "PASS; 177 unit tests and 3 rendered HTML tests",
+    "viewport": "PASS; retained 1280x720 and 390x844 production-CSS fixture inspection proves 40 px target and no switch or dock overflow",
+    "whitespace": "PASS; git diff --check"
+  },
+  "base_commit": "da6d73ab7ddbea20d64dfe4d378ed8bd98757b88",
+  "branch": "codex/wp91-obstacle-avoidance",
+  "files": [
+    {
+      "path": "design.md",
+      "post_sha256": "2c26e76d8a1543dec199effc34706db4b56de0483185a81cb4ca015bd2a3f88c",
+      "pre_sha256": "34eacda8d081e512d28ddd76fbf0250fd74b60069cd2376e73d3031df683ca92",
+      "status": "modified"
+    },
+    {
+      "path": "docs/system/README.md",
+      "post_sha256": "87461fa4376edd5f048b4a9a4df8a20d86ec04ebcebb7a3cdc5036b70c94c976",
+      "pre_sha256": "37171a98d1fd5a78f470be1598a0ab317aad99fefb671655f5c6a6b6fd336b87",
+      "status": "modified"
+    },
+    {
+      "path": "missions/campaigns/real/qualification/wp91-viewport-inspection.json",
+      "post_sha256": "1783bc8c234137acbce387d4417b773e876e860b499205b55fb7f3e02e01a5f2",
+      "pre_sha256": null,
+      "status": "new"
+    },
+    {
+      "path": "src/crazyswarm_app/hardware/basic_flight_lab.py",
+      "post_sha256": "2603e9ccd3487012bc800f9edf961bf677b36bb4022745defb42fe0d00bb13f4",
+      "pre_sha256": "482a4e1481bf14b3d6d346b5d37075cb98d2db802f4687d28f897561857d0884",
+      "status": "modified"
+    },
+    {
+      "path": "src/crazyswarm_app/safety/obstacle_avoidance.py",
+      "post_sha256": "a82f786f897ce49fab27d899755a552fee3f3a9fdfc15bdbfd38dcbb9826aa7e",
+      "pre_sha256": null,
+      "status": "new"
+    },
+    {
+      "path": "src/crazyswarm_app/vehicles/crazyflie.py",
+      "post_sha256": "8e3b10abeb118bcf74560a603d0c7ff4e935eb9f4166e488107e2ea47866b185",
+      "pre_sha256": "63bcd6fd469d697d3256f5503a3dcad1a7a2c30df9750163da2df960424fd6ed",
+      "status": "modified"
+    },
+    {
+      "path": "tests/hardware/test_basic_flight_lab.py",
+      "post_sha256": "01b466c28d439fabb464ae4adff36306e9a18b8c706b38f7a76e75f69d0c81a9",
+      "pre_sha256": "78339c6f7ac751176a4dae0b1497c5b7fe29a2a739703dc1218290d45c68ff61",
+      "status": "modified"
+    },
+    {
+      "path": "tests/hardware/test_crazyflie_adapter.py",
+      "post_sha256": "d6cb91a331413644e1a691a0d16db9f1b96b09c758dbe6db0af187d4f6c2d6b0",
+      "pre_sha256": "ea3019d6ed5354be73893510bec3e67921ad2ac26455cbc67252df20cf41a009",
+      "status": "modified"
+    },
+    {
+      "path": "tests/safety/test_obstacle_avoidance.py",
+      "post_sha256": "21412475707cd124afa2072bcf44746bfe91382c9b7fc1f46830c78a22b64da2",
+      "pre_sha256": null,
+      "status": "new"
+    },
+    {
+      "path": "ui/app/components/FixtureGallery.tsx",
+      "post_sha256": "36532b8d6fde9fdc088d496fedd8e80a6a71bb535addf0511483898499238481",
+      "pre_sha256": "d6517742213f8821d31c66c48749cf45f75d7173cbd178da61d0cd6c026f4fd2",
+      "status": "modified"
+    },
+    {
+      "path": "ui/app/components/TwinBasicFlightLab.tsx",
+      "post_sha256": "7f1d2ed75126994a86f7fd53367e5ae09d83d57b736e1e2b8fd48d8aec6dbbfa",
+      "pre_sha256": "3ed51613ad44e4efd44d671031de201f2418ce405c723715fb066b23185914e1",
+      "status": "modified"
+    },
+    {
+      "path": "ui/app/globals.css",
+      "post_sha256": "1a230ba5a1888494426c6f931357d40b265f95318c3a57fab0d40871fe76b74d",
+      "pre_sha256": "a80d922be9c145fcad26faf47413dd61eba91fdb83353e7ea87bf6c4ce30bc85",
+      "status": "modified"
+    },
+    {
+      "path": "ui/app/lib/api.generated.ts",
+      "post_sha256": "d9577948a0c6960a1874f1cbf9a5ba180a94db8d4a79ee26c432d1fa3d406184",
+      "pre_sha256": "32e8d9534fb176306e784a4494b5c20cd80477ddc634d89eca0bd97c10f7b934",
+      "status": "modified"
+    },
+    {
+      "path": "ui/app/lib/api.ts",
+      "post_sha256": "d0d92a06cbd7cb0b740084da7cf4f42d6e5bb7f81e95dc5f57c116d58435809a",
+      "pre_sha256": "45bc875823c1cfd7dc74423b49bf6f998dbfbcab4c7cd2dae737bccf6c602cdb",
+      "status": "modified"
+    },
+    {
+      "path": "ui/app/lib/models.ts",
+      "post_sha256": "3b59a96a22511d7c8e187216c00e403c42d960109f49829c47cbdc22c58b1bc8",
+      "pre_sha256": "01b5cabd546527011e77f91c6a9f0f1d6a7bb637592198b2b1f8a1b9ecc2910a",
+      "status": "modified"
+    },
+    {
+      "path": "ui/openapi.json",
+      "post_sha256": "4fdf0420207eb4dbfc3a490db5333810eebde37ed69bc4cc5d9ef53edfddc8ff",
+      "pre_sha256": "a695b513077937fa3bd6e4904ff01397984bbcfa29ce0c47bafcedcda9879c93",
+      "status": "modified"
+    },
+    {
+      "path": "ui/tests/api-adapter.test.ts",
+      "post_sha256": "97f7531b943df7a7d84d565fbb0146c7284cadccc6cea13d0ece2d2f18758354",
+      "pre_sha256": "b5109743684fb3b05ecb4b02d198991a0e6df3aee5f4306e5eb9d6d74d2b4055",
+      "status": "modified"
+    },
+    {
+      "path": "ui/tests/twin-basic-flight-lab.test.tsx",
+      "post_sha256": "6b5bfc38b071536e2a9806b4b55db219b1d92b33d1a8cd4833940b81f7136c19",
+      "pre_sha256": "69a51e0aafa55899375e05d3c4c78c03bef8eb6cc45a272b40ca37c543c8b8bc",
+      "status": "modified"
+    },
+    {
+      "path": "ui/tsconfig.tsbuildinfo",
+      "post_sha256": "6873d30b0ed200c3bcc0d8d5feb838465c5b21fef5e0db1848f73d90c72d5d3b",
+      "pre_sha256": "4dd11b3b96f1e973028333df3cd964c16c06d5f21fb38abff8db5e29072cbcb5",
+      "status": "modified"
+    }
+  ],
+  "hardware_authority": "NONE",
+  "implementation_payload_sha256": "52b7441391b3f3d975c0712b45b53b371edb14216b332453a03137bdbfabbe54",
+  "initial_blocked_payload_sha256": "78846eeab2d6ed70c255836bf59117420924cf21b921633da84bf83d6d735ad0",
+  "operator_authorized_correction": "2026-08-28: Ok continue by fixing the team aiming issues",
+  "packet_id": "WP-91",
+  "schema_version": 1,
+  "source_class": "FAST_SIM_INJECTED_LINK_ACCELERATED"
+}

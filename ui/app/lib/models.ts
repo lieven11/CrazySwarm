@@ -1069,6 +1069,17 @@ export interface ControllerTuningPreparationInput {
   targetHeightM?: number;
 }
 
+export type ObstacleAvoidanceMode = "MONITOR_ONLY" | "ENFORCED";
+
+export interface ObstacleAvoidanceStatusView {
+  mode: ObstacleAvoidanceMode;
+  decision?: "CLEAR" | "LIMIT" | "BLOCK_BEFORE_DISPATCH" | "RECOVER_ABORT_LAND" | "RECORD_ONLY";
+  evaluationCount: number;
+  minimumMarginM?: number;
+  bindingRay?: "front" | "back" | "left" | "right";
+  interventionReason?: string;
+}
+
 export type PhysicalBasicFlightMotionId =
   | "commissioning-baseline"
   | "arm-disarm"
@@ -1144,6 +1155,7 @@ export interface PhysicalFlightOperationStatusView {
   result?: TwinBasicFlightRunView;
   controllerTuningPreparation?: ControllerTuningRunPreparationView;
   availableAction?: "FLIP";
+  avoidance: ObstacleAvoidanceStatusView;
 }
 
 export type MotorBenchSelection = "all" | "m1" | "m2" | "m3" | "m4";

@@ -888,4 +888,47 @@ describe("control API view adapter", () => {
       expect.objectContaining({ method: "POST", body: "{}" }),
     );
   });
+
+  it("posts enforced obstacle avoidance and maps its live evidence", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({
+      state: "RUNNING",
+      stop_required: true,
+      operation_id: "physical-avoidance-1",
+      motion_id: "forward-10cm-return",
+      avoidance: {
+        mode: "ENFORCED",
+        decision: "LIMIT",
+        evaluation_count: 3,
+        minimum_margin_m: -0.031,
+        binding_ray: "right",
+        intervention_reason: "insufficient_clearance",
+      },
+    }), { status: 200, headers: { "Content-Type": "application/json" } }));
+    const api = new ControlApi({ endpoint: "/control-api", clientId: "control-center-ui" });
+
+    const status = await api.startPhysicalFlight(
+      "forward-10cm-return",
+      undefined,
+      "ENFORCED",
+    );
+
+    expect(status.avoidance).toEqual({
+      mode: "ENFORCED",
+      decision: "LIMIT",
+      evaluationCount: 3,
+      minimumMarginM: -0.031,
+      bindingRay: "right",
+      interventionReason: "insufficient_clearance",
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/control-api/api/v1/physical-twin/lab/physical-flight/start",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          motion_id: "forward-10cm-return",
+          avoidance_mode: "ENFORCED",
+        }),
+      }),
+    );
+  });
 });

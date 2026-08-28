@@ -10122,6 +10122,25 @@
         ],
         "title": "ArmRequest"
       },
+      "AvoidanceDecision": {
+        "type": "string",
+        "enum": [
+          "CLEAR",
+          "LIMIT",
+          "BLOCK_BEFORE_DISPATCH",
+          "RECOVER_ABORT_LAND",
+          "RECORD_ONLY"
+        ],
+        "title": "AvoidanceDecision"
+      },
+      "AvoidanceMode": {
+        "type": "string",
+        "enum": [
+          "MONITOR_ONLY",
+          "ENFORCED"
+        ],
+        "title": "AvoidanceMode"
+      },
       "BackendBindingProfile": {
         "properties": {
           "schema_version": {
@@ -12906,6 +12925,72 @@
         ],
         "title": "ObservationTwinState"
       },
+      "ObstacleAvoidanceStatus": {
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/AvoidanceMode",
+            "default": "MONITOR_ONLY"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AvoidanceDecision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evaluation_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Evaluation Count",
+            "default": 0
+          },
+          "minimum_margin_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Margin M"
+          },
+          "binding_ray": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "front",
+                  "back",
+                  "left",
+                  "right"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Binding Ray"
+          },
+          "intervention_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intervention Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ObstacleAvoidanceStatus"
+      },
       "OperatingMode": {
         "type": "string",
         "enum": [
@@ -13160,6 +13245,10 @@
               }
             ],
             "title": "Target Height M"
+          },
+          "avoidance_mode": {
+            "$ref": "#/components/schemas/AvoidanceMode",
+            "default": "MONITOR_ONLY"
           }
         },
         "additionalProperties": false,
@@ -13356,6 +13445,9 @@
               }
             ],
             "title": "Available Action"
+          },
+          "avoidance": {
+            "$ref": "#/components/schemas/ObstacleAvoidanceStatus"
           }
         },
         "additionalProperties": false,

@@ -1,0 +1,39 @@
+{
+  "work_packet": "WP-91",
+  "inspected_on": "2026-08-28",
+  "surface": "http://127.0.0.1:39180/fixtures",
+  "runtime": "isolated simulation-only production UI server",
+  "fixture": "Obstacle-avoidance mission control",
+  "method": "In-app browser inspection of the repository fixture using the production mission-dock and avoidance-toggle markup and CSS",
+  "desktop": {
+    "viewport_px": [1280, 720],
+    "dock_px": [430, 58],
+    "dock_client_px": [428, 56],
+    "dock_scroll_px": [428, 56],
+    "switch_px": [107.9375, 40],
+    "switch_client_px": [106, 38],
+    "switch_scroll_px": [106, 38],
+    "switch_grid_columns_px": [14, 45.9375, 18]
+  },
+  "narrow": {
+    "viewport_px": [390, 844],
+    "fixture_stage_px": [320, 86],
+    "dock_px": [286, 58],
+    "dock_client_px": [284, 56],
+    "dock_scroll_px": [284, 56],
+    "switch_px": [107.9375, 40],
+    "switch_client_px": [106, 38],
+    "switch_scroll_px": [106, 38],
+    "switch_grid_columns_px": [14, 45.9375, 18]
+  },
+  "assertions": {
+    "switch_has_40px_target": true,
+    "switch_has_no_scroll_overflow": true,
+    "dock_has_no_scroll_overflow": true,
+    "avoidance_label_does_not_wrap": true,
+    "state_label_does_not_wrap": true,
+    "narrow_viewport_has_no_control_clipping": true,
+    "mission_title_uses_existing_ellipsis_behavior": true
+  },
+  "result": "PASS"
+}

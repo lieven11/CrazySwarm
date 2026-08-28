@@ -89,6 +89,11 @@ from crazyswarm_app.observability.events import (
     MissionStartedPayload,
     TelemetryPayload,
 )
+from crazyswarm_app.safety.obstacle_avoidance import (
+    SPEED_FLOOR_M_S,
+    AvoidanceDecision,
+    AvoidanceMode,
+)
 from crazyswarm_app.simulation.clock import ClockMode
 from crazyswarm_app.simulation.vehicle import SimulatedVehicle
 from crazyswarm_app.simulation.world import IndoorWorld
@@ -229,7 +234,7 @@ PHYSICAL_FLIGHT_MOTION_IDS: tuple[PhysicalBasicFlightMotionId, ...] = (
     "square-stops-40cm",
     "triangle-stops-40cm",
     "straight-out-back-continuous",
-    SINGLE_ROLL_MOTION_ID,
+    cast(PhysicalBasicFlightMotionId, SINGLE_ROLL_MOTION_ID),
     *cast(tuple[PhysicalBasicFlightMotionId, ...], CONTROLLER_TUNING_FLIGHT_MOTION_IDS),
 )
 PHYSICAL_OBSERVATION_MOTION_IDS: tuple[PhysicalBasicFlightMotionId, ...] = cast(
@@ -261,6 +266,21 @@ class PhysicalBasicFlightRunRequest(ContractModel):
     station_id: FixtureMarkerId | None = None
     heading_deg: float = Field(default=0.0, ge=0.0, le=90.0)
     target_height_m: float | None = Field(default=None, ge=0.0, le=0.50)
+    avoidance_mode: AvoidanceMode = AvoidanceMode.MONITOR_ONLY
+
+
+def _resolved_avoidance_request(
+    request: PhysicalBasicFlightRunRequest,
+) -> PhysicalBasicFlightRunRequest:
+    if (
+        request.motion_id == "arm-disarm"
+        or request.motion_id == SINGLE_ROLL_MOTION_ID
+        or request.motion_id in PHYSICAL_OBSERVATION_MOTION_IDS
+    ):
+        return request.model_copy(
+            update={"avoidance_mode": AvoidanceMode.MONITOR_ONLY}
+        )
+    return request
 
 
 class ControllerTuningRunPreparation(ContractModel):
@@ -282,6 +302,15 @@ class PhysicalBasicFlightReadiness(ContractModel):
     faults: tuple[str, ...] = ()
     issues: tuple[str, ...] = ()
     physical_commands_sent: Literal[False] = False
+
+
+class ObstacleAvoidanceStatus(ContractModel):
+    mode: AvoidanceMode = AvoidanceMode.MONITOR_ONLY
+    decision: AvoidanceDecision | None = None
+    evaluation_count: int = Field(default=0, ge=0)
+    minimum_margin_m: float | None = None
+    binding_ray: Literal["front", "back", "left", "right"] | None = None
+    intervention_reason: str | None = None
 
 
 MotorSelection = Literal["all", "m1", "m2", "m3", "m4"]
@@ -430,6 +459,7 @@ class PhysicalFlightOperationStatus(ContractModel):
     command_evidence: tuple[dict[str, Any], ...] = ()
     controller_tuning_preparation: ControllerTuningRunPreparation | None = None
     available_action: Literal["FLIP"] | None = None
+    avoidance: ObstacleAvoidanceStatus = Field(default_factory=ObstacleAvoidanceStatus)
 
 
 @dataclass(slots=True)
@@ -465,6 +495,7 @@ class _ActivePhysicalFlight:
     result: BasicFlightLabRun | None = None
     failure_details: dict[str, Any] | None = None
     command_evidence: list[dict[str, Any]] = field(default_factory=list)
+    avoidance: ObstacleAvoidanceStatus = field(default_factory=ObstacleAvoidanceStatus)
 
 
 def _step(step_id: str, title: str, behavior: str, containment: str) -> BasicFlightLabStep:
@@ -1618,6 +1649,7 @@ class BasicFlightLabService:
         operator_id: str,
         active_operation: _ActivePhysicalFlight | None = None,
     ) -> BasicFlightLabRun:
+        request = _resolved_avoidance_request(request)
         block_reason = self._physical_request_block_reason(request)
         if block_reason is not None:
             raise RuntimeError(block_reason)
@@ -1728,6 +1760,7 @@ class BasicFlightLabService:
     ) -> PhysicalFlightOperationStatus:
         """Start a backend-owned flight and return before any long motion completes."""
 
+        request = _resolved_avoidance_request(request)
         async with self._physical_flight_lock:
             block_reason = self._physical_request_block_reason(request)
             if block_reason is not None:
@@ -1747,6 +1780,7 @@ class BasicFlightLabService:
                 target=target,
                 operator_id=operator_id,
                 started_at_utc=datetime.now(UTC),
+                avoidance=ObstacleAvoidanceStatus(mode=request.avoidance_mode),
             )
             self._physical_flight = operation
             # Persist uncertainty before scheduling any radio or flight work.
@@ -2036,21 +2070,32 @@ class BasicFlightLabService:
         }
         operation.command_evidence.append(record)
         self._write_physical_flight_marker(operation)
+        avoidance_start = vehicle.avoidance_evaluation_count
         try:
             acknowledgement = await asyncio.wait_for(
                 vehicle.execute(command),
                 timeout=timeout_s,
             )
         except Exception as error:
+            avoidance_evidence = vehicle.avoidance_evidence[avoidance_start:]
+            if avoidance_evidence:
+                record["obstacle_avoidance"] = list(avoidance_evidence)
+            avoidance_dispatched = any(
+                item.get("phase") == "POST_DISPATCH"
+                for item in avoidance_evidence
+            )
             outcome_unknown = isinstance(error, asyncio.TimeoutError) or (
                 isinstance(error, CrazySwarmError)
                 and error.details.get("command_outcome")
                 == AcknowledgementStatus.UNKNOWN_OUTCOME.value
-            )
+            ) or avoidance_dispatched
             record["phase"] = "OUTCOME_UNKNOWN" if outcome_unknown else "NOT_DISPATCHED"
             record["failure"] = self._exception_evidence(error)
             self._write_physical_flight_marker(operation)
             raise
+        avoidance_evidence = vehicle.avoidance_evidence[avoidance_start:]
+        if avoidance_evidence:
+            record["obstacle_avoidance"] = list(avoidance_evidence)
         record.update(
             {
                 "phase": "COMPLETED",
@@ -2165,6 +2210,11 @@ class BasicFlightLabService:
                         )
                     ),
                 )
+        avoidance = operation.avoidance
+        if operation.vehicle is not None:
+            avoidance = ObstacleAvoidanceStatus.model_validate(
+                operation.vehicle.obstacle_avoidance_status
+            )
         return PhysicalFlightOperationStatus(
             state=operation.state,
             stop_required=operation.stop_required,
@@ -2176,6 +2226,7 @@ class BasicFlightLabService:
             failure_details=operation.failure_details,
             command_evidence=tuple(operation.command_evidence),
             controller_tuning_preparation=preparation,
+            avoidance=avoidance,
             available_action=(
                 "FLIP"
                 if (
@@ -2611,6 +2662,7 @@ class BasicFlightLabService:
             "station_id": operation.request.station_id,
             "heading_deg": operation.request.heading_deg,
             "target_height_m": operation.request.target_height_m,
+            "avoidance_mode": operation.request.avoidance_mode.value,
             "selected_uri": operation.target.selected_uri,
             "vehicle_label": operation.target.vehicle_label,
             "observed_identity_sha256": operation.target.observed_identity_sha256,
@@ -2621,6 +2673,7 @@ class BasicFlightLabService:
             "detail": operation.detail,
             "failure_details": operation.failure_details,
             "command_evidence": operation.command_evidence,
+            "avoidance": operation.avoidance.model_dump(mode="json"),
             "flip_triggered": operation.flip_triggered,
             "hover_reference_m": (
                 operation.hover_reference_m.model_dump(mode="json")
@@ -2704,6 +2757,11 @@ class BasicFlightLabService:
                         if isinstance(payload.get("target_height_m"), int | float)
                         else None
                     ),
+                    avoidance_mode=(
+                        AvoidanceMode.ENFORCED
+                        if payload.get("avoidance_mode") == AvoidanceMode.ENFORCED.value
+                        else AvoidanceMode.MONITOR_ONLY
+                    ),
                 ),
                 target=PhysicalCommandTarget(
                     selected_uri=selected_uri,
@@ -2740,6 +2798,18 @@ class BasicFlightLabService:
                     ]
                     if isinstance(command_evidence, list)
                     else []
+                ),
+                avoidance=(
+                    ObstacleAvoidanceStatus.model_validate(payload["avoidance"])
+                    if isinstance(payload.get("avoidance"), dict)
+                    else ObstacleAvoidanceStatus(
+                        mode=(
+                            AvoidanceMode.ENFORCED
+                            if payload.get("avoidance_mode")
+                            == AvoidanceMode.ENFORCED.value
+                            else AvoidanceMode.MONITOR_ONLY
+                        )
+                    )
                 ),
             )
         except (OSError, ValueError, json.JSONDecodeError) as error:
@@ -2836,6 +2906,7 @@ class BasicFlightLabService:
         is_acrobatics = request.motion_id == SINGLE_ROLL_MOTION_ID
         if is_acrobatics and active_operation is None:
             raise RuntimeError("cushioned acrobatics requires the staged hover and Flip workflow")
+        takeoff_height_m: float | None
         if is_acrobatics:
             takeoff_height_m = ACROBATICS_HOVER_HEIGHT_M
         elif is_controller_tuning_flight and controller_tuning_fixture is not None:
@@ -2887,6 +2958,16 @@ class BasicFlightLabService:
                 telemetry_listener=self._physical_telemetry_callback,
             )
         )
+        def retain_avoidance(status: dict[str, object]) -> None:
+            if active_operation is None:
+                return
+            active_operation.avoidance = ObstacleAvoidanceStatus.model_validate(status)
+            self._write_physical_flight_marker(active_operation)
+
+        vehicle.configure_obstacle_avoidance(
+            request.avoidance_mode,
+            evidence_listener=retain_avoidance if active_operation is not None else None,
+        )
         step_results: list[BasicFlightLabStepResult] = []
         if request.motion_id == "commissioning-baseline":
             step_results.append(
@@ -2929,6 +3010,14 @@ class BasicFlightLabService:
                 raise asyncio.CancelledError
             if active_operation is not None:
                 duration_s = float(getattr(payload, "duration_s", 0.0))
+                if (
+                    isinstance(payload, MoveRelativeCommand)
+                    and request.avoidance_mode is AvoidanceMode.ENFORCED
+                ):
+                    duration_s = max(
+                        duration_s,
+                        math.hypot(payload.x_m, payload.y_m) / SPEED_FLOOR_M_S,
+                    )
                 await self._execute_recorded_physical_command(
                     active_operation,
                     vehicle,

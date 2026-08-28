@@ -80,6 +80,16 @@ class CrazyflieLink(Protocol):
 
     def hold_position(self, duration_s: float) -> None: ...
 
+    def stop_and_hold(self, z_distance_m: float, duration_s: float) -> None:
+        """Actively replace current motion with a zero-velocity hover setpoint."""
+
+        ...
+
+    def release_stop_and_hold(self) -> None:
+        """Release active hover priority immediately before a safe successor command."""
+
+        ...
+
     def stream_body_rate_thrust(
         self,
         setpoints: tuple[BodyRateThrustSetpoint, ...],

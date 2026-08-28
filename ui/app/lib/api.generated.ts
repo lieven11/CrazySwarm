@@ -2418,7 +2418,7 @@ export interface components {
          * AvoidanceDecision
          * @enum {string}
          */
-        AvoidanceDecision: "CLEAR" | "LIMIT" | "BLOCK_BEFORE_DISPATCH" | "RECOVER_ABORT_LAND" | "RECORD_ONLY";
+        AvoidanceDecision: "CLEAR" | "LIMIT" | "BLOCK_BEFORE_DISPATCH" | "STOP_AND_HOLD" | "HOLD_CONFIRMED" | "HOLD_FAILED" | "RECOVER_ABORT_LAND" | "RECORD_ONLY";
         /**
          * AvoidanceMode
          * @enum {string}
@@ -3513,7 +3513,7 @@ export interface components {
             /** Minimum Margin M */
             minimum_margin_m?: number | null;
             /** Binding Ray */
-            binding_ray?: ("front" | "back" | "left" | "right") | null;
+            binding_ray?: ("front" | "back" | "left" | "right" | "up" | "down") | null;
             /** Intervention Reason */
             intervention_reason?: string | null;
         };
@@ -3586,7 +3586,7 @@ export interface components {
             heading_deg: number;
             /** Target Height M */
             target_height_m?: number | null;
-            /** @default MONITOR_ONLY */
+            /** @default ENFORCED */
             avoidance_mode: components["schemas"]["AvoidanceMode"];
         };
         /**

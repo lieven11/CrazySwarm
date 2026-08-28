@@ -5,13 +5,14 @@ from copy import deepcopy
 
 import pytest
 
-from crazyswarm_app.domain.commands import MoveRelativeCommand
+from crazyswarm_app.domain.commands import MoveRelativeCommand, TakeoffCommand
 from crazyswarm_app.domain.models import CoordinateFrame
 from crazyswarm_app.safety.obstacle_avoidance import (
     AvoidanceDecision,
     AvoidanceMode,
     as_post_dispatch,
     evaluate_move_relative,
+    evaluate_takeoff,
     required_range_m,
 )
 from crazyswarm_app.vehicles.crazyflie_link import CrazyflieRawSample
@@ -22,12 +23,17 @@ def sample(*, now: float = 100.0) -> CrazyflieRawSample:
         "stabilizer.yaw": 0.0,
         "stateEstimate.vx": 0.0,
         "stateEstimate.vy": 0.0,
+        "stateEstimate.vz": 0.0,
+        "stateEstimate.z": 0.10,
         "kalman.varPX": 0.0004,
         "kalman.varPY": 0.0004,
+        "kalman.varPZ": 0.0004,
         "range.front": 500.0,
         "range.back": 500.0,
         "range.left": 500.0,
         "range.right": 500.0,
+        "range.up": 500.0,
+        "range.zrange": 500.0,
     }
     return CrazyflieRawSample(
         source_timestamp_ms=10_000,
@@ -176,7 +182,7 @@ def test_enforced_invalid_binding_inputs_block_before_dispatch(
     assert field in result.invalid_fields
 
 
-def test_per_variable_staleness_blocks_and_post_dispatch_uses_abort_land() -> None:
+def test_per_variable_staleness_blocks_and_post_dispatch_requests_stop_and_hold() -> None:
     raw = sample()
     raw.value_received_at_monotonic_s["range.front"] = 99.599999
 
@@ -189,7 +195,7 @@ def test_per_variable_staleness_blocks_and_post_dispatch_uses_abort_land() -> No
     post_dispatch = as_post_dispatch(result)
 
     assert "range.front.age" in result.invalid_fields
-    assert post_dispatch.decision is AvoidanceDecision.RECOVER_ABORT_LAND
+    assert post_dispatch.decision is AvoidanceDecision.STOP_AND_HOLD
     assert post_dispatch.intervention_reason == "invalid_binding_input"
 
 
@@ -274,3 +280,64 @@ def test_home_frame_projection_at_yaw_pi_over_two_binds_right() -> None:
     assert rays["right"].closing_speed_m_s == pytest.approx(0.06)
     assert rays["front"].closing_speed_m_s == pytest.approx(0.0)
     assert result.binding_ray == "right"
+
+
+@pytest.mark.parametrize(
+    ("z_m", "ray", "range_variable"),
+    [
+        (0.10, "up", "range.up"),
+        (-0.10, "down", "range.zrange"),
+    ],
+)
+def test_vertical_relative_move_binds_vertical_ray_and_retimes(
+    z_m: float,
+    ray: str,
+    range_variable: str,
+) -> None:
+    raw = sample()
+    raw.values[range_variable] = oracle_required_range_m(0.05) * 1_000.0
+
+    result = evaluate_move_relative(
+        raw,
+        MoveRelativeCommand(z_m=z_m, duration_s=1.0),
+        mode=AvoidanceMode.ENFORCED,
+        evaluation_time_monotonic_s=100.0,
+    )
+
+    assert result.decision is AvoidanceDecision.LIMIT
+    assert result.binding_ray == ray
+    assert result.safe_speed_m_s == pytest.approx(0.05)
+    assert result.command.duration_s == pytest.approx(2.0)
+    assert result.command.z_m == z_m
+
+
+def test_takeoff_blocks_when_upward_clearance_is_inside_stopping_envelope() -> None:
+    raw = sample()
+    raw.values["range.up"] = 100.0
+
+    result = evaluate_takeoff(
+        raw,
+        TakeoffCommand(height_m=0.30, duration_s=2.0),
+        mode=AvoidanceMode.ENFORCED,
+        evaluation_time_monotonic_s=100.0,
+    )
+
+    assert result.decision is AvoidanceDecision.BLOCK_BEFORE_DISPATCH
+    assert result.binding_ray == "up"
+    assert result.command.height_m == pytest.approx(0.30)
+
+
+def test_missing_nonclosing_vertical_range_does_not_block_horizontal_move() -> None:
+    raw = sample()
+    raw.values.pop("range.up")
+    raw.value_received_at_monotonic_s.pop("range.up")
+
+    result = evaluate_move_relative(
+        raw,
+        MoveRelativeCommand(x_m=0.10, duration_s=1.0),
+        mode=AvoidanceMode.ENFORCED,
+        evaluation_time_monotonic_s=100.0,
+    )
+
+    assert result.decision is AvoidanceDecision.CLEAR
+    assert result.invalid_fields == ()

@@ -266,7 +266,7 @@ class PhysicalBasicFlightRunRequest(ContractModel):
     station_id: FixtureMarkerId | None = None
     heading_deg: float = Field(default=0.0, ge=0.0, le=90.0)
     target_height_m: float | None = Field(default=None, ge=0.0, le=0.50)
-    avoidance_mode: AvoidanceMode = AvoidanceMode.MONITOR_ONLY
+    avoidance_mode: AvoidanceMode = AvoidanceMode.ENFORCED
 
 
 def _resolved_avoidance_request(
@@ -309,7 +309,7 @@ class ObstacleAvoidanceStatus(ContractModel):
     decision: AvoidanceDecision | None = None
     evaluation_count: int = Field(default=0, ge=0)
     minimum_margin_m: float | None = None
-    binding_ray: Literal["front", "back", "left", "right"] | None = None
+    binding_ray: Literal["front", "back", "left", "right", "up", "down"] | None = None
     intervention_reason: str | None = None
 
 
@@ -3011,12 +3011,17 @@ class BasicFlightLabService:
             if active_operation is not None:
                 duration_s = float(getattr(payload, "duration_s", 0.0))
                 if (
-                    isinstance(payload, MoveRelativeCommand)
+                    isinstance(payload, MoveRelativeCommand | TakeoffCommand)
                     and request.avoidance_mode is AvoidanceMode.ENFORCED
                 ):
+                    distance_m = (
+                        math.sqrt(payload.x_m**2 + payload.y_m**2 + payload.z_m**2)
+                        if isinstance(payload, MoveRelativeCommand)
+                        else payload.height_m
+                    )
                     duration_s = max(
                         duration_s,
-                        math.hypot(payload.x_m, payload.y_m) / SPEED_FLOOR_M_S,
+                        distance_m / SPEED_FLOOR_M_S,
                     )
                 await self._execute_recorded_physical_command(
                     active_operation,

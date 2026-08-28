@@ -7870,9 +7870,9 @@ evidence remains `NOT_RUN`; no connection, permit, motor command, or flight occu
 
 ## WP-80 — observation-only physical/predicted Digital Twin entry
 
-Status: `IN_PROGRESS`
+Status: `IMPLEMENTED_UNVERIFIED`
 
-Independent verification: `DRAFT_UNVERIFIED`
+Independent verification: `IMPLEMENTED_UNVERIFIED`
 
 WP-80 is a narrow successor to the review-blocked WP-71 through WP-75 batch. The
 operator has now explicitly requested implementation:
@@ -12669,3 +12669,75 @@ authored action label, or single scalar variance is accepted as proof.
 - Verdict: `IMPLEMENTATION_VERIFIED`. All P0/P1 findings are resolved. Hardware,
   dashboard service, radio, motors, and physical flight remained
   `NOT_RUN_NOT_AUTHORIZED`.
+
+## WP-92 — reactive hold and vertical collision guard
+
+Status: `IN_PROGRESS`
+
+Independent verification: `DRAFT_UNVERIFIED`
+
+Operator authorization: `2026-08-28`, verbatim: “Ok yeah implement that as well”.
+This follows the clarified request for immediate stop-and-hold, confirmed hover,
+bounded landing escalation, vertical sensing, and enforced-by-default avoidance.
+The verified WP-91 preimage is retained at commit
+`737b9cc0499c2d1b4ad41aa8e10839241dd2eaf1` on the same branch, as explicitly
+requested by the operator.
+
+### Bounded behavior
+
+1. Applicable contained flights default to `ENFORCED`; observation, arm/disarm, and
+   cushioned acrobatics retain their existing monitor-only exclusions. The operator
+   may deliberately select monitor-only before Play, but the UI no longer presents it
+   as the quiet default.
+2. Horizontal and vertical command evaluation uses fresh front/back/left/right/up/down
+   ranges, measured HOME velocity, per-axis estimator variance, vehicle geometry,
+   latency, jerk-limited braking, and policy margin. Positive-Z takeoff/climb binds the
+   up ray; negative-Z relative motion binds the down ray. Ordinary landing retains its
+   dedicated floor/ground procedure and is not blocked as an obstacle.
+3. An unsafe enforced command still blocks before dispatch. An obstacle that becomes
+   unsafe after dispatch no longer jumps directly to a landing decision: it replaces
+   the active high-level trajectory with a zero-XY-velocity hover setpoint at the
+   measured down-range/height, then requires consecutive fresh samples proving bounded
+   speed and drift.
+4. A confirmed hold is maintained for the bounded response window. Because no online
+   navigator is implemented in this packet, expiry, unconfirmed hold, invalid hold
+   telemetry, or hold transport failure escalates to the existing controlled
+   abort/land path. Evidence distinguishes `STOP_AND_HOLD`, `HOLD_CONFIRMED`,
+   `HOLD_FAILED`, and the final landing fallback.
+5. The physical link gains an explicit active-hold boundary. It streams low-level
+   hover setpoints without motor-stop semantics, retains commander priority until the
+   landing fallback, and releases that priority immediately before the high-level land
+   command. The former passive `StopAndHoldCommand` wait is replaced by the same active
+   boundary.
+
+### Exclusions and evidence
+
+- No mapping, SLAM, detour search, route continuation, or goal-seeking replan is added.
+  Those consumers may later replace the bounded landing fallback only through an
+  independently certified cutover.
+- No live dashboard restart, radio access, motor command, deployment, or physical
+  flight is authorized. Tests use injected links only.
+- Author evidence must include upward and downward pre-dispatch vectors, takeoff/upward
+  obstruction, monitor transparency, active-trajectory replacement, confirmed hold,
+  hold timeout/failure followed by exactly one landing fallback, and unchanged normal
+  landing behavior. This user-present iteration uses the repository fast loop and will
+  remain `IMPLEMENTED_UNVERIFIED` unless the operator separately requests a formal
+  independent gate.
+
+### Author evidence — 2026-08-28
+
+- `115 passed` across the obstacle evaluator, Crazyflie adapter/link, and basic-flight
+  service suites. These cover six-ray 3D binding, takeoff/up obstruction, monitor
+  transparency, active trajectory replacement, fresh-sample hold confirmation, hold
+  timeout and transport failure, exactly one service landing fallback, commander
+  priority release, and ordinary successful flight/landing paths.
+- Ruff passed for every changed Python source/test boundary; mypy passed for all five
+  changed production modules; `scripts/check_project_map.py` returned `valid: true`.
+- OpenAPI and generated TypeScript contracts were regenerated. The full UI check passed:
+  ESLint, TypeScript, `178` unit tests, production build, and `3` rendered-HTML tests.
+- The isolated `/fixtures` route was inspected at 1280 px and 390 px widths. The checked
+  `Avoidance On` default remained legible beside Play with no browser console errors;
+  the component test separately proves explicit `MONITOR_ONLY` transmission after the
+  deliberate opt-out.
+- Hardware, radio, motors, persistent dashboard service, deployment, and physical flight
+  remained `NOT_RUN_NOT_AUTHORIZED`.

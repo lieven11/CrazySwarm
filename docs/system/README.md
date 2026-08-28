@@ -425,15 +425,21 @@ does not require `armed=false` in that mode. The UI remains one Play action; arm
 normalization is not a separate operator workflow. These backend and UI boundaries
 are covered by `tests/hardware/test_basic_flight_lab.py` and
 `ui/tests/twin-basic-flight-lab.test.tsx`.
-`src/crazyswarm_app/safety/obstacle_avoidance.py` owns the pure per-ray physical
-translation evaluator. `CrazyflieVehicle` supplies raw, per-variable timestamped range,
-HOME-velocity, yaw, and estimator-variance inputs before dispatch and throughout each
-relative move. `MONITOR_ONLY` records the same decision evidence without changing the
-command. Operator-selected `ENFORCED` mode can preserve displacement and yaw while
-retiming a move, reject it before dispatch, or route a newly unsafe dispatched move
-through the existing abort-and-land recovery boundary. The `/start` request and global
-status carry mode and evidence; the Campaign Laboratory dock only exposes the switch
-for contained hover/translations, never observer, arm/disarm, or acrobatics workflows.
+`src/crazyswarm_app/safety/obstacle_avoidance.py` owns the pure six-ray physical-motion
+evaluator. `CrazyflieVehicle` supplies raw, per-variable timestamped front, back, left,
+right, up, and down ranges; HOME velocity; yaw; altitude; and estimator variance before
+dispatch and throughout takeoff, hover, and relative moves. Applicable contained flights
+default to `ENFORCED`: the adapter preserves displacement, target, and yaw while retiming
+a command or rejects it before dispatch. A newly unsafe dispatched command crosses the
+public `CrazyflieLink.stop_and_hold` boundary, which gives a zero-velocity low-level hover
+setpoint temporary priority over the high-level trajectory. The adapter requires fresh
+source timestamps and bounded measured speed/drift confirmation, then routes through the
+existing abort-and-land fallback because this subsystem has no local navigator or reroute
+authority. Landing calls `release_stop_and_hold` before regaining high-level commander
+priority. `MONITOR_ONLY` is the deliberate diagnostic mode: it records identical evidence
+without changing command dispatch. The `/start` request and global status carry mode and
+evidence; the Campaign Laboratory dock exposes the switch only for contained flights,
+never observer, arm/disarm, or acrobatics workflows.
 `src/crazyswarm_app/hardware/controller_tuning_lab.py` owns the second Digital Twin
 physical mission cluster, its versioned box-fixture contract, advisory characterization state,
 central-ray range model, continuity-constrained range-derived pose fit, and bounded
@@ -477,8 +483,8 @@ Admission uses the exact paired identity and a
 real radio connection; reported supervisor faults are recorded but are not a software
 admission gate. `supervisor.info` is consumed from the bounded firmware log stream;
 the command refresh loop does not add synchronous supervisor requests. Battery data and
-monitor-only range decisions remain learning observations; range data becomes a
-pass/fail input only for an operator-selected enforced contained translation. A reported
+monitor-only range decisions remain learning observations; range data is a pass/fail
+input by default for applicable contained takeoff, hover, and translation commands. A reported
 supervisor crash is sent the firmware recovery
 request on the next physical flight action. The physical command adapter retains every telemetry sample consumed by
 preflight and command-completion polling, then archives it through the normal

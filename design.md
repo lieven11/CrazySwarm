@@ -286,9 +286,10 @@ Apply `[CMP-01]` and `[CMP-02]`.
   place manual confirmation checklists in this surface; automatic link, estimator, and
   fault preflight owns admission. Battery observations and monitor-only range decisions
   remain learning data. For contained hover and translation missions only, place one
-  compact `Avoidance off` / `Avoidance on` switch immediately beside Play. Off is the
-  quiet default and preserves authored commands; on freezes enforced range guarding
-  into the start request. Hide the switch for observation, arm/disarm, and cushioned
+  compact `Avoidance on` / `Avoidance monitor` switch immediately beside Play. On is
+  the safety default and freezes enforced range guarding into the start request;
+  monitor is a deliberate diagnostic choice that preserves authored commands while
+  retaining range evidence. Hide the switch for observation, arm/disarm, and cushioned
   acrobatics, and replace it with the global recovery action while a flight is active.
   The switch uses a visible text state and `role="switch"`; orange may reinforce the
   enforced state but cannot be its only indicator. Digital Twin exposes physical actions only—Simulation

@@ -647,6 +647,9 @@ class FakeCrazyflieLink:
         self.estimator_reset_calls = 0
         self.crash_recovery_calls = 0
         self.motor_selection: str | None = None
+        self.hold_active = False
+        self.hold_zeroes_velocity = True
+        self.fail_stop_and_hold = False
         self.observation_reads = 0
         self.values = {
             "stateEstimate.x": 0.0,
@@ -767,6 +770,7 @@ class FakeCrazyflieLink:
         self.values["stateEstimate.z"] = height_m
 
     def land(self, height_m: float, duration_s: float) -> None:
+        self.release_stop_and_hold()
         self.commands.append(("land", height_m, duration_s))
         self.bitfield &= ~(1 << 4)
         self.values["stateEstimate.z"] = height_m
@@ -789,6 +793,25 @@ class FakeCrazyflieLink:
     def hold_position(self, duration_s: float) -> None:
         self.commands.append(("hold", duration_s))
 
+    def stop_and_hold(self, z_distance_m: float, duration_s: float) -> None:
+        self.commands.append(("stop-and-hold", z_distance_m, duration_s))
+        if self.fail_stop_and_hold:
+            raise RuntimeError("hover setpoint stream failed")
+        self.hold_active = True
+        if self.hold_zeroes_velocity:
+            self.values.update(
+                {
+                    "stateEstimate.vx": 0.0,
+                    "stateEstimate.vy": 0.0,
+                    "stateEstimate.vz": 0.0,
+                }
+            )
+
+    def release_stop_and_hold(self) -> None:
+        if self.hold_active:
+            self.commands.append(("release-stop-and-hold",))
+            self.hold_active = False
+
     def stream_body_rate_thrust(
         self,
         setpoints: tuple[BodyRateThrustSetpoint, ...],
@@ -810,10 +833,12 @@ class FreshAvoidanceLink(FakeCrazyflieLink):
         *,
         unsafe_after_dispatch: bool = False,
         unsafe_after_hover: bool = False,
+        unsafe_after_takeoff: bool = False,
     ) -> None:
         super().__init__()
         self.unsafe_after_dispatch = unsafe_after_dispatch
         self.unsafe_after_hover = unsafe_after_hover
+        self.unsafe_after_takeoff = unsafe_after_takeoff
         self.values.update(
             {
                 "stabilizer.yaw": 0.0,
@@ -827,6 +852,7 @@ class FreshAvoidanceLink(FakeCrazyflieLink):
         )
 
     def read_sample(self) -> CrazyflieRawSample:
+        self.timestamp_ms += 20
         raw = super().read_sample()
         return replace(
             raw,
@@ -846,6 +872,11 @@ class FreshAvoidanceLink(FakeCrazyflieLink):
         super().go_to_relative(x_m, y_m, z_m, yaw_rad, duration_s)
         if self.unsafe_after_dispatch:
             self.values["range.front"] = 50.0
+
+    def takeoff(self, height_m: float, duration_s: float, yaw_rad: float | None) -> None:
+        super().takeoff(height_m, duration_s, yaw_rad)
+        if self.unsafe_after_takeoff:
+            self.values.update({"range.up": 50.0, "stateEstimate.vz": 0.10})
 
     def hold_position(self, duration_s: float) -> None:
         super().hold_position(duration_s)
@@ -1082,7 +1113,7 @@ async def test_enforced_avoidance_blocks_invalid_sample_before_dispatch() -> Non
 
 
 @pytest.mark.asyncio
-async def test_enforced_post_dispatch_obstacle_requests_recovery() -> None:
+async def test_enforced_post_dispatch_obstacle_stops_holds_then_requests_recovery() -> None:
     link = FreshAvoidanceLink(unsafe_after_dispatch=True)
     adapter = vehicle(link)
     await adapter.connect()
@@ -1096,8 +1127,15 @@ async def test_enforced_post_dispatch_obstacle_requests_recovery() -> None:
 
     assert rejected.value.code is ErrorCode.PREFLIGHT_FAILED
     assert rejected.value.details["decision"] == "RECOVER_ABORT_LAND"
-    assert rejected.value.details["phase"] == "POST_DISPATCH"
+    assert rejected.value.details["phase"] == "HOLD_FALLBACK"
+    assert rejected.value.details["hold"]["decision"] == "HOLD_CONFIRMED"
     assert len([item for item in link.commands if item[0] == "move"]) == 1
+    assert len([item for item in link.commands if item[0] == "stop-and-hold"]) == 1
+    assert [item["decision"] for item in adapter.avoidance_evidence[-3:]] == [
+        "STOP_AND_HOLD",
+        "HOLD_CONFIRMED",
+        "RECOVER_ABORT_LAND",
+    ]
     await adapter.disconnect()
 
 
@@ -1116,8 +1154,109 @@ async def test_enforced_hover_is_guarded_after_dispatch() -> None:
 
     assert rejected.value.code is ErrorCode.PREFLIGHT_FAILED
     assert rejected.value.details["decision"] == "RECOVER_ABORT_LAND"
-    assert rejected.value.details["phase"] == "POST_DISPATCH"
+    assert rejected.value.details["phase"] == "HOLD_FALLBACK"
+    assert rejected.value.details["hold"]["decision"] == "HOLD_CONFIRMED"
     assert len([item for item in link.commands if item[0] == "hold"]) == 1
+    assert len([item for item in link.commands if item[0] == "stop-and-hold"]) == 1
+    await adapter.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_failed_stop_and_hold_is_retained_before_landing_fallback() -> None:
+    link = FreshAvoidanceLink(unsafe_after_dispatch=True)
+    link.fail_stop_and_hold = True
+    adapter = vehicle(link)
+    await adapter.connect()
+    adapter.install_command_permit(permit(PermitScope.CONTAINED_FLIGHT))
+    adapter.configure_obstacle_avoidance(AvoidanceMode.ENFORCED)
+
+    with pytest.raises(CrazySwarmError) as rejected:
+        await adapter.execute(
+            command(MoveRelativeCommand(x_m=0.002, duration_s=0.02), "hold-fails")
+        )
+
+    assert rejected.value.details["decision"] == "RECOVER_ABORT_LAND"
+    assert rejected.value.details["hold"]["decision"] == "HOLD_FAILED"
+    assert "hover setpoint stream failed" in rejected.value.details["hold_error"]
+    assert [item["decision"] for item in adapter.avoidance_evidence[-2:]] == [
+        "HOLD_FAILED",
+        "RECOVER_ABORT_LAND",
+    ]
+    await adapter.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_unconfirmed_stop_and_hold_times_out_before_landing_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "crazyswarm_app.vehicles.crazyflie.AVOIDANCE_HOLD_STREAM_DURATION_S",
+        0.03,
+    )
+    link = FreshAvoidanceLink(unsafe_after_dispatch=True)
+    link.hold_zeroes_velocity = False
+    link.values["stateEstimate.vx"] = 0.20
+    adapter = vehicle(link)
+    await adapter.connect()
+    adapter.install_command_permit(permit(PermitScope.CONTAINED_FLIGHT))
+    adapter.configure_obstacle_avoidance(AvoidanceMode.ENFORCED)
+
+    with pytest.raises(CrazySwarmError) as rejected:
+        await adapter.execute(
+            command(MoveRelativeCommand(x_m=0.002, duration_s=0.02), "hold-timeout")
+        )
+
+    assert rejected.value.details["decision"] == "RECOVER_ABORT_LAND"
+    assert rejected.value.details["hold"]["decision"] == "HOLD_FAILED"
+    assert rejected.value.details["hold_error"] == "hold was not confirmed before timeout"
+    assert [item["decision"] for item in adapter.avoidance_evidence[-2:]] == [
+        "HOLD_FAILED",
+        "RECOVER_ABORT_LAND",
+    ]
+    await adapter.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_enforced_takeoff_blocks_upward_obstacle_before_dispatch() -> None:
+    link = FreshAvoidanceLink()
+    link.values["range.up"] = 100.0
+    adapter = vehicle(link)
+    await adapter.connect()
+    adapter.install_command_permit(permit(PermitScope.CONTAINED_FLIGHT))
+    adapter.configure_obstacle_avoidance(AvoidanceMode.ENFORCED)
+
+    with pytest.raises(CrazySwarmError) as rejected:
+        await adapter.execute(
+            command(TakeoffCommand(height_m=0.30, duration_s=2.0), "blocked-takeoff")
+        )
+
+    assert rejected.value.details["decision"] == "BLOCK_BEFORE_DISPATCH"
+    assert rejected.value.details["binding_ray"] == "up"
+    assert not [item for item in link.commands if item[0] == "takeoff"]
+    await adapter.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_enforced_takeoff_stops_when_upward_obstacle_appears_during_climb() -> None:
+    link = FreshAvoidanceLink(unsafe_after_takeoff=True)
+    adapter = vehicle(link)
+    await adapter.connect()
+    adapter.install_command_permit(permit(PermitScope.CONTAINED_FLIGHT))
+    adapter.configure_obstacle_avoidance(AvoidanceMode.ENFORCED)
+
+    with pytest.raises(CrazySwarmError) as rejected:
+        await adapter.execute(
+            command(TakeoffCommand(height_m=0.30, duration_s=3.0), "takeoff-hold")
+        )
+
+    assert rejected.value.details["decision"] == "RECOVER_ABORT_LAND"
+    assert rejected.value.details["hold"]["decision"] == "HOLD_CONFIRMED"
+    assert [item["binding_ray"] for item in adapter.avoidance_evidence[-3:]] == [
+        "up",
+        "up",
+        "up",
+    ]
+    assert len([item for item in link.commands if item[0] == "stop-and-hold"]) == 1
     await adapter.disconnect()
 
 
@@ -1388,6 +1527,52 @@ def test_cflib_body_rate_stream_releases_priority_and_lock_after_send_failure() 
     link.stream_body_rate_thrust(setpoints, 0.005)
 
     assert calls == ["manual", "release", "manual", "manual", "release"]
+
+
+def test_cflib_stop_and_hold_streams_hover_until_land_releases_priority() -> None:
+    calls: list[tuple[object, ...]] = []
+
+    class Commander:
+        def send_hover_setpoint(
+            self,
+            vx: float,
+            vy: float,
+            yaw_rate: float,
+            z_distance_m: float,
+        ) -> None:
+            calls.append(("hover", vx, vy, yaw_rate, z_distance_m))
+
+        def send_notify_setpoint_stop(self, remain_valid_milliseconds: int) -> None:
+            calls.append(("release", remain_valid_milliseconds))
+
+    class HighLevelCommander:
+        def land(
+            self,
+            height_m: float,
+            duration_s: float,
+            *,
+            yaw: float | None,
+        ) -> None:
+            calls.append(("land", height_m, duration_s, yaw))
+
+    class Crazyflie:
+        commander = Commander()
+        high_level_commander = HighLevelCommander()
+
+    link = _cflib_link.CflibCrazyflieLink()
+    link._cf = Crazyflie()
+    link._connected = True
+
+    link.stop_and_hold(0.30, 0.001)
+
+    assert calls
+    assert all(call == ("hover", 0.0, 0.0, 0.0, 0.30) for call in calls)
+    assert link._hover_hold_active is True
+
+    link.land(0.0, 2.0)
+
+    assert calls[-2:] == [("release", 0), ("land", 0.0, 2.0, None)]
+    assert link._hover_hold_active is False
 
 
 @pytest.mark.asyncio

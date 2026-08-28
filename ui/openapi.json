@@ -10128,6 +10128,9 @@
           "CLEAR",
           "LIMIT",
           "BLOCK_BEFORE_DISPATCH",
+          "STOP_AND_HOLD",
+          "HOLD_CONFIRMED",
+          "HOLD_FAILED",
           "RECOVER_ABORT_LAND",
           "RECORD_ONLY"
         ],
@@ -12966,7 +12969,9 @@
                   "front",
                   "back",
                   "left",
-                  "right"
+                  "right",
+                  "up",
+                  "down"
                 ]
               },
               {
@@ -13248,7 +13253,7 @@
           },
           "avoidance_mode": {
             "$ref": "#/components/schemas/AvoidanceMode",
-            "default": "MONITOR_ONLY"
+            "default": "ENFORCED"
           }
         },
         "additionalProperties": false,

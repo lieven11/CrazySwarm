@@ -291,7 +291,7 @@ export class ControlApi {
   async startPhysicalFlight(
     motionId: PhysicalBasicFlightMotionId,
     preparation?: ControllerTuningPreparationInput,
-    avoidanceMode: ObstacleAvoidanceMode = "MONITOR_ONLY",
+    avoidanceMode: ObstacleAvoidanceMode = "ENFORCED",
   ): Promise<PhysicalFlightOperationStatusView> {
     return mapPhysicalFlightOperation(await this.post(
       "/api/v1/physical-twin/lab/physical-flight/start",
@@ -1979,9 +1979,10 @@ function mapPhysicalFlightOperation(value: unknown): PhysicalFlightOperationStat
   if (!source || !state) throw new Error("Physical flight status response is incomplete");
   const avoidance = asRecord(source.avoidance);
   const avoidanceDecision = [
-    "CLEAR", "LIMIT", "BLOCK_BEFORE_DISPATCH", "RECOVER_ABORT_LAND", "RECORD_ONLY",
+    "CLEAR", "LIMIT", "BLOCK_BEFORE_DISPATCH", "STOP_AND_HOLD", "HOLD_CONFIRMED",
+    "HOLD_FAILED", "RECOVER_ABORT_LAND", "RECORD_ONLY",
   ].find((candidate) => candidate === avoidance?.decision);
-  const bindingRay = ["front", "back", "left", "right"].find(
+  const bindingRay = ["front", "back", "left", "right", "up", "down"].find(
     (candidate) => candidate === avoidance?.binding_ray,
   );
   return {

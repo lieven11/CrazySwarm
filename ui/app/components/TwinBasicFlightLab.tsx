@@ -82,7 +82,7 @@ export function TwinBasicFlightLab({
   const [triggeringFlip, setTriggeringFlip] = useState(false);
   const [run, setRun] = useState<TwinBasicFlightRunView>();
   const [runError, setRunError] = useState<string>();
-  const [avoidanceEnabled, setAvoidanceEnabled] = useState(false);
+  const [avoidanceEnabled, setAvoidanceEnabled] = useState(true);
   const [flightOperation, setFlightOperation] = useState<PhysicalFlightOperationStatusView>();
   const launcherRef = useRef<HTMLButtonElement>(null);
   const workspaceRef = useRef<HTMLElement>(null);
@@ -387,7 +387,7 @@ export function TwinBasicFlightLab({
         headingDeg: parsedHeadingDeg,
         targetHeightM: parsedHeightM,
       } : undefined;
-      const operation = avoidanceMode === "ENFORCED"
+      const operation = avoidanceAvailable
         ? await api.startPhysicalFlight(
           selected.motionId as PhysicalBasicFlightMotionId,
           preparation,
@@ -741,12 +741,12 @@ export function TwinBasicFlightLab({
               role="switch"
               aria-checked={avoidanceEnabled}
               disabled={running}
-              title="Monitor ranges when off; limit or block unsafe movement when on"
+              title="Enforced by default; turn off only to record ranges without intervention"
               onClick={() => setAvoidanceEnabled((enabled) => !enabled)}
             >
               <ShieldCheck size={13} />
               <span>Avoidance</span>
-              <small>{avoidanceEnabled ? "On" : "Off"}</small>
+              <small>{avoidanceEnabled ? "On" : "Monitor"}</small>
             </button>
           ) : null}
           <button

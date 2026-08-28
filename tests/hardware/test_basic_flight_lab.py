@@ -179,6 +179,9 @@ def test_physical_curriculum_stays_inside_low_slow_containment() -> None:
 
 
 def test_non_translation_workflows_force_monitor_only_avoidance() -> None:
+    assert PhysicalBasicFlightRunRequest(
+        motion_id="forward-10cm-return"
+    ).avoidance_mode is AvoidanceMode.ENFORCED
     for motion_id in ("arm-disarm", "tuning-a-station-a", SINGLE_ROLL_MOTION_ID):
         resolved = _resolved_avoidance_request(
             PhysicalBasicFlightRunRequest(
@@ -384,9 +387,11 @@ async def test_airborne_stability_guard_uses_existing_failure_abort_and_land_pat
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("hold_fails", (False, True))
 async def test_post_dispatch_avoidance_uses_existing_failure_abort_and_land_path(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    hold_fails: bool,
 ) -> None:
     config = load_config(Path("config/app.yaml")).model_copy(
         update={"cache_directory": tmp_path / "cache"}
@@ -397,6 +402,7 @@ async def test_post_dispatch_avoidance_uses_existing_failure_abort_and_land_path
         evidence_path=tmp_path / "evidence.sqlite3",
     )
     link = FreshAvoidanceLink(unsafe_after_dispatch=True)
+    link.fail_stop_and_hold = hold_fails
     original_wait = CrazyflieVehicle._wait_duration_and_refresh
 
     async def fast_wait(
@@ -431,7 +437,14 @@ async def test_post_dispatch_avoidance_uses_existing_failure_abort_and_land_path
 
     assert rejected.value.code is ErrorCode.PREFLIGHT_FAILED
     assert rejected.value.details["decision"] == "RECOVER_ABORT_LAND"
+    assert rejected.value.details["hold"]["decision"] == (
+        "HOLD_FAILED" if hold_fails else "HOLD_CONFIRMED"
+    )
     assert [item[0] for item in link.commands].count("move") == 1
+    assert [item[0] for item in link.commands].count("stop-and-hold") == 1
+    assert [item[0] for item in link.commands].count("release-stop-and-hold") == (
+        0 if hold_fails else 1
+    )
     assert [item[0] for item in link.commands].count("land") == 1
     assert link.bitfield & (1 << 4) == 0
 

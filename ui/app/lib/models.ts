@@ -1073,10 +1073,10 @@ export type ObstacleAvoidanceMode = "MONITOR_ONLY" | "ENFORCED";
 
 export interface ObstacleAvoidanceStatusView {
   mode: ObstacleAvoidanceMode;
-  decision?: "CLEAR" | "LIMIT" | "BLOCK_BEFORE_DISPATCH" | "RECOVER_ABORT_LAND" | "RECORD_ONLY";
+  decision?: "CLEAR" | "LIMIT" | "BLOCK_BEFORE_DISPATCH" | "STOP_AND_HOLD" | "HOLD_CONFIRMED" | "HOLD_FAILED" | "RECOVER_ABORT_LAND" | "RECORD_ONLY";
   evaluationCount: number;
   minimumMarginM?: number;
-  bindingRay?: "front" | "back" | "left" | "right";
+  bindingRay?: "front" | "back" | "left" | "right" | "up" | "down";
   interventionReason?: string;
 }
 

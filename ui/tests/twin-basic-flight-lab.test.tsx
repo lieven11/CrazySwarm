@@ -159,7 +159,11 @@ describe("Digital Twin basic-flight campaign lab", () => {
     fireEvent.click(within(laboratory).getByRole("button", { name: "Close Campaign Laboratory" }));
     fireEvent.click(await screen.findByRole("button", { name: "Run 30 cm commissioning flight" }));
 
-    await waitFor(() => expect(startPhysicalFlight).toHaveBeenCalledWith("commissioning-baseline"));
+    await waitFor(() => expect(startPhysicalFlight).toHaveBeenCalledWith(
+      "commissioning-baseline",
+      undefined,
+      "ENFORCED",
+    ));
     fireEvent.click(screen.getByRole("button", { name: /Campaign Laboratory/i }));
     fireEvent.click(await screen.findByRole("tab", { name: "Review" }));
     expect(await screen.findByText("Learning observation retained")).toBeInTheDocument();
@@ -169,7 +173,7 @@ describe("Digital Twin basic-flight campaign lab", () => {
     expect(onPhysicalStatusChange).toHaveBeenCalledWith(pairedStatus);
   });
 
-  it("sends enforced avoidance only after the bottom-left switch is turned on", async () => {
+  it("sends enforced avoidance by default from the bottom-left switch", async () => {
     const startPhysicalFlight = vi.fn().mockResolvedValue({
       state: "STARTING",
       stopRequired: true,
@@ -190,8 +194,6 @@ describe("Digital Twin basic-flight campaign lab", () => {
     />);
 
     const toggle = await screen.findByRole("switch", { name: /Avoidance/ });
-    expect(toggle).toHaveAttribute("aria-checked", "false");
-    fireEvent.click(toggle);
     expect(toggle).toHaveAttribute("aria-checked", "true");
     fireEvent.click(screen.getByRole("button", { name: "Run 30 cm commissioning flight" }));
 
@@ -199,6 +201,38 @@ describe("Digital Twin basic-flight campaign lab", () => {
       "commissioning-baseline",
       undefined,
       "ENFORCED",
+    ));
+  });
+
+  it("allows a deliberate monitor-only diagnostic run", async () => {
+    const startPhysicalFlight = vi.fn().mockResolvedValue({
+      state: "STARTING",
+      stopRequired: true,
+      operationId: "physical-operation-monitor",
+      motionId: "commissioning-baseline",
+      avoidance: { mode: "MONITOR_ONLY", evaluationCount: 0 },
+    });
+    const api = {
+      twinBasicFlightCatalog: vi.fn().mockResolvedValue(catalog),
+      physicalFlightStatus: vi.fn().mockResolvedValue({ state: "IDLE", stopRequired: false }),
+      startPhysicalFlight,
+    } as unknown as ControlApi;
+
+    render(<TwinBasicFlightLab
+      api={api}
+      onNotice={vi.fn()}
+      physicalStatus={pairedGroundedStatus}
+    />);
+
+    const toggle = await screen.findByRole("switch", { name: /Avoidance/ });
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-checked", "false");
+    fireEvent.click(screen.getByRole("button", { name: "Run 30 cm commissioning flight" }));
+
+    await waitFor(() => expect(startPhysicalFlight).toHaveBeenCalledWith(
+      "commissioning-baseline",
+      undefined,
+      "MONITOR_ONLY",
     ));
   });
 
@@ -462,7 +496,11 @@ describe("Digital Twin basic-flight campaign lab", () => {
 
     expect(await screen.findByText("Physical drone · Connecting")).toBeVisible();
     expect(screen.getByRole("button", { name: "Connecting to physical drone" })).toBeDisabled();
-    expect(startPhysicalFlight).toHaveBeenCalledWith("commissioning-baseline");
+    expect(startPhysicalFlight).toHaveBeenCalledWith(
+      "commissioning-baseline",
+      undefined,
+      "ENFORCED",
+    );
   });
 
   it("passes the selected physical mission through instead of rewriting it to commissioning", async () => {
@@ -502,7 +540,11 @@ describe("Digital Twin basic-flight campaign lab", () => {
       name: "Run Take off → hover → land at home",
     }));
 
-    await waitFor(() => expect(startPhysicalFlight).toHaveBeenCalledWith("hover-12s"));
+    await waitFor(() => expect(startPhysicalFlight).toHaveBeenCalledWith(
+      "hover-12s",
+      undefined,
+      "ENFORCED",
+    ));
   });
 
   it("restores a backend-owned active flight and keeps global abort available", async () => {
@@ -623,6 +665,8 @@ describe("Digital Twin basic-flight campaign lab", () => {
 
     await waitFor(() => expect(startPhysicalFlight).toHaveBeenCalledWith(
       "commissioning-baseline",
+      undefined,
+      "ENFORCED",
     ));
   });
 

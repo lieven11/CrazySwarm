@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import importlib
 import json
+import math
 import queue
 import threading
 import time
@@ -276,6 +277,11 @@ class CflibCrazyflieLink:
         self._body_rate_stop = threading.Event()
         self._body_rate_idle = threading.Event()
         self._body_rate_idle.set()
+        self._hover_hold_lock = threading.Lock()
+        self._hover_hold_stop = threading.Event()
+        self._hover_hold_idle = threading.Event()
+        self._hover_hold_idle.set()
+        self._hover_hold_active = False
 
     @staticmethod
     def discover() -> tuple[str, ...]:
@@ -461,6 +467,9 @@ class CflibCrazyflieLink:
     def disconnect(self) -> None:
         self._body_rate_stop.set()
         self._body_rate_idle.wait(timeout=0.1)
+        self._hover_hold_stop.set()
+        self._hover_hold_idle.wait(timeout=0.1)
+        self._hover_hold_active = False
         scf = self._scf
         if scf is None:
             self._connected = False
@@ -966,6 +975,7 @@ class CflibCrazyflieLink:
         self._body_rate_stop.set()
         if not self._body_rate_idle.wait(timeout=0.1):
             raise TimeoutError("body-rate stream did not release before landing")
+        self.release_stop_and_hold()
         self._require_connected().high_level_commander.land(
             height_m,
             duration_s,
@@ -995,6 +1005,44 @@ class CflibCrazyflieLink:
         if duration_s <= 0.0:
             raise ValueError("hold duration must be positive")
         self._require_connected()
+
+    def stop_and_hold(self, z_distance_m: float, duration_s: float) -> None:
+        """Override an active HLC trajectory with a bounded zero-velocity hover stream."""
+
+        if not math.isfinite(z_distance_m) or z_distance_m <= 0.0:
+            raise ValueError("hold height must be finite and positive")
+        if not math.isfinite(duration_s) or duration_s <= 0.0:
+            raise ValueError("hold duration must be finite and positive")
+        if not self._hover_hold_lock.acquire(blocking=False):
+            raise RuntimeError("another stop-and-hold stream is already active")
+        if not self._body_rate_idle.wait(timeout=0.1):
+            self._hover_hold_lock.release()
+            raise TimeoutError("body-rate stream did not release before stop-and-hold")
+        self._hover_hold_stop.clear()
+        self._hover_hold_idle.clear()
+        deadline = time.monotonic() + duration_s
+        try:
+            commander = self._require_command_transport_healthy().commander
+            while True:
+                commander.send_hover_setpoint(0.0, 0.0, 0.0, z_distance_m)
+                self._hover_hold_active = True
+                remaining_s = deadline - time.monotonic()
+                if remaining_s <= 0.0:
+                    return
+                if self._hover_hold_stop.wait(timeout=min(0.02, remaining_s)):
+                    return
+        finally:
+            self._hover_hold_idle.set()
+            self._hover_hold_lock.release()
+
+    def release_stop_and_hold(self) -> None:
+        self._hover_hold_stop.set()
+        if not self._hover_hold_idle.wait(timeout=0.1):
+            raise TimeoutError("stop-and-hold stream did not release")
+        if not self._hover_hold_active:
+            return
+        self._require_connected().commander.send_notify_setpoint_stop(0)
+        self._hover_hold_active = False
 
     def stream_body_rate_thrust(
         self,
@@ -1053,6 +1101,8 @@ class CflibCrazyflieLink:
 
     def emergency_stop(self) -> None:
         self._body_rate_stop.set()
+        self._hover_hold_stop.set()
+        self._hover_hold_active = False
         self._require_connected().supervisor.send_emergency_stop()
 
     def _start_logs(self, crazyflie: Any, log_config_type: Any) -> set[str]:

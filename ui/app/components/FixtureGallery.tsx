@@ -30,12 +30,12 @@ export function FixtureGallery() {
               className="twin-avoidance-toggle"
               type="button"
               role="switch"
-              aria-checked="false"
-              title="Monitor ranges when off; limit or block unsafe movement when on"
+              aria-checked="true"
+              title="Enforced by default; turn off only to record ranges without intervention"
             >
               <ShieldCheck size={13} />
               <span>Avoidance</span>
-              <small>Off</small>
+              <small>On</small>
             </button>
             <button className="dock-run-button twin-physical-run-button" type="button" aria-label="Run selected mission">
               <Play size={14} fill="currentColor" />
